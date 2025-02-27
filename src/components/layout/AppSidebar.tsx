@@ -4,9 +4,9 @@ import { NavLink } from "react-router-dom";
 import { 
   Home, 
   FileText, 
-  FileInvoice, 
+  Receipt, // Replacing FileInvoice 
   Users, 
-  UserHardHat, 
+  HardHat, // Replacing UserHardHat
   Calendar, 
   FolderTree, 
   UserCircle, 
@@ -34,9 +34,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Dashboard", path: "/", icon: Home },
   { title: "Quotations", path: "/quotations", icon: FileText },
-  { title: "Invoices", path: "/invoices", icon: FileInvoice },
+  { title: "Invoices", path: "/invoices", icon: Receipt },
   { title: "Customers", path: "/customers", icon: Users },
-  { title: "Staff", path: "/staff", icon: UserHardHat },
+  { title: "Staff", path: "/staff", icon: HardHat },
   { title: "Schedule", path: "/schedule", icon: Calendar },
   { title: "Categories", path: "/categories", icon: FolderTree },
   { title: "Profile", path: "/profile", icon: UserCircle },

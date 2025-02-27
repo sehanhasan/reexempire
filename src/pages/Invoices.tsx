@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   Edit, 
-  FileInvoice, 
+  Receipt, // Replacing FileInvoice with Receipt
   MoreHorizontal, 
   Send,
   Trash,
@@ -48,31 +48,31 @@ export default function Invoices() {
   const columns = [
     {
       header: "ID",
-      accessorKey: "id",
+      accessorKey: "id" as keyof Invoice,
     },
     {
       header: "Customer",
-      accessorKey: "customer",
+      accessorKey: "customer" as keyof Invoice,
     },
     {
       header: "Service",
-      accessorKey: "service",
+      accessorKey: "service" as keyof Invoice,
     },
     {
       header: "Amount",
-      accessorKey: "amount",
+      accessorKey: "amount" as keyof Invoice,
     },
     {
       header: "Issue Date",
-      accessorKey: "date",
+      accessorKey: "date" as keyof Invoice,
     },
     {
       header: "Due Date",
-      accessorKey: "dueDate",
+      accessorKey: "dueDate" as keyof Invoice,
     },
     {
       header: "Status",
-      accessorKey: "status",
+      accessorKey: "status" as keyof Invoice,
       cell: (invoice: Invoice) => {
         return (
           <Badge className={
@@ -88,7 +88,7 @@ export default function Invoices() {
     },
     {
       header: "Actions",
-      accessorKey: "actions",
+      accessorKey: "id" as keyof Invoice,
       cell: (invoice: Invoice) => {
         return (
           <DropdownMenu>
@@ -137,7 +137,7 @@ export default function Invoices() {
         description="Manage invoices and track payments."
         actions={
           <Button className="flex items-center">
-            <FileInvoice className="mr-2 h-4 w-4" />
+            <Receipt className="mr-2 h-4 w-4" />
             Create Invoice
           </Button>
         }

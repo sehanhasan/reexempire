@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { 
   FileText, 
-  FileInvoice, 
+  Receipt, // Replacing FileInvoice with Receipt
   Users, 
   Calendar, 
   TrendingUp, 
@@ -15,7 +15,7 @@ export default function Dashboard() {
   // Mock data - would come from API in real app
   const stats = [
     { title: "Total Quotations", value: "128", trend: { value: 12, isPositive: true }, icon: <FileText size={18} /> },
-    { title: "Pending Invoices", value: "24", trend: { value: 5, isPositive: false }, icon: <FileInvoice size={18} /> },
+    { title: "Pending Invoices", value: "24", trend: { value: 5, isPositive: false }, icon: <Receipt size={18} /> },
     { title: "Customers", value: "84", trend: { value: 8, isPositive: true }, icon: <Users size={18} /> },
     { title: "Total Revenue", value: "$137,842", trend: { value: 14, isPositive: true }, icon: <TrendingUp size={18} /> },
   ];
@@ -83,7 +83,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg border shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900">Recent Invoices</h3>
-            <FileInvoice size={18} className="text-blue-600" />
+            <Receipt size={18} className="text-blue-600" />
           </div>
           <div className="space-y-3">
             {recentInvoices.map((invoice) => (

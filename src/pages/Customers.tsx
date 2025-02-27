@@ -49,15 +49,15 @@ export default function Customers() {
   const columns = [
     {
       header: "ID",
-      accessorKey: "id",
+      accessorKey: "id" as keyof Customer,
     },
     {
       header: "Name",
-      accessorKey: "name",
+      accessorKey: "name" as keyof Customer,
     },
     {
       header: "Email",
-      accessorKey: "email",
+      accessorKey: "email" as keyof Customer,
       cell: (customer: Customer) => (
         <div className="flex items-center">
           <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -67,7 +67,7 @@ export default function Customers() {
     },
     {
       header: "Phone",
-      accessorKey: "phone",
+      accessorKey: "phone" as keyof Customer,
       cell: (customer: Customer) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -77,15 +77,15 @@ export default function Customers() {
     },
     {
       header: "Address",
-      accessorKey: "address",
+      accessorKey: "address" as keyof Customer,
     },
     {
       header: "Projects",
-      accessorKey: "projects",
+      accessorKey: "projects" as keyof Customer,
     },
     {
       header: "Status",
-      accessorKey: "status",
+      accessorKey: "status" as keyof Customer,
       cell: (customer: Customer) => {
         return (
           <Badge className={
@@ -99,7 +99,7 @@ export default function Customers() {
     },
     {
       header: "Actions",
-      accessorKey: "actions",
+      accessorKey: "id" as keyof Customer,
       cell: (customer: Customer) => {
         return (
           <DropdownMenu>

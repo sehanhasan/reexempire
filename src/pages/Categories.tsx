@@ -44,11 +44,11 @@ export default function Categories() {
   const columns = [
     {
       header: "ID",
-      accessorKey: "id",
+      accessorKey: "id" as keyof Category,
     },
     {
       header: "Name",
-      accessorKey: "name",
+      accessorKey: "name" as keyof Category,
       cell: (category: Category) => (
         <div className="flex items-center font-medium text-blue-600">
           {category.name}
@@ -58,19 +58,19 @@ export default function Categories() {
     },
     {
       header: "Description",
-      accessorKey: "description",
+      accessorKey: "description" as keyof Category,
     },
     {
       header: "Subcategories",
-      accessorKey: "subcategories",
+      accessorKey: "subcategories" as keyof Category,
     },
     {
       header: "Services",
-      accessorKey: "services",
+      accessorKey: "services" as keyof Category,
     },
     {
       header: "Actions",
-      accessorKey: "actions",
+      accessorKey: "id" as keyof Category,
       cell: (category: Category) => {
         return (
           <DropdownMenu>

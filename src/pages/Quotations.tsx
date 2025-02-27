@@ -46,27 +46,27 @@ export default function Quotations() {
   const columns = [
     {
       header: "ID",
-      accessorKey: "id",
+      accessorKey: "id" as keyof Quotation,
     },
     {
       header: "Customer",
-      accessorKey: "customer",
+      accessorKey: "customer" as keyof Quotation,
     },
     {
       header: "Service",
-      accessorKey: "service",
+      accessorKey: "service" as keyof Quotation,
     },
     {
       header: "Amount",
-      accessorKey: "amount",
+      accessorKey: "amount" as keyof Quotation,
     },
     {
       header: "Date",
-      accessorKey: "date",
+      accessorKey: "date" as keyof Quotation,
     },
     {
       header: "Status",
-      accessorKey: "status",
+      accessorKey: "status" as keyof Quotation,
       cell: (quotation: Quotation) => {
         return (
           <Badge className={
@@ -82,7 +82,7 @@ export default function Quotations() {
     },
     {
       header: "Actions",
-      accessorKey: "actions",
+      accessorKey: "id" as keyof Quotation,
       cell: (quotation: Quotation) => {
         return (
           <DropdownMenu>

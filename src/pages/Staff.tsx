@@ -48,19 +48,19 @@ export default function Staff() {
   const columns = [
     {
       header: "ID",
-      accessorKey: "id",
+      accessorKey: "id" as keyof StaffMember,
     },
     {
       header: "Name",
-      accessorKey: "name",
+      accessorKey: "name" as keyof StaffMember,
     },
     {
       header: "Position",
-      accessorKey: "position",
+      accessorKey: "position" as keyof StaffMember,
     },
     {
       header: "Email",
-      accessorKey: "email",
+      accessorKey: "email" as keyof StaffMember,
       cell: (staff: StaffMember) => (
         <div className="flex items-center">
           <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -70,7 +70,7 @@ export default function Staff() {
     },
     {
       header: "Phone",
-      accessorKey: "phone",
+      accessorKey: "phone" as keyof StaffMember,
       cell: (staff: StaffMember) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -80,11 +80,11 @@ export default function Staff() {
     },
     {
       header: "Join Date",
-      accessorKey: "joinDate",
+      accessorKey: "joinDate" as keyof StaffMember,
     },
     {
       header: "Status",
-      accessorKey: "status",
+      accessorKey: "status" as keyof StaffMember,
       cell: (staff: StaffMember) => {
         return (
           <Badge className={
@@ -99,7 +99,7 @@ export default function Staff() {
     },
     {
       header: "Actions",
-      accessorKey: "actions",
+      accessorKey: "id" as keyof StaffMember,
       cell: (staff: StaffMember) => {
         return (
           <DropdownMenu>
