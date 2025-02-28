@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -35,14 +36,16 @@ interface StaffMember {
 }
 
 export default function Staff() {
+  const navigate = useNavigate();
+  
   // Mock data - would come from API in real app
   const [staffMembers] = useState<StaffMember[]>([
-    { id: "S001", name: "John Doe", position: "Project Manager", email: "john@renovateprox.com", phone: "(555) 111-2222", status: "Active", joinDate: "Jan 15, 2022" },
-    { id: "S002", name: "Jane Smith", position: "Interior Designer", email: "jane@renovateprox.com", phone: "(555) 222-3333", status: "Active", joinDate: "Mar 10, 2022" },
-    { id: "S003", name: "Mike Johnson", position: "Electrician", email: "mike@renovateprox.com", phone: "(555) 333-4444", status: "On Leave", joinDate: "Apr 5, 2022" },
-    { id: "S004", name: "Sarah Williams", position: "Plumber", email: "sarah@renovateprox.com", phone: "(555) 444-5555", status: "Active", joinDate: "May 20, 2022" },
-    { id: "S005", name: "Tom Brown", position: "Carpenter", email: "tom@renovateprox.com", phone: "(555) 555-6666", status: "Active", joinDate: "Jun 15, 2022" },
-    { id: "S006", name: "Lisa Davis", position: "Administrative Assistant", email: "lisa@renovateprox.com", phone: "(555) 666-7777", status: "Inactive", joinDate: "Jul 1, 2022" },
+    { id: "S001", name: "John Doe", position: "Project Manager", email: "john@renovateprox.com", phone: "012-1112222", status: "Active", joinDate: "Jan 15, 2022" },
+    { id: "S002", name: "Jane Smith", position: "Interior Designer", email: "jane@renovateprox.com", phone: "016-2223333", status: "Active", joinDate: "Mar 10, 2022" },
+    { id: "S003", name: "Mike Johnson", position: "Electrician", email: "mike@renovateprox.com", phone: "011-3334444", status: "On Leave", joinDate: "Apr 5, 2022" },
+    { id: "S004", name: "Sarah Williams", position: "Plumber", email: "sarah@renovateprox.com", phone: "018-4445555", status: "Active", joinDate: "May 20, 2022" },
+    { id: "S005", name: "Tom Brown", position: "Carpenter", email: "tom@renovateprox.com", phone: "019-5556666", status: "Active", joinDate: "Jun 15, 2022" },
+    { id: "S006", name: "Lisa Davis", position: "Administrative Assistant", email: "lisa@renovateprox.com", phone: "013-6667777", status: "Inactive", joinDate: "Jul 1, 2022" },
   ]);
 
   const columns = [
@@ -135,7 +138,7 @@ export default function Staff() {
         title="Staff" 
         description="Manage your team members."
         actions={
-          <Button className="flex items-center">
+          <Button className="flex items-center" onClick={() => navigate("/staff/add")}>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Staff Member
           </Button>
@@ -150,7 +153,7 @@ export default function Staff() {
         />
       </div>
 
-      <FloatingActionButton />
+      <FloatingActionButton onClick={() => navigate("/staff/add")} />
     </div>
   );
 }
