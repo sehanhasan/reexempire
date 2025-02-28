@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Types for our events
 interface ScheduleEvent {
@@ -23,6 +24,7 @@ interface DayEvents {
 }
 
 export default function Schedule() {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("week");
 
@@ -201,7 +203,7 @@ export default function Schedule() {
         title="Schedule" 
         description="Manage your team's appointments and service schedule."
         actions={
-          <Button className="flex items-center">
+          <Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
             <CalendarPlus className="mr-2 h-4 w-4" />
             Add Appointment
           </Button>
@@ -270,7 +272,7 @@ export default function Schedule() {
         )}
       </div>
 
-      <FloatingActionButton />
+      <FloatingActionButton onClick={() => navigate("/schedule/add")} />
     </div>
   );
 }

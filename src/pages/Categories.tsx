@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -30,6 +31,8 @@ interface Category {
 }
 
 export default function Categories() {
+  const navigate = useNavigate();
+  
   // Mock data - would come from API in real app
   const [categories] = useState<Category[]>([
     { id: "CAT-001", name: "Bathroom Renovation", description: "Complete bathroom remodeling services", subcategories: 4, services: 12 },
@@ -110,7 +113,7 @@ export default function Categories() {
         title="Service Categories" 
         description="Manage your service categories and subcategories."
         actions={
-          <Button className="flex items-center">
+          <Button className="flex items-center" onClick={() => navigate("/categories/add")}>
             <FolderPlus className="mr-2 h-4 w-4" />
             Add Category
           </Button>
@@ -125,7 +128,7 @@ export default function Categories() {
         />
       </div>
 
-      <FloatingActionButton />
+      <FloatingActionButton onClick={() => navigate("/categories/add")} />
     </div>
   );
 }
