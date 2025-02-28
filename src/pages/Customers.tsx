@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -36,17 +35,15 @@ interface Customer {
 }
 
 export default function Customers() {
-  const navigate = useNavigate();
-  
   // Mock data - would come from API in real app
   const [customers] = useState<Customer[]>([
-    { id: "C001", name: "Alice Johnson", email: "alice@example.com", phone: "012-3456789", address: "123 Main St, Subang Jaya, Selangor", status: "Active", projects: 3 },
-    { id: "C002", name: "Bob Smith", email: "bob@example.com", phone: "011-23456789", address: "456 Oak Ave, Petaling Jaya, Selangor", status: "Active", projects: 1 },
-    { id: "C003", name: "Carol Williams", email: "carol@example.com", phone: "013-3456789", address: "789 Pine Rd, Shah Alam, Selangor", status: "Inactive", projects: 0 },
-    { id: "C004", name: "David Brown", email: "david@example.com", phone: "019-4567890", address: "321 Elm St, Kuala Lumpur", status: "Active", projects: 2 },
-    { id: "C005", name: "Eva Davis", email: "eva@example.com", phone: "017-5678901", address: "654 Maple Dr, Cheras, Kuala Lumpur", status: "Active", projects: 1 },
-    { id: "C006", name: "Frank Miller", email: "frank@example.com", phone: "014-6789012", address: "987 Cedar Ln, Puchong, Selangor", status: "Inactive", projects: 0 },
-    { id: "C007", name: "Grace Wilson", email: "grace@example.com", phone: "016-7890123", address: "147 Birch Rd, Georgetown, Penang", status: "Active", projects: 2 },
+    { id: "C001", name: "Alice Johnson", email: "alice@example.com", phone: "(555) 123-4567", address: "123 Main St, Anytown", status: "Active", projects: 3 },
+    { id: "C002", name: "Bob Smith", email: "bob@example.com", phone: "(555) 234-5678", address: "456 Oak Ave, Somewhere", status: "Active", projects: 1 },
+    { id: "C003", name: "Carol Williams", email: "carol@example.com", phone: "(555) 345-6789", address: "789 Pine Rd, Nowhere", status: "Inactive", projects: 0 },
+    { id: "C004", name: "David Brown", email: "david@example.com", phone: "(555) 456-7890", address: "321 Elm St, Anywhere", status: "Active", projects: 2 },
+    { id: "C005", name: "Eva Davis", email: "eva@example.com", phone: "(555) 567-8901", address: "654 Maple Dr, Somewhere", status: "Active", projects: 1 },
+    { id: "C006", name: "Frank Miller", email: "frank@example.com", phone: "(555) 678-9012", address: "987 Cedar Ln, Anytown", status: "Inactive", projects: 0 },
+    { id: "C007", name: "Grace Wilson", email: "grace@example.com", phone: "(555) 789-0123", address: "147 Birch Rd, Nowhere", status: "Active", projects: 2 },
   ]);
 
   const columns = [
@@ -138,7 +135,7 @@ export default function Customers() {
         title="Customers" 
         description="Manage your customer database."
         actions={
-          <Button className="flex items-center" onClick={() => navigate("/customers/add")}>
+          <Button className="flex items-center">
             <UserPlus className="mr-2 h-4 w-4" />
             Add Customer
           </Button>
@@ -153,7 +150,7 @@ export default function Customers() {
         />
       </div>
 
-      <FloatingActionButton onClick={() => navigate("/customers/add")} />
+      <FloatingActionButton />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -33,17 +32,15 @@ interface Quotation {
 }
 
 export default function Quotations() {
-  const navigate = useNavigate();
-  
   // Mock data - would come from API in real app
   const [quotations] = useState<Quotation[]>([
-    { id: "QT-001", customer: "John Smith", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", status: "Approved" },
-    { id: "QT-002", customer: "Emma Johnson", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", status: "Sent" },
-    { id: "QT-003", customer: "Michael Brown", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", status: "Draft" },
-    { id: "QT-004", customer: "Lisa Davis", service: "Roof Repair", amount: "RM 1,800.00", date: "Sep 5, 2023", status: "Rejected" },
-    { id: "QT-005", customer: "Robert Wilson", service: "Deck Construction", amount: "RM 5,600.00", date: "Sep 3, 2023", status: "Approved" },
-    { id: "QT-006", customer: "Jennifer Garcia", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", status: "Draft" },
-    { id: "QT-007", customer: "David Martinez", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", status: "Sent" },
+    { id: "QT-001", customer: "John Smith", service: "Bathroom Renovation", amount: "$4,500.00", date: "Sep 12, 2023", status: "Approved" },
+    { id: "QT-002", customer: "Emma Johnson", service: "Kitchen Remodel", amount: "$12,350.00", date: "Sep 10, 2023", status: "Sent" },
+    { id: "QT-003", customer: "Michael Brown", service: "Flooring Installation", amount: "$2,800.00", date: "Sep 8, 2023", status: "Draft" },
+    { id: "QT-004", customer: "Lisa Davis", service: "Roof Repair", amount: "$1,800.00", date: "Sep 5, 2023", status: "Rejected" },
+    { id: "QT-005", customer: "Robert Wilson", service: "Deck Construction", amount: "$5,600.00", date: "Sep 3, 2023", status: "Approved" },
+    { id: "QT-006", customer: "Jennifer Garcia", service: "Painting Services", amount: "$1,200.00", date: "Aug 29, 2023", status: "Draft" },
+    { id: "QT-007", customer: "David Martinez", service: "Electrical Wiring", amount: "$2,300.00", date: "Aug 25, 2023", status: "Sent" },
   ]);
 
   const columns = [
@@ -127,7 +124,7 @@ export default function Quotations() {
         title="Quotations" 
         description="Manage and track all your customer quotations."
         actions={
-          <Button className="flex items-center" onClick={() => navigate("/quotations/create")}>
+          <Button className="flex items-center">
             <FileText className="mr-2 h-4 w-4" />
             Create Quotation
           </Button>
@@ -142,7 +139,7 @@ export default function Quotations() {
         />
       </div>
 
-      <FloatingActionButton onClick={() => navigate("/quotations/create")} />
+      <FloatingActionButton />
     </div>
   );
 }
