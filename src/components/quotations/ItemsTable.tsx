@@ -10,6 +10,16 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { ItemBase } from "./types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { 
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell 
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ItemsTableProps<T extends ItemBase> {
   items: T[];
@@ -22,31 +32,131 @@ export function ItemsTable<T extends ItemBase>({
   handleItemChange, 
   removeItem 
 }: ItemsTableProps<T>) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {items.map((item) => (
+          <Card key={item.id} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Description</label>
+                  <Input
+                    placeholder="Item description"
+                    value={item.description}
+                    onChange={(e) => handleItemChange(item.id, "description", e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Qty</label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(item.id, "quantity", parseInt(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Unit</label>
+                    <Select
+                      value={item.unit}
+                      onValueChange={(value) => handleItemChange(item.id, "unit", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Unit">Unit</SelectItem>
+                        <SelectItem value="Hour">Hour</SelectItem>
+                        <SelectItem value="Day">Day</SelectItem>
+                        <SelectItem value="Meter">Meter</SelectItem>
+                        <SelectItem value="Sq.m">Sq.m</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Unit Price</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.unitPrice}
+                        onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value))}
+                        required
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium">Amount</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
+                      <Input
+                        type="number"
+                        value={item.amount.toFixed(2)}
+                        disabled
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="pt-2 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeItem(item.id)}
+                    className="text-red-500 hover:text-red-700"
+                    disabled={items.length <= 1}
+                  >
+                    <X className="h-4 w-4 mr-1" /> Remove
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="border rounded-lg overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-muted text-muted-foreground">
-          <tr>
-            <th className="py-3 px-4 text-left font-medium">Description</th>
-            <th className="py-3 px-4 text-center font-medium w-20">Qty</th>
-            <th className="py-3 px-4 text-center font-medium w-24">Unit</th>
-            <th className="py-3 px-4 text-right font-medium w-32">Unit Price</th>
-            <th className="py-3 px-4 text-right font-medium w-32">Amount</th>
-            <th className="py-3 px-4 text-center font-medium w-16"></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="py-3 px-4 text-left font-medium">Description</TableHead>
+            <TableHead className="py-3 px-4 text-center font-medium w-20">Qty</TableHead>
+            <TableHead className="py-3 px-4 text-center font-medium w-24">Unit</TableHead>
+            <TableHead className="py-3 px-4 text-right font-medium w-32">Unit Price</TableHead>
+            <TableHead className="py-3 px-4 text-right font-medium w-32">Amount</TableHead>
+            <TableHead className="py-3 px-4 text-center font-medium w-16"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {items.map((item) => (
-            <tr key={item.id}>
-              <td className="py-3 px-4">
+            <TableRow key={item.id}>
+              <TableCell className="py-3 px-4">
                 <Input
                   placeholder="Item description"
                   value={item.description}
                   onChange={(e) => handleItemChange(item.id, "description", e.target.value)}
                   required
                 />
-              </td>
-              <td className="py-3 px-4">
+              </TableCell>
+              <TableCell className="py-3 px-4">
                 <Input
                   type="number"
                   min="1"
@@ -55,8 +165,8 @@ export function ItemsTable<T extends ItemBase>({
                   required
                   className="text-center"
                 />
-              </td>
-              <td className="py-3 px-4">
+              </TableCell>
+              <TableCell className="py-3 px-4">
                 <Select
                   value={item.unit}
                   onValueChange={(value) => handleItemChange(item.id, "unit", value)}
@@ -72,8 +182,8 @@ export function ItemsTable<T extends ItemBase>({
                     <SelectItem value="Sq.m">Sq.m</SelectItem>
                   </SelectContent>
                 </Select>
-              </td>
-              <td className="py-3 px-4">
+              </TableCell>
+              <TableCell className="py-3 px-4">
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
                   <Input
@@ -86,8 +196,8 @@ export function ItemsTable<T extends ItemBase>({
                     className="text-right pl-10"
                   />
                 </div>
-              </td>
-              <td className="py-3 px-4">
+              </TableCell>
+              <TableCell className="py-3 px-4">
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
                   <Input
@@ -97,8 +207,8 @@ export function ItemsTable<T extends ItemBase>({
                     className="text-right pl-10"
                   />
                 </div>
-              </td>
-              <td className="py-3 px-4 text-center">
+              </TableCell>
+              <TableCell className="py-3 px-4 text-center">
                 <Button
                   type="button"
                   variant="ghost"
@@ -109,11 +219,11 @@ export function ItemsTable<T extends ItemBase>({
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }
