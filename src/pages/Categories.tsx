@@ -11,7 +11,8 @@ import {
   Trash,
   Eye,
   FolderPlus,
-  ChevronRight
+  ChevronRight,
+  List
 } from "lucide-react";
 
 import {
@@ -21,28 +22,117 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SubcategoryModal, Subcategory } from "@/components/categories/SubcategoryModel";
+import { toast } from "@/components/ui/use-toast";
 
 interface Category {
   id: string;
   name: string;
   description: string;
-  subcategories: number;
-  services: number;
+  subcategories: Subcategory[];
 }
 
 export default function Categories() {
   const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
+  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | undefined>(undefined);
   
   // Mock data - would come from API in real app
-  const [categories] = useState<Category[]>([
-    { id: "CAT-001", name: "Bathroom Renovation", description: "Complete bathroom remodeling services", subcategories: 4, services: 12 },
-    { id: "CAT-002", name: "Kitchen Remodeling", description: "Kitchen upgrade and renovation", subcategories: 5, services: 15 },
-    { id: "CAT-003", name: "Flooring", description: "All types of flooring installation and repair", subcategories: 6, services: 10 },
-    { id: "CAT-004", name: "Painting", description: "Interior and exterior painting services", subcategories: 2, services: 5 },
-    { id: "CAT-005", name: "Electrical Work", description: "All electrical installation and repairs", subcategories: 3, services: 8 },
-    { id: "CAT-006", name: "Plumbing", description: "Plumbing services and fixtures", subcategories: 3, services: 9 },
-    { id: "CAT-007", name: "Roofing", description: "Roof repair and installation", subcategories: 2, services: 6 },
+  const [categories, setCategories] = useState<Category[]>([
+    { 
+      id: "CAT-001", 
+      name: "Bathroom Renovation", 
+      description: "Complete bathroom remodeling services", 
+      subcategories: [
+        {
+          id: "SUB-001",
+          name: "Toilet Installation",
+          description: "Removal and installation of toilets",
+          pricingOptions: [
+            { id: "PO-001", name: "Standard Toilet", price: 250, unit: "Unit" },
+            { id: "PO-002", name: "Premium Toilet", price: 450, unit: "Unit" }
+          ]
+        },
+        {
+          id: "SUB-002",
+          name: "Sink Installation",
+          description: "Removal and installation of sinks",
+          pricingOptions: [
+            { id: "PO-003", name: "Standard Sink", price: 200, unit: "Unit" },
+            { id: "PO-004", name: "Premium Sink", price: 350, unit: "Unit" }
+          ]
+        }
+      ]
+    },
+    { 
+      id: "CAT-002", 
+      name: "Kitchen Remodeling", 
+      description: "Kitchen upgrade and renovation", 
+      subcategories: [
+        {
+          id: "SUB-003",
+          name: "Cabinets Installation",
+          description: "Installation of kitchen cabinets",
+          pricingOptions: [
+            { id: "PO-005", name: "Standard Cabinets", price: 450, unit: "Unit" },
+            { id: "PO-006", name: "Custom Cabinets", price: 800, unit: "Unit" }
+          ]
+        }
+      ]
+    },
+    { id: "CAT-003", name: "Flooring", description: "All types of flooring installation and repair", subcategories: [] },
+    { id: "CAT-004", name: "Painting", description: "Interior and exterior painting services", subcategories: [] },
+    { id: "CAT-005", name: "Electrical Work", description: "All electrical installation and repairs", subcategories: [] },
+    { id: "CAT-006", name: "Plumbing", description: "Plumbing services and fixtures", subcategories: [] },
+    { id: "CAT-007", name: "Roofing", description: "Roof repair and installation", subcategories: [] },
   ]);
+
+  const handleAddSubcategory = (category: Category) => {
+    setSelectedCategory(category);
+    setEditingSubcategory(undefined);
+    setShowSubcategoryModal(true);
+  };
+
+  const handleEditSubcategory = (category: Category, subcategory: Subcategory) => {
+    setSelectedCategory(category);
+    setEditingSubcategory(subcategory);
+    setShowSubcategoryModal(true);
+  };
+
+  const handleSaveSubcategory = (subcategory: Subcategory) => {
+    if (!selectedCategory) return;
+
+    setCategories(categories.map(category => {
+      if (category.id !== selectedCategory.id) return category;
+
+      const existingIndex = category.subcategories.findIndex(sc => sc.id === subcategory.id);
+      
+      if (existingIndex >= 0) {
+        // Update existing subcategory
+        const updatedSubcategories = [...category.subcategories];
+        updatedSubcategories[existingIndex] = subcategory;
+        
+        toast({
+          title: "Subcategory Updated",
+          description: `${subcategory.name} has been updated successfully.`,
+        });
+        
+        return { ...category, subcategories: updatedSubcategories };
+      } else {
+        // Add new subcategory
+        toast({
+          title: "Subcategory Added",
+          description: `${subcategory.name} has been added to ${category.name}.`,
+        });
+        
+        return { 
+          ...category, 
+          subcategories: [...category.subcategories, subcategory] 
+        };
+      }
+    }));
+  };
 
   const columns = [
     {
@@ -66,10 +156,26 @@ export default function Categories() {
     {
       header: "Subcategories",
       accessorKey: "subcategories" as keyof Category,
-    },
-    {
-      header: "Services",
-      accessorKey: "services" as keyof Category,
+      cell: (category: Category) => (
+        <div className="flex items-center">
+          <span className="mr-2">{category.subcategories.length}</span>
+          {category.subcategories.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-blue-600"
+              onClick={() => {
+                toast({
+                  title: "Subcategories for " + category.name,
+                  description: category.subcategories.map(sub => sub.name).join(", "),
+                });
+              }}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      ),
     },
     {
       header: "Actions",
@@ -82,7 +188,7 @@ export default function Categories() {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuContent align="end" className="w-[180px]">
               <DropdownMenuItem className="cursor-pointer">
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
@@ -91,7 +197,10 @@ export default function Categories() {
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleAddSubcategory(category)}
+              >
                 <FolderPlus className="mr-2 h-4 w-4" />
                 Add Subcategory
               </DropdownMenuItem>
@@ -127,6 +236,16 @@ export default function Categories() {
           searchKey="name" 
         />
       </div>
+
+      {selectedCategory && (
+        <SubcategoryModal
+          open={showSubcategoryModal}
+          onOpenChange={setShowSubcategoryModal}
+          category={selectedCategory}
+          subcategory={editingSubcategory}
+          onSave={handleSaveSubcategory}
+        />
+      )}
 
       <FloatingActionButton onClick={() => navigate("/categories/add")} />
     </div>

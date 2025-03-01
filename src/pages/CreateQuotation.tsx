@@ -20,8 +20,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { X, Plus, Save, ArrowLeft } from "lucide-react";
+import { 
+  X, 
+  Plus, 
+  Save, 
+  ArrowLeft, 
+  FolderSearch, 
+  Wallet 
+} from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface QuotationItem {
   id: number;
@@ -46,6 +55,10 @@ export default function CreateQuotation() {
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [requiresDeposit, setRequiresDeposit] = useState(false);
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
 
   // Sample customers for the demo
   const customers = [
@@ -88,6 +101,50 @@ export default function CreateQuotation() {
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
 
+  const updateDepositFromPercentage = () => {
+    const total = calculateTotal();
+    setDepositAmount(total * (depositPercentage / 100));
+  };
+
+  // Update deposit amount when total or percentage changes
+  useState(() => {
+    updateDepositFromPercentage();
+  });
+
+  const handleDepositPercentageChange = (value: number) => {
+    setDepositPercentage(value);
+    setDepositAmount(calculateTotal() * (value / 100));
+  };
+
+  const handleDepositAmountChange = (value: number) => {
+    setDepositAmount(value);
+    // Update percentage based on the amount
+    const total = calculateTotal();
+    if (total > 0) {
+      setDepositPercentage((value / total) * 100);
+    }
+  };
+
+  const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
+    // Convert selected items to quotation items format
+    const newItems = selectedItems.map((selectedItem, index) => ({
+      id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
+      description: selectedItem.description,
+      quantity: selectedItem.quantity,
+      unit: selectedItem.unit,
+      unitPrice: selectedItem.price,
+      amount: selectedItem.quantity * selectedItem.price
+    }));
+
+    // Add the new items to the existing items
+    setItems([...items, ...newItems]);
+    
+    toast({
+      title: "Items Added",
+      description: `${newItems.length} item(s) have been added to the quotation.`,
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -99,6 +156,17 @@ export default function CreateQuotation() {
     
     // Navigate back to the quotations list
     navigate("/quotations");
+  };
+
+  const handleConvertToInvoice = () => {
+    // In a real app, this would create an invoice from the quotation data
+    // For this demo, we'll just navigate to the invoice creation page
+    toast({
+      title: "Convert to Invoice",
+      description: "This would convert the quotation to an invoice in a real app.",
+    });
+    
+    navigate("/invoices/create");
   };
 
   return (
@@ -183,6 +251,26 @@ export default function CreateQuotation() {
             <CardTitle>Quotation Items</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addItem}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Item
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCategorySelector(true)}
+              >
+                <FolderSearch className="mr-2 h-4 w-4" />
+                Select from Categories
+              </Button>
+            </div>
+
             <div className="border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted text-muted-foreground">
@@ -276,22 +364,71 @@ export default function CreateQuotation() {
               </table>
             </div>
             
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-4"
-              onClick={addItem}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Item
-            </Button>
-            
-            <div className="flex justify-end mt-6 space-x-4">
-              <div className="w-72 space-y-2">
+            <div className="flex justify-end mt-6">
+              <div className="w-72 space-y-4">
                 <div className="flex justify-between py-2">
                   <span className="font-medium">Subtotal:</span>
                   <span>RM {calculateTotal().toFixed(2)}</span>
                 </div>
+
+                {/* Deposit Section */}
+                <div className="border-t pt-2">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Checkbox 
+                      id="requiresDeposit" 
+                      checked={requiresDeposit}
+                      onCheckedChange={(checked) => setRequiresDeposit(!!checked)}
+                    />
+                    <label
+                      htmlFor="requiresDeposit"
+                      className="text-sm font-medium flex items-center cursor-pointer"
+                    >
+                      <Wallet className="h-4 w-4 mr-1" />
+                      Require Deposit Payment
+                    </label>
+                  </div>
+                  
+                  {requiresDeposit && (
+                    <div className="space-y-2 ml-6">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label htmlFor="depositPercentage" className="text-xs">Percentage</Label>
+                          <div className="relative">
+                            <Input
+                              id="depositPercentage"
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={depositPercentage.toFixed(0)}
+                              onChange={(e) => handleDepositPercentageChange(parseFloat(e.target.value))}
+                              className="pr-8"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
+                            <Input
+                              id="depositAmount"
+                              type="number"
+                              min="0"
+                              value={depositAmount.toFixed(2)}
+                              onChange={(e) => handleDepositAmountChange(parseFloat(e.target.value))}
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-sm py-1">
+                        <span>Balance Due:</span>
+                        <span>RM {(calculateTotal() - depositAmount).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-between py-2 border-t">
                   <span className="font-semibold text-lg">Total:</span>
                   <span className="font-semibold text-lg">RM {calculateTotal().toFixed(2)}</span>
@@ -317,17 +454,34 @@ export default function CreateQuotation() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate("/quotations")}>
-              Cancel
+          <CardFooter className="flex justify-between space-x-4">
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={handleConvertToInvoice}
+              className="text-blue-600"
+            >
+              Convert to Invoice
             </Button>
-            <Button type="submit">
-              <Save className="mr-2 h-4 w-4" />
-              Save Quotation
-            </Button>
+            
+            <div className="space-x-2">
+              <Button variant="outline" type="button" onClick={() => navigate("/quotations")}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                <Save className="mr-2 h-4 w-4" />
+                Save Quotation
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </form>
+
+      <CategoryItemSelector
+        open={showCategorySelector}
+        onOpenChange={setShowCategorySelector}
+        onSelectItems={handleItemsFromCategories}
+      />
     </div>
   );
 }
