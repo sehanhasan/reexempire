@@ -6,6 +6,7 @@ import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 import { 
   Edit,
   MoreHorizontal,
@@ -13,7 +14,6 @@ import {
   Eye,
   Mail,
   Phone,
-  UserCog,
   UserPlus
 } from "lucide-react";
 
@@ -39,7 +39,7 @@ export default function Staff() {
   const navigate = useNavigate();
   
   // Mock data - would come from API in real app
-  const [staffMembers] = useState<StaffMember[]>([
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([
     { id: "S001", name: "John Doe", position: "Project Manager", email: "john@renovateprox.com", phone: "012-1112222", status: "Active", joinDate: "Jan 15, 2022" },
     { id: "S002", name: "Jane Smith", position: "Interior Designer", email: "jane@renovateprox.com", phone: "016-2223333", status: "Active", joinDate: "Mar 10, 2022" },
     { id: "S003", name: "Mike Johnson", position: "Electrician", email: "mike@renovateprox.com", phone: "011-3334444", status: "On Leave", joinDate: "Apr 5, 2022" },
@@ -47,6 +47,42 @@ export default function Staff() {
     { id: "S005", name: "Tom Brown", position: "Carpenter", email: "tom@renovateprox.com", phone: "019-5556666", status: "Active", joinDate: "Jun 15, 2022" },
     { id: "S006", name: "Lisa Davis", position: "Administrative Assistant", email: "lisa@renovateprox.com", phone: "013-6667777", status: "Inactive", joinDate: "Jul 1, 2022" },
   ]);
+
+  // Action handlers
+  const handleView = (staff: StaffMember) => {
+    toast({
+      title: "Viewing Staff Details",
+      description: `Viewing details for ${staff.name} - ${staff.position}`,
+    });
+  };
+
+  const handleEdit = (staff: StaffMember) => {
+    navigate(`/staff/add?id=${staff.id}`);
+  };
+
+  const handleDelete = (staff: StaffMember) => {
+    // Remove the staff member from the list
+    setStaffMembers(staffMembers.filter(s => s.id !== staff.id));
+    
+    toast({
+      title: "Staff Removed",
+      description: `${staff.name} has been removed from staff records`,
+      variant: "destructive",
+    });
+  };
+
+  const handleStatusChange = (staff: StaffMember, newStatus: "Active" | "On Leave" | "Inactive") => {
+    // Update the staff status
+    const updatedStaff = staffMembers.map(s => 
+      s.id === staff.id ? { ...s, status: newStatus } : s
+    );
+    setStaffMembers(updatedStaff);
+    
+    toast({
+      title: "Status Updated",
+      description: `${staff.name}'s status changed to ${newStatus}`,
+    });
+  };
 
   const columns = [
     {
@@ -111,17 +147,51 @@ export default function Staff() {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuContent align="end" className="w-[180px]">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleView(staff)}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleEdit(staff)}
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-red-600">
+              {staff.status !== "Active" && (
+                <DropdownMenuItem 
+                  className="cursor-pointer text-green-600"
+                  onClick={() => handleStatusChange(staff, "Active")}
+                >
+                  Set as Active
+                </DropdownMenuItem>
+              )}
+              {staff.status !== "On Leave" && (
+                <DropdownMenuItem 
+                  className="cursor-pointer text-amber-600"
+                  onClick={() => handleStatusChange(staff, "On Leave")}
+                >
+                  Set as On Leave
+                </DropdownMenuItem>
+              )}
+              {staff.status !== "Inactive" && (
+                <DropdownMenuItem 
+                  className="cursor-pointer text-gray-600"
+                  onClick={() => handleStatusChange(staff, "Inactive")}
+                >
+                  Set as Inactive
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="cursor-pointer text-red-600"
+                onClick={() => handleDelete(staff)}
+              >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>

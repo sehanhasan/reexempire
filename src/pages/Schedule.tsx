@@ -4,8 +4,9 @@ import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 // Types for our events
 interface ScheduleEvent {
@@ -27,6 +28,18 @@ export default function Schedule() {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("week");
+  const [events, setEvents] = useState<DayEvents>({});
+
+  // Load events from localStorage on component mount
+  useEffect(() => {
+    const storedEvents = localStorage.getItem('scheduleEvents');
+    if (storedEvents) {
+      setEvents(JSON.parse(storedEvents));
+    } else {
+      // If no events in localStorage, use mock data
+      setEvents(mockEvents);
+    }
+  }, []);
 
   // Mock data - would come from API in real app
   const mockEvents: DayEvents = {
@@ -142,7 +155,7 @@ export default function Schedule() {
           
           {weekDates.map((date, dateIndex) => {
             const dateKey = formatDateKey(date);
-            const events = mockEvents[dateKey] || [];
+            const dateEvents = events[dateKey] || [];
             
             return (
               <div key={dateIndex} className="divide-y relative">
@@ -150,7 +163,7 @@ export default function Schedule() {
                   <div key={hour} className="h-24 p-1 relative"></div>
                 ))}
                 
-                {events.map((event, eventIndex) => {
+                {dateEvents.map((event, eventIndex) => {
                   const startHour = parseInt(event.start.split(':')[0], 10);
                   const startMinute = parseInt(event.start.split(':')[1], 10);
                   const endHour = parseInt(event.end.split(':')[0], 10);

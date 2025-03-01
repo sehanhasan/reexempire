@@ -6,6 +6,7 @@ import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 import { 
   Edit, 
   Receipt, 
@@ -38,7 +39,7 @@ export default function Invoices() {
   const navigate = useNavigate();
   
   // Mock data - would come from API in real app
-  const [invoices] = useState<Invoice[]>([
+  const [invoices, setInvoices] = useState<Invoice[]>([
     { id: "INV-001", customer: "Jane Cooper", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", dueDate: "Oct 12, 2023", status: "Paid" },
     { id: "INV-002", customer: "Robert Fox", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", dueDate: "Oct 10, 2023", status: "Unpaid" },
     { id: "INV-003", customer: "Cody Fisher", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", dueDate: "Oct 8, 2023", status: "Overdue" },
@@ -47,6 +48,65 @@ export default function Invoices() {
     { id: "INV-006", customer: "Brooklyn Simmons", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", dueDate: "Sep 29, 2023", status: "Draft" },
     { id: "INV-007", customer: "Cameron Williamson", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", dueDate: "Sep 25, 2023", status: "Overdue" },
   ]);
+
+  // Action handlers
+  const handleView = (invoice: Invoice) => {
+    toast({
+      title: "Viewing Invoice",
+      description: `Viewing details for invoice ${invoice.id} - ${invoice.service}`,
+    });
+  };
+
+  const handleEdit = (invoice: Invoice) => {
+    navigate(`/invoices/create?id=${invoice.id}`);
+  };
+
+  const handleDownload = (invoice: Invoice) => {
+    toast({
+      title: "Invoice Downloaded",
+      description: `Invoice ${invoice.id} has been downloaded`,
+    });
+  };
+
+  const handleSend = (invoice: Invoice) => {
+    // Update the invoice status if it's a draft
+    if (invoice.status === "Draft") {
+      const updatedInvoices = invoices.map(inv => 
+        inv.id === invoice.id ? { ...inv, status: "Unpaid" as const } : inv
+      );
+      setInvoices(updatedInvoices);
+    }
+    
+    toast({
+      title: "Invoice Sent",
+      description: `Invoice ${invoice.id} has been sent to ${invoice.customer}`,
+    });
+  };
+
+  const handleDelete = (invoice: Invoice) => {
+    // Remove the invoice from the list
+    setInvoices(invoices.filter(inv => inv.id !== invoice.id));
+    
+    toast({
+      title: "Invoice Deleted",
+      description: `Invoice ${invoice.id} has been deleted`,
+      variant: "destructive",
+    });
+  };
+
+  const handleMarkAsPaid = (invoice: Invoice) => {
+    // Update the invoice status to "Paid"
+    const updatedInvoices = invoices.map(inv => 
+      inv.id === invoice.id ? { ...inv, status: "Paid" as const } : inv
+    );
+    setInvoices(updatedInvoices);
+    
+    toast({
+      title: "Payment Recorded",
+      description: `Invoice ${invoice.id} has been marked as paid`,
+      variant: "default",
+    });
+  };
 
   const columns = [
     {
@@ -101,28 +161,52 @@ export default function Invoices() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleView(invoice)}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View
               </DropdownMenuItem>
               {invoice.status === "Draft" && (
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer"
+                  onClick={() => handleEdit(invoice)}
+                >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleDownload(invoice)}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </DropdownMenuItem>
               {(invoice.status === "Draft" || invoice.status === "Unpaid") && (
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                  className="cursor-pointer"
+                  onClick={() => handleSend(invoice)}
+                >
                   <Send className="mr-2 h-4 w-4" />
                   Send
                 </DropdownMenuItem>
               )}
+              {(invoice.status === "Unpaid" || invoice.status === "Overdue") && (
+                <DropdownMenuItem 
+                  className="cursor-pointer text-green-600"
+                  onClick={() => handleMarkAsPaid(invoice)}
+                >
+                  <Receipt className="mr-2 h-4 w-4" />
+                  Mark as Paid
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-red-600">
+              <DropdownMenuItem 
+                className="cursor-pointer text-red-600"
+                onClick={() => handleDelete(invoice)}
+              >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
