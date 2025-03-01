@@ -10,12 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Save, Receipt } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface AdditionalInfoCardProps {
   notes: string;
   setNotes: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (e?: React.FormEvent) => void;
   onCancel: () => void;
   onConvertToInvoice?: () => void;
   documentType: "quotation" | "invoice";
@@ -80,7 +79,7 @@ export function AdditionalInfoCard({
           <Button variant="outline" type="button" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" onClick={onSubmit}>
+          <Button type="submit" onClick={(e) => onSubmit(e)}>
             <Save className="mr-2 h-4 w-4" />
             Save {isQuotation ? "Quotation" : "Invoice"}
           </Button>
