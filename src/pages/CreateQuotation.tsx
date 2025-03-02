@@ -3,22 +3,20 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
-import { generateQuotationPDF } from "@/utils/pdfGenerator";
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
   const [items, setItems] = useState<QuotationItem[]>([
-    { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0, category: "" }
+    { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
   const [customer, setCustomer] = useState("");
-  const [subject, setSubject] = useState("");
   const [quotationDate, setQuotationDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -61,41 +59,16 @@ export default function CreateQuotation() {
     navigate("/invoices/create");
   };
 
-  const handleGeneratePDF = () => {
-    generateQuotationPDF({
-      customer,
-      subject,
-      quotationNumber: "QT-0001",
-      quotationDate,
-      validUntil,
-      items,
-      notes,
-      depositInfo,
-      total: items.reduce((sum, item) => sum + item.amount, 0)
-    });
-    
-    toast({
-      title: "PDF Generated",
-      description: "Quotation PDF has been generated successfully.",
-    });
-  };
-
   return (
     <div className="page-container">
       <PageHeader
         title="Create Quotation"
         description="Create a new quotation for a customer."
         actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/quotations")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Quotations
-            </Button>
-            <Button variant="outline" onClick={handleGeneratePDF}>
-              <FileText className="mr-2 h-4 w-4" />
-              Generate PDF
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => navigate("/quotations")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Quotations
+          </Button>
         }
       />
 
@@ -109,8 +82,6 @@ export default function CreateQuotation() {
           setDocumentDate={setQuotationDate}
           expiryDate={validUntil}
           setExpiryDate={setValidUntil}
-          subject={subject}
-          setSubject={setSubject}
         />
         
         <QuotationItemsCard 

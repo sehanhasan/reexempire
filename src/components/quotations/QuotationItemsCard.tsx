@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ export function QuotationItemsCard({
 
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items, { id: newId, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0, category: "" }]);
+    setItems([...items, { id: newId, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }]);
   };
 
   const removeItem = (id: number) => {
@@ -85,8 +86,7 @@ export function QuotationItemsCard({
       quantity: selectedItem.quantity,
       unit: selectedItem.unit,
       unitPrice: selectedItem.price,
-      amount: selectedItem.quantity * selectedItem.price,
-      category: selectedItem.categoryName // Use categoryName instead of category
+      amount: selectedItem.quantity * selectedItem.price
     }));
 
     // Add the new items to the existing items
@@ -129,7 +129,6 @@ export function QuotationItemsCard({
             items={items}
             handleItemChange={handleItemChange}
             removeItem={removeItem}
-            showCategory={true}
           />
           
           <div className="flex justify-end mt-6">
