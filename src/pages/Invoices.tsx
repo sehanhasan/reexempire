@@ -28,6 +28,7 @@ import {
 interface Invoice {
   id: string;
   customer: string;
+  unitNumber: string;
   service: string;
   amount: string;
   date: string;
@@ -40,13 +41,13 @@ export default function Invoices() {
   
   // Mock data - would come from API in real app
   const [invoices, setInvoices] = useState<Invoice[]>([
-    { id: "INV-001", customer: "Jane Cooper", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", dueDate: "Oct 12, 2023", status: "Paid" },
-    { id: "INV-002", customer: "Robert Fox", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", dueDate: "Oct 10, 2023", status: "Unpaid" },
-    { id: "INV-003", customer: "Cody Fisher", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", dueDate: "Oct 8, 2023", status: "Overdue" },
-    { id: "INV-004", customer: "Esther Howard", service: "Roof Repair", amount: "RM 1,800.00", date: "Sep 5, 2023", dueDate: "Oct 5, 2023", status: "Paid" },
-    { id: "INV-005", customer: "Wade Warren", service: "Deck Construction", amount: "RM 5,600.00", date: "Sep 3, 2023", dueDate: "Oct 3, 2023", status: "Unpaid" },
-    { id: "INV-006", customer: "Brooklyn Simmons", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", dueDate: "Sep 29, 2023", status: "Draft" },
-    { id: "INV-007", customer: "Cameron Williamson", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", dueDate: "Sep 25, 2023", status: "Overdue" },
+    { id: "INV-001", customer: "Jane Cooper", unitNumber: "A-12-10", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", dueDate: "Oct 12, 2023", status: "Paid" },
+    { id: "INV-002", customer: "Robert Fox", unitNumber: "B-07-15", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", dueDate: "Oct 10, 2023", status: "Unpaid" },
+    { id: "INV-003", customer: "Cody Fisher", unitNumber: "C-03-22", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", dueDate: "Oct 8, 2023", status: "Overdue" },
+    { id: "INV-004", customer: "Esther Howard", unitNumber: "A-09-05", service: "Roof Repair", amount: "RM 1,800.00", date: "Sep 5, 2023", dueDate: "Oct 5, 2023", status: "Paid" },
+    { id: "INV-005", customer: "Wade Warren", unitNumber: "B-15-18", service: "Deck Construction", amount: "RM 5,600.00", date: "Sep 3, 2023", dueDate: "Oct 3, 2023", status: "Unpaid" },
+    { id: "INV-006", customer: "Brooklyn Simmons", unitNumber: "C-21-01", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", dueDate: "Sep 29, 2023", status: "Draft" },
+    { id: "INV-007", customer: "Cameron Williamson", unitNumber: "A-06-11", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", dueDate: "Sep 25, 2023", status: "Overdue" },
   ]);
 
   // Action handlers
@@ -114,12 +115,8 @@ export default function Invoices() {
       accessorKey: "id" as keyof Invoice,
     },
     {
-      header: "Customer",
-      accessorKey: "customer" as keyof Invoice,
-    },
-    {
-      header: "Service",
-      accessorKey: "service" as keyof Invoice,
+      header: "Unit #",
+      accessorKey: "unitNumber" as keyof Invoice,
     },
     {
       header: "Amount",
@@ -234,7 +231,7 @@ export default function Invoices() {
         <DataTable 
           columns={columns} 
           data={invoices} 
-          searchKey="customer" 
+          searchKey="unitNumber" 
         />
       </div>
 

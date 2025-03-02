@@ -26,6 +26,7 @@ import { toast } from "@/components/ui/use-toast";
 export default function AddCustomer() {
   const navigate = useNavigate();
   const [customerType, setCustomerType] = useState("individual");
+  const [residence, setResidence] = useState("Star Residences ONE");
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,15 +89,9 @@ export default function AddCustomer() {
             </div>
             
             {customerType === "individual" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" required />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input id="fullName" required />
               </div>
             ) : (
               <div className="space-y-2">
@@ -104,6 +99,48 @@ export default function AddCustomer() {
                 <Input id="companyName" required />
               </div>
             )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="unitNumber">Unit #</Label>
+              <Input id="unitNumber" placeholder="e.g. X-XX-XX" required />
+              <p className="text-xs text-muted-foreground">Format: X-XX-XX</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="residence">Residence</Label>
+              <Select value={residence} onValueChange={setResidence}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Star Residences ONE">Star Residences ONE</SelectItem>
+                  <SelectItem value="Star Residences TWO">Star Residences TWO</SelectItem>
+                  <SelectItem value="Star Residences THREE">Star Residences THREE</SelectItem>
+                  <SelectItem value="Ascott">Ascott</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp">WhatsApp Number</Label>
+              <div className="flex">
+                <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
+                  +60
+                </span>
+                <Input 
+                  id="whatsapp" 
+                  className="rounded-l-none"
+                  placeholder="e.g. 123456789"
+                  required
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Malaysian number without leading 0</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address (Optional)</Label>
+              <Input id="email" type="email" />
+            </div>
             
             {customerType === "company" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -117,75 +154,6 @@ export default function AddCustomer() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  placeholder="e.g. 012-3456789"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">Malaysian phone format: 01X-XXXXXXX</p>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea 
-                id="address" 
-                rows={3} 
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Select defaultValue="Selangor">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Johor">Johor</SelectItem>
-                    <SelectItem value="Kedah">Kedah</SelectItem>
-                    <SelectItem value="Kelantan">Kelantan</SelectItem>
-                    <SelectItem value="Melaka">Melaka</SelectItem>
-                    <SelectItem value="Negeri Sembilan">Negeri Sembilan</SelectItem>
-                    <SelectItem value="Pahang">Pahang</SelectItem>
-                    <SelectItem value="Perak">Perak</SelectItem>
-                    <SelectItem value="Perlis">Perlis</SelectItem>
-                    <SelectItem value="Pulau Pinang">Pulau Pinang</SelectItem>
-                    <SelectItem value="Sabah">Sabah</SelectItem>
-                    <SelectItem value="Sarawak">Sarawak</SelectItem>
-                    <SelectItem value="Selangor">Selangor</SelectItem>
-                    <SelectItem value="Terengganu">Terengganu</SelectItem>
-                    <SelectItem value="Kuala Lumpur">Kuala Lumpur</SelectItem>
-                    <SelectItem value="Labuan">Labuan</SelectItem>
-                    <SelectItem value="Putrajaya">Putrajaya</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="postalCode">Postal Code</Label>
-                <Input id="postalCode" required />
-              </div>
-            </div>
           </CardContent>
         </Card>
         

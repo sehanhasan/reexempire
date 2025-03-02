@@ -28,6 +28,7 @@ import {
 interface Quotation {
   id: string;
   customer: string;
+  unitNumber: string;
   service: string;
   amount: string;
   date: string;
@@ -39,13 +40,13 @@ export default function Quotations() {
   
   // Mock data - would come from API in real app
   const [quotations, setQuotations] = useState<Quotation[]>([
-    { id: "QT-001", customer: "John Smith", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", status: "Approved" },
-    { id: "QT-002", customer: "Emma Johnson", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", status: "Sent" },
-    { id: "QT-003", customer: "Michael Brown", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", status: "Draft" },
-    { id: "QT-004", customer: "Lisa Davis", service: "Roof Repair", amount: "RM 1,800.00", date: "Sep 5, 2023", status: "Rejected" },
-    { id: "QT-005", customer: "Robert Wilson", service: "Deck Construction", amount: "RM 5,600.00", date: "Sep 3, 2023", status: "Approved" },
-    { id: "QT-006", customer: "Jennifer Garcia", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", status: "Draft" },
-    { id: "QT-007", customer: "David Martinez", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", status: "Sent" },
+    { id: "QT-001", customer: "John Smith", unitNumber: "A-12-10", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", status: "Approved" },
+    { id: "QT-002", customer: "Emma Johnson", unitNumber: "B-07-15", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", status: "Sent" },
+    { id: "QT-003", customer: "Michael Brown", unitNumber: "C-03-22", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", status: "Draft" },
+    { id: "QT-004", customer: "Lisa Davis", unitNumber: "A-09-05", service: "Roof Repair", amount: "RM 1,800.00", date: "Sep 5, 2023", status: "Rejected" },
+    { id: "QT-005", customer: "Robert Wilson", unitNumber: "B-15-18", service: "Deck Construction", amount: "RM 5,600.00", date: "Sep 3, 2023", status: "Approved" },
+    { id: "QT-006", customer: "Jennifer Garcia", unitNumber: "C-21-01", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", status: "Draft" },
+    { id: "QT-007", customer: "David Martinez", unitNumber: "A-06-11", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", status: "Sent" },
   ]);
 
   // Action handlers
@@ -98,12 +99,8 @@ export default function Quotations() {
       accessorKey: "id" as keyof Quotation,
     },
     {
-      header: "Customer",
-      accessorKey: "customer" as keyof Quotation,
-    },
-    {
-      header: "Service",
-      accessorKey: "service" as keyof Quotation,
+      header: "Unit #",
+      accessorKey: "unitNumber" as keyof Quotation,
     },
     {
       header: "Amount",
@@ -205,7 +202,7 @@ export default function Quotations() {
         <DataTable 
           columns={columns} 
           data={quotations} 
-          searchKey="customer" 
+          searchKey="unitNumber" 
         />
       </div>
 

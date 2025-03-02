@@ -43,6 +43,12 @@ export function DataTable<T extends Record<string, any>>({
     return column.header;
   };
 
+  // Skip certain columns on mobile view
+  const shouldShowColumnOnMobile = (column: Column<T>) => {
+    const skipHeaders = ["ID", "Email", "Service", "Projects"];
+    return !skipHeaders.includes(column.header);
+  };
+
   return (
     <div className="space-y-4">
       {searchKey && (
@@ -74,17 +80,17 @@ export function DataTable<T extends Record<string, any>>({
                     <CardContent className="p-0">
                       {columns.map((column, colIndex) => {
                         // Skip rendering of certain columns that don't make sense on mobile
+                        if (!shouldShowColumnOnMobile(column)) {
+                          return null;
+                        }
+                        
+                        // Actions column should be displayed at the bottom
                         if (column.header === "Actions") {
                           return (
                             <div key={colIndex} className="border-t p-2 bg-muted/20 flex justify-center">
                               {column.cell ? column.cell(row) : row[column.accessorKey]}
                             </div>
                           );
-                        }
-                        
-                        // Skip ID column on mobile
-                        if (column.header === "ID" || column.accessorKey === "id") {
-                          return null;
                         }
                         
                         return (
