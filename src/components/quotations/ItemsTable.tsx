@@ -116,7 +116,7 @@ export function ItemsTable({
           <TableHead>Unit</TableHead>
           <TableHead>Unit Price (RM)</TableHead>
           <TableHead>Amount (RM)</TableHead>
-          <TableHead width={80}></TableHead>
+          <TableHead className="w-20">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

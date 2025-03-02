@@ -14,19 +14,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Subcategory, PricingOption } from "@/components/categories/SubcategoryModel";
+import { CategoryItem } from "./types";
 
 // Define the type for the selected items
-export interface SelectedItem {
-  id: string;
-  categoryId: string;
-  categoryName: string;
-  subcategoryId: string;
-  subcategoryName: string;
-  description: string;
-  price: number;
-  quantity: number;
-  unit: string;
-}
+export interface SelectedItem extends CategoryItem {}
 
 interface Category {
   id: string;
@@ -147,7 +138,7 @@ export function CategoryItemSelector({
         // If already selected, remove it
         delete newItems[itemKey];
       } else {
-        // Otherwise add it
+        // Otherwise add it with proper category field
         newItems[itemKey] = {
           id: pricingOption.id,
           categoryId: category.id,
@@ -157,7 +148,8 @@ export function CategoryItemSelector({
           description: `${subcategory.name} - ${pricingOption.name}`,
           price: pricingOption.price,
           quantity: 1,
-          unit: pricingOption.unit
+          unit: pricingOption.unit,
+          category: category.name // Add category field
         };
       }
       

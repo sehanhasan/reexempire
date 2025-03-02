@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -115,7 +114,7 @@ export function InvoiceItemsCard({
       unit: selectedItem.unit,
       unitPrice: selectedItem.price,
       amount: selectedItem.quantity * selectedItem.price,
-      category: selectedItem.category
+      category: selectedItem.categoryName // Use categoryName instead of category
     }));
 
     // Add the new items to the existing items

@@ -46,3 +46,17 @@ export interface InvoicePDFData {
   paymentMethod: string;
   quotationReference?: string;
 }
+
+// Add CategoryItem interface for use in CategoryItemSelector
+export interface CategoryItem {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  subcategoryId: string;
+  subcategoryName: string;
+  description: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  category?: string; // Added to support the existing implementation
+}
