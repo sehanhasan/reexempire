@@ -85,7 +85,7 @@ export function AppSidebar() {
             </nav>
           </div>
           
-          <div className="p-4 border-t border-sidebar-border">
+          <div className="p-4 border-t border-sidebar-border bg-white">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
                 <UserCircle size={16} />
