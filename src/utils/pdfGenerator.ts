@@ -118,8 +118,10 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
     addItemsTable(pdf, details.items, 105);
   }
   
-  // Add totals
+  // Get the final Y position after the table
+  // @ts-ignore - lastAutoTable is added by the plugin but not in the type definition
   const tableEndY = pdf.lastAutoTable?.finalY || 200;
+  
   pdf.setFontSize(11);
   
   pdf.text(`Subtotal:`, 140, tableEndY + 10);
@@ -225,8 +227,10 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
     addItemsTable(pdf, details.items, 105);
   }
   
-  // Add totals
+  // Get the final Y position after the table
+  // @ts-ignore - lastAutoTable is added by the plugin but not in the type definition
   const tableEndY = pdf.lastAutoTable?.finalY || 200;
+  
   pdf.setFontSize(11);
   
   pdf.text(`Subtotal:`, 140, tableEndY + 10);
