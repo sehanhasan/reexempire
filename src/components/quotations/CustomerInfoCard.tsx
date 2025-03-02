@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,16 +15,18 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Receipt } from "lucide-react";
-
-// Sample customers for demo
-const customers = [
-  { id: "C001", name: "Alice Johnson" },
-  { id: "C002", name: "Bob Smith" },
-  { id: "C003", name: "Carol Williams" },
-  { id: "C004", name: "David Brown" },
-  { id: "C005", name: "Eva Davis" },
-];
+import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Plus, Receipt } from "lucide-react";
+import { customerService } from "@/services";
+import { Customer } from "@/types/database";
+import AddCustomerForm from "@/components/customers/AddCustomerForm";
 
 interface CustomerInfoCardProps {
   customer: string;
@@ -62,6 +65,24 @@ export function CustomerInfoCard({
 }: CustomerInfoCardProps) {
   const isQuotation = documentType === "quotation";
   const expiryLabel = isQuotation ? "Valid Until" : "Due Date";
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const data = await customerService.getAll();
+        setCustomers(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, [isAddCustomerOpen]); // Refetch when modal is closed
   
   return (
     <Card>
@@ -71,10 +92,30 @@ export function CustomerInfoCard({
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="customer">Customer</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="customer">Customer</Label>
+              <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8">
+                    <Plus className="mr-1 h-3 w-3" />
+                    Add Customer
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Customer</DialogTitle>
+                  </DialogHeader>
+                  <AddCustomerForm 
+                    onSuccess={() => setIsAddCustomerOpen(false)} 
+                    isModal={true}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
             <Select 
               value={customer} 
               onValueChange={setCustomer}
+              disabled={isLoading}
               required
             >
               <SelectTrigger>
@@ -82,8 +123,11 @@ export function CustomerInfoCard({
               </SelectTrigger>
               <SelectContent>
                 {customers.map(c => (
-                  <SelectItem key={c.id} value={c.name}>
-                    {c.name}
+                  <SelectItem key={c.id} value={c.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{c.unit_number || 'No Unit'}</span>
+                      <span className="text-xs text-muted-foreground">{c.name}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -92,13 +136,12 @@ export function CustomerInfoCard({
           
           {isQuotation ? (
             <div className="space-y-2">
-              <Label htmlFor="documentDate">Quotation Date</Label>
+              <Label htmlFor="documentNumber">Quotation Number</Label>
               <Input
-                id="documentDate"
-                type="date"
-                value={documentDate}
-                onChange={(e) => setDocumentDate(e.target.value)}
-                required
+                id="documentNumber"
+                placeholder={documentNumber}
+                defaultValue={documentNumber}
+                disabled
               />
             </div>
           ) : (
@@ -114,20 +157,8 @@ export function CustomerInfoCard({
           )}
         </div>
         
-        {/* Add unit number and subject fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {setUnitNumber && (
-            <div className="space-y-2">
-              <Label htmlFor="unitNumber">Unit #</Label>
-              <Input
-                id="unitNumber"
-                placeholder="e.g., A-12-10"
-                value={unitNumber || ''}
-                onChange={(e) => setUnitNumber(e.target.value)}
-              />
-            </div>
-          )}
-          
+        {/* Subject field only */}
+        <div className="grid grid-cols-1 gap-4">
           {setSubject && (
             <div className="space-y-2">
               <Label htmlFor="subject">Subject</Label>
@@ -153,30 +184,9 @@ export function CustomerInfoCard({
                 required
               />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="documentNumber">Quotation Number</Label>
-              <Input
-                id="documentNumber"
-                placeholder={documentNumber}
-                defaultValue={documentNumber}
-                disabled
-              />
-            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="documentDate">Invoice Date</Label>
-              <Input
-                id="documentDate"
-                type="date"
-                value={documentDate}
-                onChange={(e) => setDocumentDate(e.target.value)}
-                required
-              />
-            </div>
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="expiryDate">{expiryLabel}</Label>
               <Input

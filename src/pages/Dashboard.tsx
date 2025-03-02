@@ -1,113 +1,218 @@
 
+import React from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { 
-  FileText, 
-  Receipt, // Replacing FileInvoice with Receipt
-  Users, 
-  Calendar, 
-  TrendingUp, 
-  ClipboardCheck, 
-  Clock
-} from "lucide-react";
+import { ArrowUpRight, Check, Clock, DollarSign, FileText, Users, X } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Chart } from "@/components/ui/chart";
 
 export default function Dashboard() {
-  // Mock data - would come from API in real app
-  const stats = [
-    { title: "Total Quotations", value: "128", trend: { value: 12, isPositive: true }, icon: <FileText size={18} /> },
-    { title: "Pending Invoices", value: "24", trend: { value: 5, isPositive: false }, icon: <Receipt size={18} /> },
-    { title: "Customers", value: "84", trend: { value: 8, isPositive: true }, icon: <Users size={18} /> },
-    { title: "Total Revenue", value: "$137,842", trend: { value: 14, isPositive: true }, icon: <TrendingUp size={18} /> },
+  // Sample data for charts (would come from API in real app)
+  const revenueData = [
+    { name: 'Jan', total: 1200 },
+    { name: 'Feb', total: 2100 },
+    { name: 'Mar', total: 1800 },
+    { name: 'Apr', total: 2700 },
+    { name: 'May', total: 3200 },
+    { name: 'Jun', total: 2800 },
+    { name: 'Jul', total: 3800 },
+    { name: 'Aug', total: 4300 },
+    { name: 'Sep', total: 3800 },
+    { name: 'Oct', total: 4000 },
+    { name: 'Nov', total: 4500 },
+    { name: 'Dec', total: 5000 },
   ];
   
-  const upcomingJobs = [
-    { id: 1, customer: "John Smith", service: "Bathroom Renovation", date: "Sep 12", status: "Confirmed" },
-    { id: 2, customer: "Emma Johnson", service: "Kitchen Remodel", date: "Sep 14", status: "Confirmed" },
-    { id: 3, customer: "Michael Brown", service: "Flooring Installation", date: "Sep 15", status: "Pending" },
+  const projectTypeData = [
+    { name: 'Bathroom', value: 35 },
+    { name: 'Kitchen', value: 25 },
+    { name: 'Flooring', value: 15 },
+    { name: 'Electrical', value: 12 },
+    { name: 'Plumbing', value: 8 },
+    { name: 'Other', value: 5 },
   ];
-
-  const recentInvoices = [
-    { id: "INV-001", customer: "Jane Cooper", amount: "$1,250.00", status: "Paid", date: "Sep 5" },
-    { id: "INV-002", customer: "Robert Fox", amount: "$2,840.00", status: "Pending", date: "Sep 4" },
-    { id: "INV-003", customer: "Cody Fisher", amount: "$3,150.00", status: "Overdue", date: "Aug 30" },
-  ];
-
+  
   return (
     <div className="page-container">
       <PageHeader 
         title="Dashboard" 
-        description="Welcome to RenovateProX. Here's an overview of your business."
+        description="Welcome to RenovateProX dashboard. Get a quick summary of your business."
       />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            trend={stat.trend}
-            icon={stat.icon}
-          />
-        ))}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-6">
+        <StatCard
+          title="Total Revenue"
+          value="RM 124,500"
+          trend="+12%"
+          description="vs. previous month"
+          icon={<DollarSign className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Active Projects"
+          value="8"
+          trend="+2"
+          description="vs. previous month"
+          icon={<FileText className="h-5 w-5" />}
+        />
+        <StatCard
+          title="New Customers"
+          value="24"
+          trend="+5"
+          description="vs. previous month"
+          icon={<Users className="h-5 w-5" />}
+        />
+        <StatCard
+          title="Completion Rate"
+          value="92%"
+          trend="+3%"
+          description="vs. previous month"
+          icon={<ArrowUpRight className="h-5 w-5" />}
+        />
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Upcoming Jobs</h3>
-            <Calendar size={18} className="text-blue-600" />
-          </div>
-          <div className="space-y-3">
-            {upcomingJobs.map((job) => (
-              <div key={job.id} className="flex items-center p-3 rounded-md hover:bg-slate-50 transition-colors">
-                <div className="mr-4 p-2 bg-blue-50 rounded-md text-blue-600">
-                  <ClipboardCheck size={16} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-slate-900">{job.customer}</p>
-                  <p className="text-sm text-slate-500">{job.service}</p>
+      
+      <div className="grid gap-4 md:grid-cols-2 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Chart
+              type="bar"
+              data={revenueData}
+              categories={['total']}
+              index="name"
+              colors={['#2563eb']}
+              valueFormatter={(value: number) => `RM ${value.toLocaleString()}`}
+              height={300}
+            />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Types</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Chart
+              type="pie"
+              data={projectTypeData}
+              index="name"
+              categories={['value']}
+              colors={['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe']}
+              valueFormatter={(value: number) => `${value}%`}
+              height={300}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Quotations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="font-medium">QT-0012</p>
+                  <p className="text-sm text-muted-foreground">Emma Johnson</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium">{job.date}</p>
-                  <p className={`text-xs ${
-                    job.status === "Confirmed" ? "text-green-600" : "text-amber-600"
-                  }`}>
-                    {job.status}
+                  <p className="font-medium">RM 4,500.00</p>
+                  <p className="text-sm text-orange-500 flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Pending
                   </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Recent Invoices</h3>
-            <Receipt size={18} className="text-blue-600" />
-          </div>
-          <div className="space-y-3">
-            {recentInvoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center p-3 rounded-md hover:bg-slate-50 transition-colors">
-                <div className="mr-4 p-2 bg-blue-50 rounded-md text-blue-600">
-                  <Clock size={16} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-slate-900">{invoice.customer}</p>
-                  <p className="text-sm text-slate-500">{invoice.id}</p>
+              
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="font-medium">QT-0011</p>
+                  <p className="text-sm text-muted-foreground">John Davis</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium">{invoice.amount}</p>
-                  <p className={`text-xs ${
-                    invoice.status === "Paid" ? "text-green-600" : 
-                    invoice.status === "Pending" ? "text-amber-600" : "text-red-600"
-                  }`}>
-                    {invoice.status}
+                  <p className="font-medium">RM 12,800.00</p>
+                  <p className="text-sm text-green-500 flex items-center">
+                    <Check className="h-3 w-3 mr-1" />
+                    Accepted
                   </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+              
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="font-medium">QT-0010</p>
+                  <p className="text-sm text-muted-foreground">Sarah Wilson</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">RM 7,200.00</p>
+                  <p className="text-sm text-red-500 flex items-center">
+                    <X className="h-3 w-3 mr-1" />
+                    Declined
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Invoices</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="font-medium">INV-0025</p>
+                  <p className="text-sm text-muted-foreground">Michael Brown</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">RM 8,350.00</p>
+                  <p className="text-sm text-green-500 flex items-center">
+                    <Check className="h-3 w-3 mr-1" />
+                    Paid
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="font-medium">INV-0024</p>
+                  <p className="text-sm text-muted-foreground">Robert Martinez</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">RM 5,120.00</p>
+                  <p className="text-sm text-amber-500 flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Due
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="font-medium">INV-0023</p>
+                  <p className="text-sm text-muted-foreground">Jennifer Lee</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">RM 3,450.00</p>
+                  <p className="text-sm text-red-500 flex items-center">
+                    <X className="h-3 w-3 mr-1" />
+                    Overdue
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

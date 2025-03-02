@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
@@ -24,132 +24,205 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { invoiceService, customerService } from "@/services";
+import { format } from "date-fns";
+import { Invoice, Customer } from "@/types/database";
 
-interface Invoice {
-  id: string;
-  customer: string;
-  unitNumber: string;
-  service: string;
-  amount: string;
-  date: string;
-  dueDate: string;
-  status: "Paid" | "Unpaid" | "Overdue" | "Draft";
+interface InvoiceWithCustomer extends Invoice {
+  customer_name: string;
+  unit_number: string | null;
 }
 
 export default function Invoices() {
   const navigate = useNavigate();
+  const [invoices, setInvoices] = useState<InvoiceWithCustomer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Mock data - would come from API in real app
-  const [invoices, setInvoices] = useState<Invoice[]>([
-    { id: "INV-001", customer: "Jane Cooper", unitNumber: "A-12-10", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", dueDate: "Oct 12, 2023", status: "Paid" },
-    { id: "INV-002", customer: "Robert Fox", unitNumber: "B-07-15", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", dueDate: "Oct 10, 2023", status: "Unpaid" },
-    { id: "INV-003", customer: "Cody Fisher", unitNumber: "C-03-22", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", dueDate: "Oct 8, 2023", status: "Overdue" },
-    { id: "INV-004", customer: "Esther Howard", unitNumber: "A-09-05", service: "Roof Repair", amount: "RM 1,800.00", date: "Sep 5, 2023", dueDate: "Oct 5, 2023", status: "Paid" },
-    { id: "INV-005", customer: "Wade Warren", unitNumber: "B-15-18", service: "Deck Construction", amount: "RM 5,600.00", date: "Sep 3, 2023", dueDate: "Oct 3, 2023", status: "Unpaid" },
-    { id: "INV-006", customer: "Brooklyn Simmons", unitNumber: "C-21-01", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", dueDate: "Sep 29, 2023", status: "Draft" },
-    { id: "INV-007", customer: "Cameron Williamson", unitNumber: "A-06-11", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", dueDate: "Sep 25, 2023", status: "Overdue" },
-  ]);
+  const fetchInvoices = async () => {
+    try {
+      setIsLoading(true);
+      const data = await invoiceService.getAll();
+      
+      // Fetch customer details for each invoice
+      const invoicesWithCustomers = await Promise.all(
+        data.map(async (invoice) => {
+          let customerName = "Unknown";
+          let unitNumber = null;
+          
+          try {
+            const customer = await customerService.getById(invoice.customer_id);
+            if (customer) {
+              customerName = customer.name;
+              unitNumber = customer.unit_number;
+            }
+          } catch (error) {
+            console.error(`Error fetching customer for invoice ${invoice.id}:`, error);
+          }
+          
+          return {
+            ...invoice,
+            customer_name: customerName,
+            unit_number: unitNumber
+          };
+        })
+      );
+      
+      setInvoices(invoicesWithCustomers);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to fetch invoices. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
 
   // Action handlers
-  const handleView = (invoice: Invoice) => {
+  const handleView = (invoice: InvoiceWithCustomer) => {
     toast({
       title: "Viewing Invoice",
-      description: `Viewing details for invoice ${invoice.id} - ${invoice.service}`,
+      description: `Viewing details for invoice ${invoice.reference_number}`,
     });
   };
 
-  const handleEdit = (invoice: Invoice) => {
-    navigate(`/invoices/create?id=${invoice.id}`);
+  const handleEdit = (invoice: InvoiceWithCustomer) => {
+    navigate(`/invoices/edit?id=${invoice.id}`);
   };
 
-  const handleDownload = (invoice: Invoice) => {
+  const handleDownload = (invoice: InvoiceWithCustomer) => {
     toast({
       title: "Invoice Downloaded",
-      description: `Invoice ${invoice.id} has been downloaded`,
+      description: `Invoice ${invoice.reference_number} has been downloaded`,
     });
   };
 
-  const handleSend = (invoice: Invoice) => {
+  const handleSend = (invoice: InvoiceWithCustomer) => {
     // Update the invoice status if it's a draft
     if (invoice.status === "Draft") {
-      const updatedInvoices = invoices.map(inv => 
-        inv.id === invoice.id ? { ...inv, status: "Unpaid" as const } : inv
-      );
-      setInvoices(updatedInvoices);
+      const updateInvoice = async () => {
+        try {
+          await invoiceService.update(invoice.id, { 
+            status: "Sent",
+            payment_status: "Unpaid"
+          });
+          fetchInvoices(); // Refresh the list
+        } catch (error) {
+          console.error("Error updating invoice:", error);
+        }
+      };
+      
+      updateInvoice();
     }
     
     toast({
       title: "Invoice Sent",
-      description: `Invoice ${invoice.id} has been sent to ${invoice.customer}`,
+      description: `Invoice ${invoice.reference_number} has been sent to ${invoice.customer_name}`,
     });
   };
 
-  const handleDelete = (invoice: Invoice) => {
-    // Remove the invoice from the list
-    setInvoices(invoices.filter(inv => inv.id !== invoice.id));
+  const handleDelete = (invoice: InvoiceWithCustomer) => {
+    const deleteInvoice = async () => {
+      try {
+        await invoiceService.delete(invoice.id);
+        // Remove the invoice from the list
+        setInvoices(invoices.filter(inv => inv.id !== invoice.id));
+        
+        toast({
+          title: "Invoice Deleted",
+          description: `Invoice ${invoice.reference_number} has been deleted`,
+          variant: "destructive",
+        });
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete invoice. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
     
-    toast({
-      title: "Invoice Deleted",
-      description: `Invoice ${invoice.id} has been deleted`,
-      variant: "destructive",
-    });
+    deleteInvoice();
   };
 
-  const handleMarkAsPaid = (invoice: Invoice) => {
+  const handleMarkAsPaid = (invoice: InvoiceWithCustomer) => {
     // Update the invoice status to "Paid"
-    const updatedInvoices = invoices.map(inv => 
-      inv.id === invoice.id ? { ...inv, status: "Paid" as const } : inv
-    );
-    setInvoices(updatedInvoices);
+    const updateInvoice = async () => {
+      try {
+        await invoiceService.update(invoice.id, { payment_status: "Paid" });
+        fetchInvoices(); // Refresh the list
+        
+        toast({
+          title: "Payment Recorded",
+          description: `Invoice ${invoice.reference_number} has been marked as paid`,
+          variant: "default",
+        });
+      } catch (error) {
+        console.error("Error updating invoice:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update invoice. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
     
-    toast({
-      title: "Payment Recorded",
-      description: `Invoice ${invoice.id} has been marked as paid`,
-      variant: "default",
-    });
+    updateInvoice();
   };
 
   const columns = [
     {
       header: "ID",
-      accessorKey: "id" as keyof Invoice,
+      accessorKey: "reference_number",
     },
     {
       header: "Unit #",
-      accessorKey: "unitNumber" as keyof Invoice,
+      accessorKey: "unit_number",
+      cell: (info: any) => info.getValue() || "N/A",
     },
     {
       header: "Amount",
-      accessorKey: "amount" as keyof Invoice,
+      accessorKey: "total",
+      cell: (info: any) => `RM ${parseFloat(info.getValue()).toFixed(2)}`,
     },
     {
       header: "Issue Date",
-      accessorKey: "date" as keyof Invoice,
+      accessorKey: "issue_date",
+      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
     },
     {
       header: "Due Date",
-      accessorKey: "dueDate" as keyof Invoice,
+      accessorKey: "due_date",
+      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
     },
     {
       header: "Status",
-      accessorKey: "status" as keyof Invoice,
-      cell: (invoice: Invoice) => {
+      accessorKey: "payment_status",
+      cell: (info: any) => {
+        const status = info.getValue();
         return (
           <Badge className={
-            invoice.status === "Paid" ? "bg-green-100 text-green-800 hover:bg-green-200" :
-            invoice.status === "Unpaid" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
-            invoice.status === "Draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" :
+            status === "Paid" ? "bg-green-100 text-green-800 hover:bg-green-200" :
+            status === "Unpaid" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
+            status === "Draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" :
             "bg-red-100 text-red-800 hover:bg-red-200"
           }>
-            {invoice.status}
+            {status}
           </Badge>
         );
       },
     },
     {
       header: "Actions",
-      accessorKey: "id" as keyof Invoice,
-      cell: (invoice: Invoice) => {
+      cell: (info: any) => {
+        const invoice = info.row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -181,7 +254,7 @@ export default function Invoices() {
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </DropdownMenuItem>
-              {(invoice.status === "Draft" || invoice.status === "Unpaid") && (
+              {(invoice.status === "Draft" || invoice.payment_status === "Unpaid") && (
                 <DropdownMenuItem 
                   className="cursor-pointer"
                   onClick={() => handleSend(invoice)}
@@ -190,7 +263,7 @@ export default function Invoices() {
                   Send
                 </DropdownMenuItem>
               )}
-              {(invoice.status === "Unpaid" || invoice.status === "Overdue") && (
+              {(invoice.payment_status === "Unpaid" || invoice.payment_status === "Overdue") && (
                 <DropdownMenuItem 
                   className="cursor-pointer text-green-600"
                   onClick={() => handleMarkAsPaid(invoice)}
@@ -231,7 +304,8 @@ export default function Invoices() {
         <DataTable 
           columns={columns} 
           data={invoices} 
-          searchKey="unitNumber" 
+          searchKey="unit_number" 
+          isLoading={isLoading}
         />
       </div>
 

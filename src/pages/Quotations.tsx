@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Edit, 
-  FileText, 
+  File, 
   MoreHorizontal, 
   Send,
   Trash,
   Eye,
-  Receipt
+  Download,
+  Receipt,
+  RefreshCw
 } from "lucide-react";
 
 import {
@@ -24,112 +26,233 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { quotationService, customerService } from "@/services";
+import { format } from "date-fns";
+import { Quotation, Customer } from "@/types/database";
 
-interface Quotation {
-  id: string;
-  customer: string;
-  unitNumber: string;
-  service: string;
-  amount: string;
-  date: string;
-  status: "Draft" | "Sent" | "Approved" | "Rejected";
+interface QuotationWithCustomer extends Quotation {
+  customer_name: string;
+  unit_number: string | null;
 }
 
 export default function Quotations() {
   const navigate = useNavigate();
+  const [quotations, setQuotations] = useState<QuotationWithCustomer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Mock data - would come from API in real app
-  const [quotations, setQuotations] = useState<Quotation[]>([
-    { id: "QT-001", customer: "John Smith", unitNumber: "A-12-10", service: "Bathroom Renovation", amount: "RM 4,500.00", date: "Sep 12, 2023", status: "Approved" },
-    { id: "QT-002", customer: "Emma Johnson", unitNumber: "B-07-15", service: "Kitchen Remodel", amount: "RM 12,350.00", date: "Sep 10, 2023", status: "Sent" },
-    { id: "QT-003", customer: "Michael Brown", unitNumber: "C-03-22", service: "Flooring Installation", amount: "RM 2,800.00", date: "Sep 8, 2023", status: "Draft" },
-    { id: "QT-004", customer: "Lisa Davis", unitNumber: "A-09-05", service: "Roof Repair", amount: "RM 1,800.00", date: "Sep 5, 2023", status: "Rejected" },
-    { id: "QT-005", customer: "Robert Wilson", unitNumber: "B-15-18", service: "Deck Construction", amount: "RM 5,600.00", date: "Sep 3, 2023", status: "Approved" },
-    { id: "QT-006", customer: "Jennifer Garcia", unitNumber: "C-21-01", service: "Painting Services", amount: "RM 1,200.00", date: "Aug 29, 2023", status: "Draft" },
-    { id: "QT-007", customer: "David Martinez", unitNumber: "A-06-11", service: "Electrical Wiring", amount: "RM 2,300.00", date: "Aug 25, 2023", status: "Sent" },
-  ]);
+  const fetchQuotations = async () => {
+    try {
+      setIsLoading(true);
+      const data = await quotationService.getAll();
+      
+      // Fetch customer details for each quotation
+      const quotationsWithCustomers = await Promise.all(
+        data.map(async (quotation) => {
+          let customerName = "Unknown";
+          let unitNumber = null;
+          
+          try {
+            const customer = await customerService.getById(quotation.customer_id);
+            if (customer) {
+              customerName = customer.name;
+              unitNumber = customer.unit_number;
+            }
+          } catch (error) {
+            console.error(`Error fetching customer for quotation ${quotation.id}:`, error);
+          }
+          
+          return {
+            ...quotation,
+            customer_name: customerName,
+            unit_number: unitNumber
+          };
+        })
+      );
+      
+      setQuotations(quotationsWithCustomers);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching quotations:", error);
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to fetch quotations. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  useEffect(() => {
+    fetchQuotations();
+  }, []);
 
   // Action handlers
-  const handleView = (quotation: Quotation) => {
+  const handleView = (quotation: QuotationWithCustomer) => {
     toast({
       title: "Viewing Quotation",
-      description: `Viewing details for quotation ${quotation.id} - ${quotation.service}`,
+      description: `Viewing details for quotation ${quotation.reference_number}`,
     });
   };
 
-  const handleEdit = (quotation: Quotation) => {
-    navigate(`/quotations/create?id=${quotation.id}`);
+  const handleEdit = (quotation: QuotationWithCustomer) => {
+    navigate(`/quotations/edit?id=${quotation.id}`);
   };
 
-  const handleSend = (quotation: Quotation) => {
-    // Update the quotation status to "Sent"
-    const updatedQuotations = quotations.map(q => 
-      q.id === quotation.id ? { ...q, status: "Sent" as const } : q
-    );
-    setQuotations(updatedQuotations);
+  const handleDownload = (quotation: QuotationWithCustomer) => {
+    toast({
+      title: "Quotation Downloaded",
+      description: `Quotation ${quotation.reference_number} has been downloaded`,
+    });
+  };
+
+  const handleSend = (quotation: QuotationWithCustomer) => {
+    // Update the quotation status if it's a draft
+    if (quotation.status === "Draft") {
+      const updateQuotation = async () => {
+        try {
+          await quotationService.update(quotation.id, { status: "Sent" });
+          fetchQuotations(); // Refresh the list
+        } catch (error) {
+          console.error("Error updating quotation:", error);
+        }
+      };
+      
+      updateQuotation();
+    }
     
     toast({
       title: "Quotation Sent",
-      description: `Quotation ${quotation.id} has been sent to ${quotation.customer}`,
+      description: `Quotation ${quotation.reference_number} has been sent to ${quotation.customer_name}`,
     });
   };
 
-  const handleDelete = (quotation: Quotation) => {
-    // Remove the quotation from the list
-    setQuotations(quotations.filter(q => q.id !== quotation.id));
+  const handleDelete = (quotation: QuotationWithCustomer) => {
+    const deleteQuotation = async () => {
+      try {
+        await quotationService.delete(quotation.id);
+        // Remove the quotation from the list
+        setQuotations(quotations.filter(q => q.id !== quotation.id));
+        
+        toast({
+          title: "Quotation Deleted",
+          description: `Quotation ${quotation.reference_number} has been deleted`,
+          variant: "destructive",
+        });
+      } catch (error) {
+        console.error("Error deleting quotation:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete quotation. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
     
-    toast({
-      title: "Quotation Deleted",
-      description: `Quotation ${quotation.id} has been deleted`,
-      variant: "destructive",
-    });
+    deleteQuotation();
   };
 
-  const handleConvertToInvoice = (quotation: Quotation) => {
-    toast({
-      title: "Converting to Invoice",
-      description: `Quotation ${quotation.id} is being converted to an invoice`,
-    });
-    navigate(`/invoices/create?from=${quotation.id}`);
+  const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
+    navigate("/invoices/create", { state: { quotationId: quotation.id } });
+  };
+
+  const handleMarkAsAccepted = (quotation: QuotationWithCustomer) => {
+    const updateQuotation = async () => {
+      try {
+        await quotationService.update(quotation.id, { status: "Accepted" });
+        fetchQuotations(); // Refresh the list
+        
+        toast({
+          title: "Quotation Accepted",
+          description: `Quotation ${quotation.reference_number} has been marked as accepted`,
+          variant: "default",
+        });
+      } catch (error) {
+        console.error("Error updating quotation:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update quotation. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    updateQuotation();
+  };
+
+  const handleMarkAsRejected = (quotation: QuotationWithCustomer) => {
+    const updateQuotation = async () => {
+      try {
+        await quotationService.update(quotation.id, { status: "Rejected" });
+        fetchQuotations(); // Refresh the list
+        
+        toast({
+          title: "Quotation Rejected",
+          description: `Quotation ${quotation.reference_number} has been marked as rejected`,
+          variant: "destructive",
+        });
+      } catch (error) {
+        console.error("Error updating quotation:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update quotation. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    updateQuotation();
   };
 
   const columns = [
     {
       header: "ID",
-      accessorKey: "id" as keyof Quotation,
+      accessorKey: "reference_number",
     },
     {
       header: "Unit #",
-      accessorKey: "unitNumber" as keyof Quotation,
+      accessorKey: "unit_number",
+      cell: (info: any) => info.getValue() || "N/A",
+    },
+    {
+      header: "Customer",
+      accessorKey: "customer_name",
     },
     {
       header: "Amount",
-      accessorKey: "amount" as keyof Quotation,
+      accessorKey: "total",
+      cell: (info: any) => `RM ${parseFloat(info.getValue()).toFixed(2)}`,
     },
     {
-      header: "Date",
-      accessorKey: "date" as keyof Quotation,
+      header: "Issue Date",
+      accessorKey: "issue_date",
+      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
+    },
+    {
+      header: "Valid Until",
+      accessorKey: "expiry_date",
+      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
     },
     {
       header: "Status",
-      accessorKey: "status" as keyof Quotation,
-      cell: (quotation: Quotation) => {
+      accessorKey: "status",
+      cell: (info: any) => {
+        const status = info.getValue();
         return (
           <Badge className={
-            quotation.status === "Approved" ? "bg-green-100 text-green-800 hover:bg-green-200" :
-            quotation.status === "Sent" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" :
-            quotation.status === "Draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" :
+            status === "Accepted" ? "bg-green-100 text-green-800 hover:bg-green-200" :
+            status === "Sent" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
+            status === "Draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" :
             "bg-red-100 text-red-800 hover:bg-red-200"
           }>
-            {quotation.status}
+            {status}
           </Badge>
         );
       },
     },
     {
       header: "Actions",
-      accessorKey: "id" as keyof Quotation,
-      cell: (quotation: Quotation) => {
+      cell: (info: any) => {
+        const quotation = info.row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -145,12 +268,21 @@ export default function Quotations() {
                 <Eye className="mr-2 h-4 w-4" />
                 View
               </DropdownMenuItem>
+              {quotation.status === "Draft" && (
+                <DropdownMenuItem 
+                  className="cursor-pointer"
+                  onClick={() => handleEdit(quotation)}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem 
                 className="cursor-pointer"
-                onClick={() => handleEdit(quotation)}
+                onClick={() => handleDownload(quotation)}
               >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
+                <Download className="mr-2 h-4 w-4" />
+                Download
               </DropdownMenuItem>
               {quotation.status === "Draft" && (
                 <DropdownMenuItem 
@@ -161,9 +293,27 @@ export default function Quotations() {
                   Send
                 </DropdownMenuItem>
               )}
-              {quotation.status === "Approved" && (
+              {quotation.status === "Sent" && (
+                <>
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-green-600"
+                    onClick={() => handleMarkAsAccepted(quotation)}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Mark as Accepted
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="cursor-pointer text-red-600"
+                    onClick={() => handleMarkAsRejected(quotation)}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Mark as Rejected
+                  </DropdownMenuItem>
+                </>
+              )}
+              {quotation.status === "Accepted" && (
                 <DropdownMenuItem 
-                  className="cursor-pointer"
+                  className="cursor-pointer text-blue-600"
                   onClick={() => handleConvertToInvoice(quotation)}
                 >
                   <Receipt className="mr-2 h-4 w-4" />
@@ -189,10 +339,10 @@ export default function Quotations() {
     <div className="page-container">
       <PageHeader 
         title="Quotations" 
-        description="Manage and track all your customer quotations."
+        description="Manage quotations and track their status."
         actions={
           <Button className="flex items-center" onClick={() => navigate("/quotations/create")}>
-            <FileText className="mr-2 h-4 w-4" />
+            <File className="mr-2 h-4 w-4" />
             Create Quotation
           </Button>
         }
@@ -202,7 +352,8 @@ export default function Quotations() {
         <DataTable 
           columns={columns} 
           data={quotations} 
-          searchKey="unitNumber" 
+          searchKey="unit_number" 
+          isLoading={isLoading}
         />
       </div>
 

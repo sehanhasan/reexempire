@@ -10,6 +10,8 @@ import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
+import { invoiceService, customerService, quotationService } from "@/services";
+import { Customer } from "@/types/database";
 
 export default function CreateInvoice() {
   const navigate = useNavigate();
@@ -18,7 +20,8 @@ export default function CreateInvoice() {
     { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
-  const [customer, setCustomer] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -33,42 +36,160 @@ export default function CreateInvoice() {
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
   const [quotationReference, setQuotationReference] = useState("");
+  const [quotationId, setQuotationId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch customer details when customer ID changes
+  useEffect(() => {
+    if (customerId) {
+      const fetchCustomer = async () => {
+        try {
+          const customerData = await customerService.getById(customerId);
+          setCustomer(customerData);
+          
+          // Auto-fill unit number if available
+          if (customerData?.unit_number) {
+            setUnitNumber(customerData.unit_number);
+          }
+        } catch (error) {
+          console.error("Error fetching customer:", error);
+        }
+      };
+      
+      fetchCustomer();
+    }
+  }, [customerId]);
 
   // Check if this invoice is being created from a quotation
   useEffect(() => {
-    // In a real app, you would get the quotation ID from the URL or state
-    // and then fetch the quotation data from the API
-    const fromQuotation = location.state?.fromQuotation;
-    if (fromQuotation) {
-      // Populate invoice with quotation data
-      // This is just a demo placeholder
-      setQuotationReference("QT-0001");
-      toast({
-        title: "Created from Quotation",
-        description: "Invoice has been pre-filled with quotation data.",
-      });
-    }
+    const fetchQuotationData = async () => {
+      // In a real app, you would get the quotation ID from the URL or state
+      const fromQuotationId = location.state?.quotationId;
+      
+      if (fromQuotationId) {
+        try {
+          // Fetch quotation details
+          const quotation = await quotationService.getById(fromQuotationId);
+          if (quotation) {
+            setQuotationId(quotation.id);
+            setQuotationReference(quotation.reference_number);
+            setCustomerId(quotation.customer_id);
+            setSubject(quotation.notes || "");
+            
+            // Set deposit info
+            setIsDepositInvoice(quotation.requires_deposit || false);
+            setDepositAmount(quotation.deposit_amount || 0);
+            setDepositPercentage(quotation.deposit_percentage || 30);
+            
+            // Fetch quotation items
+            const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
+            if (quotationItems && quotationItems.length > 0) {
+              setItems(quotationItems.map((item, index) => ({
+                id: index + 1,
+                description: item.description,
+                quantity: item.quantity,
+                unit: item.unit,
+                unitPrice: item.unit_price,
+                amount: item.amount
+              })));
+            }
+            
+            toast({
+              title: "Created from Quotation",
+              description: "Invoice has been pre-filled with quotation data.",
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching quotation:", error);
+        }
+      }
+    };
+    
+    fetchQuotationData();
   }, [location]);
 
   const calculateItemAmount = (item: InvoiceItem) => {
     return item.quantity * item.unitPrice;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, this would save to the database
-    toast({
-      title: "Invoice Created",
-      description: `Invoice for ${customer} has been created successfully.`,
-    });
+    if (!customerId) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before creating an invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Navigate back to the invoices list
-    navigate("/invoices");
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const taxRate = 6; // 6% SST
+    const taxAmount = (subtotal * taxRate) / 100;
+    const total = subtotal + taxAmount;
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Create invoice in database
+      const invoice = {
+        customer_id: customerId,
+        quotation_id: quotationId,
+        reference_number: "INV-0001", // In production, this would be generated
+        issue_date: invoiceDate,
+        due_date: dueDate,
+        status: "Draft",
+        subtotal: subtotal,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        total: total,
+        notes: notes || null,
+        terms: null,
+        is_deposit_invoice: isDepositInvoice,
+        deposit_amount: isDepositInvoice ? depositAmount : 0,
+        deposit_percentage: isDepositInvoice ? depositPercentage : 0,
+        payment_status: "Unpaid"
+      };
+      
+      const createdInvoice = await invoiceService.create(invoice);
+      
+      // Add invoice items
+      for (const item of items) {
+        if (item.description && item.unitPrice > 0) {
+          await invoiceService.createItem({
+            invoice_id: createdInvoice.id,
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unit_price: item.unitPrice,
+            amount: item.quantity * item.unitPrice
+          });
+        }
+      }
+      
+      toast({
+        title: "Invoice Created",
+        description: `Invoice for ${customer?.name} has been created successfully.`,
+      });
+      
+      // Navigate back to the invoices list
+      navigate("/invoices");
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      toast({
+        title: "Error",
+        description: "There was an error creating the invoice. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDownloadPDF = () => {
-    if (!customer) {
+    if (!customerId || !customer) {
       toast({
         title: "Missing Information",
         description: "Please select a customer before downloading the PDF.",
@@ -81,7 +202,7 @@ export default function CreateInvoice() {
       const pdf = generateInvoicePDF({
         documentNumber: "INV-0001",
         documentDate: invoiceDate,
-        customerName: customer,
+        customerName: customer.name,
         unitNumber: unitNumber,
         expiryDate: dueDate,
         dueDate: dueDate,
@@ -95,7 +216,7 @@ export default function CreateInvoice() {
         quotationReference: quotationReference
       });
       
-      downloadPDF(pdf, `Invoice_INV-0001_${customer.replace(/\s+/g, '_')}.pdf`);
+      downloadPDF(pdf, `Invoice_INV-0001_${customer.name.replace(/\s+/g, '_')}.pdf`);
       
       toast({
         title: "PDF Generated",
@@ -132,8 +253,8 @@ export default function CreateInvoice() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <CustomerInfoCard 
-          customer={customer}
-          setCustomer={setCustomer}
+          customer={customerId}
+          setCustomer={setCustomerId}
           documentType="invoice"
           documentNumber="INV-0001"
           documentDate={invoiceDate}

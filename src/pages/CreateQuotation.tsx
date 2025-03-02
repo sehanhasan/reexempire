@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
+import { quotationService, customerService } from "@/services";
+import { Customer } from "@/types/database";
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
@@ -17,7 +19,8 @@ export default function CreateQuotation() {
     { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
-  const [customer, setCustomer] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [quotationDate, setQuotationDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -27,6 +30,7 @@ export default function CreateQuotation() {
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [unitNumber, setUnitNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
@@ -34,21 +38,98 @@ export default function CreateQuotation() {
     depositPercentage: 30
   });
 
+  // Fetch customer details when customer ID changes
+  useEffect(() => {
+    if (customerId) {
+      const fetchCustomer = async () => {
+        try {
+          const customerData = await customerService.getById(customerId);
+          setCustomer(customerData);
+          
+          // Auto-fill unit number if available
+          if (customerData?.unit_number) {
+            setUnitNumber(customerData.unit_number);
+          }
+        } catch (error) {
+          console.error("Error fetching customer:", error);
+        }
+      };
+      
+      fetchCustomer();
+    }
+  }, [customerId]);
+
   const calculateItemAmount = (item: QuotationItem) => {
     return item.quantity * item.unitPrice;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, this would save to the database
-    toast({
-      title: "Quotation Created",
-      description: `Quotation for ${customer} has been created successfully.`,
-    });
+    if (!customerId) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before creating a quotation.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Navigate back to the quotations list
-    navigate("/quotations");
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Create quotation in database
+      const quotation = {
+        customer_id: customerId,
+        reference_number: "QT-0001", // In production, this would be generated
+        issue_date: quotationDate,
+        expiry_date: validUntil,
+        status: "Draft",
+        subtotal: subtotal,
+        total: subtotal, // No tax for quotations
+        notes: notes || null,
+        terms: null,
+        requires_deposit: depositInfo.requiresDeposit,
+        deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
+        deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
+      };
+      
+      const createdQuotation = await quotationService.create(quotation);
+      
+      // Add quotation items
+      for (const item of items) {
+        if (item.description && item.unitPrice > 0) {
+          await quotationService.createItem({
+            quotation_id: createdQuotation.id,
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unit_price: item.unitPrice,
+            amount: item.quantity * item.unitPrice
+          });
+        }
+      }
+      
+      toast({
+        title: "Quotation Created",
+        description: `Quotation for ${customer?.name} has been created successfully.`,
+      });
+      
+      // Navigate back to the quotations list
+      navigate("/quotations");
+    } catch (error) {
+      console.error("Error creating quotation:", error);
+      toast({
+        title: "Error",
+        description: "There was an error creating the quotation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleConvertToInvoice = () => {
@@ -63,7 +144,7 @@ export default function CreateQuotation() {
   };
 
   const handleDownloadPDF = () => {
-    if (!customer) {
+    if (!customerId || !customer) {
       toast({
         title: "Missing Information",
         description: "Please select a customer before downloading the PDF.",
@@ -76,7 +157,7 @@ export default function CreateQuotation() {
       const pdf = generateQuotationPDF({
         documentNumber: "QT-0001",
         documentDate: quotationDate,
-        customerName: customer,
+        customerName: customer.name,
         unitNumber: unitNumber,
         expiryDate: validUntil,
         validUntil: validUntil,
@@ -86,7 +167,7 @@ export default function CreateQuotation() {
         depositInfo: depositInfo
       });
       
-      downloadPDF(pdf, `Quotation_QT-0001_${customer.replace(/\s+/g, '_')}.pdf`);
+      downloadPDF(pdf, `Quotation_QT-0001_${customer.name.replace(/\s+/g, '_')}.pdf`);
       
       toast({
         title: "PDF Generated",
@@ -123,8 +204,8 @@ export default function CreateQuotation() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <CustomerInfoCard 
-          customer={customer}
-          setCustomer={setCustomer}
+          customer={customerId}
+          setCustomer={setCustomerId}
           documentType="quotation"
           documentNumber="QT-0001"
           documentDate={quotationDate}
