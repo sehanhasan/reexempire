@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,15 +15,20 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Receipt } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Receipt, Plus, Check, ChevronsUpDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 // Sample customers for demo
 const customers = [
-  { id: "C001", name: "Alice Johnson" },
-  { id: "C002", name: "Bob Smith" },
-  { id: "C003", name: "Carol Williams" },
-  { id: "C004", name: "David Brown" },
-  { id: "C005", name: "Eva Davis" },
+  { id: "C001", name: "Alice Johnson", unitNumber: "A-12-10" },
+  { id: "C002", name: "Bob Smith", unitNumber: "B-07-15" },
+  { id: "C003", name: "Carol Williams", unitNumber: "C-03-22" },
+  { id: "C004", name: "David Brown", unitNumber: "A-09-05" },
+  { id: "C005", name: "Eva Davis", unitNumber: "B-15-18" },
 ];
 
 interface CustomerInfoCardProps {
@@ -37,6 +43,8 @@ interface CustomerInfoCardProps {
   paymentMethod?: string;
   setPaymentMethod?: (value: string) => void;
   quotationReference?: string;
+  subject: string;
+  setSubject: (value: string) => void;
 }
 
 export function CustomerInfoCard({
@@ -50,10 +58,14 @@ export function CustomerInfoCard({
   setExpiryDate,
   paymentMethod,
   setPaymentMethod,
-  quotationReference
+  quotationReference,
+  subject,
+  setSubject
 }: CustomerInfoCardProps) {
   const isQuotation = documentType === "quotation";
   const expiryLabel = isQuotation ? "Valid Until" : "Due Date";
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
   
   return (
     <Card>
@@ -63,23 +75,63 @@ export function CustomerInfoCard({
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="customer">Customer</Label>
-            <Select 
-              value={customer} 
-              onValueChange={setCustomer}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a customer" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map(c => (
-                  <SelectItem key={c.id} value={c.name}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="customer">Customer</Label>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate("/customers/add")}
+                className="h-8"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Customer
+              </Button>
+            </div>
+            
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between"
+                >
+                  {customer
+                    ? customers.find(c => c.name === customer)?.unitNumber + " • " + customer
+                    : "Select a customer..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[320px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search customer..." />
+                  <CommandEmpty>No customer found.</CommandEmpty>
+                  <CommandGroup>
+                    {customers.map((c) => (
+                      <CommandItem
+                        key={c.id}
+                        value={c.id}
+                        onSelect={() => {
+                          setCustomer(c.name);
+                          setOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            customer === c.name ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-medium">{c.unitNumber}</span>
+                          <span className="text-sm text-muted-foreground">{c.name}</span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           
           {isQuotation ? (
@@ -104,6 +156,17 @@ export function CustomerInfoCard({
               />
             </div>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="subject">Subject</Label>
+          <Input
+            id="subject"
+            placeholder="e.g. Bathroom Renovation"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            required
+          />
         </div>
         
         {isQuotation ? (

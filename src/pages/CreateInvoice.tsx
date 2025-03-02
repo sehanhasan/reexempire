@@ -3,21 +3,23 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { generateInvoicePDF } from "@/utils/pdfGenerator";
 
 export default function CreateInvoice() {
   const navigate = useNavigate();
   const location = useLocation();
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+    { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0, category: "" }
   ]);
 
   const [customer, setCustomer] = useState("");
+  const [subject, setSubject] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -64,16 +66,50 @@ export default function CreateInvoice() {
     navigate("/invoices");
   };
 
+  const handleGeneratePDF = () => {
+    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+    const tax = isDepositInvoice ? depositAmount * 0.06 : subtotal * 0.06;
+    const total = isDepositInvoice ? depositAmount + tax : subtotal + tax;
+    
+    generateInvoicePDF({
+      customer,
+      subject,
+      invoiceNumber: "INV-0001",
+      invoiceDate,
+      dueDate,
+      items,
+      notes,
+      isDepositInvoice,
+      depositAmount,
+      subtotal,
+      tax,
+      total,
+      paymentMethod,
+      quotationReference
+    });
+    
+    toast({
+      title: "PDF Generated",
+      description: "Invoice PDF has been generated successfully.",
+    });
+  };
+
   return (
     <div className="page-container">
       <PageHeader
         title="Create Invoice"
         description="Create a new invoice for a customer."
         actions={
-          <Button variant="outline" onClick={() => navigate("/invoices")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Invoices
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/invoices")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Invoices
+            </Button>
+            <Button variant="outline" onClick={handleGeneratePDF}>
+              <FileText className="mr-2 h-4 w-4" />
+              Generate PDF
+            </Button>
+          </div>
         }
       />
 
@@ -90,6 +126,8 @@ export default function CreateInvoice() {
           paymentMethod={paymentMethod}
           setPaymentMethod={setPaymentMethod}
           quotationReference={quotationReference}
+          subject={subject}
+          setSubject={setSubject}
         />
         
         <InvoiceItemsCard 
