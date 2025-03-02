@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
@@ -14,8 +14,8 @@ import {
   Eye,
   Mail,
   Phone,
-  User,
-  UserPlus
+  UserPlus,
+  Loader2
 } from "lucide-react";
 
 import {
@@ -26,31 +26,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  unitNumber: string;
-  phone: string;
-  address: string;
-  status: "Active" | "Inactive";
-}
+import { customerService } from "@/services";
+import { Customer } from "@/types/database";
 
 export default function Customers() {
   const navigate = useNavigate();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Mock data - would come from API in real app
-  const [customers] = useState<Customer[]>([
-    { id: "C001", name: "Alice Johnson", email: "alice@example.com", unitNumber: "A-12-10", phone: "123456789", address: "Star Residences ONE", status: "Active" },
-    { id: "C002", name: "Bob Smith", email: "bob@example.com", unitNumber: "B-07-15", phone: "234567890", address: "Star Residences TWO", status: "Active" },
-    { id: "C003", name: "Carol Williams", email: "carol@example.com", unitNumber: "C-03-22", phone: "345678901", address: "Star Residences THREE", status: "Inactive" },
-    { id: "C004", name: "David Brown", email: "david@example.com", unitNumber: "A-09-05", phone: "456789012", address: "Ascott", status: "Active" },
-    { id: "C005", name: "Eva Davis", email: "eva@example.com", unitNumber: "B-15-18", phone: "567890123", address: "Star Residences ONE", status: "Active" },
-    { id: "C006", name: "Frank Miller", email: "frank@example.com", unitNumber: "C-21-01", phone: "678901234", address: "Star Residences TWO", status: "Inactive" },
-    { id: "C007", name: "Grace Wilson", email: "grace@example.com", unitNumber: "A-06-11", phone: "789012345", address: "Star Residences THREE", status: "Active" },
-  ]);
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const data = await customerService.getAll();
+        setCustomers(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load customers. Please try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    };
 
-  // Action handlers
+    fetchCustomers();
+  }, []);
+
   const handleView = (customer: Customer) => {
     toast({
       title: "View Customer",
@@ -66,18 +69,28 @@ export default function Customers() {
     navigate(`/customers/add?id=${customer.id}`);
   };
 
-  const handleDelete = (customer: Customer) => {
-    toast({
-      title: "Delete Customer",
-      description: `${customer.name} has been deleted`,
-      variant: "destructive"
-    });
+  const handleDelete = async (customer: Customer) => {
+    try {
+      await customerService.delete(customer.id);
+      setCustomers(customers.filter(c => c.id !== customer.id));
+      toast({
+        title: "Customer Deleted",
+        description: `${customer.name} has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete customer. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const columns = [
     {
       header: "Unit #",
-      accessorKey: "unitNumber" as keyof Customer,
+      accessorKey: "unit_number" as keyof Customer,
     },
     {
       header: "Name",
@@ -89,34 +102,27 @@ export default function Customers() {
       cell: (customer: Customer) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          <a 
-            href={`https://wa.me/60${customer.phone}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            +60 {customer.phone}
-          </a>
+          {customer.phone ? (
+            <a 
+              href={`https://wa.me/60${customer.phone}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              +60 {customer.phone}
+            </a>
+          ) : (
+            <span className="text-muted-foreground">Not provided</span>
+          )}
         </div>
       ),
     },
     {
       header: "Address",
       accessorKey: "address" as keyof Customer,
-    },
-    {
-      header: "Status",
-      accessorKey: "status" as keyof Customer,
-      cell: (customer: Customer) => {
-        return (
-          <Badge className={
-            customer.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-200"
-          }>
-            {customer.status}
-          </Badge>
-        );
-      },
+      cell: (customer: Customer) => (
+        <span>{customer.address || 'Not provided'}</span>
+      ),
     },
     {
       header: "Actions",
@@ -158,6 +164,15 @@ export default function Customers() {
       },
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="page-container flex items-center justify-center h-[70vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-lg">Loading customers...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">
