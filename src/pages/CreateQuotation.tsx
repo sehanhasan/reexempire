@@ -3,12 +3,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ export default function CreateQuotation() {
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
+  const [subject, setSubject] = useState("");
+  const [unitNumber, setUnitNumber] = useState("");
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
@@ -59,16 +62,62 @@ export default function CreateQuotation() {
     navigate("/invoices/create");
   };
 
+  const handleDownloadPDF = () => {
+    if (!customer) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before downloading the PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const pdf = generateQuotationPDF({
+        documentNumber: "QT-0001",
+        documentDate: quotationDate,
+        customerName: customer,
+        unitNumber: unitNumber,
+        expiryDate: validUntil,
+        validUntil: validUntil,
+        notes: notes,
+        items: items,
+        subject: subject,
+        depositInfo: depositInfo
+      });
+      
+      downloadPDF(pdf, `Quotation_QT-0001_${customer.replace(/\s+/g, '_')}.pdf`);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Quotation PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="page-container">
       <PageHeader
         title="Create Quotation"
         description="Create a new quotation for a customer."
         actions={
-          <Button variant="outline" onClick={() => navigate("/quotations")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Quotations
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/quotations")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Quotations
+            </Button>
+            <Button variant="secondary" onClick={handleDownloadPDF}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
+          </div>
         }
       />
 
@@ -82,6 +131,10 @@ export default function CreateQuotation() {
           setDocumentDate={setQuotationDate}
           expiryDate={validUntil}
           setExpiryDate={setValidUntil}
+          subject={subject}
+          setSubject={setSubject}
+          unitNumber={unitNumber}
+          setUnitNumber={setUnitNumber}
         />
         
         <QuotationItemsCard 

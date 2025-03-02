@@ -37,6 +37,10 @@ interface CustomerInfoCardProps {
   paymentMethod?: string;
   setPaymentMethod?: (value: string) => void;
   quotationReference?: string;
+  subject?: string;
+  setSubject?: (value: string) => void;
+  unitNumber?: string;
+  setUnitNumber?: (value: string) => void;
 }
 
 export function CustomerInfoCard({
@@ -50,7 +54,11 @@ export function CustomerInfoCard({
   setExpiryDate,
   paymentMethod,
   setPaymentMethod,
-  quotationReference
+  quotationReference,
+  subject,
+  setSubject,
+  unitNumber,
+  setUnitNumber
 }: CustomerInfoCardProps) {
   const isQuotation = documentType === "quotation";
   const expiryLabel = isQuotation ? "Valid Until" : "Due Date";
@@ -101,6 +109,33 @@ export function CustomerInfoCard({
                 placeholder={documentNumber}
                 defaultValue={documentNumber}
                 disabled
+              />
+            </div>
+          )}
+        </div>
+        
+        {/* Add unit number and subject fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {setUnitNumber && (
+            <div className="space-y-2">
+              <Label htmlFor="unitNumber">Unit #</Label>
+              <Input
+                id="unitNumber"
+                placeholder="e.g., A-12-10"
+                value={unitNumber || ''}
+                onChange={(e) => setUnitNumber(e.target.value)}
+              />
+            </div>
+          )}
+          
+          {setSubject && (
+            <div className="space-y-2">
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                placeholder="e.g., Bathroom Renovation"
+                value={subject || ''}
+                onChange={(e) => setSubject(e.target.value)}
               />
             </div>
           )}

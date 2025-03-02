@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 
 export default function CreateInvoice() {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ export default function CreateInvoice() {
   );
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [notes, setNotes] = useState("");
+  const [subject, setSubject] = useState("");
+  const [unitNumber, setUnitNumber] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
@@ -64,16 +67,66 @@ export default function CreateInvoice() {
     navigate("/invoices");
   };
 
+  const handleDownloadPDF = () => {
+    if (!customer) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before downloading the PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const pdf = generateInvoicePDF({
+        documentNumber: "INV-0001",
+        documentDate: invoiceDate,
+        customerName: customer,
+        unitNumber: unitNumber,
+        expiryDate: dueDate,
+        dueDate: dueDate,
+        paymentMethod: paymentMethod,
+        notes: notes,
+        items: items,
+        subject: subject,
+        isDepositInvoice: isDepositInvoice,
+        depositAmount: depositAmount,
+        depositPercentage: depositPercentage,
+        quotationReference: quotationReference
+      });
+      
+      downloadPDF(pdf, `Invoice_INV-0001_${customer.replace(/\s+/g, '_')}.pdf`);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Invoice PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="page-container">
       <PageHeader
         title="Create Invoice"
         description="Create a new invoice for a customer."
         actions={
-          <Button variant="outline" onClick={() => navigate("/invoices")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Invoices
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/invoices")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Invoices
+            </Button>
+            <Button variant="secondary" onClick={handleDownloadPDF}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
+          </div>
         }
       />
 
@@ -90,6 +143,10 @@ export default function CreateInvoice() {
           paymentMethod={paymentMethod}
           setPaymentMethod={setPaymentMethod}
           quotationReference={quotationReference}
+          subject={subject}
+          setSubject={setSubject}
+          unitNumber={unitNumber}
+          setUnitNumber={setUnitNumber}
         />
         
         <InvoiceItemsCard 
