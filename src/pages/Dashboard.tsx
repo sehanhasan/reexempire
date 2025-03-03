@@ -51,14 +51,17 @@ export default function Dashboard() {
           .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
           .slice(0, 5);
 
-        // Find related quotations for each appointment
+        // We're accessing job.quotation_id which doesn't exist on Appointment type
+        // So we'll need to modify this part to use a different approach
         const jobsWithQuotations = await Promise.all(
           upcomingAppointments.map(async (job) => {
-            if (job.quotation_id) {
-              const quotation = await quotationService.getById(job.quotation_id);
-              return { ...job, quotation };
-            }
-            return job;
+            // Find quotations related to this customer
+            const customerQuotations = quotations.filter(q => q.customer_id === job.customer_id);
+            return { 
+              ...job, 
+              // Add related quotations if any
+              related_quotations: customerQuotations.length ? customerQuotations : []
+            };
           })
         );
 
@@ -195,11 +198,11 @@ export default function Dashboard() {
                       <p className="text-sm">{job.customer_name}</p>
                     </div>
                     <div className="flex space-x-2">
-                      {job.quotation_id && (
+                      {job.related_quotations && job.related_quotations.length > 0 && (
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => navigateToQuotation(job.quotation_id)}
+                          onClick={() => navigateToQuotation(job.related_quotations[0].id)}
                         >
                           <ReceiptText className="h-4 w-4 mr-1" />
                           Quotation
