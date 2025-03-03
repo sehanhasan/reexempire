@@ -14,7 +14,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip
+  Tooltip,
+  Legend
 } from "recharts";
 
 interface ChartProps {
@@ -119,6 +120,7 @@ export function Chart({
               return null
             }}
           />
+          <Legend />
         </PieChart>
       </ResponsiveContainer>
     );

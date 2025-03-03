@@ -12,9 +12,11 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [items, setItems] = useState<QuotationItem[]>([
     { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
@@ -30,6 +32,7 @@ export default function CreateQuotation() {
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [unitNumber, setUnitNumber] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("QT-0001");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
@@ -84,7 +87,7 @@ export default function CreateQuotation() {
       // Create quotation in database
       const quotation = {
         customer_id: customerId,
-        reference_number: "QT-0001", // In production, this would be generated
+        reference_number: documentNumber,
         issue_date: quotationDate,
         expiry_date: validUntil,
         status: "Draft",
@@ -155,7 +158,7 @@ export default function CreateQuotation() {
 
     try {
       const pdf = generateQuotationPDF({
-        documentNumber: "QT-0001",
+        documentNumber: documentNumber,
         documentDate: quotationDate,
         customerName: customer.name,
         unitNumber: unitNumber,
@@ -167,7 +170,7 @@ export default function CreateQuotation() {
         depositInfo: depositInfo
       });
       
-      downloadPDF(pdf, `Quotation_QT-0001_${customer.name.replace(/\s+/g, '_')}.pdf`);
+      downloadPDF(pdf, `Quotation_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
       
       toast({
         title: "PDF Generated",
@@ -189,7 +192,7 @@ export default function CreateQuotation() {
         title="Create Quotation"
         description="Create a new quotation for a customer."
         actions={
-          <div className="flex gap-2">
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
@@ -207,7 +210,8 @@ export default function CreateQuotation() {
           customer={customerId}
           setCustomer={setCustomerId}
           documentType="quotation"
-          documentNumber="QT-0001"
+          documentNumber={documentNumber}
+          setDocumentNumber={setDocumentNumber}
           documentDate={quotationDate}
           setDocumentDate={setQuotationDate}
           expiryDate={validUntil}

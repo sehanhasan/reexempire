@@ -15,6 +15,7 @@ import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuotationItemsCardProps {
   items: QuotationItem[];
@@ -32,6 +33,7 @@ export function QuotationItemsCard({
   calculateItemAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const isMobile = useIsMobile();
   
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
     setItems(prevItems =>
@@ -105,11 +107,12 @@ export function QuotationItemsCard({
           <CardTitle>Quotation Items</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-4`}>
             <Button
               type="button"
               variant="outline"
               onClick={addItem}
+              className={isMobile ? "w-full" : ""}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Item
@@ -119,6 +122,7 @@ export function QuotationItemsCard({
               type="button"
               variant="outline"
               onClick={() => setShowCategorySelector(true)}
+              className={isMobile ? "w-full" : ""}
             >
               <FolderSearch className="mr-2 h-4 w-4" />
               Select from Categories
@@ -131,8 +135,8 @@ export function QuotationItemsCard({
             removeItem={removeItem}
           />
           
-          <div className="flex justify-end mt-6">
-            <div className="w-72 space-y-4">
+          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-6`}>
+            <div className={isMobile ? "w-full" : "w-72"}>
               <div className="flex justify-between py-2">
                 <span className="font-medium">Subtotal:</span>
                 <span>RM {calculateTotal().toFixed(2)}</span>

@@ -58,7 +58,7 @@ export function ItemsTable<T extends ItemBase>({
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => handleItemChange(item.id, "quantity", parseInt(e.target.value))}
+                      onChange={(e) => handleItemChange(item.id, "quantity", parseInt(e.target.value) || 1)}
                       required
                     />
                   </div>
@@ -92,7 +92,7 @@ export function ItemsTable<T extends ItemBase>({
                         min="0"
                         step="0.01"
                         value={item.unitPrice}
-                        onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value))}
+                        onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
                         required
                         className="pl-10"
                       />
@@ -100,14 +100,8 @@ export function ItemsTable<T extends ItemBase>({
                   </div>
                   <div className="space-y-1">
                     <label className="text-sm font-medium">Amount</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                      <Input
-                        type="number"
-                        value={item.amount.toFixed(2)}
-                        disabled
-                        className="pl-10"
-                      />
+                    <div className="text-lg font-medium pt-1.5 pl-2">
+                      RM {item.amount.toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -147,7 +141,7 @@ export function ItemsTable<T extends ItemBase>({
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
+            <TableRow key={`row-${item.id}`}>
               <TableCell className="py-3 px-4">
                 <Input
                   placeholder="Item description"
@@ -161,7 +155,7 @@ export function ItemsTable<T extends ItemBase>({
                   type="number"
                   min="1"
                   value={item.quantity}
-                  onChange={(e) => handleItemChange(item.id, "quantity", parseInt(e.target.value))}
+                  onChange={(e) => handleItemChange(item.id, "quantity", parseInt(e.target.value) || 1)}
                   required
                   className="text-center"
                 />
@@ -191,22 +185,14 @@ export function ItemsTable<T extends ItemBase>({
                     min="0"
                     step="0.01"
                     value={item.unitPrice}
-                    onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value))}
+                    onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
                     required
                     className="text-right pl-10"
                   />
                 </div>
               </TableCell>
-              <TableCell className="py-3 px-4">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                  <Input
-                    type="number"
-                    value={item.amount.toFixed(2)}
-                    disabled
-                    className="text-right pl-10"
-                  />
-                </div>
+              <TableCell className="py-3 px-4 text-right font-medium">
+                RM {item.amount.toFixed(2)}
               </TableCell>
               <TableCell className="py-3 px-4 text-center">
                 <Button

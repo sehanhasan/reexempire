@@ -1,5 +1,6 @@
 
 import { cn } from "@/lib/utils";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface StatCardProps {
   title: string;
@@ -11,6 +12,7 @@ interface StatCardProps {
     isPositive: boolean;
   } | string;
   className?: string;
+  onClick?: () => void;
 }
 
 export function StatCard({ 
@@ -19,7 +21,8 @@ export function StatCard({
   description, 
   icon, 
   trend, 
-  className 
+  className,
+  onClick
 }: StatCardProps) {
   // Process trend to handle both string and object formats
   const trendDisplay = typeof trend === 'string' 
@@ -27,13 +30,17 @@ export function StatCard({
     : trend && `${trend.isPositive ? '+' : ''}${trend.value}%`;
   
   // Determine if trend is positive (for styling)
-  const isTrendPositive = typeof trend === 'object' ? trend.isPositive : true;
+  const isTrendPositive = typeof trend === 'object' ? trend.isPositive : false;
   
   return (
-    <div className={cn(
-      "bg-white rounded-lg border border-slate-200 p-5 shadow-sm transition-all hover:shadow-md",
-      className
-    )}>
+    <div 
+      className={cn(
+        "bg-white rounded-lg border border-slate-200 p-5 shadow-sm transition-all hover:shadow-md",
+        onClick && "cursor-pointer",
+        className
+      )}
+      onClick={onClick}
+    >
       <div className="flex justify-between items-start">
         <div>
           <p className="text-sm font-medium text-slate-500">{title}</p>
@@ -42,9 +49,12 @@ export function StatCard({
           {trend && (
             <div className="flex items-center mt-1">
               <span className={cn(
-                "text-xs font-medium",
+                "text-xs font-medium flex items-center",
                 isTrendPositive ? "text-green-600" : "text-red-600"
               )}>
+                {typeof trend === 'object' && (
+                  isTrendPositive ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />
+                )}
                 {trendDisplay}
               </span>
               {description && (

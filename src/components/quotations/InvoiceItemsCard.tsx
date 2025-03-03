@@ -15,6 +15,7 @@ import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
@@ -40,6 +41,7 @@ export function InvoiceItemsCard({
   calculateItemAmount
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const isMobile = useIsMobile();
   
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems =>
@@ -69,20 +71,12 @@ export function InvoiceItemsCard({
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
 
-  const calculateTax = () => {
-    // If this is a deposit invoice, only apply tax to the deposit amount
-    if (isDepositInvoice) {
-      return depositAmount * 0.06; // 6% SST in Malaysia
-    }
-    return calculateSubtotal() * 0.06; // 6% SST in Malaysia
-  };
-
   const calculateTotal = () => {
-    // If this is a deposit invoice, return only the deposit amount + tax
+    // If this is a deposit invoice, return only the deposit amount
     if (isDepositInvoice) {
-      return depositAmount + calculateTax();
+      return depositAmount;
     }
-    return calculateSubtotal() + calculateTax();
+    return calculateSubtotal();
   };
 
   const handleDepositPercentageChange = (value: number) => {
@@ -147,11 +141,12 @@ export function InvoiceItemsCard({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-4`}>
             <Button
               type="button"
               variant="outline"
               onClick={addItem}
+              className={isMobile ? "w-full" : ""}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Item
@@ -161,6 +156,7 @@ export function InvoiceItemsCard({
               type="button"
               variant="outline"
               onClick={() => setShowCategorySelector(true)}
+              className={isMobile ? "w-full" : ""}
             >
               <FolderSearch className="mr-2 h-4 w-4" />
               Select from Categories
@@ -173,8 +169,8 @@ export function InvoiceItemsCard({
             removeItem={removeItem}
           />
           
-          <div className="flex justify-end mt-6">
-            <div className="w-72 space-y-2">
+          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-6`}>
+            <div className={isMobile ? "w-full" : "w-72"}>
               <div className="flex justify-between py-2">
                 <span className="font-medium">Subtotal:</span>
                 <span>RM {calculateSubtotal().toFixed(2)}</span>
@@ -221,11 +217,7 @@ export function InvoiceItemsCard({
                 </div>
               )}
 
-              <div className="flex justify-between py-2 border-t border-b">
-                <span className="font-medium">SST (6%):</span>
-                <span>RM {calculateTax().toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between py-2 border-t">
                 <span className="font-semibold text-lg">Total:</span>
                 <span className="font-semibold text-lg">RM {calculateTotal().toFixed(2)}</span>
               </div>

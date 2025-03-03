@@ -12,10 +12,12 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 import { invoiceService, customerService, quotationService } from "@/services";
 import { Customer } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function CreateInvoice() {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
@@ -32,6 +34,7 @@ export default function CreateInvoice() {
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [unitNumber, setUnitNumber] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("INV-0001");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
@@ -126,9 +129,7 @@ export default function CreateInvoice() {
     
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const taxRate = 6; // 6% SST
-    const taxAmount = (subtotal * taxRate) / 100;
-    const total = subtotal + taxAmount;
+    const total = isDepositInvoice ? depositAmount : subtotal;
     
     try {
       setIsSubmitting(true);
@@ -137,13 +138,13 @@ export default function CreateInvoice() {
       const invoice = {
         customer_id: customerId,
         quotation_id: quotationId,
-        reference_number: "INV-0001", // In production, this would be generated
+        reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
         status: "Draft",
         subtotal: subtotal,
-        tax_rate: taxRate,
-        tax_amount: taxAmount,
+        tax_rate: 0, // No SST as requested
+        tax_amount: 0,
         total: total,
         notes: notes || null,
         terms: null,
@@ -200,7 +201,7 @@ export default function CreateInvoice() {
 
     try {
       const pdf = generateInvoicePDF({
-        documentNumber: "INV-0001",
+        documentNumber: documentNumber,
         documentDate: invoiceDate,
         customerName: customer.name,
         unitNumber: unitNumber,
@@ -216,7 +217,7 @@ export default function CreateInvoice() {
         quotationReference: quotationReference
       });
       
-      downloadPDF(pdf, `Invoice_INV-0001_${customer.name.replace(/\s+/g, '_')}.pdf`);
+      downloadPDF(pdf, `Invoice_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
       
       toast({
         title: "PDF Generated",
@@ -238,7 +239,7 @@ export default function CreateInvoice() {
         title="Create Invoice"
         description="Create a new invoice for a customer."
         actions={
-          <div className="flex gap-2">
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/invoices")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Invoices
@@ -256,7 +257,8 @@ export default function CreateInvoice() {
           customer={customerId}
           setCustomer={setCustomerId}
           documentType="invoice"
-          documentNumber="INV-0001"
+          documentNumber={documentNumber}
+          setDocumentNumber={setDocumentNumber}
           documentDate={invoiceDate}
           setDocumentDate={setInvoiceDate}
           expiryDate={dueDate}
