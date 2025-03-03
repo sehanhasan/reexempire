@@ -60,7 +60,10 @@ export default function AddCustomerForm({ onSuccess, isModal = false }: AddCusto
         phone: `+60${whatsapp}`,
         email: email || null,
         notes: notes || null,
-        // Additional fields can be added as needed
+        address: residence || null,
+        city: null,
+        state: null,
+        postal_code: null,
       };
       
       await customerService.create(customer);

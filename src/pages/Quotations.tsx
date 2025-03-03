@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DataTable } from "@/components/common/DataTable";
+import { DataTable, Column } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,7 +203,8 @@ export default function Quotations() {
     updateQuotation();
   };
 
-  const columns = [
+  // Define columns for the DataTable
+  const columns: Column<QuotationWithCustomer>[] = [
     {
       header: "ID",
       accessorKey: "reference_number",
@@ -211,7 +212,7 @@ export default function Quotations() {
     {
       header: "Unit #",
       accessorKey: "unit_number",
-      cell: (info: any) => info.getValue() || "N/A",
+      cell: (quotation) => quotation.unit_number || "N/A",
     },
     {
       header: "Customer",
@@ -220,23 +221,23 @@ export default function Quotations() {
     {
       header: "Amount",
       accessorKey: "total",
-      cell: (info: any) => `RM ${parseFloat(info.getValue()).toFixed(2)}`,
+      cell: (quotation) => `RM ${parseFloat(quotation.total.toString()).toFixed(2)}`,
     },
     {
       header: "Issue Date",
       accessorKey: "issue_date",
-      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
+      cell: (quotation) => format(new Date(quotation.issue_date), "MMM dd, yyyy"),
     },
     {
       header: "Valid Until",
       accessorKey: "expiry_date",
-      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
+      cell: (quotation) => format(new Date(quotation.expiry_date), "MMM dd, yyyy"),
     },
     {
       header: "Status",
       accessorKey: "status",
-      cell: (info: any) => {
-        const status = info.getValue();
+      cell: (quotation) => {
+        const status = quotation.status;
         return (
           <Badge className={
             status === "Accepted" ? "bg-green-100 text-green-800 hover:bg-green-200" :
@@ -251,8 +252,8 @@ export default function Quotations() {
     },
     {
       header: "Actions",
-      cell: (info: any) => {
-        const quotation = info.row.original;
+      accessorKey: "id", // We need to specify a key even for action columns
+      cell: (quotation) => {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

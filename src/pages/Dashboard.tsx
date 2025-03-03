@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Chart } from "@/components/ui/chart";
+import { Chart } from "@/components/dashboard/Chart";
 
 export default function Dashboard() {
   // Sample data for charts (would come from API in real app)
@@ -48,28 +48,28 @@ export default function Dashboard() {
         <StatCard
           title="Total Revenue"
           value="RM 124,500"
-          trend="+12%"
+          trend={{ value: 12, isPositive: true }}
           description="vs. previous month"
           icon={<DollarSign className="h-5 w-5" />}
         />
         <StatCard
           title="Active Projects"
           value="8"
-          trend="+2"
+          trend={{ value: 2, isPositive: true }}
           description="vs. previous month"
           icon={<FileText className="h-5 w-5" />}
         />
         <StatCard
           title="New Customers"
           value="24"
-          trend="+5"
+          trend={{ value: 5, isPositive: true }}
           description="vs. previous month"
           icon={<Users className="h-5 w-5" />}
         />
         <StatCard
           title="Completion Rate"
           value="92%"
-          trend="+3%"
+          trend={{ value: 3, isPositive: true }}
           description="vs. previous month"
           icon={<ArrowUpRight className="h-5 w-5" />}
         />

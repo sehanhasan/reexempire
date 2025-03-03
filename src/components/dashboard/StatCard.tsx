@@ -9,7 +9,7 @@ interface StatCardProps {
   trend?: {
     value: number;
     isPositive: boolean;
-  };
+  } | string;
   className?: string;
 }
 
@@ -21,6 +21,14 @@ export function StatCard({
   trend, 
   className 
 }: StatCardProps) {
+  // Process trend to handle both string and object formats
+  const trendDisplay = typeof trend === 'string' 
+    ? trend 
+    : trend && `${trend.isPositive ? '+' : ''}${trend.value}%`;
+  
+  // Determine if trend is positive (for styling)
+  const isTrendPositive = typeof trend === 'object' ? trend.isPositive : true;
+  
   return (
     <div className={cn(
       "bg-white rounded-lg border border-slate-200 p-5 shadow-sm transition-all hover:shadow-md",
@@ -35,11 +43,13 @@ export function StatCard({
             <div className="flex items-center mt-1">
               <span className={cn(
                 "text-xs font-medium",
-                trend.isPositive ? "text-green-600" : "text-red-600"
+                isTrendPositive ? "text-green-600" : "text-red-600"
               )}>
-                {trend.isPositive ? "+" : ""}{trend.value}%
+                {trendDisplay}
               </span>
-              <span className="text-xs text-slate-500 ml-1">from last month</span>
+              {description && (
+                <span className="text-xs text-slate-500 ml-1">{description}</span>
+              )}
             </div>
           )}
         </div>
@@ -49,7 +59,7 @@ export function StatCard({
           </div>
         )}
       </div>
-      {description && (
+      {!trend && description && (
         <p className="mt-2 text-sm text-slate-500">{description}</p>
       )}
     </div>

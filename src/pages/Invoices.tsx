@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DataTable } from "@/components/common/DataTable";
+import { DataTable, Column } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -177,7 +177,8 @@ export default function Invoices() {
     updateInvoice();
   };
 
-  const columns = [
+  // Define columns for the DataTable
+  const columns: Column<InvoiceWithCustomer>[] = [
     {
       header: "ID",
       accessorKey: "reference_number",
@@ -185,28 +186,28 @@ export default function Invoices() {
     {
       header: "Unit #",
       accessorKey: "unit_number",
-      cell: (info: any) => info.getValue() || "N/A",
+      cell: (invoice) => invoice.unit_number || "N/A",
     },
     {
       header: "Amount",
       accessorKey: "total",
-      cell: (info: any) => `RM ${parseFloat(info.getValue()).toFixed(2)}`,
+      cell: (invoice) => `RM ${parseFloat(invoice.total.toString()).toFixed(2)}`,
     },
     {
       header: "Issue Date",
       accessorKey: "issue_date",
-      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
+      cell: (invoice) => format(new Date(invoice.issue_date), "MMM dd, yyyy"),
     },
     {
       header: "Due Date",
       accessorKey: "due_date",
-      cell: (info: any) => format(new Date(info.getValue()), "MMM dd, yyyy"),
+      cell: (invoice) => format(new Date(invoice.due_date), "MMM dd, yyyy"),
     },
     {
       header: "Status",
       accessorKey: "payment_status",
-      cell: (info: any) => {
-        const status = info.getValue();
+      cell: (invoice) => {
+        const status = invoice.payment_status;
         return (
           <Badge className={
             status === "Paid" ? "bg-green-100 text-green-800 hover:bg-green-200" :
@@ -221,8 +222,8 @@ export default function Invoices() {
     },
     {
       header: "Actions",
-      cell: (info: any) => {
-        const invoice = info.row.original;
+      accessorKey: "id", // We need to specify a key even for action columns
+      cell: (invoice) => {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
