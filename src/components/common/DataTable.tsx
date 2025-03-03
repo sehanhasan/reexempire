@@ -49,6 +49,19 @@ export function DataTable<T extends Record<string, any>>({
     return !skipHeaders.includes(column.header);
   };
 
+  // Generate unique stable keys for each row and cell
+  const getRowKey = (row: T, rowIndex: number) => {
+    return `row-${row.id || rowIndex}-${rowIndex}`;
+  };
+
+  const getCellKey = (column: Column<T>, colIndex: number, rowIndex: number) => {
+    return `cell-${colIndex}-${rowIndex}-${column.header.replace(/\s+/g, '-')}`;
+  };
+  
+  const getCardKey = (row: T, rowIndex: number) => {
+    return `card-${row.id || rowIndex}-${rowIndex}`;
+  };
+
   return (
     <div className="space-y-4">
       {searchKey && (
@@ -76,7 +89,7 @@ export function DataTable<T extends Record<string, any>>({
             {isMobile ? (
               <div className="space-y-4">
                 {filteredData.map((row, rowIndex) => (
-                  <Card key={`card-${row.id || rowIndex}`} className="overflow-hidden border-l-4 border-l-blue-500">
+                  <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500">
                     <CardContent className="p-0">
                       {columns.map((column, colIndex) => {
                         // Skip rendering of certain columns that don't make sense on mobile
@@ -87,14 +100,14 @@ export function DataTable<T extends Record<string, any>>({
                         // Actions column should be displayed at the bottom
                         if (column.header === "Actions") {
                           return (
-                            <div key={`action-${colIndex}`} className="border-t p-2 bg-muted/20 flex justify-end">
+                            <div key={getCellKey(column, colIndex, rowIndex)} className="border-t p-2 bg-muted/20 flex justify-end">
                               {column.cell ? column.cell(row) : row[column.accessorKey]}
                             </div>
                           );
                         }
                         
                         return (
-                          <div key={`col-${colIndex}`} className="flex flex-col px-4 py-2 border-b last:border-b-0">
+                          <div key={getCellKey(column, colIndex, rowIndex)} className="flex flex-col px-4 py-2 border-b last:border-b-0">
                             <span className="text-xs font-medium text-muted-foreground">
                               {getMobileLabel(column)}
                             </span>
@@ -113,7 +126,7 @@ export function DataTable<T extends Record<string, any>>({
                 <TableHeader className="data-table-header">
                   <TableRow>
                     {columns.map((column, idx) => (
-                      <TableHead key={`header-${idx}`} className="data-table-head">
+                      <TableHead key={`header-${idx}-${column.header.replace(/\s+/g, '-')}`} className="data-table-head">
                         {column.header}
                       </TableHead>
                     ))}
@@ -121,9 +134,9 @@ export function DataTable<T extends Record<string, any>>({
                 </TableHeader>
                 <TableBody className="data-table-body">
                   {filteredData.map((row, rowIndex) => (
-                    <TableRow key={`row-${row.id || rowIndex}`} className="data-table-row">
+                    <TableRow key={getRowKey(row, rowIndex)} className="data-table-row">
                       {columns.map((column, colIndex) => (
-                        <TableCell key={`cell-${colIndex}-${rowIndex}`} className="data-table-cell">
+                        <TableCell key={getCellKey(column, colIndex, rowIndex)} className="data-table-cell">
                           {column.cell ? column.cell(row) : row[column.accessorKey]}
                         </TableCell>
                       ))}

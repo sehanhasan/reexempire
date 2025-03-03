@@ -11,7 +11,6 @@ import {
   Edit, 
   Receipt, 
   MoreHorizontal, 
-  Send,
   Trash,
   Eye,
   Download
@@ -24,9 +23,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { invoiceService, customerService } from "@/services";
 import { format } from "date-fns";
 import { Invoice, Customer } from "@/types/database";
+import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 
 interface InvoiceWithCustomer extends Invoice {
   customer_name: string;
@@ -37,6 +58,10 @@ export default function Invoices() {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<InvoiceWithCustomer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithCustomer | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<InvoiceWithCustomer | null>(null);
   
   const fetchInvoices = async () => {
     try {
@@ -86,70 +111,81 @@ export default function Invoices() {
 
   // Action handlers
   const handleView = (invoice: InvoiceWithCustomer) => {
-    toast({
-      title: "Viewing Invoice",
-      description: `Viewing details for invoice ${invoice.reference_number}`,
-    });
+    setSelectedInvoice(invoice);
+    setShowViewDialog(true);
   };
 
   const handleEdit = (invoice: InvoiceWithCustomer) => {
-    navigate(`/invoices/edit?id=${invoice.id}`);
+    // Since we don't have an edit page yet, we'll show a toast
+    toast({
+      title: "Edit Invoice",
+      description: "This feature is coming soon.",
+    });
   };
 
   const handleDownload = (invoice: InvoiceWithCustomer) => {
-    toast({
-      title: "Invoice Downloaded",
-      description: `Invoice ${invoice.reference_number} has been downloaded`,
-    });
-  };
-
-  const handleSend = (invoice: InvoiceWithCustomer) => {
-    // Update the invoice status if it's a draft
-    if (invoice.status === "Draft") {
-      const updateInvoice = async () => {
-        try {
-          await invoiceService.update(invoice.id, { 
-            status: "Sent",
-            payment_status: "Unpaid"
-          });
-          fetchInvoices(); // Refresh the list
-        } catch (error) {
-          console.error("Error updating invoice:", error);
+    try {
+      // Reusing the quotation PDF generator with invoice data
+      const pdf = generateQuotationPDF({
+        documentNumber: invoice.reference_number,
+        documentDate: invoice.issue_date,
+        customerName: invoice.customer_name,
+        unitNumber: invoice.unit_number || "",
+        expiryDate: invoice.due_date,
+        validUntil: invoice.due_date,
+        notes: invoice.notes || "",
+        items: [], // In real app, we'd need to fetch the items
+        subject: "Invoice",
+        depositInfo: {
+          requiresDeposit: invoice.is_deposit_invoice || false,
+          depositAmount: Number(invoice.deposit_amount) || 0,
+          depositPercentage: invoice.deposit_percentage || 0
         }
-      };
+      });
       
-      updateInvoice();
+      downloadPDF(pdf, `Invoice_${invoice.reference_number}_${invoice.customer_name.replace(/\s+/g, '_')}.pdf`);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Invoice PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    toast({
-      title: "Invoice Sent",
-      description: `Invoice ${invoice.reference_number} has been sent to ${invoice.customer_name}`,
-    });
   };
 
   const handleDelete = (invoice: InvoiceWithCustomer) => {
-    const deleteInvoice = async () => {
-      try {
-        await invoiceService.delete(invoice.id);
-        // Remove the invoice from the list
-        setInvoices(invoices.filter(inv => inv.id !== invoice.id));
-        
-        toast({
-          title: "Invoice Deleted",
-          description: `Invoice ${invoice.reference_number} has been deleted`,
-          variant: "destructive",
-        });
-      } catch (error) {
-        console.error("Error deleting invoice:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete invoice. Please try again.",
-          variant: "destructive",
-        });
-      }
-    };
+    setInvoiceToDelete(invoice);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!invoiceToDelete) return;
     
-    deleteInvoice();
+    try {
+      await invoiceService.delete(invoiceToDelete.id);
+      setInvoices(invoices.filter(inv => inv.id !== invoiceToDelete.id));
+      setShowDeleteConfirm(false);
+      setInvoiceToDelete(null);
+      
+      toast({
+        title: "Invoice Deleted",
+        description: `Invoice ${invoiceToDelete.reference_number} has been deleted`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMarkAsPaid = (invoice: InvoiceWithCustomer) => {
@@ -187,6 +223,10 @@ export default function Invoices() {
       header: "Unit #",
       accessorKey: "unit_number",
       cell: (invoice) => invoice.unit_number || "N/A",
+    },
+    {
+      header: "Customer",
+      accessorKey: "customer_name",
     },
     {
       header: "Amount",
@@ -255,15 +295,6 @@ export default function Invoices() {
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </DropdownMenuItem>
-              {(invoice.status === "Draft" || invoice.payment_status === "Unpaid") && (
-                <DropdownMenuItem 
-                  className="cursor-pointer"
-                  onClick={() => handleSend(invoice)}
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  Send
-                </DropdownMenuItem>
-              )}
               {(invoice.payment_status === "Unpaid" || invoice.payment_status === "Overdue") && (
                 <DropdownMenuItem 
                   className="cursor-pointer text-green-600"
@@ -309,6 +340,123 @@ export default function Invoices() {
           isLoading={isLoading}
         />
       </div>
+
+      {/* View Invoice Dialog */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Invoice Details</DialogTitle>
+            <DialogDescription>
+              {selectedInvoice && `Invoice ${selectedInvoice.reference_number}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedInvoice && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Reference No.</p>
+                  <p className="font-medium">{selectedInvoice.reference_number}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <Badge className={
+                    selectedInvoice.payment_status === "Paid" ? "bg-green-100 text-green-800" :
+                    selectedInvoice.payment_status === "Unpaid" ? "bg-amber-100 text-amber-800" :
+                    selectedInvoice.payment_status === "Draft" ? "bg-gray-100 text-gray-800" :
+                    "bg-red-100 text-red-800"
+                  }>
+                    {selectedInvoice.payment_status}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Customer</p>
+                <p className="font-medium">{selectedInvoice.customer_name}</p>
+                {selectedInvoice.unit_number && (
+                  <p className="text-sm text-gray-500">Unit #{selectedInvoice.unit_number}</p>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Issue Date</p>
+                  <p>{format(new Date(selectedInvoice.issue_date), "MMM dd, yyyy")}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Due Date</p>
+                  <p>{format(new Date(selectedInvoice.due_date), "MMM dd, yyyy")}</p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Amount</p>
+                <p className="text-xl font-semibold">RM {parseFloat(selectedInvoice.total.toString()).toFixed(2)}</p>
+                {selectedInvoice.is_deposit_invoice && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium text-muted-foreground">Deposit Invoice</p>
+                    <p>RM {parseFloat(selectedInvoice.deposit_amount?.toString() || "0").toFixed(2)} ({selectedInvoice.deposit_percentage}%)</p>
+                  </div>
+                )}
+              </div>
+              
+              {selectedInvoice.notes && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                  <p className="text-sm whitespace-pre-line">{selectedInvoice.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setShowViewDialog(false)}>
+              Close
+            </Button>
+            {selectedInvoice && selectedInvoice.status === "Draft" && (
+              <Button variant="outline" onClick={() => {
+                setShowViewDialog(false);
+                handleEdit(selectedInvoice);
+              }}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            )}
+            {selectedInvoice && (
+              <Button variant="outline" onClick={() => {
+                setShowViewDialog(false);
+                handleDownload(selectedInvoice);
+              }}>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this invoice.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FloatingActionButton onClick={() => navigate("/invoices/create")} />
     </div>

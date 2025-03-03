@@ -59,29 +59,34 @@ export default function Customers() {
   const [showDetails, setShowDetails] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const data = await customerService.getAll();
-        setCustomers(data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load customers. Please try again.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-      }
-    };
+  const fetchCustomers = async () => {
+    try {
+      const data = await customerService.getAll();
+      setCustomers(data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load customers. Please try again.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCustomers();
   }, []);
 
   const handleView = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setShowDetails(true);
+    // First clear the previous customer to avoid state issues
+    setSelectedCustomer(null);
+    // Use setTimeout to ensure the state is updated before showing dialog
+    setTimeout(() => {
+      setSelectedCustomer(customer);
+      setShowDetails(true);
+    }, 10);
   };
 
   const handleEdit = (customer: Customer) => {
@@ -100,6 +105,7 @@ export default function Customers() {
       await customerService.delete(customerToDelete.id);
       setCustomers(customers.filter(c => c.id !== customerToDelete.id));
       setShowDeleteConfirm(false);
+      setCustomerToDelete(null);
       
       toast({
         title: "Customer Deleted",
@@ -244,16 +250,19 @@ export default function Customers() {
         />
       </div>
 
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Customer Details</DialogTitle>
-            <DialogDescription>
-              Complete information about this customer.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedCustomer && (
+      {selectedCustomer && (
+        <Dialog open={showDetails} onOpenChange={(open) => {
+          setShowDetails(open);
+          if (!open) setSelectedCustomer(null);
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Customer Details</DialogTitle>
+              <DialogDescription>
+                Complete information about this customer.
+              </DialogDescription>
+            </DialogHeader>
+            
             <div className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Unit Number</p>
@@ -315,41 +324,41 @@ export default function Customers() {
                 </div>
               )}
             </div>
-          )}
-          
-          <DialogFooter className="sm:justify-end">
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowDetails(false)}
-              >
-                Close
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  setShowDetails(false);
-                  if (selectedCustomer) {
-                    navigate("/quotations/create", { state: { customerId: selectedCustomer.id } });
-                  }
-                }}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                Create Quotation
-              </Button>
-              <Button 
-                onClick={() => {
-                  setShowDetails(false);
-                  if (selectedCustomer) handleEdit(selectedCustomer);
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            
+            <DialogFooter className="sm:justify-end">
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDetails(false)}
+                >
+                  Close
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setShowDetails(false);
+                    if (selectedCustomer) {
+                      navigate("/quotations/create", { state: { customerId: selectedCustomer.id } });
+                    }
+                  }}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  Create Quotation
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowDetails(false);
+                    if (selectedCustomer) handleEdit(selectedCustomer);
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>

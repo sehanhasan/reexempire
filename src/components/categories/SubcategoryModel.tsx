@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Sheet,
   SheetContent,
@@ -20,6 +20,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Plus, Trash } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 export interface PricingOption {
   id: string;
@@ -53,12 +54,24 @@ export function SubcategoryModal({
   subcategory,
   onSave,
 }: SubcategoryModalProps) {
-  const [name, setName] = useState(subcategory?.name || "");
-  const [description, setDescription] = useState(subcategory?.description || "");
-  const [pricingOptions, setPricingOptions] = useState<PricingOption[]>(
-    subcategory?.pricingOptions || 
-    [{ id: `po-${Date.now()}`, name: "", price: 0, unit: "Unit" }]
-  );
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([
+    { id: `po-${Date.now()}`, name: "", price: 0, unit: "Unit" }
+  ]);
+
+  // Reset form when modal opens with new data
+  useEffect(() => {
+    if (open) {
+      setName(subcategory?.name || "");
+      setDescription(subcategory?.description || "");
+      setPricingOptions(
+        subcategory?.pricingOptions?.length 
+          ? [...subcategory.pricingOptions] 
+          : [{ id: `po-${Date.now()}`, name: "", price: 0, unit: "Unit" }]
+      );
+    }
+  }, [open, subcategory]);
 
   const addPricingOption = () => {
     setPricingOptions([
@@ -80,7 +93,14 @@ export function SubcategoryModal({
   };
 
   const handleSave = () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Subcategory name is required",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const newSubcategory: Subcategory = {
       id: subcategory?.id || `subcat-${Date.now()}`,
@@ -101,7 +121,7 @@ export function SubcategoryModal({
             {subcategory ? "Edit Subcategory" : "Add Subcategory"}
           </SheetTitle>
           <SheetDescription>
-            Add a new subcategory to <span className="font-medium">{category.name}</span>
+            Add a new subcategory to <span className="font-medium">{category?.name || ""}</span>
           </SheetDescription>
         </SheetHeader>
 

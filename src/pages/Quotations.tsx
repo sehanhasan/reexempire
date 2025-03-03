@@ -26,9 +26,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { quotationService, customerService } from "@/services";
 import { format } from "date-fns";
 import { Quotation, Customer } from "@/types/database";
+import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
@@ -39,6 +61,10 @@ export default function Quotations() {
   const navigate = useNavigate();
   const [quotations, setQuotations] = useState<QuotationWithCustomer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedQuotation, setSelectedQuotation] = useState<QuotationWithCustomer | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [quotationToDelete, setQuotationToDelete] = useState<QuotationWithCustomer | null>(null);
   
   const fetchQuotations = async () => {
     try {
@@ -88,21 +114,51 @@ export default function Quotations() {
 
   // Action handlers
   const handleView = (quotation: QuotationWithCustomer) => {
-    toast({
-      title: "Viewing Quotation",
-      description: `Viewing details for quotation ${quotation.reference_number}`,
-    });
+    setSelectedQuotation(quotation);
+    setShowViewDialog(true);
   };
 
   const handleEdit = (quotation: QuotationWithCustomer) => {
-    navigate(`/quotations/edit?id=${quotation.id}`);
+    // Since we don't have an edit page yet, we'll show a toast
+    toast({
+      title: "Edit Quotation",
+      description: "This feature is coming soon.",
+    });
   };
 
   const handleDownload = (quotation: QuotationWithCustomer) => {
-    toast({
-      title: "Quotation Downloaded",
-      description: `Quotation ${quotation.reference_number} has been downloaded`,
-    });
+    try {
+      const pdf = generateQuotationPDF({
+        documentNumber: quotation.reference_number,
+        documentDate: quotation.issue_date,
+        customerName: quotation.customer_name,
+        unitNumber: quotation.unit_number || "",
+        expiryDate: quotation.expiry_date,
+        validUntil: quotation.expiry_date,
+        notes: quotation.notes || "",
+        items: [], // In real app, we'd need to fetch the items
+        subject: "Quotation",
+        depositInfo: {
+          requiresDeposit: quotation.requires_deposit || false,
+          depositAmount: Number(quotation.deposit_amount) || 0,
+          depositPercentage: quotation.deposit_percentage || 0
+        }
+      });
+      
+      downloadPDF(pdf, `Quotation_${quotation.reference_number}_${quotation.customer_name.replace(/\s+/g, '_')}.pdf`);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Quotation PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSend = (quotation: QuotationWithCustomer) => {
@@ -127,32 +183,32 @@ export default function Quotations() {
   };
 
   const handleDelete = (quotation: QuotationWithCustomer) => {
-    const deleteQuotation = async () => {
-      try {
-        await quotationService.delete(quotation.id);
-        // Remove the quotation from the list
-        setQuotations(quotations.filter(q => q.id !== quotation.id));
-        
-        toast({
-          title: "Quotation Deleted",
-          description: `Quotation ${quotation.reference_number} has been deleted`,
-          variant: "destructive",
-        });
-      } catch (error) {
-        console.error("Error deleting quotation:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete quotation. Please try again.",
-          variant: "destructive",
-        });
-      }
-    };
-    
-    deleteQuotation();
+    setQuotationToDelete(quotation);
+    setShowDeleteConfirm(true);
   };
 
-  const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
-    navigate("/invoices/create", { state: { quotationId: quotation.id } });
+  const confirmDelete = async () => {
+    if (!quotationToDelete) return;
+    
+    try {
+      await quotationService.delete(quotationToDelete.id);
+      setQuotations(quotations.filter(q => q.id !== quotationToDelete.id));
+      setShowDeleteConfirm(false);
+      setQuotationToDelete(null);
+      
+      toast({
+        title: "Quotation Deleted",
+        description: `Quotation ${quotationToDelete.reference_number} has been deleted`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Error deleting quotation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete quotation. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMarkAsAccepted = (quotation: QuotationWithCustomer) => {
@@ -201,6 +257,10 @@ export default function Quotations() {
     };
     
     updateQuotation();
+  };
+
+  const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
+    navigate("/invoices/create", { state: { quotationId: quotation.id } });
   };
 
   // Define columns for the DataTable
@@ -357,6 +417,123 @@ export default function Quotations() {
           isLoading={isLoading}
         />
       </div>
+
+      {/* View Quotation Dialog */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Quotation Details</DialogTitle>
+            <DialogDescription>
+              {selectedQuotation && `Quotation ${selectedQuotation.reference_number}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedQuotation && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Reference No.</p>
+                  <p className="font-medium">{selectedQuotation.reference_number}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <Badge className={
+                    selectedQuotation.status === "Accepted" ? "bg-green-100 text-green-800" :
+                    selectedQuotation.status === "Sent" ? "bg-amber-100 text-amber-800" :
+                    selectedQuotation.status === "Draft" ? "bg-gray-100 text-gray-800" :
+                    "bg-red-100 text-red-800"
+                  }>
+                    {selectedQuotation.status}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Customer</p>
+                <p className="font-medium">{selectedQuotation.customer_name}</p>
+                {selectedQuotation.unit_number && (
+                  <p className="text-sm text-gray-500">Unit #{selectedQuotation.unit_number}</p>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Issue Date</p>
+                  <p>{format(new Date(selectedQuotation.issue_date), "MMM dd, yyyy")}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Valid Until</p>
+                  <p>{format(new Date(selectedQuotation.expiry_date), "MMM dd, yyyy")}</p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Amount</p>
+                <p className="text-xl font-semibold">RM {parseFloat(selectedQuotation.total.toString()).toFixed(2)}</p>
+                {selectedQuotation.requires_deposit && (
+                  <div className="mt-2">
+                    <p className="text-sm font-medium text-muted-foreground">Deposit Required</p>
+                    <p>RM {parseFloat(selectedQuotation.deposit_amount?.toString() || "0").toFixed(2)} ({selectedQuotation.deposit_percentage}%)</p>
+                  </div>
+                )}
+              </div>
+              
+              {selectedQuotation.notes && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                  <p className="text-sm whitespace-pre-line">{selectedQuotation.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setShowViewDialog(false)}>
+              Close
+            </Button>
+            {selectedQuotation && selectedQuotation.status === "Draft" && (
+              <Button variant="outline" onClick={() => {
+                setShowViewDialog(false);
+                handleEdit(selectedQuotation);
+              }}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            )}
+            {selectedQuotation && (
+              <Button variant="outline" onClick={() => {
+                setShowViewDialog(false);
+                handleDownload(selectedQuotation);
+              }}>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this quotation.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FloatingActionButton onClick={() => navigate("/quotations/create")} />
     </div>

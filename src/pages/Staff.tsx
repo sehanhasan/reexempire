@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
@@ -12,7 +12,6 @@ import {
   MoreHorizontal,
   Trash,
   Eye,
-  Mail,
   Phone,
   UserPlus
 } from "lucide-react";
@@ -43,84 +42,113 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-interface StaffMember {
-  id: string;
-  name: string;
-  position: string;
-  email: string;
-  phone: string;
-  status: "Active" | "On Leave" | "Inactive";
-  joinDate: string;
-}
+import { staffService } from "@/services";
+import { format } from "date-fns";
+import { Staff } from "@/types/database";
 
-export default function Staff() {
+export default function StaffPage() {
   const navigate = useNavigate();
+  const [staffMembers, setStaffMembers] = useState<Staff[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
+  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   
-  // Mock data - would come from API in real app
-  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([
-    { id: "S001", name: "John Doe", position: "Project Manager", email: "john@renovateprox.com", phone: "012-1112222", status: "Active", joinDate: "Jan 15, 2022" },
-    { id: "S002", name: "Jane Smith", position: "Interior Designer", email: "jane@renovateprox.com", phone: "016-2223333", status: "Active", joinDate: "Mar 10, 2022" },
-    { id: "S003", name: "Mike Johnson", position: "Electrician", email: "mike@renovateprox.com", phone: "011-3334444", status: "On Leave", joinDate: "Apr 5, 2022" },
-    { id: "S004", name: "Sarah Williams", position: "Plumber", email: "sarah@renovateprox.com", phone: "018-4445555", status: "Active", joinDate: "May 20, 2022" },
-    { id: "S005", name: "Tom Brown", position: "Carpenter", email: "tom@renovateprox.com", phone: "019-5556666", status: "Active", joinDate: "Jun 15, 2022" },
-    { id: "S006", name: "Lisa Davis", position: "Administrative Assistant", email: "lisa@renovateprox.com", phone: "013-6667777", status: "Inactive", joinDate: "Jul 1, 2022" },
-  ]);
-
-  // Action handlers
-  const handleView = (staff: StaffMember) => {
-    setSelectedStaff(staff);
-    setShowDetails(true);
+  const fetchStaff = async () => {
+    try {
+      setIsLoading(true);
+      const data = await staffService.getAll();
+      setStaffMembers(data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching staff:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load staff members. Please try again.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
   };
 
-  const handleEdit = (staff: StaffMember) => {
+  useEffect(() => {
+    fetchStaff();
+  }, []);
+  
+  // Action handlers
+  const handleView = (staff: Staff) => {
+    // First clear the previous staff to avoid state issues
+    setSelectedStaff(null);
+    // Use setTimeout to ensure the state is updated before showing dialog
+    setTimeout(() => {
+      setSelectedStaff(staff);
+      setShowDetails(true);
+    }, 10);
+  };
+
+  const handleEdit = (staff: Staff) => {
     navigate(`/staff/add?id=${staff.id}`);
   };
 
-  const handleDelete = (staff: StaffMember) => {
+  const handleDelete = (staff: Staff) => {
     setStaffToDelete(staff);
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!staffToDelete) return;
     
-    // Remove the staff member from the list
-    setStaffMembers(staffMembers.filter(s => s.id !== staffToDelete.id));
-    setShowDeleteConfirm(false);
-    
-    toast({
-      title: "Staff Removed",
-      description: `${staffToDelete.name} has been removed from staff records`,
-      variant: "destructive",
-    });
+    try {
+      await staffService.delete(staffToDelete.id);
+      setStaffMembers(staffMembers.filter(s => s.id !== staffToDelete.id));
+      setShowDeleteConfirm(false);
+      setStaffToDelete(null);
+      
+      toast({
+        title: "Staff Removed",
+        description: `${staffToDelete.name} has been removed from staff records`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Error deleting staff:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete staff member. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleStatusChange = (staff: StaffMember, newStatus: "Active" | "On Leave" | "Inactive") => {
+  const handleStatusChange = (staff: Staff, newStatus: "Active" | "On Leave" | "Inactive") => {
     // Update the staff status
-    const updatedStaff = staffMembers.map(s => 
-      s.id === staff.id ? { ...s, status: newStatus } : s
-    );
-    setStaffMembers(updatedStaff);
+    const updateStaff = async () => {
+      try {
+        await staffService.update(staff.id, { status: newStatus });
+        fetchStaff(); // Refresh the list
+        
+        toast({
+          title: "Status Updated",
+          description: `${staff.name}'s status changed to ${newStatus}`,
+        });
+      } catch (error) {
+        console.error("Error updating staff status:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update staff status. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
     
-    toast({
-      title: "Status Updated",
-      description: `${staff.name}'s status changed to ${newStatus}`,
-    });
+    updateStaff();
   };
 
   const columns = [
     {
-      header: "ID",
-      accessorKey: "id" as keyof StaffMember,
-    },
-    {
       header: "Name",
-      accessorKey: "name" as keyof StaffMember,
-      cell: (staff: StaffMember) => (
+      accessorKey: "name" as keyof Staff,
+      cell: (staff: Staff) => (
         <div 
           className="font-medium text-blue-600 cursor-pointer"
           onClick={() => handleView(staff)}
@@ -131,24 +159,12 @@ export default function Staff() {
     },
     {
       header: "Position",
-      accessorKey: "position" as keyof StaffMember,
-    },
-    {
-      header: "Email",
-      accessorKey: "email" as keyof StaffMember,
-      cell: (staff: StaffMember) => (
-        <div className="flex items-center">
-          <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-          <a href={`mailto:${staff.email}`} className="hover:underline text-blue-600">
-            {staff.email}
-          </a>
-        </div>
-      ),
+      accessorKey: "position" as keyof Staff,
     },
     {
       header: "Phone",
-      accessorKey: "phone" as keyof StaffMember,
-      cell: (staff: StaffMember) => (
+      accessorKey: "phone" as keyof Staff,
+      cell: (staff: Staff) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           <a href={`tel:${staff.phone}`} className="hover:underline text-blue-600">
@@ -159,12 +175,15 @@ export default function Staff() {
     },
     {
       header: "Join Date",
-      accessorKey: "joinDate" as keyof StaffMember,
+      accessorKey: "join_date" as keyof Staff,
+      cell: (staff: Staff) => {
+        return staff.join_date ? format(new Date(staff.join_date), "MMM dd, yyyy") : "N/A";
+      },
     },
     {
       header: "Status",
-      accessorKey: "status" as keyof StaffMember,
-      cell: (staff: StaffMember) => {
+      accessorKey: "status" as keyof Staff,
+      cell: (staff: Staff) => {
         return (
           <Badge className={
             staff.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
@@ -178,8 +197,8 @@ export default function Staff() {
     },
     {
       header: "Actions",
-      accessorKey: "id" as keyof StaffMember,
-      cell: (staff: StaffMember) => {
+      accessorKey: "id" as keyof Staff,
+      cell: (staff: Staff) => {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -260,31 +279,24 @@ export default function Staff() {
           columns={columns} 
           data={staffMembers} 
           searchKey="name" 
+          isLoading={isLoading}
         />
       </div>
 
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Staff Details</DialogTitle>
-            <DialogDescription>
-              Complete information about this staff member.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedStaff && (
+      {selectedStaff && (
+        <Dialog open={showDetails} onOpenChange={(open) => {
+          setShowDetails(open);
+          if (!open) setSelectedStaff(null);
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Staff Details</DialogTitle>
+              <DialogDescription>
+                Complete information about this staff member.
+              </DialogDescription>
+            </DialogHeader>
+            
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">ID</p>
-                  <p>{selectedStaff.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Join Date</p>
-                  <p>{selectedStaff.joinDate}</p>
-                </div>
-              </div>
-              
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Name</p>
                 <p className="text-lg font-medium">{selectedStaff.name}</p>
@@ -307,44 +319,53 @@ export default function Staff() {
               </div>
               
               <div>
+                <p className="text-sm font-medium text-muted-foreground">Join Date</p>
+                <p>{selectedStaff.join_date ? format(new Date(selectedStaff.join_date), "MMMM dd, yyyy") : "N/A"}</p>
+              </div>
+              
+              <div>
                 <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
-                <div className="flex items-center mt-1">
-                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <a href={`mailto:${selectedStaff.email}`} className="text-blue-600 hover:underline">
-                    {selectedStaff.email}
-                  </a>
-                </div>
-                <div className="flex items-center mt-1">
-                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <a href={`tel:${selectedStaff.phone}`} className="text-blue-600 hover:underline">
-                    {selectedStaff.phone}
-                  </a>
-                </div>
+                {selectedStaff.phone && (
+                  <div className="flex items-center mt-1">
+                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <a href={`tel:${selectedStaff.phone}`} className="text-blue-600 hover:underline">
+                      {selectedStaff.phone}
+                    </a>
+                  </div>
+                )}
+                {selectedStaff.email && (
+                  <div className="flex items-center mt-1">
+                    <div className="h-4 w-4 mr-2 text-muted-foreground">@</div>
+                    <a href={`mailto:${selectedStaff.email}`} className="text-blue-600 hover:underline">
+                      {selectedStaff.email}
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-          
-          <DialogFooter className="sm:justify-end">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowDetails(false)}
-              >
-                Close
-              </Button>
-              <Button 
-                onClick={() => {
-                  setShowDetails(false);
-                  if (selectedStaff) handleEdit(selectedStaff);
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            
+            <DialogFooter className="sm:justify-end">
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDetails(false)}
+                >
+                  Close
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowDetails(false);
+                    if (selectedStaff) handleEdit(selectedStaff);
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>

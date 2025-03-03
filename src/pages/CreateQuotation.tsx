@@ -32,7 +32,7 @@ export default function CreateQuotation() {
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [unitNumber, setUnitNumber] = useState("");
-  const [documentNumber, setDocumentNumber] = useState("QT-0001");
+  const [documentNumber, setDocumentNumber] = useState("QT-" + Math.floor(Math.random() * 10000).toString().padStart(4, '0'));
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
