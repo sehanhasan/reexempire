@@ -24,6 +24,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface StaffMember {
   id: string;
@@ -37,6 +55,10 @@ interface StaffMember {
 
 export default function Staff() {
   const navigate = useNavigate();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   
   // Mock data - would come from API in real app
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([
@@ -50,10 +72,8 @@ export default function Staff() {
 
   // Action handlers
   const handleView = (staff: StaffMember) => {
-    toast({
-      title: "Viewing Staff Details",
-      description: `Viewing details for ${staff.name} - ${staff.position}`,
-    });
+    setSelectedStaff(staff);
+    setShowDetails(true);
   };
 
   const handleEdit = (staff: StaffMember) => {
@@ -61,12 +81,20 @@ export default function Staff() {
   };
 
   const handleDelete = (staff: StaffMember) => {
+    setStaffToDelete(staff);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (!staffToDelete) return;
+    
     // Remove the staff member from the list
-    setStaffMembers(staffMembers.filter(s => s.id !== staff.id));
+    setStaffMembers(staffMembers.filter(s => s.id !== staffToDelete.id));
+    setShowDeleteConfirm(false);
     
     toast({
       title: "Staff Removed",
-      description: `${staff.name} has been removed from staff records`,
+      description: `${staffToDelete.name} has been removed from staff records`,
       variant: "destructive",
     });
   };
@@ -92,6 +120,14 @@ export default function Staff() {
     {
       header: "Name",
       accessorKey: "name" as keyof StaffMember,
+      cell: (staff: StaffMember) => (
+        <div 
+          className="font-medium text-blue-600 cursor-pointer"
+          onClick={() => handleView(staff)}
+        >
+          {staff.name}
+        </div>
+      ),
     },
     {
       header: "Position",
@@ -103,7 +139,9 @@ export default function Staff() {
       cell: (staff: StaffMember) => (
         <div className="flex items-center">
           <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>{staff.email}</span>
+          <a href={`mailto:${staff.email}`} className="hover:underline text-blue-600">
+            {staff.email}
+          </a>
         </div>
       ),
     },
@@ -113,7 +151,9 @@ export default function Staff() {
       cell: (staff: StaffMember) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span>{staff.phone}</span>
+          <a href={`tel:${staff.phone}`} className="hover:underline text-blue-600">
+            {staff.phone}
+          </a>
         </div>
       ),
     },
@@ -222,6 +262,110 @@ export default function Staff() {
           searchKey="name" 
         />
       </div>
+
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Staff Details</DialogTitle>
+            <DialogDescription>
+              Complete information about this staff member.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedStaff && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">ID</p>
+                  <p>{selectedStaff.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Join Date</p>
+                  <p>{selectedStaff.joinDate}</p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="text-lg font-medium">{selectedStaff.name}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Position</p>
+                <p>{selectedStaff.position}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <Badge className={
+                  selectedStaff.status === "Active" ? "bg-green-100 text-green-800" :
+                  selectedStaff.status === "On Leave" ? "bg-amber-100 text-amber-800" :
+                  "bg-gray-100 text-gray-800"
+                }>
+                  {selectedStaff.status}
+                </Badge>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
+                <div className="flex items-center mt-1">
+                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <a href={`mailto:${selectedStaff.email}`} className="text-blue-600 hover:underline">
+                    {selectedStaff.email}
+                  </a>
+                </div>
+                <div className="flex items-center mt-1">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <a href={`tel:${selectedStaff.phone}`} className="text-blue-600 hover:underline">
+                    {selectedStaff.phone}
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="sm:justify-end">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDetails(false)}
+              >
+                Close
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowDetails(false);
+                  if (selectedStaff) handleEdit(selectedStaff);
+                }}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove {staffToDelete?.name} from your staff records.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FloatingActionButton onClick={() => navigate("/staff/add")} />
     </div>

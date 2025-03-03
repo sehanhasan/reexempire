@@ -24,6 +24,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SubcategoryModal, Subcategory } from "@/components/categories/SubcategoryModel";
 import { toast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Category {
   id: string;
@@ -37,6 +47,10 @@ export default function Categories() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | undefined>(undefined);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [showCategoryDetails, setShowCategoryDetails] = useState(false);
+  const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
   
   // Mock data - would come from API in real app
   const [categories, setCategories] = useState<Category[]>([
@@ -134,6 +148,42 @@ export default function Categories() {
     }));
   };
 
+  const handleViewCategory = (category: Category) => {
+    setViewingCategory(category);
+    setShowCategoryDetails(true);
+    toast({
+      title: "Category Details",
+      description: `Viewing details for ${category.name}`
+    });
+  };
+
+  const handleEditCategory = (category: Category) => {
+    navigate(`/categories/add?id=${category.id}`);
+    toast({
+      title: "Edit Category",
+      description: `Editing ${category.name}`
+    });
+  };
+
+  const handleDeleteCategory = (category: Category) => {
+    setCategoryToDelete(category);
+    setShowConfirmDelete(true);
+  };
+
+  const confirmDeleteCategory = () => {
+    if (!categoryToDelete) return;
+    
+    setCategories(categories.filter(c => c.id !== categoryToDelete.id));
+    setCategoryToDelete(null);
+    setShowConfirmDelete(false);
+    
+    toast({
+      title: "Category Deleted",
+      description: `${categoryToDelete.name} has been deleted.`,
+      variant: "destructive",
+    });
+  };
+
   const columns = [
     {
       header: "ID",
@@ -143,7 +193,10 @@ export default function Categories() {
       header: "Name",
       accessorKey: "name" as keyof Category,
       cell: (category: Category) => (
-        <div className="flex items-center font-medium text-blue-600">
+        <div 
+          className="flex items-center font-medium text-blue-600 cursor-pointer"
+          onClick={() => handleViewCategory(category)}
+        >
           {category.name}
           <ChevronRight className="ml-1 h-4 w-4" />
         </div>
@@ -189,11 +242,17 @@ export default function Categories() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleViewCategory(category)}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleEditCategory(category)}
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
@@ -205,7 +264,10 @@ export default function Categories() {
                 Add Subcategory
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-red-600">
+              <DropdownMenuItem 
+                className="cursor-pointer text-red-600"
+                onClick={() => handleDeleteCategory(category)}
+              >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -246,6 +308,28 @@ export default function Categories() {
           onSave={handleSaveSubcategory}
         />
       )}
+
+      <AlertDialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the category
+              {categoryToDelete ? ` "${categoryToDelete.name}"` : ''} and all its subcategories.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteCategory}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FloatingActionButton onClick={() => navigate("/categories/add")} />
     </div>

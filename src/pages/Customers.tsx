@@ -15,7 +15,8 @@ import {
   Mail,
   Phone,
   UserPlus,
-  Loader2
+  Loader2,
+  MapPin
 } from "lucide-react";
 
 import {
@@ -26,6 +27,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
 import { customerService } from "@/services";
 import { Customer } from "@/types/database";
 
@@ -33,6 +54,10 @@ export default function Customers() {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -55,27 +80,31 @@ export default function Customers() {
   }, []);
 
   const handleView = (customer: Customer) => {
-    toast({
-      title: "View Customer",
-      description: `Viewing details for ${customer.name}`
-    });
+    setSelectedCustomer(customer);
+    setShowDetails(true);
   };
 
   const handleEdit = (customer: Customer) => {
-    toast({
-      title: "Edit Customer",
-      description: `Editing details for ${customer.name}`
-    });
     navigate(`/customers/add?id=${customer.id}`);
   };
 
-  const handleDelete = async (customer: Customer) => {
+  const handleDelete = (customer: Customer) => {
+    setCustomerToDelete(customer);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!customerToDelete) return;
+    
     try {
-      await customerService.delete(customer.id);
-      setCustomers(customers.filter(c => c.id !== customer.id));
+      await customerService.delete(customerToDelete.id);
+      setCustomers(customers.filter(c => c.id !== customerToDelete.id));
+      setShowDeleteConfirm(false);
+      
       toast({
         title: "Customer Deleted",
-        description: `${customer.name} has been deleted successfully.`,
+        description: `${customerToDelete.name} has been deleted successfully.`,
+        variant: "destructive",
       });
     } catch (error) {
       console.error("Error deleting customer:", error);
@@ -91,10 +120,21 @@ export default function Customers() {
     {
       header: "Unit #",
       accessorKey: "unit_number" as keyof Customer,
+      cell: (customer: Customer) => (
+        <div className="font-medium">{customer.unit_number || 'N/A'}</div>
+      ),
     },
     {
       header: "Name",
       accessorKey: "name" as keyof Customer,
+      cell: (customer: Customer) => (
+        <div 
+          className="font-medium text-blue-600 cursor-pointer"
+          onClick={() => handleView(customer)}
+        >
+          {customer.name}
+        </div>
+      ),
     },
     {
       header: "WhatsApp",
@@ -150,6 +190,15 @@ export default function Customers() {
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => {
+                  navigate("/quotations/create", { state: { customerId: customer.id } });
+                }}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Create Quotation
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
@@ -194,6 +243,134 @@ export default function Customers() {
           searchKey="name" 
         />
       </div>
+
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Customer Details</DialogTitle>
+            <DialogDescription>
+              Complete information about this customer.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedCustomer && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Unit Number</p>
+                <p className="text-lg font-medium">{selectedCustomer.unit_number || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="text-lg font-medium">{selectedCustomer.name}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
+                <div className="flex items-center mt-1">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {selectedCustomer.phone ? (
+                    <a 
+                      href={`https://wa.me/60${selectedCustomer.phone}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      +60 {selectedCustomer.phone}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">Not provided</span>
+                  )}
+                </div>
+                {selectedCustomer.email && (
+                  <div className="flex items-center mt-1">
+                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <a 
+                      href={`mailto:${selectedCustomer.email}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {selectedCustomer.email}
+                    </a>
+                  </div>
+                )}
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Address</p>
+                <div className="flex items-start mt-1">
+                  <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
+                  <span>
+                    {selectedCustomer.address || 'Not provided'}
+                    {selectedCustomer.city && `, ${selectedCustomer.city}`}
+                    {selectedCustomer.state && `, ${selectedCustomer.state}`}
+                    {selectedCustomer.postal_code && ` ${selectedCustomer.postal_code}`}
+                  </span>
+                </div>
+              </div>
+              
+              {selectedCustomer.notes && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                  <p className="text-sm mt-1">{selectedCustomer.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="sm:justify-end">
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDetails(false)}
+              >
+                Close
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowDetails(false);
+                  if (selectedCustomer) {
+                    navigate("/quotations/create", { state: { customerId: selectedCustomer.id } });
+                  }
+                }}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Create Quotation
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowDetails(false);
+                  if (selectedCustomer) handleEdit(selectedCustomer);
+                }}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {customerToDelete?.name}'s customer record.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FloatingActionButton onClick={() => navigate("/customers/add")} />
     </div>

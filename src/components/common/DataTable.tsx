@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface Column<T> {
   header: string;
-  accessorKey: keyof T;
+  accessorKey: keyof T | string;
   cell?: (item: T) => React.ReactNode;
 }
 
@@ -76,7 +76,7 @@ export function DataTable<T extends Record<string, any>>({
             {isMobile ? (
               <div className="space-y-4">
                 {filteredData.map((row, rowIndex) => (
-                  <Card key={rowIndex} className="overflow-hidden">
+                  <Card key={`card-${row.id || rowIndex}`} className="overflow-hidden border-l-4 border-l-blue-500">
                     <CardContent className="p-0">
                       {columns.map((column, colIndex) => {
                         // Skip rendering of certain columns that don't make sense on mobile
@@ -87,14 +87,14 @@ export function DataTable<T extends Record<string, any>>({
                         // Actions column should be displayed at the bottom
                         if (column.header === "Actions") {
                           return (
-                            <div key={colIndex} className="border-t p-2 bg-muted/20 flex justify-center">
+                            <div key={`action-${colIndex}`} className="border-t p-2 bg-muted/20 flex justify-end">
                               {column.cell ? column.cell(row) : row[column.accessorKey]}
                             </div>
                           );
                         }
                         
                         return (
-                          <div key={colIndex} className="flex flex-col px-4 py-2 border-b last:border-b-0">
+                          <div key={`col-${colIndex}`} className="flex flex-col px-4 py-2 border-b last:border-b-0">
                             <span className="text-xs font-medium text-muted-foreground">
                               {getMobileLabel(column)}
                             </span>
@@ -112,18 +112,18 @@ export function DataTable<T extends Record<string, any>>({
               <Table className="data-table">
                 <TableHeader className="data-table-header">
                   <TableRow>
-                    {columns.map((column) => (
-                      <TableHead key={column.header as string} className="data-table-head">
+                    {columns.map((column, idx) => (
+                      <TableHead key={`header-${idx}`} className="data-table-head">
                         {column.header}
                       </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody className="data-table-body">
-                  {filteredData.map((row, index) => (
-                    <TableRow key={index} className="data-table-row">
-                      {columns.map((column) => (
-                        <TableCell key={column.accessorKey as string} className="data-table-cell">
+                  {filteredData.map((row, rowIndex) => (
+                    <TableRow key={`row-${row.id || rowIndex}`} className="data-table-row">
+                      {columns.map((column, colIndex) => (
+                        <TableCell key={`cell-${colIndex}-${rowIndex}`} className="data-table-cell">
                           {column.cell ? column.cell(row) : row[column.accessorKey]}
                         </TableCell>
                       ))}
