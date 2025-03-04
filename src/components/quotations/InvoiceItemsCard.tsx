@@ -167,6 +167,7 @@ export function InvoiceItemsCard({
             items={items}
             handleItemChange={handleItemChange}
             removeItem={removeItem}
+            showDescription={true}
           />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-6`}>

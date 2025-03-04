@@ -10,8 +10,10 @@ import { MainLayout } from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Quotations from "./pages/Quotations";
 import CreateQuotation from "./pages/CreateQuotation";
+import EditQuotation from "./pages/EditQuotation";
 import Invoices from "./pages/Invoices";
 import CreateInvoice from "./pages/CreateInvoice";
+import EditInvoice from "./pages/EditInvoice";
 import Customers from "./pages/Customers";
 import AddCustomer from "./pages/AddCustomer";
 import Staff from "./pages/Staff";
@@ -36,9 +38,11 @@ const App = () => (
           
           <Route path="/quotations" element={<MainLayout><Quotations /></MainLayout>} />
           <Route path="/quotations/create" element={<MainLayout><CreateQuotation /></MainLayout>} />
+          <Route path="/quotations/edit/:id" element={<MainLayout><EditQuotation /></MainLayout>} />
           
           <Route path="/invoices" element={<MainLayout><Invoices /></MainLayout>} />
           <Route path="/invoices/create" element={<MainLayout><CreateInvoice /></MainLayout>} />
+          <Route path="/invoices/edit/:id" element={<MainLayout><EditInvoice /></MainLayout>} />
           
           <Route path="/customers" element={<MainLayout><Customers /></MainLayout>} />
           <Route path="/customers/add" element={<MainLayout><AddCustomer /></MainLayout>} />

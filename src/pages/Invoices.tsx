@@ -13,7 +13,9 @@ import {
   MoreHorizontal, 
   Trash,
   Eye,
-  Download
+  Download,
+  Send,
+  ExternalLink
 } from "lucide-react";
 
 import {
@@ -116,11 +118,7 @@ export default function Invoices() {
   };
 
   const handleEdit = (invoice: InvoiceWithCustomer) => {
-    // Since we don't have an edit page yet, we'll show a toast
-    toast({
-      title: "Edit Invoice",
-      description: "This feature is coming soon.",
-    });
+    navigate(`/invoices/edit/${invoice.id}`);
   };
 
   const handleDownload = (invoice: InvoiceWithCustomer) => {
@@ -213,11 +211,80 @@ export default function Invoices() {
     updateInvoice();
   };
 
+  const handleSendWhatsapp = (invoice: InvoiceWithCustomer) => {
+    if (!invoice.customer_name) {
+      toast({
+        title: "Missing Information",
+        description: "Customer information is required to send WhatsApp message.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Fetch customer details to get phone number
+      customerService.getById(invoice.customer_id).then(customer => {
+        if (!customer || !customer.phone) {
+          toast({
+            title: "Missing Phone Number",
+            description: "Customer doesn't have a phone number for WhatsApp.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Format phone number (remove any non-digit characters)
+        let phoneNumber = customer.phone.replace(/\D/g, '');
+        
+        // Make sure phone number starts with country code
+        if (phoneNumber.startsWith('0')) {
+          phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
+        } else if (!phoneNumber.startsWith('6')) {
+          phoneNumber = '60' + phoneNumber;
+        }
+        
+        // WhatsApp message text
+        const message = `Dear ${invoice.customer_name},\n\nPlease find attached Invoice ${invoice.reference_number}.\n\nThank you.`;
+        
+        // Open WhatsApp web with the prepared message
+        window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        
+        toast({
+          title: "WhatsApp Opened",
+          description: "WhatsApp has been opened with the invoice message. The document PDF will need to be attached manually.",
+        });
+      }).catch(error => {
+        console.error("Error fetching customer:", error);
+        toast({
+          title: "Error",
+          description: "Failed to get customer details. Please try again.",
+          variant: "destructive",
+        });
+      });
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Define columns for the DataTable
   const columns: Column<InvoiceWithCustomer>[] = [
     {
       header: "ID",
       accessorKey: "reference_number",
+      cell: (invoice) => (
+        <button 
+          className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
+          onClick={() => handleView(invoice)}
+        >
+          {invoice.reference_number}
+          <ExternalLink className="ml-1 h-3 w-3" />
+        </button>
+      ),
     },
     {
       header: "Unit #",
@@ -279,21 +346,26 @@ export default function Invoices() {
                 <Eye className="mr-2 h-4 w-4" />
                 View
               </DropdownMenuItem>
-              {invoice.status === "Draft" && (
-                <DropdownMenuItem 
-                  className="cursor-pointer"
-                  onClick={() => handleEdit(invoice)}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleEdit(invoice)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuItem 
                 className="cursor-pointer"
                 onClick={() => handleDownload(invoice)}
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={() => handleSendWhatsapp(invoice)}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                Send WhatsApp
               </DropdownMenuItem>
               {(invoice.payment_status === "Unpaid" || invoice.payment_status === "Overdue") && (
                 <DropdownMenuItem 
@@ -319,6 +391,15 @@ export default function Invoices() {
     },
   ];
 
+  // Handle closing the view dialog with cleanup
+  const closeViewDialog = () => {
+    setShowViewDialog(false);
+    // Small delay to prevent freezing when closing the dialog
+    setTimeout(() => {
+      setSelectedInvoice(null);
+    }, 100);
+  };
+
   return (
     <div className="page-container">
       <PageHeader 
@@ -342,7 +423,7 @@ export default function Invoices() {
       </div>
 
       {/* View Invoice Dialog */}
-      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+      <Dialog open={showViewDialog} onOpenChange={closeViewDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Invoice Details</DialogTitle>
@@ -411,26 +492,33 @@ export default function Invoices() {
           )}
           
           <DialogFooter className="gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setShowViewDialog(false)}>
+            <Button variant="outline" onClick={closeViewDialog}>
               Close
             </Button>
-            {selectedInvoice && selectedInvoice.status === "Draft" && (
-              <Button variant="outline" onClick={() => {
-                setShowViewDialog(false);
-                handleEdit(selectedInvoice);
-              }}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            )}
             {selectedInvoice && (
-              <Button variant="outline" onClick={() => {
-                setShowViewDialog(false);
-                handleDownload(selectedInvoice);
-              }}>
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
+              <>
+                <Button variant="outline" onClick={() => {
+                  closeViewDialog();
+                  handleEdit(selectedInvoice);
+                }}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  closeViewDialog();
+                  handleDownload(selectedInvoice);
+                }}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+                <Button variant="default" onClick={() => {
+                  closeViewDialog();
+                  handleSendWhatsapp(selectedInvoice);
+                }}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Send to WhatsApp
+                </Button>
+              </>
             )}
           </DialogFooter>
         </DialogContent>
