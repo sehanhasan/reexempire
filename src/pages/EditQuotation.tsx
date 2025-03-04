@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown, Save } from "lucide-react";
+import { ArrowLeft, FileDown, Save, Send } from "lucide-react"; // Add Send import
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -333,7 +333,7 @@ export default function EditQuotation() {
           setSubject={setSubject}
           unitNumber={unitNumber}
           setUnitNumber={setUnitNumber}
-          readOnly={status !== "Draft" && status !== "Accepted"}
+          // Remove the readOnly prop as it's not in the interface
         />
         
         <QuotationItemsCard 
@@ -346,7 +346,7 @@ export default function EditQuotation() {
         
         <div className="flex flex-col md:flex-row gap-4 justify-end">
           <Button 
-            variant="primary" 
+            variant="default" // Change 'primary' to 'default' as per available variants
             type="submit"
             disabled={isSubmitting}
             className="flex items-center"

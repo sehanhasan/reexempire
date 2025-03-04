@@ -47,6 +47,7 @@ interface CustomerInfoCardProps {
   setSubject?: (value: string) => void;
   unitNumber?: string;
   setUnitNumber?: (value: string) => void;
+  readOnly?: boolean; // Add readOnly prop
 }
 
 export function CustomerInfoCard({
@@ -65,7 +66,8 @@ export function CustomerInfoCard({
   subject,
   setSubject,
   unitNumber,
-  setUnitNumber
+  setUnitNumber,
+  readOnly = false // Add default value
 }: CustomerInfoCardProps) {
   const isQuotation = documentType === "quotation";
   const expiryLabel = isQuotation ? "Valid Until" : "Due Date";
@@ -107,28 +109,30 @@ export function CustomerInfoCard({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="customer">Customer</Label>
-              <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8">
-                    <Plus className="mr-1 h-3 w-3" />
-                    Add Customer
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Add New Customer</DialogTitle>
-                  </DialogHeader>
-                  <AddCustomerForm 
-                    onSuccess={() => setIsAddCustomerOpen(false)} 
-                    isModal={true}
-                  />
-                </DialogContent>
-              </Dialog>
+              {!readOnly && (
+                <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <Plus className="mr-1 h-3 w-3" />
+                      Add Customer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Add New Customer</DialogTitle>
+                    </DialogHeader>
+                    <AddCustomerForm 
+                      onSuccess={() => setIsAddCustomerOpen(false)} 
+                      isModal={true}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
             <Select 
               value={customer} 
               onValueChange={setCustomer}
-              disabled={isLoading}
+              disabled={isLoading || readOnly}
               required
             >
               <SelectTrigger>
@@ -156,6 +160,7 @@ export function CustomerInfoCard({
               placeholder={documentNumber}
               value={documentNumber}
               onChange={(e) => setDocumentNumber(e.target.value)}
+              readOnly={readOnly}
             />
           </div>
         </div>
@@ -170,6 +175,7 @@ export function CustomerInfoCard({
                 placeholder="e.g., Bathroom Renovation"
                 value={subject || ''}
                 onChange={(e) => setSubject(e.target.value)}
+                readOnly={readOnly}
               />
             </div>
           )}
@@ -179,21 +185,23 @@ export function CustomerInfoCard({
           <div className="space-y-2">
             <Label htmlFor="expiryDate">{expiryLabel}</Label>
             <div className="flex space-x-2">
-              <Select 
-                onValueChange={(value) => handleDateOptionChange(parseInt(value))}
-                defaultValue="30"
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Select days" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3 days</SelectItem>
-                  <SelectItem value="7">7 days</SelectItem>
-                  <SelectItem value="15">15 days</SelectItem>
-                  <SelectItem value="30">30 days</SelectItem>
-                  <SelectItem value="60">60 days</SelectItem>
-                </SelectContent>
-              </Select>
+              {!readOnly && (
+                <Select 
+                  onValueChange={(value) => handleDateOptionChange(parseInt(value))}
+                  defaultValue="30"
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select days" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 days</SelectItem>
+                    <SelectItem value="7">7 days</SelectItem>
+                    <SelectItem value="15">15 days</SelectItem>
+                    <SelectItem value="30">30 days</SelectItem>
+                    <SelectItem value="60">60 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <Input
                 id="expiryDate"
                 type="date"
@@ -201,6 +209,7 @@ export function CustomerInfoCard({
                 onChange={(e) => setExpiryDate(e.target.value)}
                 required
                 className="flex-1"
+                readOnly={readOnly}
               />
             </div>
           </div>
@@ -211,6 +220,7 @@ export function CustomerInfoCard({
               <Select 
                 value={paymentMethod} 
                 onValueChange={setPaymentMethod}
+                disabled={readOnly}
               >
                 <SelectTrigger>
                   <SelectValue />
