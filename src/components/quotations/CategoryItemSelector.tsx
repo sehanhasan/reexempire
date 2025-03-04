@@ -184,11 +184,13 @@ export function CategoryItemSelector({
   );
 
   const handleAccordionChange = (value: string) => {
-    if (expandedCategories.includes(value)) {
-      setExpandedCategories(expandedCategories.filter(id => id !== value));
-    } else {
-      setExpandedCategories([...expandedCategories, value]);
-    }
+    setExpandedCategories(prev => {
+      if (prev.includes(value)) {
+        return prev.filter(id => id !== value);
+      } else {
+        return [...prev, value];
+      }
+    });
   };
 
   return (
@@ -231,7 +233,7 @@ export function CategoryItemSelector({
                     >
                       {category.name}
                     </AccordionTrigger>
-                    <AccordionContent className="overflow-auto max-h-64">
+                    <AccordionContent>
                       <ScrollArea className="h-full max-h-60 pr-4">
                         <div className="space-y-2 mt-2">
                           {(categoryItems[category.id] || [])
