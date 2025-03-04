@@ -1,215 +1,186 @@
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { ItemBase } from "./types";
+import { Button } from "@/components/ui/button";
+import { Trash, X } from "lucide-react";
+import { QuotationItem, InvoiceItem } from "./types";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { 
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell 
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
 
-interface ItemsTableProps<T extends ItemBase> {
-  items: T[];
-  handleItemChange: (id: number, field: keyof T, value: any) => void;
+type Item = QuotationItem | InvoiceItem;
+
+interface ItemsTableProps {
+  items: Item[];
+  handleItemChange: (id: number, field: keyof Item, value: any) => void;
   removeItem: (id: number) => void;
+  showDescription?: boolean;
 }
 
-export function ItemsTable<T extends ItemBase>({ 
-  items, 
-  handleItemChange, 
-  removeItem 
-}: ItemsTableProps<T>) {
+export function ItemsTable({
+  items,
+  handleItemChange,
+  removeItem,
+  showDescription = true,
+}: ItemsTableProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {items.map((item) => (
-          <Card key={item.id} className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="space-y-3">
+          <div key={item.id} className="border rounded-md p-3 relative">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => removeItem(item.id)}
+              className="absolute top-2 right-2 h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Description</label>
+                <Input
+                  value={item.description}
+                  onChange={(e) =>
+                    handleItemChange(item.id, "description", e.target.value)
+                  }
+                  placeholder="Enter item description"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Description</label>
+                  <label className="text-xs font-medium">Quantity</label>
                   <Input
-                    placeholder="Item description"
-                    value={item.description}
-                    onChange={(e) => handleItemChange(item.id, "description", e.target.value)}
-                    required
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      handleItemChange(
+                        item.id,
+                        "quantity",
+                        parseFloat(e.target.value)
+                      )
+                    }
                   />
                 </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Qty</label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(item.id, "quantity", parseInt(e.target.value) || 1)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Unit</label>
-                    <Select
-                      value={item.unit}
-                      onValueChange={(value) => handleItemChange(item.id, "unit", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Unit">Unit</SelectItem>
-                        <SelectItem value="Hour">Hour</SelectItem>
-                        <SelectItem value="Day">Day</SelectItem>
-                        <SelectItem value="Meter">Meter</SelectItem>
-                        <SelectItem value="Sq.m">Sq.m</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Unit Price</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.unitPrice}
-                        onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
-                        required
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Amount</label>
-                    <div className="text-lg font-medium pt-1.5 pl-2">
-                      RM {item.amount.toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="pt-2 flex justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeItem(item.id)}
-                    className="text-red-500 hover:text-red-700"
-                    disabled={items.length <= 1}
-                  >
-                    <X className="h-4 w-4 mr-1" /> Remove
-                  </Button>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Unit</label>
+                  <Input
+                    value={item.unit}
+                    onChange={(e) =>
+                      handleItemChange(item.id, "unit", e.target.value)
+                    }
+                  />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Unit Price (RM)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={item.unitPrice}
+                    onChange={(e) =>
+                      handleItemChange(
+                        item.id,
+                        "unitPrice",
+                        parseFloat(e.target.value)
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Amount (RM)</label>
+                  <div className="bg-gray-50 px-3 py-2 border rounded-md text-right">
+                    {item.amount.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="py-3 px-4 text-left font-medium">Description</TableHead>
-            <TableHead className="py-3 px-4 text-center font-medium w-20">Qty</TableHead>
-            <TableHead className="py-3 px-4 text-center font-medium w-24">Unit</TableHead>
-            <TableHead className="py-3 px-4 text-right font-medium w-32">Unit Price</TableHead>
-            <TableHead className="py-3 px-4 text-right font-medium w-32">Amount</TableHead>
-            <TableHead className="py-3 px-4 text-center font-medium w-16"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={`row-${item.id}`}>
-              <TableCell className="py-3 px-4">
-                <Input
-                  placeholder="Item description"
-                  value={item.description}
-                  onChange={(e) => handleItemChange(item.id, "description", e.target.value)}
-                  required
-                />
-              </TableCell>
-              <TableCell className="py-3 px-4">
+    <div className="border rounded-md">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-gray-50">
+            <th className="px-4 py-2 text-left font-medium text-gray-500 text-sm w-10">#</th>
+            {showDescription && <th className="px-4 py-2 text-left font-medium text-gray-500 text-sm">Description</th>}
+            <th className="px-4 py-2 text-left font-medium text-gray-500 text-sm w-20">Qty</th>
+            <th className="px-4 py-2 text-left font-medium text-gray-500 text-sm w-24">Unit</th>
+            <th className="px-4 py-2 text-right font-medium text-gray-500 text-sm w-32">Unit Price (RM)</th>
+            <th className="px-4 py-2 text-right font-medium text-gray-500 text-sm w-32">Amount (RM)</th>
+            <th className="px-4 py-2 text-right font-medium text-gray-500 text-sm w-16"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => (
+            <tr key={item.id} className="border-t">
+              <td className="px-4 py-2 align-top">{index + 1}</td>
+              
+              {showDescription && (
+                <td className="px-4 py-2">
+                  <Input
+                    value={item.description}
+                    onChange={(e) => handleItemChange(item.id, "description", e.target.value)}
+                    placeholder="Enter item description"
+                  />
+                </td>
+              )}
+              
+              <td className="px-4 py-2">
                 <Input
                   type="number"
                   min="1"
                   value={item.quantity}
-                  onChange={(e) => handleItemChange(item.id, "quantity", parseInt(e.target.value) || 1)}
-                  required
-                  className="text-center"
+                  onChange={(e) => handleItemChange(item.id, "quantity", parseFloat(e.target.value))}
                 />
-              </TableCell>
-              <TableCell className="py-3 px-4">
-                <Select
+              </td>
+              
+              <td className="px-4 py-2">
+                <Input
                   value={item.unit}
-                  onValueChange={(value) => handleItemChange(item.id, "unit", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Unit">Unit</SelectItem>
-                    <SelectItem value="Hour">Hour</SelectItem>
-                    <SelectItem value="Day">Day</SelectItem>
-                    <SelectItem value="Meter">Meter</SelectItem>
-                    <SelectItem value="Sq.m">Sq.m</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="py-3 px-4">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={item.unitPrice}
-                    onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
-                    required
-                    className="text-right pl-10"
-                  />
-                </div>
-              </TableCell>
-              <TableCell className="py-3 px-4 text-right font-medium">
-                RM {item.amount.toFixed(2)}
-              </TableCell>
-              <TableCell className="py-3 px-4 text-center">
-                <Button
+                  onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}
+                />
+              </td>
+              
+              <td className="px-4 py-2">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.unitPrice}
+                  onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value))}
+                  className="text-right"
+                />
+              </td>
+              
+              <td className="px-4 py-2 text-right">
+                {item.amount.toFixed(2)}
+              </td>
+              
+              <td className="px-4 py-2 text-right">
+                <Button 
                   type="button"
-                  variant="ghost"
+                  variant="ghost" 
                   size="icon"
                   onClick={() => removeItem(item.id)}
-                  className="text-red-500 hover:text-red-700"
                   disabled={items.length <= 1}
                 >
-                  <X className="h-4 w-4" />
+                  <Trash className="h-4 w-4 text-red-500" />
                 </Button>
-              </TableCell>
-            </TableRow>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 }

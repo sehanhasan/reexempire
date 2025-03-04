@@ -34,13 +34,21 @@ export default function CreateInvoice() {
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [unitNumber, setUnitNumber] = useState("");
-  const [documentNumber, setDocumentNumber] = useState("INV-0001");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
   const [quotationReference, setQuotationReference] = useState("");
   const [quotationId, setQuotationId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Generate reference number with year - INV-2025-00001 format
+  const generateReferenceNumber = () => {
+    const currentYear = new Date().getFullYear();
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `INV-${currentYear}-${randomNum.toString().padStart(5, '0')}`;
+  };
+
+  const [documentNumber, setDocumentNumber] = useState(generateReferenceNumber());
 
   // Fetch customer details when customer ID changes
   useEffect(() => {
@@ -127,6 +135,17 @@ export default function CreateInvoice() {
       return;
     }
     
+    // Validate that there are at least one item with a value
+    const validItems = items.filter(item => item.description && item.unitPrice > 0);
+    if (validItems.length === 0) {
+      toast({
+        title: "Missing Items",
+        description: "Please add at least one item to the invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
     const total = isDepositInvoice ? depositAmount : subtotal;
@@ -186,6 +205,56 @@ export default function CreateInvoice() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSendWhatsapp = () => {
+    if (!customerId || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before sending the invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Format phone number (remove any non-digit characters)
+      let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
+      
+      if (!phoneNumber) {
+        toast({
+          title: "Missing Phone Number",
+          description: "Customer doesn't have a phone number for WhatsApp.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Make sure phone number starts with country code
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
+      } else if (!phoneNumber.startsWith('6')) {
+        phoneNumber = '60' + phoneNumber;
+      }
+      
+      // WhatsApp message text
+      const message = `Dear ${customer.name},\n\nPlease find attached Invoice ${documentNumber}.\n\nThank you.`;
+      
+      // Open WhatsApp web with the prepared message
+      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+      
+      toast({
+        title: "WhatsApp Opened",
+        description: "WhatsApp has been opened with the invoice message. The document PDF will need to be attached manually.",
+      });
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -290,6 +359,8 @@ export default function CreateInvoice() {
           onSubmit={handleSubmit}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
+          isSubmitting={isSubmitting}
+          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>

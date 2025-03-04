@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, FolderSearch, Wallet } from "lucide-react";
+import { Plus, FolderSearch, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { QuotationItem, DepositInfo } from "./types";
@@ -33,6 +33,7 @@ export function QuotationItemsCard({
   calculateItemAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
   const isMobile = useIsMobile();
   
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
@@ -127,12 +128,32 @@ export function QuotationItemsCard({
               <FolderSearch className="mr-2 h-4 w-4" />
               Select from Categories
             </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDescription(!showDescription)}
+              className={isMobile ? "w-full" : "ml-auto"}
+            >
+              {showDescription ? (
+                <>
+                  <ChevronUp className="mr-2 h-4 w-4" />
+                  Hide Descriptions
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Show Descriptions
+                </>
+              )}
+            </Button>
           </div>
 
           <ItemsTable
             items={items}
             handleItemChange={handleItemChange}
             removeItem={removeItem}
+            showDescription={showDescription}
           />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-6`}>

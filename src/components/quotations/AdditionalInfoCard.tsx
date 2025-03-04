@@ -1,23 +1,19 @@
 
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Save, Receipt } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, Send } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AdditionalInfoCardProps {
   notes: string;
-  setNotes: (value: string) => void;
-  onSubmit: (e?: React.FormEvent) => void;
+  setNotes: React.Dispatch<React.SetStateAction<string>>;
+  onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   onConvertToInvoice?: () => void;
   documentType: "quotation" | "invoice";
+  isSubmitting?: boolean;
+  onSendWhatsapp?: () => void;
 }
 
 export function AdditionalInfoCard({
@@ -26,65 +22,84 @@ export function AdditionalInfoCard({
   onSubmit,
   onCancel,
   onConvertToInvoice,
-  documentType
+  documentType,
+  isSubmitting = false,
+  onSendWhatsapp
 }: AdditionalInfoCardProps) {
-  const isQuotation = documentType === "quotation";
-  const cardTitle = isQuotation ? "Additional Information" : "Payment Information";
+  const isMobile = useIsMobile();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{cardTitle}</CardTitle>
+        <CardTitle>Additional Information</CardTitle>
       </CardHeader>
       <CardContent>
-        {!isQuotation && (
-          <div className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h3 className="font-medium text-blue-700 mb-2">Bank Details</h3>
-              <p className="text-sm text-blue-800">
-                Bank: MayBank<br />
-                Account Name: RenovateProX Sdn Bhd<br />
-                Account Number: 1234 5678 9012<br />
-                Swift Code: MBBEMYKL
-              </p>
-            </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="notes" className="block text-sm font-medium leading-6">
+              Notes (Optional)
+            </label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={`Add any additional ${documentType} notes here...`}
+              rows={4}
+              className="resize-none"
+            />
           </div>
-        )}
-        
-        <div className="space-y-2 mt-4">
-          <Label htmlFor="notes">{isQuotation ? "Notes/Terms" : "Notes"}</Label>
-          <Textarea
-            id="notes"
-            placeholder={`Enter any additional ${isQuotation ? "notes or terms and conditions" : "information"}...`}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={4}
-          />
+
+          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} space-y-2 md:space-y-0 md:space-x-2 pt-4 border-t`}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              className={isMobile ? "w-full order-2 md:order-1" : ""}
+            >
+              Cancel
+            </Button>
+            
+            {onConvertToInvoice && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onConvertToInvoice}
+                className={isMobile ? "w-full order-1 md:order-2" : ""}
+              >
+                Convert to Invoice
+              </Button>
+            )}
+            
+            {onSendWhatsapp && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSendWhatsapp}
+                className={isMobile ? "w-full order-2 md:order-3 bg-green-50 hover:bg-green-100 text-green-600 border-green-200" : "bg-green-50 hover:bg-green-100 text-green-600 border-green-200"}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                Send via WhatsApp
+              </Button>
+            )}
+            
+            <Button
+              type="submit"
+              onClick={onSubmit}
+              disabled={isSubmitting}
+              className={isMobile ? "w-full order-3 md:order-4" : ""}
+            >
+              {isSubmitting ? (
+                "Saving..."
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Create {documentType.charAt(0).toUpperCase() + documentType.slice(1)}
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardContent>
-      <CardFooter className={`flex ${isQuotation ? "justify-between" : "justify-end"} space-x-4`}>
-        {isQuotation && onConvertToInvoice && (
-          <Button 
-            variant="outline" 
-            type="button" 
-            onClick={onConvertToInvoice}
-            className="text-blue-600"
-          >
-            <Receipt className="mr-2 h-4 w-4" />
-            Convert to Invoice
-          </Button>
-        )}
-        
-        <div className="space-x-2">
-          <Button variant="outline" type="button" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" onClick={(e) => onSubmit(e)}>
-            <Save className="mr-2 h-4 w-4" />
-            Save {isQuotation ? "Quotation" : "Invoice"}
-          </Button>
-        </div>
-      </CardFooter>
     </Card>
   );
 }

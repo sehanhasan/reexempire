@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { ArrowLeft, FileDown, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -14,9 +14,11 @@ import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export default function CreateQuotation() {
+export default function EditQuotation() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<QuotationItem[]>([
     { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
@@ -32,6 +34,8 @@ export default function CreateQuotation() {
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [unitNumber, setUnitNumber] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [status, setStatus] = useState("Draft");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
@@ -40,35 +44,70 @@ export default function CreateQuotation() {
     depositPercentage: 30
   });
 
-  // Generate reference number with year - QT-2025-00001 format
-  const generateReferenceNumber = () => {
-    const currentYear = new Date().getFullYear();
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `QT-${currentYear}-${randomNum.toString().padStart(5, '0')}`;
-  };
-
-  const [documentNumber, setDocumentNumber] = useState(generateReferenceNumber());
-
-  // Fetch customer details when customer ID changes
+  // Fetch quotation data
   useEffect(() => {
-    if (customerId) {
-      const fetchCustomer = async () => {
-        try {
-          const customerData = await customerService.getById(customerId);
-          setCustomer(customerData);
+    if (!id) return;
+
+    const fetchQuotationData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch quotation details
+        const quotation = await quotationService.getById(id);
+        if (quotation) {
+          setCustomerId(quotation.customer_id);
+          setDocumentNumber(quotation.reference_number);
+          setQuotationDate(quotation.issue_date);
+          setValidUntil(quotation.expiry_date);
+          setNotes(quotation.notes || "");
+          setStatus(quotation.status);
           
-          // Auto-fill unit number if available
-          if (customerData?.unit_number) {
-            setUnitNumber(customerData.unit_number);
+          // Set deposit info
+          setDepositInfo({
+            requiresDeposit: quotation.requires_deposit || false,
+            depositAmount: quotation.deposit_amount || 0,
+            depositPercentage: quotation.deposit_percentage || 30
+          });
+          
+          // Fetch customer details
+          if (quotation.customer_id) {
+            const customerData = await customerService.getById(quotation.customer_id);
+            setCustomer(customerData);
+            
+            if (customerData?.unit_number) {
+              setUnitNumber(customerData.unit_number);
+            }
           }
-        } catch (error) {
-          console.error("Error fetching customer:", error);
+          
+          // Fetch quotation items
+          const quotationItems = await quotationService.getItemsByQuotationId(id);
+          if (quotationItems && quotationItems.length > 0) {
+            setItems(quotationItems.map((item, index) => ({
+              id: index + 1,
+              description: item.description,
+              quantity: item.quantity,
+              unit: item.unit,
+              unitPrice: item.unit_price,
+              amount: item.amount
+            })));
+          }
         }
-      };
-      
-      fetchCustomer();
-    }
-  }, [customerId]);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching quotation:", error);
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: "Failed to fetch quotation data. Please try again.",
+          variant: "destructive",
+        });
+        navigate("/quotations");
+      }
+    };
+    
+    fetchQuotationData();
+  }, [id, navigate]);
 
   const calculateItemAmount = (item: QuotationItem) => {
     return item.quantity * item.unitPrice;
@@ -77,10 +116,10 @@ export default function CreateQuotation() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!customerId) {
+    if (!customerId || !id) {
       toast({
         title: "Missing Information",
-        description: "Please select a customer before creating a quotation.",
+        description: "Please select a customer before updating the quotation.",
         variant: "destructive",
       });
       return;
@@ -103,29 +142,31 @@ export default function CreateQuotation() {
     try {
       setIsSubmitting(true);
       
-      // Create quotation in database
+      // Update quotation in database
       const quotation = {
         customer_id: customerId,
         reference_number: documentNumber,
         issue_date: quotationDate,
         expiry_date: validUntil,
-        status: "Draft",
+        status: status,
         subtotal: subtotal,
         total: subtotal, // No tax for quotations
         notes: notes || null,
-        terms: null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
       };
       
-      const createdQuotation = await quotationService.create(quotation);
+      await quotationService.update(id, quotation);
       
-      // Add quotation items
+      // Delete all existing items and add the new ones
+      await quotationService.deleteAllItems(id);
+      
+      // Add updated quotation items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           await quotationService.createItem({
-            quotation_id: createdQuotation.id,
+            quotation_id: id,
             description: item.description,
             quantity: item.quantity,
             unit: item.unit,
@@ -136,33 +177,22 @@ export default function CreateQuotation() {
       }
       
       toast({
-        title: "Quotation Created",
-        description: `Quotation for ${customer?.name} has been created successfully.`,
+        title: "Quotation Updated",
+        description: `Quotation for ${customer?.name} has been updated successfully.`,
       });
       
       // Navigate back to the quotations list
       navigate("/quotations");
     } catch (error) {
-      console.error("Error creating quotation:", error);
+      console.error("Error updating quotation:", error);
       toast({
         title: "Error",
-        description: "There was an error creating the quotation. Please try again.",
+        description: "There was an error updating the quotation. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleConvertToInvoice = () => {
-    // In a real app, this would create an invoice from the quotation data
-    // For this demo, we'll just navigate to the invoice creation page
-    toast({
-      title: "Convert to Invoice",
-      description: "This would convert the quotation to an invoice in a real app.",
-    });
-    
-    navigate("/invoices/create");
   };
 
   const handleDownloadPDF = () => {
@@ -205,11 +235,75 @@ export default function CreateQuotation() {
     }
   };
 
+  const handleSendWhatsapp = () => {
+    if (!customerId || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before sending the quotation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Format phone number (remove any non-digit characters)
+      let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
+      
+      if (!phoneNumber) {
+        toast({
+          title: "Missing Phone Number",
+          description: "Customer doesn't have a phone number for WhatsApp.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Make sure phone number starts with country code
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
+      } else if (!phoneNumber.startsWith('6')) {
+        phoneNumber = '60' + phoneNumber;
+      }
+      
+      // WhatsApp message text
+      const message = `Dear ${customer.name},\n\nPlease find attached Quotation ${documentNumber}.\n\nThank you.`;
+      
+      // Open WhatsApp web with the prepared message
+      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+      
+      toast({
+        title: "WhatsApp Opened",
+        description: "WhatsApp has been opened with the quotation message. The document PDF will need to be attached manually.",
+      });
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="page-container">
+        <PageHeader
+          title="Edit Quotation"
+          description="Loading quotation data..."
+        />
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-container">
       <PageHeader
-        title="Create Quotation"
-        description="Create a new quotation for a customer."
+        title="Edit Quotation"
+        description="Update an existing quotation."
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
@@ -239,6 +333,7 @@ export default function CreateQuotation() {
           setSubject={setSubject}
           unitNumber={unitNumber}
           setUnitNumber={setUnitNumber}
+          readOnly={status !== "Draft" && status !== "Accepted"}
         />
         
         <QuotationItemsCard 
@@ -249,15 +344,26 @@ export default function CreateQuotation() {
           calculateItemAmount={calculateItemAmount}
         />
         
-        <AdditionalInfoCard 
-          notes={notes}
-          setNotes={setNotes}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/quotations")}
-          onConvertToInvoice={handleConvertToInvoice}
-          documentType="quotation"
-          isSubmitting={isSubmitting}
-        />
+        <div className="flex flex-col md:flex-row gap-4 justify-end">
+          <Button 
+            variant="primary" 
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isSubmitting ? "Saving..." : "Save Changes"}
+          </Button>
+          <Button 
+            variant="outline" 
+            type="button"
+            onClick={handleSendWhatsapp}
+            className="flex items-center bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+          >
+            <Send className="mr-2 h-4 w-4" />
+            Send via WhatsApp
+          </Button>
+        </div>
       </form>
     </div>
   );

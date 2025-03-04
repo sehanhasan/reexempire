@@ -119,38 +119,55 @@ export default function Quotations() {
   };
 
   const handleEdit = (quotation: QuotationWithCustomer) => {
-    // Since we don't have an edit page yet, we'll show a toast
-    toast({
-      title: "Edit Quotation",
-      description: "This feature is coming soon.",
-    });
+    navigate(`/quotations/edit/${quotation.id}`);
   };
 
   const handleDownload = (quotation: QuotationWithCustomer) => {
     try {
-      const pdf = generateQuotationPDF({
-        documentNumber: quotation.reference_number,
-        documentDate: quotation.issue_date,
-        customerName: quotation.customer_name,
-        unitNumber: quotation.unit_number || "",
-        expiryDate: quotation.expiry_date,
-        validUntil: quotation.expiry_date,
-        notes: quotation.notes || "",
-        items: [], // In real app, we'd need to fetch the items
-        subject: "Quotation",
-        depositInfo: {
-          requiresDeposit: quotation.requires_deposit || false,
-          depositAmount: Number(quotation.deposit_amount) || 0,
-          depositPercentage: quotation.deposit_percentage || 0
-        }
-      });
-      
-      downloadPDF(pdf, `Quotation_${quotation.reference_number}_${quotation.customer_name.replace(/\s+/g, '_')}.pdf`);
-      
-      toast({
-        title: "PDF Generated",
-        description: "Quotation PDF has been downloaded successfully.",
-      });
+      // First fetch the quotation items
+      quotationService.getItemsByQuotationId(quotation.id)
+        .then(items => {
+          const formattedItems = items.map(item => ({
+            id: Number(item.id),
+            description: item.description,
+            quantity: Number(item.quantity),
+            unit: item.unit,
+            unitPrice: Number(item.unit_price),
+            amount: Number(item.amount)
+          }));
+          
+          const pdf = generateQuotationPDF({
+            documentNumber: quotation.reference_number,
+            documentDate: quotation.issue_date,
+            customerName: quotation.customer_name,
+            unitNumber: quotation.unit_number || "",
+            expiryDate: quotation.expiry_date,
+            validUntil: quotation.expiry_date,
+            notes: quotation.notes || "",
+            items: formattedItems,
+            subject: "Quotation",
+            depositInfo: {
+              requiresDeposit: quotation.requires_deposit || false,
+              depositAmount: Number(quotation.deposit_amount) || 0,
+              depositPercentage: quotation.deposit_percentage || 0
+            }
+          });
+          
+          downloadPDF(pdf, `Quotation_${quotation.reference_number}_${quotation.customer_name.replace(/\s+/g, '_')}.pdf`);
+          
+          toast({
+            title: "PDF Generated",
+            description: "Quotation PDF has been downloaded successfully.",
+          });
+        })
+        .catch(error => {
+          console.error("Error fetching quotation items:", error);
+          toast({
+            title: "PDF Generation Failed",
+            description: "There was an error generating the PDF. Please try again.",
+            variant: "destructive",
+          });
+        });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
@@ -176,10 +193,83 @@ export default function Quotations() {
       updateQuotation();
     }
     
-    toast({
-      title: "Quotation Sent",
-      description: `Quotation ${quotation.reference_number} has been sent to ${quotation.customer_name}`,
-    });
+    sendWhatsappWithQuotation(quotation);
+  };
+
+  const sendWhatsappWithQuotation = async (quotation: QuotationWithCustomer) => {
+    try {
+      // Fetch customer details to get phone number
+      const customer = await customerService.getById(quotation.customer_id);
+      if (!customer || !customer.phone) {
+        toast({
+          title: "Missing Phone Number",
+          description: "Customer doesn't have a phone number for WhatsApp.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Fetch quotation items
+      const items = await quotationService.getItemsByQuotationId(quotation.id);
+      
+      const formattedItems = items.map(item => ({
+        id: Number(item.id),
+        description: item.description,
+        quantity: Number(item.quantity),
+        unit: item.unit,
+        unitPrice: Number(item.unit_price),
+        amount: Number(item.amount)
+      }));
+      
+      // Generate PDF
+      const pdf = generateQuotationPDF({
+        documentNumber: quotation.reference_number,
+        documentDate: quotation.issue_date,
+        customerName: quotation.customer_name,
+        unitNumber: quotation.unit_number || "",
+        expiryDate: quotation.expiry_date,
+        validUntil: quotation.expiry_date,
+        notes: quotation.notes || "",
+        items: formattedItems,
+        subject: "Quotation",
+        depositInfo: {
+          requiresDeposit: quotation.requires_deposit || false,
+          depositAmount: Number(quotation.deposit_amount) || 0,
+          depositPercentage: quotation.deposit_percentage || 0
+        }
+      });
+      
+      // Use the Base64 PDF to create a Data URL
+      const pdfDataUri = pdf.output('datauristring');
+      
+      // Format phone number (remove any non-digit characters)
+      let phoneNumber = customer.phone.replace(/\D/g, '');
+      
+      // Make sure phone number starts with country code
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
+      } else if (!phoneNumber.startsWith('6')) {
+        phoneNumber = '60' + phoneNumber;
+      }
+      
+      // WhatsApp message text
+      const message = `Dear ${quotation.customer_name},\n\nPlease find attached Quotation ${quotation.reference_number}.\n\nThank you.`;
+      
+      // Open WhatsApp web with the prepared message
+      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+      
+      toast({
+        title: "WhatsApp Opened",
+        description: "WhatsApp has been opened with the quotation message. The document PDF will need to be attached manually.",
+      });
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = (quotation: QuotationWithCustomer) => {
@@ -268,6 +358,14 @@ export default function Quotations() {
     {
       header: "ID",
       accessorKey: "reference_number",
+      cell: (quotation) => (
+        <button 
+          className="font-medium text-blue-600 hover:underline"
+          onClick={() => handleView(quotation)}
+        >
+          {quotation.reference_number}
+        </button>
+      ),
     },
     {
       header: "Unit #",
@@ -315,82 +413,89 @@ export default function Quotations() {
       accessorKey: "id", // We need to specify a key even for action columns
       cell: (quotation) => {
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
+          <div className="flex items-center">
+            {(quotation.status === "Draft" || quotation.status === "Accepted") && (
+              <Button variant="ghost" size="icon" onClick={() => handleEdit(quotation)} title="Edit">
+                <Edit className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleView(quotation)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View
-              </DropdownMenuItem>
-              {quotation.status === "Draft" && (
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
                 <DropdownMenuItem 
                   className="cursor-pointer"
-                  onClick={() => handleEdit(quotation)}
+                  onClick={() => handleView(quotation)}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  <Eye className="mr-2 h-4 w-4" />
+                  View
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleDownload(quotation)}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </DropdownMenuItem>
-              {quotation.status === "Draft" && (
+                {quotation.status === "Draft" && (
+                  <DropdownMenuItem 
+                    className="cursor-pointer"
+                    onClick={() => handleEdit(quotation)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   className="cursor-pointer"
-                  onClick={() => handleSend(quotation)}
+                  onClick={() => handleDownload(quotation)}
                 >
-                  <Send className="mr-2 h-4 w-4" />
-                  Send
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
                 </DropdownMenuItem>
-              )}
-              {quotation.status === "Sent" && (
-                <>
+                {quotation.status === "Draft" && (
                   <DropdownMenuItem 
-                    className="cursor-pointer text-green-600"
-                    onClick={() => handleMarkAsAccepted(quotation)}
+                    className="cursor-pointer"
+                    onClick={() => handleSend(quotation)}
                   >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Mark as Accepted
+                    <Send className="mr-2 h-4 w-4" />
+                    Send
                   </DropdownMenuItem>
+                )}
+                {quotation.status === "Sent" && (
+                  <>
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-green-600"
+                      onClick={() => handleMarkAsAccepted(quotation)}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Mark as Accepted
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-red-600"
+                      onClick={() => handleMarkAsRejected(quotation)}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Mark as Rejected
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {quotation.status === "Accepted" && (
                   <DropdownMenuItem 
-                    className="cursor-pointer text-red-600"
-                    onClick={() => handleMarkAsRejected(quotation)}
+                    className="cursor-pointer text-blue-600"
+                    onClick={() => handleConvertToInvoice(quotation)}
                   >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Mark as Rejected
+                    <Receipt className="mr-2 h-4 w-4" />
+                    Convert to Invoice
                   </DropdownMenuItem>
-                </>
-              )}
-              {quotation.status === "Accepted" && (
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  className="cursor-pointer text-blue-600"
-                  onClick={() => handleConvertToInvoice(quotation)}
+                  className="cursor-pointer text-red-600"
+                  onClick={() => handleDelete(quotation)}
                 >
-                  <Receipt className="mr-2 h-4 w-4" />
-                  Convert to Invoice
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="cursor-pointer text-red-600"
-                onClick={() => handleDelete(quotation)}
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
     },
@@ -419,7 +524,13 @@ export default function Quotations() {
       </div>
 
       {/* View Quotation Dialog */}
-      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+      <Dialog open={showViewDialog} onOpenChange={(open) => {
+        setShowViewDialog(open);
+        // Make sure to clear the selected quotation when closing to prevent freezing
+        if (!open) {
+          setTimeout(() => setSelectedQuotation(null), 300);
+        }
+      }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Quotation Details</DialogTitle>
@@ -501,13 +612,22 @@ export default function Quotations() {
               </Button>
             )}
             {selectedQuotation && (
-              <Button variant="outline" onClick={() => {
-                setShowViewDialog(false);
-                handleDownload(selectedQuotation);
-              }}>
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
+              <>
+                <Button variant="outline" onClick={() => {
+                  setShowViewDialog(false);
+                  handleDownload(selectedQuotation);
+                }}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  setShowViewDialog(false);
+                  handleSend(selectedQuotation);
+                }}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Send via WhatsApp
+                </Button>
+              </>
             )}
           </DialogFooter>
         </DialogContent>
