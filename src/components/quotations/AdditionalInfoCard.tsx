@@ -14,6 +14,7 @@ interface AdditionalInfoCardProps {
   documentType: "quotation" | "invoice";
   isSubmitting?: boolean;
   onSendWhatsapp?: () => void;
+  saveButtonText?: string; // Add the missing property
 }
 
 export function AdditionalInfoCard({
@@ -24,7 +25,8 @@ export function AdditionalInfoCard({
   onConvertToInvoice,
   documentType,
   isSubmitting = false,
-  onSendWhatsapp
+  onSendWhatsapp,
+  saveButtonText
 }: AdditionalInfoCardProps) {
   const isMobile = useIsMobile();
 
@@ -90,6 +92,11 @@ export function AdditionalInfoCard({
             >
               {isSubmitting ? (
                 "Saving..."
+              ) : saveButtonText ? (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {saveButtonText}
+                </>
               ) : (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />

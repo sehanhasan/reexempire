@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Category, Subcategory, PricingOption } from "@/types/database";
+import { Category, Subcategory, PricingOption, CategoryItem } from "@/types/database";
 
 export const categoryService = {
   // Categories
@@ -31,6 +31,49 @@ export const categoryService = {
     }
 
     return data;
+  },
+
+  // Add the missing getItemsByCategoryId method
+  async getItemsByCategoryId(categoryId: string): Promise<CategoryItem[]> {
+    try {
+      // First get all subcategories for this category
+      const { data: subcategories, error: subcatError } = await supabase
+        .from("subcategories")
+        .select("*")
+        .eq("category_id", categoryId);
+      
+      if (subcatError) {
+        throw subcatError;
+      }
+      
+      if (!subcategories || subcategories.length === 0) {
+        return [];
+      }
+      
+      // Then get all pricing options for these subcategories
+      const subcategoryIds = subcategories.map(sub => sub.id);
+      const { data: pricingOptions, error: priceError } = await supabase
+        .from("pricing_options")
+        .select("*")
+        .in("subcategory_id", subcategoryIds);
+      
+      if (priceError) {
+        throw priceError;
+      }
+      
+      // Convert pricing options to CategoryItem format
+      return (pricingOptions || []).map(option => ({
+        id: option.id,
+        name: option.name,
+        description: null,
+        price: option.price,
+        unit: option.unit,
+        subcategory_id: option.subcategory_id
+      }));
+    } catch (error) {
+      console.error(`Error fetching items for category ${categoryId}:`, error);
+      throw error;
+    }
   },
 
   async create(category: Omit<Category, "id" | "created_at" | "updated_at">): Promise<Category> {

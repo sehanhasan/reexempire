@@ -27,6 +27,16 @@ export interface PricingOption {
   updated_at: string;
 }
 
+// Adding CategoryItem type for the CategoryItemSelector component
+export interface CategoryItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  unit: string;
+  subcategory_id?: string;
+}
+
 export interface Customer {
   id: string;
   name: string;
