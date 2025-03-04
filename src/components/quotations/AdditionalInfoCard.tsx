@@ -14,7 +14,7 @@ interface AdditionalInfoCardProps {
   documentType: "quotation" | "invoice";
   isSubmitting?: boolean;
   onSendWhatsapp?: () => void;
-  saveButtonText?: string; // Add the missing property
+  saveButtonText?: string;
 }
 
 export function AdditionalInfoCard({
@@ -31,14 +31,14 @@ export function AdditionalInfoCard({
   const isMobile = useIsMobile();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Additional Information</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="py-3 px-4">
+        <CardTitle className="text-base lg:text-lg">Additional Information</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="notes" className="block text-sm font-medium leading-6">
+      <CardContent className="py-3 px-4">
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label htmlFor="notes" className="block text-sm font-medium">
               Notes (Optional)
             </label>
             <Textarea
@@ -46,17 +46,17 @@ export function AdditionalInfoCard({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={`Add any additional ${documentType} notes here...`}
-              rows={4}
-              className="resize-none"
+              rows={3}
+              className="resize-none text-sm"
             />
           </div>
 
-          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} space-y-2 md:space-y-0 md:space-x-2 pt-4 border-t`}>
+          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} gap-2 pt-3 border-t`}>
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
-              className={isMobile ? "w-full order-2 md:order-1" : ""}
+              className={`${isMobile ? "w-full order-2 md:order-1" : ""} h-8 text-sm`}
             >
               Cancel
             </Button>
@@ -66,7 +66,7 @@ export function AdditionalInfoCard({
                 type="button"
                 variant="outline"
                 onClick={onConvertToInvoice}
-                className={isMobile ? "w-full order-1 md:order-2" : ""}
+                className={`${isMobile ? "w-full order-1 md:order-2" : ""} h-8 text-sm`}
               >
                 Convert to Invoice
               </Button>
@@ -77,9 +77,9 @@ export function AdditionalInfoCard({
                 type="button"
                 variant="outline"
                 onClick={onSendWhatsapp}
-                className={isMobile ? "w-full order-2 md:order-3 bg-green-50 hover:bg-green-100 text-green-600 border-green-200" : "bg-green-50 hover:bg-green-100 text-green-600 border-green-200"}
+                className={`${isMobile ? "w-full order-2 md:order-3" : ""} h-8 text-sm bg-green-50 hover:bg-green-100 text-green-600 border-green-200`}
               >
-                <Send className="mr-2 h-4 w-4" />
+                <Send className="mr-1 h-3.5 w-3.5" />
                 Send via WhatsApp
               </Button>
             )}
@@ -88,18 +88,18 @@ export function AdditionalInfoCard({
               type="submit"
               onClick={onSubmit}
               disabled={isSubmitting}
-              className={isMobile ? "w-full order-3 md:order-4" : ""}
+              className={`${isMobile ? "w-full order-3 md:order-4" : ""} h-8 text-sm`}
             >
               {isSubmitting ? (
                 "Saving..."
               ) : saveButtonText ? (
                 <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
+                  <CheckCircle className="mr-1 h-3.5 w-3.5" />
                   {saveButtonText}
                 </>
               ) : (
                 <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
+                  <CheckCircle className="mr-1 h-3.5 w-3.5" />
                   Create {documentType.charAt(0).toUpperCase() + documentType.slice(1)}
                 </>
               )}

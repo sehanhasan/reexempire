@@ -24,15 +24,15 @@ export function ItemsTable({
     <div className="w-full overflow-auto">
       {isMobile ? (
         // Mobile view
-        <div className="space-y-6">
-          {items.map((item) => (
-            <div key={item.id} className="border rounded-md p-4 space-y-3 relative">
+        <div className="space-y-4">
+          {items.map((item, index) => (
+            <div key={item.id} className="border rounded-md p-3 space-y-2 relative">
               <div className="absolute top-2 right-2">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
                   onClick={() => removeItem(item.id)}
                   disabled={items.length <= 1}
                 >
@@ -43,60 +43,76 @@ export function ItemsTable({
               <div className="space-y-2">
                 <div className="grid grid-cols-4 gap-2">
                   <div className="col-span-3">
-                    <label className="block text-sm mb-1 text-muted-foreground">Description</label>
+                    <label className="block text-xs mb-1 text-muted-foreground">Description</label>
                     <Input
                       placeholder="Item description"
                       value={item.description}
                       onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                      className="text-sm h-8"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm mb-1 text-muted-foreground">Quantity</label>
+                    <label className="block text-xs mb-1 text-muted-foreground">Quantity</label>
                     <Input
                       type="number"
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                      className="text-sm h-8"
                     />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-4 gap-2">
                   <div>
-                    <label className="block text-sm mb-1 text-muted-foreground">Unit</label>
+                    <label className="block text-xs mb-1 text-muted-foreground">Unit</label>
                     <Input
                       placeholder="Unit"
                       value={item.unit}
                       onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
+                      className="text-sm h-8"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm mb-1 text-muted-foreground">Unit Price</label>
+                    <label className="block text-xs mb-1 text-muted-foreground">Price</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
                       <Input
                         type="number"
                         min="0"
                         step="0.01"
-                        className="pl-10"
+                        className="pl-8 text-sm h-8"
                         value={item.unitPrice}
                         onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                       />
                     </div>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm mb-1 text-muted-foreground">Amount</label>
+                    <label className="block text-xs mb-1 text-muted-foreground">Amount</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
                       <Input
                         type="number"
-                        className="pl-10"
+                        className="pl-8 text-sm h-8"
                         value={item.amount.toFixed(2)}
                         disabled
                       />
                     </div>
                   </div>
                 </div>
+                
+                {showDescription && (
+                  <div>
+                    <label className="block text-xs mb-1 text-muted-foreground">Detailed Description</label>
+                    <textarea
+                      placeholder="Additional details (optional)"
+                      value={item.description}
+                      onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                      rows={2}
+                      className="mt-1 w-full text-sm p-2 rounded-md border resize-y h-16"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}

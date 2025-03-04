@@ -100,19 +100,19 @@ export function CustomerInfoCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Customer Information</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="py-3 px-4">
+        <CardTitle className="text-base lg:text-lg">Customer Information</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-4`}>
-          <div className="space-y-2">
+      <CardContent className="space-y-3 py-3 px-4">
+        <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-3`}>
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="customer">Customer</Label>
+              <Label htmlFor="customer" className="text-sm">Customer</Label>
               {!readOnly && (
                 <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8">
+                    <Button variant="outline" size="sm" className="h-7 text-xs">
                       <Plus className="mr-1 h-3 w-3" />
                       Add Customer
                     </Button>
@@ -135,7 +135,7 @@ export function CustomerInfoCard({
               disabled={isLoading || readOnly}
               required
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-8 text-sm">
                 <SelectValue placeholder="Select a customer" />
               </SelectTrigger>
               <SelectContent>
@@ -151,8 +151,8 @@ export function CustomerInfoCard({
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="documentNumber">
+          <div className="space-y-1.5">
+            <Label htmlFor="documentNumber" className="text-sm">
               {isQuotation ? "Quotation Number" : "Invoice Number"}
             </Label>
             <Input
@@ -161,36 +161,36 @@ export function CustomerInfoCard({
               value={documentNumber}
               onChange={(e) => setDocumentNumber(e.target.value)}
               readOnly={readOnly}
+              className="h-8 text-sm"
             />
           </div>
         </div>
         
         {/* Subject field only */}
-        <div className="grid grid-cols-1 gap-4">
-          {setSubject && (
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                placeholder="e.g., Bathroom Renovation"
-                value={subject || ''}
-                onChange={(e) => setSubject(e.target.value)}
-                readOnly={readOnly}
-              />
-            </div>
-          )}
-        </div>
+        {setSubject && (
+          <div className="space-y-1.5">
+            <Label htmlFor="subject" className="text-sm">Subject</Label>
+            <Input
+              id="subject"
+              placeholder="e.g., Bathroom Renovation"
+              value={subject || ''}
+              onChange={(e) => setSubject(e.target.value)}
+              readOnly={readOnly}
+              className="h-8 text-sm"
+            />
+          </div>
+        )}
         
-        <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-4`}>
-          <div className="space-y-2">
-            <Label htmlFor="expiryDate">{expiryLabel}</Label>
+        <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-3`}>
+          <div className="space-y-1.5">
+            <Label htmlFor="expiryDate" className="text-sm">{expiryLabel}</Label>
             <div className="flex space-x-2">
               {!readOnly && (
                 <Select 
                   onValueChange={(value) => handleDateOptionChange(parseInt(value))}
                   defaultValue="30"
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[110px] h-8 text-sm">
                     <SelectValue placeholder="Select days" />
                   </SelectTrigger>
                   <SelectContent>
@@ -208,21 +208,21 @@ export function CustomerInfoCard({
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
                 required
-                className="flex-1"
+                className="flex-1 h-8 text-sm"
                 readOnly={readOnly}
               />
             </div>
           </div>
           
           {paymentMethod && setPaymentMethod && (
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Payment Method</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="paymentMethod" className="text-sm">Payment Method</Label>
               <Select 
                 value={paymentMethod} 
                 onValueChange={setPaymentMethod}
                 disabled={readOnly}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -237,10 +237,10 @@ export function CustomerInfoCard({
         </div>
 
         {quotationReference && (
-          <div className="pt-2">
+          <div className="pt-1">
             <div className="flex items-center text-blue-600">
-              <Receipt className="h-4 w-4 mr-2" />
-              <span className="text-sm">Created from Quotation: <strong>{quotationReference}</strong></span>
+              <Receipt className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs">Created from Quotation: <strong>{quotationReference}</strong></span>
             </div>
           </div>
         )}
