@@ -184,7 +184,7 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Quotations</CardTitle>
-              <CardDescription>Recently created quotations</CardDescription>
+              
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate("/quotations")}>
               View All
@@ -217,7 +217,7 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Invoices</CardTitle>
-              <CardDescription>Recently created invoices</CardDescription>
+              
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate("/invoices")}>
               View All
