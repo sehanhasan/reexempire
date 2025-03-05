@@ -14,10 +14,12 @@ import { quotationService, customerService } from "@/services";
 import { format } from "date-fns";
 import { Quotation, Customer } from "@/types/database";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
+
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number: string | null;
 }
+
 export default function Quotations() {
   const navigate = useNavigate();
   const [quotations, setQuotations] = useState<QuotationWithCustomer[]>([]);
@@ -26,10 +28,12 @@ export default function Quotations() {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<QuotationWithCustomer | null>(null);
+
   const fetchQuotations = async () => {
     try {
       setIsLoading(true);
       const data = await quotationService.getAll();
+
       const quotationsWithCustomers = await Promise.all(data.map(async quotation => {
         let customerName = "Unknown";
         let unitNumber = null;
@@ -60,16 +64,20 @@ export default function Quotations() {
       });
     }
   };
+
   useEffect(() => {
     fetchQuotations();
   }, []);
+
   const handleView = (quotation: QuotationWithCustomer) => {
     setSelectedQuotation(quotation);
     setShowViewDialog(true);
   };
+
   const handleEdit = (quotation: QuotationWithCustomer) => {
     navigate(`/quotations/edit/${quotation.id}`);
   };
+
   const handleDownload = (quotation: QuotationWithCustomer) => {
     try {
       quotationService.getItemsByQuotationId(quotation.id).then(items => {
@@ -119,6 +127,7 @@ export default function Quotations() {
       });
     }
   };
+
   const handleSend = (quotation: QuotationWithCustomer) => {
     if (quotation.status === "Draft") {
       const updateQuotation = async () => {
@@ -135,6 +144,7 @@ export default function Quotations() {
     }
     sendWhatsappWithQuotation(quotation);
   };
+
   const sendWhatsappWithQuotation = async (quotation: QuotationWithCustomer) => {
     try {
       const customer = await customerService.getById(quotation.customer_id);
@@ -146,6 +156,7 @@ export default function Quotations() {
         });
         return;
       }
+
       const items = await quotationService.getItemsByQuotationId(quotation.id);
       const formattedItems = items.map(item => ({
         id: Number(item.id),
@@ -155,6 +166,7 @@ export default function Quotations() {
         unitPrice: Number(item.unit_price),
         amount: Number(item.amount)
       }));
+
       const pdf = generateQuotationPDF({
         documentNumber: quotation.reference_number,
         documentDate: quotation.issue_date,
@@ -171,14 +183,18 @@ export default function Quotations() {
           depositPercentage: quotation.deposit_percentage || 0
         }
       });
+
       const pdfDataUri = pdf.output('datauristring');
+
       let phoneNumber = customer.phone.replace(/\D/g, '');
       if (phoneNumber.startsWith('0')) {
         phoneNumber = '6' + phoneNumber;
       } else if (!phoneNumber.startsWith('6')) {
         phoneNumber = '60' + phoneNumber;
       }
+
       const message = `Dear ${quotation.customer_name},\n\nPlease find attached Quotation ${quotation.reference_number}.\n\nThank you.`;
+
       window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
       toast({
         title: "WhatsApp Opened",
@@ -193,10 +209,12 @@ export default function Quotations() {
       });
     }
   };
+
   const handleDelete = (quotation: QuotationWithCustomer) => {
     setQuotationToDelete(quotation);
     setShowDeleteConfirm(true);
   };
+
   const confirmDelete = async () => {
     if (!quotationToDelete) return;
     try {
@@ -218,6 +236,7 @@ export default function Quotations() {
       });
     }
   };
+
   const handleMarkAsAccepted = (quotation: QuotationWithCustomer) => {
     const updateQuotation = async () => {
       try {
@@ -241,6 +260,7 @@ export default function Quotations() {
     };
     updateQuotation();
   };
+
   const handleMarkAsRejected = (quotation: QuotationWithCustomer) => {
     const updateQuotation = async () => {
       try {
@@ -264,6 +284,7 @@ export default function Quotations() {
     };
     updateQuotation();
   };
+
   const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
     navigate("/invoices/create", {
       state: {
@@ -271,45 +292,55 @@ export default function Quotations() {
       }
     });
   };
-  const columns: Column<QuotationWithCustomer>[] = [{
-    header: "ID",
-    accessorKey: "reference_number",
-    cell: quotation => <button className="font-medium text-blue-600 hover:underline" onClick={() => handleView(quotation)}>
+
+  const columns: Column<QuotationWithCustomer>[] = [
+    {
+      header: "ID",
+      accessorKey: "reference_number",
+      cell: quotation => <button className="font-medium text-blue-600 hover:underline" onClick={() => handleView(quotation)}>
           {quotation.reference_number}
         </button>
-  }, {
-    header: "Unit #",
-    accessorKey: "unit_number",
-    cell: quotation => quotation.unit_number || "N/A"
-  }, {
-    header: "Customer",
-    accessorKey: "customer_name"
-  }, {
-    header: "Amount",
-    accessorKey: "total",
-    cell: quotation => `RM ${parseFloat(quotation.total.toString()).toFixed(2)}`
-  }, {
-    header: "Issue Date",
-    accessorKey: "issue_date",
-    cell: quotation => format(new Date(quotation.issue_date), "MMM dd, yyyy")
-  }, {
-    header: "Valid Until",
-    accessorKey: "expiry_date",
-    cell: quotation => format(new Date(quotation.expiry_date), "MMM dd, yyyy")
-  }, {
-    header: "Status",
-    accessorKey: "status",
-    cell: quotation => {
-      const status = quotation.status;
-      return <Badge className={status === "Accepted" ? "bg-green-100 text-green-800 hover:bg-green-200" : status === "Sent" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : status === "Draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" : "bg-red-100 text-red-800 hover:bg-red-200"}>
+    },
+    {
+      header: "Unit #",
+      accessorKey: "unit_number",
+      cell: quotation => quotation.unit_number || "N/A"
+    },
+    {
+      header: "Customer",
+      accessorKey: "customer_name"
+    },
+    {
+      header: "Amount",
+      accessorKey: "total",
+      cell: quotation => `RM ${parseFloat(quotation.total.toString()).toFixed(2)}`
+    },
+    {
+      header: "Issue Date",
+      accessorKey: "issue_date",
+      cell: quotation => format(new Date(quotation.issue_date), "MMM dd, yyyy")
+    },
+    {
+      header: "Valid Until",
+      accessorKey: "expiry_date",
+      cell: quotation => format(new Date(quotation.expiry_date), "MMM dd, yyyy")
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      cell: quotation => {
+        const status = quotation.status;
+        return <Badge className={status === "Accepted" ? "bg-green-100 text-green-800 hover:bg-green-200" : status === "Sent" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : status === "Draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" : "bg-red-100 text-red-800 hover:bg-red-200"}>
               {status}
             </Badge>;
-    }
-  }, {
-    header: "Actions",
-    accessorKey: "id",
-    cell: quotation => {
-      return <div className="flex items-center">
+      }
+    },
+    {
+      header: "Actions",
+      accessorKey: "id",
+      cell: quotation => {
+        return (
+          <div className="flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -322,22 +353,27 @@ export default function Quotations() {
                   View
                 </DropdownMenuItem>
                 
-                {quotation.status === "Draft" && <DropdownMenuItem className="cursor-pointer" onClick={() => handleEdit(quotation)}>
+                {quotation.status === "Draft" && (
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleEdit(quotation)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
-                  </DropdownMenuItem>}
+                  </DropdownMenuItem>
+                )}
                 
                 <DropdownMenuItem className="cursor-pointer" onClick={() => handleDownload(quotation)}>
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
                 
-                {quotation.status === "Draft" && <DropdownMenuItem className="cursor-pointer" onClick={() => handleSend(quotation)}>
+                {quotation.status === "Draft" && (
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleSend(quotation)}>
                     <Send className="mr-2 h-4 w-4" />
                     Send
-                  </DropdownMenuItem>}
+                  </DropdownMenuItem>
+                )}
                 
-                {quotation.status === "Sent" && <>
+                {quotation.status === "Sent" && (
+                  <>
                     <DropdownMenuItem className="cursor-pointer text-green-600" onClick={() => handleMarkAsAccepted(quotation)}>
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Mark as Accepted
@@ -346,12 +382,15 @@ export default function Quotations() {
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Mark as Rejected
                     </DropdownMenuItem>
-                  </>}
+                  </>
+                )}
                 
-                {quotation.status === "Accepted" && <DropdownMenuItem className="cursor-pointer text-blue-600" onClick={() => handleConvertToInvoice(quotation)}>
+                {quotation.status === "Accepted" && (
+                  <DropdownMenuItem className="cursor-pointer text-blue-600" onClick={() => handleConvertToInvoice(quotation)}>
                     <Receipt className="mr-2 h-4 w-4" />
                     Convert to Invoice
-                  </DropdownMenuItem>}
+                  </DropdownMenuItem>
+                )}
                 
                 <DropdownMenuSeparator />
                 
@@ -361,11 +400,17 @@ export default function Quotations() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>;
+          </div>
+        );
+      }
     }
-  }];
+  ];
+
   return <div className="page-container">
-      
+      <PageHeader title="Quotations" description="Manage quotations and track their status." actions={<Button className="flex items-center" onClick={() => navigate("/quotations/create")}>
+            <File className="mr-2 h-4 w-4" />
+            Create Quotation
+          </Button>} />
       
       <div className="mt-8">
         <DataTable columns={columns} data={quotations} searchKey="unit_number" isLoading={isLoading} />
