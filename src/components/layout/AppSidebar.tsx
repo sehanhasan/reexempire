@@ -1,105 +1,173 @@
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { Home, FileText, Receipt,
-// Replacing FileInvoice 
-Users, HardHat,
-// Replacing UserHardHat
-Calendar, FolderTree, UserCircle, Menu, X } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { useNavigate, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  LayoutDashboard,
+  FolderTree,
+  Users,
+  FileText,
+  Receipt,
+  UserCircle,
+  Calendar,
+  Settings,
+  LogOut,
+  X
+} from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-interface NavItem {
-  title: string;
-  path: string;
-  icon: React.ElementType;
+
+interface AppSidebarProps {
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
 }
-const navItems: NavItem[] = [{
-  title: "Dashboard",
-  path: "/",
-  icon: Home
-}, {
-  title: "Quotations",
-  path: "/quotations",
-  icon: FileText
-}, {
-  title: "Invoices",
-  path: "/invoices",
-  icon: Receipt
-}, {
-  title: "Customers",
-  path: "/customers",
-  icon: Users
-}, {
-  title: "Staff",
-  path: "/staff",
-  icon: HardHat
-}, {
-  title: "Schedule",
-  path: "/schedule",
-  icon: Calendar
-}, {
-  title: "Categories",
-  path: "/categories",
-  icon: FolderTree
-}, {
-  title: "Profile",
-  path: "/profile",
-  icon: UserCircle
-}];
-export function AppSidebar() {
-  const [expanded, setExpanded] = useState(true);
+
+export function AppSidebar({ open, setOpen }: AppSidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
-  const toggleSidebar = () => {
-    setExpanded(!expanded);
+  
+  // Logo image
+  const logoUrl = "https://i.ibb.co/Ltyts5K/reex-empire-logo.png";
+
+  // Navigation items
+  const navItems = [
+    {
+      title: "Dashboard",
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      href: "/dashboard",
+    },
+    {
+      title: "Categories",
+      icon: <FolderTree className="h-5 w-5" />,
+      href: "/categories",
+    },
+    {
+      title: "Customers",
+      icon: <Users className="h-5 w-5" />,
+      href: "/customers",
+    },
+    {
+      title: "Quotations",
+      icon: <FileText className="h-5 w-5" />,
+      href: "/quotations",
+    },
+    {
+      title: "Invoices",
+      icon: <Receipt className="h-5 w-5" />,
+      href: "/invoices",
+    },
+    {
+      title: "Staff",
+      icon: <UserCircle className="h-5 w-5" />,
+      href: "/staff",
+    },
+    {
+      title: "Schedule",
+      icon: <Calendar className="h-5 w-5" />,
+      href: "/schedule",
+    },
+  ];
+
+  // Function to check if a nav item is active
+  const isActiveRoute = (href: string) => {
+    if (href === "/dashboard" && location.pathname === "/") {
+      return true;
+    }
+    return location.pathname.startsWith(href);
   };
-  return <>
-      {/* Mobile Overlay */}
-      {isMobile && expanded && <div className="fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity" onClick={() => setExpanded(false)} />}
 
-      {/* Mobile toggle button */}
-      <button onClick={toggleSidebar} className="fixed top-4 left-4 z-50 md:hidden flex items-center justify-center h-10 w-10 rounded-md bg-blue-600 text-white" aria-label="Toggle sidebar">
-        {expanded ? <X size={20} /> : <Menu size={20} />}
-      </button>
+  // Mobile overlay for sidebar
+  const mobileOverlay = isMobile && (
+    <div 
+      className={cn(
+        "fixed inset-0 bg-black/50 z-40 transition-opacity",
+        open ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}
+      onClick={() => setOpen && setOpen(false)}
+    />
+  );
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out 
-                    ${expanded ? "translate-x-0" : "-translate-x-full"} 
-                    md:translate-x-0 md:static md:flex flex-col flex-shrink-0 w-64 bg-sidebar border-r border-sidebar-border overflow-hidden`}>
-        <div className="flex flex-col h-full">
-          <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border bg-white">
-            <div className="flex items-center">
-              <img src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" alt="Reex Empire Logo" className="h-10 mr-2" />
-            </div>
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hidden md:flex">
-              <Menu size={20} />
+  return (
+    <>
+      {mobileOverlay}
+      
+      <aside
+        className={cn(
+          "bg-white border-r border-gray-200 h-screen flex flex-col z-50",
+          isMobile 
+            ? "fixed transition-transform transform w-72" 
+            : "relative w-64",
+          isMobile && !open && "-translate-x-full"
+        )}
+      >
+        <div className="h-14 flex items-center px-4 border-b justify-between">
+          <div className="flex items-center gap-2">
+            <img src={logoUrl} alt="Reex Empire Logo" className="h-8" />
+            <span className="font-semibold text-lg">Reex Empire</span>
+          </div>
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setOpen && setOpen(false)}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        
+        <ScrollArea className="flex-1 py-2">
+          <nav className="space-y-1 px-2">
+            {navItems.map((item) => (
+              <Button
+                key={item.href}
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start text-gray-600 h-10",
+                  isActiveRoute(item.href) &&
+                    "bg-gray-100 text-gray-900 font-medium"
+                )}
+                onClick={() => {
+                  navigate(item.href);
+                  if (isMobile) {
+                    setOpen && setOpen(false);
+                  }
+                }}
+              >
+                {item.icon}
+                <span className="ml-3">{item.title}</span>
+              </Button>
+            ))}
+          </nav>
+        </ScrollArea>
+        
+        <div className="border-t border-gray-200 p-2">
+          <div className="mt-2 p-2">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-gray-600 h-10"
+              onClick={() => navigate("/profile")}
+            >
+              <Settings className="h-5 w-5" />
+              <span className="ml-3">Settings</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-gray-600 h-10"
+              onClick={() => {
+                // Handle logout logic
+                navigate("/");
+              }}
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="ml-3">Logout</span>
             </Button>
           </div>
-
-          <div className="flex-1 overflow-y-auto py-4 bg-white">
-            <nav className="space-y-1 px-2">
-              {navItems.map(item => <NavLink key={item.path} to={item.path} className={({
-              isActive
-            }) => `flex items-center px-4 py-3 text-sm rounded-md transition-colors
-                    ${isActive ? "bg-blue-100 text-blue-800 font-medium" : "text-slate-700 hover:bg-blue-50 hover:text-blue-700"}`} onClick={() => isMobile && setExpanded(false)}>
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  <span>{item.title}</span>
-                </NavLink>)}
-            </nav>
-          </div>
-          
-          <div className="p-4 border-t border-sidebar-border bg-white">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                <UserCircle size={16} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-700">Admin User</p>
-                <p className="text-xs text-slate-500">admin@renovateprox.com</p>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-    </>;
+      </aside>
+    </>
+  );
 }

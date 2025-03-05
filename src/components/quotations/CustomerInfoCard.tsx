@@ -1,53 +1,34 @@
 
 import { useState, useEffect } from "react";
+import { CardTitle, Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Plus, Receipt } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserRound, Search, CalendarIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { customerService } from "@/services";
 import { Customer } from "@/types/database";
-import AddCustomerForm from "@/components/customers/AddCustomerForm";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { addDays, format } from "date-fns";
 
 interface CustomerInfoCardProps {
   customer: string;
-  setCustomer: (value: string) => void;
+  setCustomer: (id: string) => void;
   documentType: "quotation" | "invoice";
   documentNumber: string;
-  setDocumentNumber: (value: string) => void;
+  setDocumentNumber: (number: string) => void;
   documentDate: string;
-  setDocumentDate: (value: string) => void;
+  setDocumentDate: (date: string) => void;
   expiryDate: string;
-  setExpiryDate: (value: string) => void;
+  setExpiryDate: (date: string) => void;
   paymentMethod?: string;
-  setPaymentMethod?: (value: string) => void;
+  setPaymentMethod?: (method: string) => void;
   quotationReference?: string;
   subject?: string;
-  setSubject?: (value: string) => void;
+  setSubject?: (subject: string) => void;
   unitNumber?: string;
-  setUnitNumber?: (value: string) => void;
-  readOnly?: boolean; // Add readOnly prop
+  setUnitNumber?: (unit: string) => void;
 }
 
 export function CustomerInfoCard({
@@ -66,185 +47,253 @@ export function CustomerInfoCard({
   subject,
   setSubject,
   unitNumber,
-  setUnitNumber,
-  readOnly = false // Add default value
+  setUnitNumber
 }: CustomerInfoCardProps) {
-  const isQuotation = documentType === "quotation";
-  const expiryLabel = isQuotation ? "Valid Until" : "Due Date";
+  const [customerSearch, setCustomerSearch] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const isMobile = useIsMobile();
-  
+
+  // Load customers when component mounts
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const loadCustomers = async () => {
       try {
         const data = await customerService.getAll();
-        // Sort by most recently added (created_at in descending order)
-        data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setCustomers(data);
-        setIsLoading(false);
+        setFilteredCustomers(data);
       } catch (error) {
-        console.error("Error fetching customers:", error);
-        setIsLoading(false);
+        console.error("Error loading customers:", error);
       }
     };
+    
+    loadCustomers();
+  }, []);
 
-    fetchCustomers();
-  }, [isAddCustomerOpen]); // Refetch when modal is closed
-  
-  const handleDateOptionChange = (days: number) => {
-    const today = new Date();
-    const futureDate = addDays(today, days);
-    setExpiryDate(format(futureDate, 'yyyy-MM-dd'));
+  // Set customer details when customer ID changes
+  useEffect(() => {
+    if (customer && customers.length > 0) {
+      const found = customers.find((c) => c.id === customer);
+      setSelectedCustomer(found || null);
+    }
+  }, [customer, customers]);
+
+  // Handle customer search
+  useEffect(() => {
+    if (customerSearch.trim() === "") {
+      setFilteredCustomers(customers);
+    } else {
+      const search = customerSearch.toLowerCase();
+      setFilteredCustomers(
+        customers.filter(
+          (c) =>
+            c.name.toLowerCase().includes(search) ||
+            c.email?.toLowerCase().includes(search) ||
+            c.phone?.toLowerCase().includes(search)
+        )
+      );
+    }
+  }, [customerSearch, customers]);
+
+  // Handle customer selection
+  const handleSelectCustomer = (selected: Customer) => {
+    setCustomer(selected.id);
+    setSelectedCustomer(selected);
+    
+    // Auto-fill unit number if available
+    if (selected.unit_number && setUnitNumber) {
+      setUnitNumber(selected.unit_number);
+    }
+    
+    setCustomerDialogOpen(false);
   };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="py-3 px-4">
-        <CardTitle className="text-base lg:text-lg">Customer Information</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 py-3 px-4">
-        <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-3`}>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="customer" className="text-sm">Customer</Label>
-              {!readOnly && (
-                <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-7 text-xs">
-                      <Plus className="mr-1 h-3 w-3" />
-                      Add Customer
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Add New Customer</DialogTitle>
-                    </DialogHeader>
-                    <AddCustomerForm 
-                      onSuccess={() => setIsAddCustomerOpen(false)} 
-                      isModal={true}
-                    />
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-            <Select 
-              value={customer} 
-              onValueChange={setCustomer}
-              disabled={isLoading || readOnly}
-              required
-            >
-              <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder="Select a customer" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{c.unit_number || 'No Unit'}</span>
-                      <span className="text-xs text-muted-foreground">{c.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-1.5">
-            <Label htmlFor="documentNumber" className="text-sm">
-              {isQuotation ? "Quotation Number" : "Invoice Number"}
-            </Label>
-            <Input
-              id="documentNumber"
-              placeholder={documentNumber}
-              value={documentNumber}
-              onChange={(e) => setDocumentNumber(e.target.value)}
-              readOnly={readOnly}
-              className="h-8 text-sm"
-            />
-          </div>
-        </div>
-        
-        {/* Subject field only */}
-        {setSubject && (
-          <div className="space-y-1.5">
-            <Label htmlFor="subject" className="text-sm">Subject</Label>
-            <Input
-              id="subject"
-              placeholder="e.g., Bathroom Renovation"
-              value={subject || ''}
-              onChange={(e) => setSubject(e.target.value)}
-              readOnly={readOnly}
-              className="h-8 text-sm"
-            />
-          </div>
-        )}
-        
-        <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-3`}>
-          <div className="space-y-1.5">
-            <Label htmlFor="expiryDate" className="text-sm">{expiryLabel}</Label>
-            <div className="flex space-x-2">
-              {!readOnly && (
-                <Select 
-                  onValueChange={(value) => handleDateOptionChange(parseInt(value))}
-                  defaultValue="30"
+    <>
+      <Card className="shadow-sm">
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-base lg:text-lg">Customer Information</CardTitle>
+        </CardHeader>
+        <CardContent className="py-3 px-4">
+          <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-3"} gap-4`}>
+            <div className="space-y-2">
+              <Label htmlFor="customer">Customer</Label>
+              <div className="flex gap-2">
+                <Button
+                  id="customer"
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCustomerDialogOpen(true)}
+                  className={`w-full h-10 ${selectedCustomer ? "justify-start" : "justify-center"}`}
                 >
-                  <SelectTrigger className="w-[110px] h-8 text-sm">
-                    <SelectValue placeholder="Select days" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3">3 days</SelectItem>
-                    <SelectItem value="7">7 days</SelectItem>
-                    <SelectItem value="15">15 days</SelectItem>
-                    <SelectItem value="30">30 days</SelectItem>
-                    <SelectItem value="60">60 days</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
+                  {selectedCustomer ? (
+                    <>
+                      <UserRound className="mr-2 h-4 w-4 text-gray-500" />
+                      <span className="truncate">{selectedCustomer.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-2 h-4 w-4" />
+                      Select Customer
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {unitNumber !== undefined && setUnitNumber && (
+              <div className="space-y-2">
+                <Label htmlFor="unitNumber">Unit Number / Property</Label>
+                <Input
+                  id="unitNumber"
+                  value={unitNumber}
+                  onChange={(e) => setUnitNumber(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="documentNumber">
+                {documentType === "quotation" ? "Quotation" : "Invoice"} Number
+              </Label>
               <Input
-                id="expiryDate"
-                type="date"
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-                required
-                className="flex-1 h-8 text-sm"
-                readOnly={readOnly}
+                id="documentNumber"
+                value={documentNumber}
+                onChange={(e) => setDocumentNumber(e.target.value)}
+                className="h-10"
               />
             </div>
-          </div>
-          
-          {paymentMethod && setPaymentMethod && (
-            <div className="space-y-1.5">
-              <Label htmlFor="paymentMethod" className="text-sm">Payment Method</Label>
-              <Select 
-                value={paymentMethod} 
-                onValueChange={setPaymentMethod}
-                disabled={readOnly}
-              >
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="cheque">Cheque</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
 
-        {quotationReference && (
-          <div className="pt-1">
-            <div className="flex items-center text-blue-600">
-              <Receipt className="h-3.5 w-3.5 mr-1.5" />
-              <span className="text-xs">Created from Quotation: <strong>{quotationReference}</strong></span>
+            <div className="space-y-2">
+              <Label htmlFor="documentDate">
+                {documentType === "quotation" ? "Quotation" : "Invoice"} Date
+              </Label>
+              <div className="relative">
+                <Input
+                  id="documentDate"
+                  type="date"
+                  value={documentDate}
+                  onChange={(e) => setDocumentDate(e.target.value)}
+                  className="h-10"
+                />
+                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+              </div>
             </div>
+
+            {/* Hide Valid Until date picker as requested */}
+            {documentType === "invoice" && (
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <div className="relative">
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    value={expiryDate}
+                    onChange={(e) => setExpiryDate(e.target.value)}
+                    className="h-10"
+                  />
+                  <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                </div>
+              </div>
+            )}
+
+            {documentType === "invoice" &&
+              paymentMethod !== undefined &&
+              setPaymentMethod && (
+                <div className="space-y-2">
+                  <Label htmlFor="paymentMethod">Payment Method</Label>
+                  <Select
+                    value={paymentMethod}
+                    onValueChange={setPaymentMethod}
+                  >
+                    <SelectTrigger id="paymentMethod" className="h-10">
+                      <SelectValue placeholder="Select Payment Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="credit_card">Credit Card</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+            {quotationReference && (
+              <div className="space-y-2">
+                <Label htmlFor="quotationReference">Quotation Reference</Label>
+                <Input
+                  id="quotationReference"
+                  value={quotationReference}
+                  readOnly
+                  className="h-10 bg-gray-50"
+                />
+              </div>
+            )}
+
+            {subject !== undefined && setSubject && (
+              <div className={`space-y-2 ${isMobile ? "" : "col-span-2 xl:col-span-3"}`}>
+                <Label htmlFor="subject">Subject</Label>
+                <Input
+                  id="subject"
+                  placeholder="e.g. Monthly Maintenance Service"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Customer selection dialog */}
+      <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Customer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Input
+                type="search"
+                placeholder="Search customers..."
+                className="pl-8 h-10"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+              />
+            </div>
+            <ScrollArea className="h-[300px] rounded border p-2">
+              {filteredCustomers.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredCustomers.map((c) => (
+                    <Button
+                      key={c.id}
+                      variant="ghost"
+                      className="w-full justify-start h-auto py-2 px-2"
+                      onClick={() => handleSelectCustomer(c)}
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">{c.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {c.email || c.phone || "No contact info"}
+                        </span>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  No customers found
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

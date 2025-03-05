@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +16,7 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation } from "react-router-dom";
 
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
@@ -43,6 +44,17 @@ export function InvoiceItemsCard({
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [showItemsTable, setShowItemsTable] = useState(false);
   const isMobile = useIsMobile();
+  const location = useLocation();
+  
+  // Determine if we're on an edit page or create page
+  const isEditPage = location.pathname.includes('edit');
+  
+  // Set showItemsTable to true automatically if on edit page
+  useEffect(() => {
+    if (isEditPage && items.length > 0) {
+      setShowItemsTable(true);
+    }
+  }, [isEditPage, items.length]);
   
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems =>
@@ -154,7 +166,7 @@ export function InvoiceItemsCard({
               type="button"
               variant="outline"
               onClick={addItem}
-              className={`${isMobile ? "w-full h-10" : "h-10"} text-sm`}
+              className={`${isMobile ? "w-full" : ""} text-sm h-10`}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Item
@@ -164,7 +176,7 @@ export function InvoiceItemsCard({
               type="button"
               variant="outline"
               onClick={() => setShowCategorySelector(true)}
-              className={`${isMobile ? "w-full h-10" : "h-10"} text-sm`}
+              className={`${isMobile ? "w-full" : ""} text-sm h-10`}
             >
               <FolderOpen className="mr-1 h-3.5 w-3.5" />
               Select from Categories

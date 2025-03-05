@@ -23,16 +23,16 @@ export function ItemsTable({
   return (
     <div className="w-full overflow-auto">
       {isMobile ? (
-        // Mobile view
+        // Mobile view - improved layout
         <div className="space-y-4">
           {items.map((item, index) => (
-            <div key={item.id} className="border rounded-md p-3 space-y-2 relative">
+            <div key={item.id} className="border rounded-md p-3 space-y-2 relative bg-white">
               <div className="absolute top-2 right-2">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                   onClick={() => removeItem(item.id)}
                   disabled={items.length <= 1}
                 >
@@ -40,19 +40,22 @@ export function ItemsTable({
                 </Button>
               </div>
               
-              <div className="space-y-2">
-                <div className="grid grid-cols-4 gap-2">
-                  <div className="col-span-3">
-                    <label className="block text-xs mb-1 text-muted-foreground">Description</label>
-                    <Input
-                      placeholder="Enter item description"
-                      value={item.description}
-                      onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1 text-muted-foreground">Qty</label>
+              <div className="space-y-3 pb-1">
+                <div className="mb-1 font-medium text-sm text-slate-500">Item #{index + 1}</div>
+                
+                <div className="space-y-2">
+                  <label className="block text-xs mb-1 text-slate-600 font-medium">Description</label>
+                  <Input
+                    placeholder="Enter item description"
+                    value={item.description}
+                    onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
                     <Input
                       type="number"
                       min="1"
@@ -61,11 +64,9 @@ export function ItemsTable({
                       className="h-10 text-center"
                     />
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-4 gap-2">
-                  <div>
-                    <label className="block text-xs mb-1 text-muted-foreground">Unit</label>
+                  
+                  <div className="space-y-1">
+                    <label className="block text-xs mb-1 text-slate-600 font-medium">Unit</label>
                     <Input
                       placeholder="Unit"
                       value={item.unit}
@@ -73,8 +74,11 @@ export function ItemsTable({
                       className="h-10"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs mb-1 text-muted-foreground">Unit Price</label>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price</label>
                     <div className="relative">
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
                       <Input
@@ -87,13 +91,14 @@ export function ItemsTable({
                       />
                     </div>
                   </div>
-                  <div className="col-span-2">
-                    <label className="block text-xs mb-1 text-muted-foreground">Amount</label>
+                  
+                  <div className="space-y-1">
+                    <label className="block text-xs mb-1 text-slate-600 font-medium">Amount</label>
                     <div className="relative">
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
                       <Input
                         type="number"
-                        className="pl-8 h-10 text-right"
+                        className="pl-8 h-10 text-right bg-gray-50"
                         value={item.amount.toFixed(2)}
                         disabled
                       />
@@ -178,7 +183,7 @@ export function ItemsTable({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50"
                     onClick={() => removeItem(item.id)}
                     disabled={items.length <= 1}
                   >
