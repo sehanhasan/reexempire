@@ -149,7 +149,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Upcoming Jobs</CardTitle>
-            <CardDescription>Jobs scheduled in the next few days</CardDescription>
+            
           </CardHeader>
           <CardContent>
             {upcomingJobs.length === 0 ? <p className="text-center py-10 text-muted-foreground">No upcoming jobs scheduled</p> : <div className="space-y-4">
