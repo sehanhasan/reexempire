@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
@@ -9,11 +9,12 @@ import {
   Edit,
   MoreHorizontal,
   Trash,
-  Eye,
   FolderPlus,
   ChevronRight,
   List
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { categoryService } from "@/services/categoryService";
 
 import {
   DropdownMenu,
@@ -35,12 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  subcategories: Subcategory[];
-}
+import { Category } from "@/types/database";
 
 export default function Categories() {
   const navigate = useNavigate();
@@ -49,58 +45,27 @@ export default function Categories() {
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | undefined>(undefined);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
-  const [showCategoryDetails, setShowCategoryDetails] = useState(false);
-  const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
   
-  // Mock data - would come from API in real app
-  const [categories, setCategories] = useState<Category[]>([
-    { 
-      id: "CAT-001", 
-      name: "Bathroom Renovation", 
-      description: "Complete bathroom remodeling services", 
-      subcategories: [
-        {
-          id: "SUB-001",
-          name: "Toilet Installation",
-          description: "Removal and installation of toilets",
-          pricingOptions: [
-            { id: "PO-001", name: "Standard Toilet", price: 250, unit: "Unit" },
-            { id: "PO-002", name: "Premium Toilet", price: 450, unit: "Unit" }
-          ]
-        },
-        {
-          id: "SUB-002",
-          name: "Sink Installation",
-          description: "Removal and installation of sinks",
-          pricingOptions: [
-            { id: "PO-003", name: "Standard Sink", price: 200, unit: "Unit" },
-            { id: "PO-004", name: "Premium Sink", price: 350, unit: "Unit" }
-          ]
-        }
-      ]
-    },
-    { 
-      id: "CAT-002", 
-      name: "Kitchen Remodeling", 
-      description: "Kitchen upgrade and renovation", 
-      subcategories: [
-        {
-          id: "SUB-003",
-          name: "Cabinets Installation",
-          description: "Installation of kitchen cabinets",
-          pricingOptions: [
-            { id: "PO-005", name: "Standard Cabinets", price: 450, unit: "Unit" },
-            { id: "PO-006", name: "Custom Cabinets", price: 800, unit: "Unit" }
-          ]
-        }
-      ]
-    },
-    { id: "CAT-003", name: "Flooring", description: "All types of flooring installation and repair", subcategories: [] },
-    { id: "CAT-004", name: "Painting", description: "Interior and exterior painting services", subcategories: [] },
-    { id: "CAT-005", name: "Electrical Work", description: "All electrical installation and repairs", subcategories: [] },
-    { id: "CAT-006", name: "Plumbing", description: "Plumbing services and fixtures", subcategories: [] },
-    { id: "CAT-007", name: "Roofing", description: "Roof repair and installation", subcategories: [] },
-  ]);
+  // Fetch categories from the API
+  const { data: categories = [], refetch } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const categories = await categoryService.getAll();
+      
+      // Fetch subcategories for each category
+      const categoriesWithSubcategories = await Promise.all(
+        categories.map(async (category) => {
+          const subcategories = await categoryService.getSubcategoriesByCategoryId(category.id);
+          return {
+            ...category,
+            subcategories: subcategories || []
+          };
+        })
+      );
+      
+      return categoriesWithSubcategories;
+    }
+  });
 
   const handleAddSubcategory = (category: Category) => {
     setSelectedCategory(category);
@@ -114,55 +79,60 @@ export default function Categories() {
     setShowSubcategoryModal(true);
   };
 
-  const handleSaveSubcategory = (subcategory: Subcategory) => {
+  const handleSaveSubcategory = async (subcategory: Subcategory) => {
     if (!selectedCategory) return;
 
-    setCategories(categories.map(category => {
-      if (category.id !== selectedCategory.id) return category;
-
-      const existingIndex = category.subcategories.findIndex(sc => sc.id === subcategory.id);
-      
-      if (existingIndex >= 0) {
-        // Update existing subcategory
-        const updatedSubcategories = [...category.subcategories];
-        updatedSubcategories[existingIndex] = subcategory;
-        
-        toast({
-          title: "Subcategory Updated",
-          description: `${subcategory.name} has been updated successfully.`,
+    try {
+      if (subcategory.id.startsWith('subcat-')) {
+        // This is a new subcategory (with temporary ID)
+        await categoryService.createSubcategory({
+          name: subcategory.name,
+          description: subcategory.description,
+          category_id: selectedCategory.id
         });
         
-        return { ...category, subcategories: updatedSubcategories };
+        // Save each pricing option
+        for (const option of subcategory.pricingOptions) {
+          if (option.name.trim()) {
+            await categoryService.createPricingOption({
+              name: option.name,
+              price: option.price,
+              unit: option.unit,
+              subcategory_id: subcategory.id
+            });
+          }
+        }
       } else {
-        // Add new subcategory
-        toast({
-          title: "Subcategory Added",
-          description: `${subcategory.name} has been added to ${category.name}.`,
+        // Update existing subcategory
+        await categoryService.updateSubcategory(subcategory.id, {
+          name: subcategory.name,
+          description: subcategory.description
         });
         
-        return { 
-          ...category, 
-          subcategories: [...category.subcategories, subcategory] 
-        };
+        // Handle pricing options updates (this is simplified)
+        // In a full implementation, you'd need to track which options were added, updated, or deleted
       }
-    }));
-  };
-
-  const handleViewCategory = (category: Category) => {
-    setViewingCategory(category);
-    setShowCategoryDetails(true);
-    toast({
-      title: "Category Details",
-      description: `Viewing details for ${category.name}`
-    });
+      
+      toast({
+        title: "Subcategory Saved",
+        description: `${subcategory.name} has been saved successfully.`,
+      });
+      
+      // Refresh the categories data
+      refetch();
+      
+    } catch (error) {
+      console.error("Error saving subcategory:", error);
+      toast({
+        title: "Error",
+        description: "There was an error saving the subcategory.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleEditCategory = (category: Category) => {
     navigate(`/categories/add?id=${category.id}`);
-    toast({
-      title: "Edit Category",
-      description: `Editing ${category.name}`
-    });
   };
 
   const handleDeleteCategory = (category: Category) => {
@@ -170,18 +140,32 @@ export default function Categories() {
     setShowConfirmDelete(true);
   };
 
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
     
-    setCategories(categories.filter(c => c.id !== categoryToDelete.id));
-    setCategoryToDelete(null);
-    setShowConfirmDelete(false);
-    
-    toast({
-      title: "Category Deleted",
-      description: `${categoryToDelete.name} has been deleted.`,
-      variant: "destructive",
-    });
+    try {
+      await categoryService.delete(categoryToDelete.id);
+      
+      toast({
+        title: "Category Deleted",
+        description: `${categoryToDelete.name} has been deleted.`,
+        variant: "destructive",
+      });
+      
+      setCategoryToDelete(null);
+      setShowConfirmDelete(false);
+      
+      // Refresh the categories data
+      refetch();
+      
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast({
+        title: "Error",
+        description: "There was an error deleting the category.",
+        variant: "destructive"
+      });
+    }
   };
 
   const columns = [
@@ -195,7 +179,7 @@ export default function Categories() {
       cell: (category: Category) => (
         <div 
           className="flex items-center font-medium text-blue-600 cursor-pointer"
-          onClick={() => handleViewCategory(category)}
+          onClick={() => handleEditCategory(category)}
         >
           {category.name}
           <ChevronRight className="ml-1 h-4 w-4" />
@@ -211,8 +195,8 @@ export default function Categories() {
       accessorKey: "subcategories" as keyof Category,
       cell: (category: Category) => (
         <div className="flex items-center">
-          <span className="mr-2">{category.subcategories.length}</span>
-          {category.subcategories.length > 0 && (
+          <span className="mr-2">{category.subcategories?.length || 0}</span>
+          {category.subcategories?.length > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
@@ -241,27 +225,13 @@ export default function Categories() {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleViewCategory(category)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-[160px]">
               <DropdownMenuItem 
                 className="cursor-pointer"
                 onClick={() => handleEditCategory(category)}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleAddSubcategory(category)}
-              >
-                <FolderPlus className="mr-2 h-4 w-4" />
-                Add Subcategory
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
