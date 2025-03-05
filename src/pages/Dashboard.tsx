@@ -139,7 +139,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Revenue</CardTitle>
-            <CardDescription>Monthly revenue breakdown</CardDescription>
+            
           </CardHeader>
           <CardContent>
             <Chart type="bar" data={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={300} />
