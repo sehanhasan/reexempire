@@ -51,7 +51,7 @@
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .page-container {
-    padding: 0 !important;
+    padding: 0.5rem !important;
   }
   
   .card {
@@ -64,11 +64,6 @@
   
   .space-y-6 {
     margin-top: 1rem !important;
-  }
-  
-  /* Hide titles on mobile */
-  .mobile-hidden-title {
-    display: none;
   }
   
   /* Mobile header spacing */
@@ -165,32 +160,5 @@ button.h-10 {
     border-radius: 0.375rem;
     padding: 0.75rem;
     margin-bottom: 0.5rem;
-  }
-  
-  /* Adjust padding for mobile */
-  .page-container {
-    padding: 0.5rem 0.75rem !important;
-  }
-  
-  /* Blue header for mobile */
-  .mobile-header {
-    background: #1e40af;
-    color: white;
-    padding: 0.75rem 1rem;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 40;
-    height: 3.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  /* Content spacing below mobile header */
-  .mobile-header + main {
-    padding-top: 4rem !important;
   }
 }

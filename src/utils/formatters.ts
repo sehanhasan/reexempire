@@ -1,43 +1,59 @@
 
-import { format, parseISO, isValid } from 'date-fns';
+import { format, isValid, parseISO } from "date-fns";
 
-export function formatDate(date: string | Date | null | undefined): string {
-  if (!date) return '';
+/**
+ * Formats a date string to a human-readable format
+ * @param dateString The date string to format
+ * @param formatString Optional format string (defaults to dd/MM/yyyy)
+ * @returns Formatted date string or empty string if invalid
+ */
+export const formatDate = (dateString?: string, formatString: string = "dd/MM/yyyy"): string => {
+  if (!dateString) return "";
   
   try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date;
-    if (!isValid(dateObj)) return '';
-    return format(dateObj, 'MMM d, yyyy');
+    const date = parseISO(dateString);
+    if (!isValid(date)) return "";
+    return format(date, formatString);
   } catch (error) {
-    console.error('Error formatting date:', error);
-    return '';
+    console.error("Error formatting date:", error);
+    return "";
   }
-}
+};
 
-export function formatCurrency(amount: number | string | null | undefined): string {
-  if (amount === null || amount === undefined) return 'RM 0.00';
+/**
+ * Formats a number as currency
+ * @param amount The amount to format
+ * @param currency The currency code (defaults to RM)
+ * @returns Formatted currency string
+ */
+export const formatCurrency = (amount?: number | string, currency: string = "RM"): string => {
+  if (amount === undefined || amount === null) return `${currency} 0.00`;
   
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
   
-  if (isNaN(numAmount)) return 'RM 0.00';
+  if (isNaN(numAmount)) return `${currency} 0.00`;
   
-  return `RM ${numAmount.toFixed(2)}`;
-}
+  return `${currency} ${numAmount.toFixed(2)}`;
+};
 
-export function formatPhoneNumber(phone: string | null | undefined): string {
-  if (!phone) return '';
+/**
+ * Format a phone number to add proper spacing
+ * @param phone The phone number to format
+ * @returns Formatted phone number
+ */
+export const formatPhoneNumber = (phone?: string): string => {
+  if (!phone) return "";
   
-  // Basic formatting for Malaysian phone numbers
-  // Handles different formats like 01X-XXXXXXX or 01X-XXX XXXX
+  // Remove any non-digit characters
+  const digitsOnly = phone.replace(/\D/g, '');
   
-  // Remove all non-digits
-  const cleaned = phone.replace(/\D/g, '');
-  
-  if (cleaned.length === 10) {
-    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
-  } else if (cleaned.length === 11) {
-    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)} ${cleaned.slice(7)}`;
+  // Format Malaysian phone number (simple formatting)
+  if (digitsOnly.length === 10) {
+    return `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+  } else if (digitsOnly.length === 11) {
+    return `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7)}`;
   }
   
+  // Return as is if it doesn't match expected formats
   return phone;
-}
+};
