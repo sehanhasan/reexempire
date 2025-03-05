@@ -17,6 +17,7 @@ interface DataTableProps<T> {
   data: T[];
   searchKey?: keyof T;
   isLoading?: boolean;
+  emptyMessage?: string; // Added this prop
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -24,6 +25,7 @@ export function DataTable<T extends Record<string, any>>({
   data,
   searchKey,
   isLoading = false,
+  emptyMessage = "No data available", // Added default value
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -82,7 +84,7 @@ export function DataTable<T extends Record<string, any>>({
           </div>
         ) : filteredData.length === 0 ? (
           <div className="h-32 flex items-center justify-center">
-            <p className="text-center text-muted-foreground">No data available</p>
+            <p className="text-center text-muted-foreground">{emptyMessage}</p>
           </div>
         ) : (
           <>
