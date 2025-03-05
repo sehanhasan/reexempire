@@ -142,7 +142,8 @@ export default function Invoices() {
       ),
     },
     {
-      id: "actions",
+      header: "Actions",
+      accessorKey: "actions",
       cell: ({ row }) => (
         <div className="text-right">
           <DropdownMenu>
