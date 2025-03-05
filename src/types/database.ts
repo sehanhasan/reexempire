@@ -6,6 +6,7 @@ export interface Category {
   description: string | null;
   created_at: string;
   updated_at: string;
+  subcategories?: Subcategory[]; // Add this property to fix the TypeScript error
 }
 
 export interface Subcategory {

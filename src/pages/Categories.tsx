@@ -23,7 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SubcategoryModal, Subcategory } from "@/components/categories/SubcategoryModel";
 import { toast } from "@/components/ui/use-toast";
 import {
   AlertDialog,
@@ -40,9 +39,6 @@ import { Category } from "@/types/database";
 
 export default function Categories() {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
-  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | undefined>(undefined);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   
@@ -66,70 +62,6 @@ export default function Categories() {
       return categoriesWithSubcategories;
     }
   });
-
-  const handleAddSubcategory = (category: Category) => {
-    setSelectedCategory(category);
-    setEditingSubcategory(undefined);
-    setShowSubcategoryModal(true);
-  };
-
-  const handleEditSubcategory = (category: Category, subcategory: Subcategory) => {
-    setSelectedCategory(category);
-    setEditingSubcategory(subcategory);
-    setShowSubcategoryModal(true);
-  };
-
-  const handleSaveSubcategory = async (subcategory: Subcategory) => {
-    if (!selectedCategory) return;
-
-    try {
-      if (subcategory.id.startsWith('subcat-')) {
-        // This is a new subcategory (with temporary ID)
-        await categoryService.createSubcategory({
-          name: subcategory.name,
-          description: subcategory.description,
-          category_id: selectedCategory.id
-        });
-        
-        // Save each pricing option
-        for (const option of subcategory.pricingOptions) {
-          if (option.name.trim()) {
-            await categoryService.createPricingOption({
-              name: option.name,
-              price: option.price,
-              unit: option.unit,
-              subcategory_id: subcategory.id
-            });
-          }
-        }
-      } else {
-        // Update existing subcategory
-        await categoryService.updateSubcategory(subcategory.id, {
-          name: subcategory.name,
-          description: subcategory.description
-        });
-        
-        // Handle pricing options updates (this is simplified)
-        // In a full implementation, you'd need to track which options were added, updated, or deleted
-      }
-      
-      toast({
-        title: "Subcategory Saved",
-        description: `${subcategory.name} has been saved successfully.`,
-      });
-      
-      // Refresh the categories data
-      refetch();
-      
-    } catch (error) {
-      console.error("Error saving subcategory:", error);
-      toast({
-        title: "Error",
-        description: "There was an error saving the subcategory.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleEditCategory = (category: Category) => {
     navigate(`/categories/add?id=${category.id}`);
@@ -196,7 +128,7 @@ export default function Categories() {
       cell: (category: Category) => (
         <div className="flex items-center">
           <span className="mr-2">{category.subcategories?.length || 0}</span>
-          {category.subcategories?.length > 0 && (
+          {(category.subcategories?.length || 0) > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
@@ -204,7 +136,7 @@ export default function Categories() {
               onClick={() => {
                 toast({
                   title: "Subcategories for " + category.name,
-                  description: category.subcategories.map(sub => sub.name).join(", "),
+                  description: category.subcategories?.map(sub => sub.name).join(", "),
                 });
               }}
             >
@@ -268,16 +200,6 @@ export default function Categories() {
           searchKey="name" 
         />
       </div>
-
-      {selectedCategory && (
-        <SubcategoryModal
-          open={showSubcategoryModal}
-          onOpenChange={setShowSubcategoryModal}
-          category={selectedCategory}
-          subcategory={editingSubcategory}
-          onSave={handleSaveSubcategory}
-        />
-      )}
 
       <AlertDialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
         <AlertDialogContent>
