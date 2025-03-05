@@ -1,299 +1,236 @@
 
 import { useState, useEffect } from "react";
-import { CardTitle, Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserRound, Search, CalendarIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Search, UserPlus } from "lucide-react";
 import { customerService } from "@/services";
-import { Customer } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CustomerInfoCardProps {
-  customer: string;
-  setCustomer: (id: string) => void;
-  documentType: "quotation" | "invoice";
-  documentNumber: string;
-  setDocumentNumber: (number: string) => void;
-  documentDate: string;
-  setDocumentDate: (date: string) => void;
-  expiryDate: string;
-  setExpiryDate: (date: string) => void;
-  paymentMethod?: string;
-  setPaymentMethod?: (method: string) => void;
-  quotationReference?: string;
-  subject?: string;
-  setSubject?: (subject: string) => void;
-  unitNumber?: string;
-  setUnitNumber?: (unit: string) => void;
+  customerId: string;
+  setCustomerId: (id: string) => void;
 }
 
-export function CustomerInfoCard({
-  customer,
-  setCustomer,
-  documentType,
-  documentNumber,
-  setDocumentNumber,
-  documentDate,
-  setDocumentDate,
-  expiryDate,
-  setExpiryDate,
-  paymentMethod,
-  setPaymentMethod,
-  quotationReference,
-  subject,
-  setSubject,
-  unitNumber,
-  setUnitNumber
-}: CustomerInfoCardProps) {
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+export function CustomerInfoCard({ customerId, setCustomerId }: CustomerInfoCardProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const isMobile = useIsMobile();
 
-  // Load customers when component mounts
+  // Fetch customers
   useEffect(() => {
-    const loadCustomers = async () => {
+    const fetchCustomers = async () => {
       try {
+        setLoading(true);
         const data = await customerService.getAll();
         setCustomers(data);
-        setFilteredCustomers(data);
+        setLoading(false);
       } catch (error) {
-        console.error("Error loading customers:", error);
+        console.error("Error fetching customers:", error);
+        setLoading(false);
       }
     };
     
-    loadCustomers();
+    fetchCustomers();
   }, []);
-
-  // Set customer details when customer ID changes
+  
+  // Get customer details by ID
   useEffect(() => {
-    if (customer && customers.length > 0) {
-      const found = customers.find((c) => c.id === customer);
-      setSelectedCustomer(found || null);
+    if (customerId) {
+      const fetchCustomerDetails = async () => {
+        try {
+          const customer = await customerService.getById(customerId);
+          setSelectedCustomer(customer);
+        } catch (error) {
+          console.error("Error fetching customer details:", error);
+        }
+      };
+      
+      fetchCustomerDetails();
     }
-  }, [customer, customers]);
-
-  // Handle customer search
-  useEffect(() => {
-    if (customerSearch.trim() === "") {
-      setFilteredCustomers(customers);
-    } else {
-      const search = customerSearch.toLowerCase();
-      setFilteredCustomers(
-        customers.filter(
-          (c) =>
-            c.name.toLowerCase().includes(search) ||
-            c.email?.toLowerCase().includes(search) ||
-            c.phone?.toLowerCase().includes(search)
-        )
-      );
-    }
-  }, [customerSearch, customers]);
-
+  }, [customerId]);
+  
+  // Filter customers based on search
+  const filteredCustomers = customers.filter(customer => {
+    const search = searchTerm.toLowerCase();
+    return (
+      customer.name?.toLowerCase().includes(search) ||
+      customer.email?.toLowerCase().includes(search) ||
+      customer.phone?.toLowerCase().includes(search) ||
+      customer.unit_number?.toLowerCase().includes(search)
+    );
+  });
+  
   // Handle customer selection
-  const handleSelectCustomer = (selected: Customer) => {
-    setCustomer(selected.id);
-    setSelectedCustomer(selected);
-    
-    // Auto-fill unit number if available
-    if (selected.unit_number && setUnitNumber) {
-      setUnitNumber(selected.unit_number);
-    }
-    
-    setCustomerDialogOpen(false);
+  const handleSelectCustomer = (customer: any) => {
+    setSelectedCustomer(customer);
+    setCustomerId(customer.id);
+    setDialogOpen(false);
   };
+  
+  // Show Add Customer button
+  const renderAddCustomerButton = () => (
+    <Button 
+      variant="outline" 
+      size="sm" 
+      onClick={() => window.open('/customers/add', '_blank')}
+    >
+      <UserPlus className="mr-2 h-4 w-4" />
+      Add New Customer
+    </Button>
+  );
 
   return (
-    <>
-      <Card className="shadow-sm">
-        <CardHeader className="py-3 px-4">
-          <CardTitle className="text-base lg:text-lg">Customer Information</CardTitle>
-        </CardHeader>
-        <CardContent className="py-3 px-4">
-          <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-3"} gap-4`}>
-            <div className="space-y-2">
-              <Label htmlFor="customer">Customer</Label>
-              <div className="flex gap-2">
-                <Button
-                  id="customer"
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCustomerDialogOpen(true)}
-                  className={`w-full h-10 ${selectedCustomer ? "justify-start" : "justify-center"}`}
-                >
-                  {selectedCustomer ? (
-                    <>
-                      <UserRound className="mr-2 h-4 w-4 text-gray-500" />
-                      <span className="truncate">{selectedCustomer.name}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Select Customer
-                    </>
-                  )}
-                </Button>
+    <Card className="shadow-sm">
+      <CardHeader className={`py-3 px-4 ${isMobile ? "hidden" : ""}`}>
+        <CardTitle className="text-base lg:text-lg">Customer Information</CardTitle>
+      </CardHeader>
+      <CardContent className={`${isMobile ? "pt-4" : ""} px-4 pb-4`}>
+        {selectedCustomer ? (
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <div>
+                <h3 className="font-medium">{selectedCustomer.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {selectedCustomer.unit_number && `Unit ${selectedCustomer.unit_number}, `}
+                  {selectedCustomer.address}
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setDialogOpen(true)}
+              >
+                Change
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <p className="text-muted-foreground">Phone</p>
+                <p>{selectedCustomer.phone || "—"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Email</p>
+                <p className="truncate">{selectedCustomer.email || "—"}</p>
               </div>
             </div>
-
-            {unitNumber !== undefined && setUnitNumber && (
-              <div className="space-y-2">
-                <Label htmlFor="unitNumber">Unit Number / Property</Label>
-                <Input
-                  id="unitNumber"
-                  value={unitNumber}
-                  onChange={(e) => setUnitNumber(e.target.value)}
-                  className="h-10"
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="documentNumber">
-                {documentType === "quotation" ? "Quotation" : "Invoice"} Number
-              </Label>
-              <Input
-                id="documentNumber"
-                value={documentNumber}
-                onChange={(e) => setDocumentNumber(e.target.value)}
-                className="h-10"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="documentDate">
-                {documentType === "quotation" ? "Quotation" : "Invoice"} Date
-              </Label>
-              <div className="relative">
-                <Input
-                  id="documentDate"
-                  type="date"
-                  value={documentDate}
-                  onChange={(e) => setDocumentDate(e.target.value)}
-                  className="h-10"
-                />
-                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Hide Valid Until date picker as requested */}
-            {documentType === "invoice" && (
-              <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <div className="relative">
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={expiryDate}
-                    onChange={(e) => setExpiryDate(e.target.value)}
-                    className="h-10"
-                  />
-                  <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-                </div>
-              </div>
-            )}
-
-            {documentType === "invoice" &&
-              paymentMethod !== undefined &&
-              setPaymentMethod && (
-                <div className="space-y-2">
-                  <Label htmlFor="paymentMethod">Payment Method</Label>
-                  <Select
-                    value={paymentMethod}
-                    onValueChange={setPaymentMethod}
-                  >
-                    <SelectTrigger id="paymentMethod" className="h-10">
-                      <SelectValue placeholder="Select Payment Method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="credit_card">Credit Card</SelectItem>
-                      <SelectItem value="cheque">Cheque</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-            {quotationReference && (
-              <div className="space-y-2">
-                <Label htmlFor="quotationReference">Quotation Reference</Label>
-                <Input
-                  id="quotationReference"
-                  value={quotationReference}
-                  readOnly
-                  className="h-10 bg-gray-50"
-                />
-              </div>
-            )}
-
-            {subject !== undefined && setSubject && (
-              <div className={`space-y-2 ${isMobile ? "" : "col-span-2 xl:col-span-3"}`}>
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
-                  placeholder="e.g. Monthly Maintenance Service"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="h-10"
-                />
-              </div>
-            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Customer selection dialog */}
-      <Dialog open={customerDialogOpen} onOpenChange={setCustomerDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        ) : (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <p className="text-muted-foreground mb-4">No customer selected</p>
+            <Button onClick={() => setDialogOpen(true)}>Select Customer</Button>
+          </div>
+        )}
+      </CardContent>
+      
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle>Select Customer</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="relative">
+          
+          <div className="flex items-center gap-2 my-4">
+            <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
                 type="search"
                 placeholder="Search customers..."
                 className="pl-8 h-10"
-                value={customerSearch}
-                onChange={(e) => setCustomerSearch(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <ScrollArea className="h-[300px] rounded border p-2">
-              {filteredCustomers.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredCustomers.map((c) => (
-                    <Button
-                      key={c.id}
-                      variant="ghost"
-                      className="w-full justify-start h-auto py-2 px-2"
-                      onClick={() => handleSelectCustomer(c)}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">{c.name}</span>
-                        <span className="text-xs text-gray-500">
-                          {c.email || c.phone || "No contact info"}
-                        </span>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4 text-gray-500">
-                  No customers found
-                </div>
-              )}
-            </ScrollArea>
+            {renderAddCustomerButton()}
           </div>
+          
+          {loading ? (
+            <div className="h-60 flex items-center justify-center">
+              <p className="text-muted-foreground">Loading customers...</p>
+            </div>
+          ) : filteredCustomers.length === 0 ? (
+            <div className="h-60 flex flex-col items-center justify-center space-y-3">
+              <p className="text-muted-foreground">No customers found</p>
+              {renderAddCustomerButton()}
+            </div>
+          ) : (
+            <div className="max-h-96 overflow-y-auto border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className="hidden md:table-cell">Phone</TableHead>
+                    <TableHead className="hidden md:table-cell">Email</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id} onClick={() => handleSelectCustomer(customer)} className="cursor-pointer hover:bg-muted">
+                      <TableCell className="font-medium">
+                        {customer.unit_number || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {customer.name}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {customer.phone || "—"}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {customer.email || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectCustomer(customer);
+                          }}
+                        >
+                          Select
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          
+          <DialogFooter className="sm:justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </Card>
   );
 }

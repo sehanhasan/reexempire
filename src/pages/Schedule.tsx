@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,16 @@ import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { appointmentService } from "@/services/appointmentService";
+import { customerService } from "@/services";
 
 // Types for our events
 interface ScheduleEvent {
   id: string;
   title: string;
   customer: string;
+  unit?: string;
   staff: string[];
   start: string; // "HH:MM"
   end: string; // "HH:MM"
@@ -26,40 +29,91 @@ interface DayEvents {
 
 export default function Schedule() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("week");
   const [events, setEvents] = useState<DayEvents>({});
+  const [customers, setCustomers] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
 
-  // Load events from localStorage on component mount
+  // Load events from API and localStorage on component mount
   useEffect(() => {
-    const storedEvents = localStorage.getItem('scheduleEvents');
-    if (storedEvents) {
-      setEvents(JSON.parse(storedEvents));
-    } else {
-      // If no events in localStorage, use mock data
-      setEvents(mockEvents);
-    }
+    const fetchData = async () => {
+      setLoading(true);
+      
+      try {
+        // Fetch customers to get unit numbers
+        const customerData = await customerService.getAll();
+        const customerMap: Record<string, any> = {};
+        customerData.forEach((customer: any) => {
+          customerMap[customer.id] = customer;
+        });
+        setCustomers(customerMap);
+        
+        // Try to get appointments from API
+        const appointments = await appointmentService.getAll();
+        
+        // Convert appointments to events format
+        const eventMap: DayEvents = {};
+        
+        // Process appointments
+        appointments.forEach((appointment: any) => {
+          const dateKey = appointment.appointment_date;
+          
+          if (!eventMap[dateKey]) {
+            eventMap[dateKey] = [];
+          }
+          
+          const customer = customerMap[appointment.customer_id];
+          
+          eventMap[dateKey].push({
+            id: appointment.id,
+            title: appointment.title,
+            customer: customer?.name || "Unknown",
+            unit: customer?.unit_number,
+            staff: appointment.staff_id ? [appointment.staff_id] : [],
+            start: appointment.start_time,
+            end: appointment.end_time,
+            status: appointment.status
+          });
+        });
+        
+        // Fallback to localStorage if no appointments
+        if (Object.keys(eventMap).length === 0) {
+          const storedEvents = localStorage.getItem('scheduleEvents');
+          if (storedEvents) {
+            setEvents(JSON.parse(storedEvents));
+          } else {
+            // If nothing in localStorage either, use mock data for demo
+            setEvents(mockEvents);
+          }
+        } else {
+          setEvents(eventMap);
+        }
+      } catch (error) {
+        console.error("Error fetching schedule data:", error);
+        // Fallback to localStorage
+        const storedEvents = localStorage.getItem('scheduleEvents');
+        if (storedEvents) {
+          setEvents(JSON.parse(storedEvents));
+        } else {
+          setEvents(mockEvents);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
 
   // Mock data - would come from API in real app
   const mockEvents: DayEvents = {
     "2023-09-11": [
-      { id: "E001", title: "Bathroom Renovation", customer: "John Smith", staff: ["Mike Johnson", "Sarah Williams"], start: "09:00", end: "12:00", status: "Confirmed" },
-      { id: "E002", title: "Electrical Inspection", customer: "Emma Brown", staff: ["Mike Johnson"], start: "14:00", end: "15:30", status: "Confirmed" },
+      { id: "E001", title: "Bathroom Renovation", customer: "John Smith", unit: "A-12-3", staff: ["Mike Johnson", "Sarah Williams"], start: "09:00", end: "12:00", status: "Confirmed" },
+      { id: "E002", title: "Electrical Inspection", customer: "Emma Brown", unit: "B-09-7", staff: ["Mike Johnson"], start: "14:00", end: "15:30", status: "Confirmed" },
     ],
-    "2023-09-12": [
-      { id: "E003", title: "Kitchen Cabinets", customer: "Robert Wilson", staff: ["Tom Brown", "Jane Smith"], start: "10:00", end: "16:00", status: "Pending" },
-    ],
-    "2023-09-13": [
-      { id: "E004", title: "Flooring Installation", customer: "Michael Davis", staff: ["Tom Brown"], start: "09:00", end: "17:00", status: "Confirmed" },
-    ],
-    "2023-09-14": [
-      { id: "E005", title: "Painting - Living Room", customer: "Lisa Jones", staff: ["Jane Smith"], start: "13:00", end: "18:00", status: "Confirmed" },
-    ],
-    "2023-09-15": [
-      { id: "E006", title: "Final Inspection", customer: "John Smith", staff: ["John Doe"], start: "11:00", end: "12:00", status: "Pending" },
-      { id: "E007", title: "Plumbing Repair", customer: "David Martin", staff: ["Sarah Williams"], start: "14:30", end: "16:30", status: "Confirmed" },
-    ],
+    // ... keep existing code for other mock events
   };
 
   // Helper functions for calendar
@@ -125,11 +179,14 @@ export default function Schedule() {
     
     return (
       <div className="bg-white rounded-lg border shadow">
-        <div className="grid grid-cols-8 border-b">
-          <div className="py-4 px-2 text-center font-semibold text-muted-foreground border-r">
-            Time
-          </div>
-          {weekDates.map((date, i) => (
+        <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-8'} border-b`}>
+          {!isMobile && (
+            <div className="py-4 px-2 text-center font-semibold text-muted-foreground border-r">
+              Time
+            </div>
+          )}
+          
+          {weekDates.slice(0, isMobile ? 1 : 7).map((date, i) => (
             <div 
               key={i} 
               className={`py-4 px-2 text-center ${
@@ -144,23 +201,31 @@ export default function Schedule() {
           ))}
         </div>
         
-        <div className="grid grid-cols-8 divide-x">
-          <div className="divide-y">
-            {hours.map((hour) => (
-              <div key={hour} className="h-24 p-1 text-xs text-muted-foreground">
-                {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}
-              </div>
-            ))}
-          </div>
+        <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-8'} divide-x`}>
+          {!isMobile && (
+            <div className="divide-y">
+              {hours.map((hour) => (
+                <div key={hour} className="h-24 p-1 text-xs text-muted-foreground">
+                  {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}
+                </div>
+              ))}
+            </div>
+          )}
           
-          {weekDates.map((date, dateIndex) => {
+          {weekDates.slice(0, isMobile ? 1 : 7).map((date, dateIndex) => {
             const dateKey = formatDateKey(date);
             const dateEvents = events[dateKey] || [];
             
             return (
               <div key={dateIndex} className="divide-y relative">
                 {hours.map((hour) => (
-                  <div key={hour} className="h-24 p-1 relative"></div>
+                  <div key={hour} className="h-24 p-1 relative">
+                    {isMobile && (
+                      <div className="absolute left-0 top-0 text-xs text-muted-foreground">
+                        {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}
+                      </div>
+                    )}
+                  </div>
                 ))}
                 
                 {dateEvents.map((event, eventIndex) => {
@@ -171,6 +236,10 @@ export default function Schedule() {
                   
                   const startPosition = ((startHour - 7) * 60 + startMinute) * (24 / 60);
                   const duration = ((endHour - startHour) * 60 + (endMinute - startMinute)) * (24 / 60);
+                  
+                  const displayTitle = event.unit 
+                    ? `${event.unit} - ${event.title}`
+                    : event.title;
                   
                   return (
                     <div
@@ -187,7 +256,7 @@ export default function Schedule() {
                         left: '4px',
                       }}
                     >
-                      <div className="text-xs font-semibold">{event.title}</div>
+                      <div className="text-xs font-semibold">{displayTitle}</div>
                       <div className="text-xs mt-1">{formatTime(event.start)} - {formatTime(event.end)}</div>
                       {duration > 50 && (
                         <>
@@ -208,6 +277,14 @@ export default function Schedule() {
         </div>
       </div>
     );
+  };
+
+  const handleDateChange = (date: Date) => {
+    setCurrentDate(date);
+    if (isMobile) {
+      // For mobile, when changing date, automatically switch to that day's view
+      setView("week");
+    }
   };
 
   return (
@@ -252,10 +329,17 @@ export default function Schedule() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-lg font-semibold hidden md:block">
             {view === "week" 
               ? `${getWeekDates()[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${getWeekDates()[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
               : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+            }
+          </h3>
+          
+          <h3 className="text-sm font-semibold md:hidden">
+            {view === "week" 
+              ? getWeekDates()[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              : currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
             }
           </h3>
           
@@ -278,7 +362,11 @@ export default function Schedule() {
       </div>
       
       <div className="mt-2 overflow-x-auto pb-6">
-        {view === "week" ? renderWeekView() : (
+        {loading ? (
+          <div className="bg-white rounded-lg border shadow p-8 text-center">
+            <div className="text-muted-foreground">Loading schedule...</div>
+          </div>
+        ) : view === "week" ? renderWeekView() : (
           <div className="bg-white rounded-lg border shadow p-4">
             <div className="text-center text-muted-foreground">Month view coming soon</div>
           </div>

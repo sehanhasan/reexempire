@@ -32,7 +32,10 @@ export function MainLayout({ children }: MainLayoutProps) {
       return "Invoices";
     }
     if (path.includes("/staff")) return "Staff";
-    if (path.includes("/schedule")) return "Schedule";
+    if (path.includes("/schedule")) {
+      if (path.includes("/add")) return "Add Appointment";
+      return "Schedule";
+    }
     if (path.includes("/profile")) return "Profile";
     
     return "Reex Empire";

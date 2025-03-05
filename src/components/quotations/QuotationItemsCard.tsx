@@ -62,8 +62,12 @@ export function QuotationItemsCard({
   };
 
   const addItem = () => {
-    const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items, { id: newId, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }]);
+    // Only add an item if there are no items or if the items table is already showing
+    // This prevents adding duplicate items when clicking "Add Item" the first time
+    if (items.length === 0 || showItemsTable) {
+      const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
+      setItems([...items, { id: newId, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }]);
+    }
     setShowItemsTable(true);
   };
 
