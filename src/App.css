@@ -66,3 +66,14 @@
     margin-top: 1rem !important;
   }
 }
+
+/* Fix dropdown menu freezing */
+.radix-dropdown-open {
+  z-index: 999;
+  position: relative;
+}
+
+/* Animation speed adjustments */
+.radix-dropdown-content {
+  --transition-duration: 100ms !important;
+}
