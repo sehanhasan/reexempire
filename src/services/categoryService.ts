@@ -76,6 +76,35 @@ export const categoryService = {
     }
   },
 
+  // Add new methods to get all subcategories and pricing options
+  async getAllSubcategories(): Promise<Subcategory[]> {
+    const { data, error } = await supabase
+      .from("subcategories")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Error fetching all subcategories:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getAllPricingOptions(): Promise<PricingOption[]> {
+    const { data, error } = await supabase
+      .from("pricing_options")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Error fetching all pricing options:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
   async create(category: Omit<Category, "id" | "created_at" | "updated_at">): Promise<Category> {
     const { data, error } = await supabase
       .from("categories")
