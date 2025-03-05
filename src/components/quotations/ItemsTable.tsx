@@ -45,20 +45,20 @@ export function ItemsTable({
                   <div className="col-span-3">
                     <label className="block text-xs mb-1 text-muted-foreground">Description</label>
                     <Input
-                      placeholder="Item description"
+                      placeholder="Enter item description"
                       value={item.description}
                       onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                      className="text-sm h-8"
+                      className="h-10"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs mb-1 text-muted-foreground">Quantity</label>
+                    <label className="block text-xs mb-1 text-muted-foreground">Qty</label>
                     <Input
                       type="number"
                       min="1"
                       value={item.quantity}
                       onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                      className="text-sm h-8"
+                      className="h-10 text-center"
                     />
                   </div>
                 </div>
@@ -70,18 +70,18 @@ export function ItemsTable({
                       placeholder="Unit"
                       value={item.unit}
                       onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
-                      className="text-sm h-8"
+                      className="h-10"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs mb-1 text-muted-foreground">Price</label>
+                    <label className="block text-xs mb-1 text-muted-foreground">Unit Price</label>
                     <div className="relative">
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
                       <Input
                         type="number"
                         min="0"
                         step="0.01"
-                        className="pl-8 text-sm h-8"
+                        className="pl-8 h-10 text-right"
                         value={item.unitPrice}
                         onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                       />
@@ -93,26 +93,13 @@ export function ItemsTable({
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
                       <Input
                         type="number"
-                        className="pl-8 text-sm h-8"
+                        className="pl-8 h-10 text-right"
                         value={item.amount.toFixed(2)}
                         disabled
                       />
                     </div>
                   </div>
                 </div>
-                
-                {showDescription && (
-                  <div>
-                    <label className="block text-xs mb-1 text-muted-foreground">Detailed Description</label>
-                    <textarea
-                      placeholder="Additional details (optional)"
-                      value={item.description}
-                      onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                      rows={2}
-                      className="mt-1 w-full text-sm p-2 rounded-md border resize-y h-16"
-                    />
-                  </div>
-                )}
               </div>
             </div>
           ))}
@@ -124,10 +111,10 @@ export function ItemsTable({
             <tr className="border-b">
               <th className="py-2 px-1 text-left font-medium text-sm w-6">#</th>
               <th className="py-2 px-2 text-left font-medium text-sm">Description</th>
-              <th className="py-2 px-2 text-right font-medium text-sm w-20">Quantity</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-20">Qty</th>
               <th className="py-2 px-2 text-right font-medium text-sm w-24">Unit</th>
-              <th className="py-2 px-2 text-right font-medium text-sm w-32">Unit Price</th>
-              <th className="py-2 px-2 text-right font-medium text-sm w-32">Amount</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-32">Unit Price (RM)</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-32">Amount (RM)</th>
               <th className="py-2 px-1 w-12"></th>
             </tr>
           </thead>
@@ -139,20 +126,11 @@ export function ItemsTable({
                 </td>
                 <td className="py-3 px-2">
                   <Input
-                    placeholder="Item description"
+                    placeholder="Enter item description"
                     value={item.description}
                     onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                    className={showDescription ? "" : "w-40"}
+                    className="h-10"
                   />
-                  {showDescription && (
-                    <textarea
-                      placeholder="Detailed description (optional)"
-                      value={item.description}
-                      onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                      rows={2}
-                      className="mt-2 w-full text-sm p-2 rounded-md border resize-y"
-                    />
-                  )}
                 </td>
                 <td className="py-3 px-2">
                   <Input
@@ -160,7 +138,7 @@ export function ItemsTable({
                     min="1"
                     value={item.quantity}
                     onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                    className="text-right"
+                    className="text-right h-10"
                   />
                 </td>
                 <td className="py-3 px-2">
@@ -168,6 +146,7 @@ export function ItemsTable({
                     placeholder="Unit"
                     value={item.unit}
                     onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
+                    className="h-10"
                   />
                 </td>
                 <td className="py-3 px-2">
@@ -177,7 +156,7 @@ export function ItemsTable({
                       type="number"
                       min="0"
                       step="0.01"
-                      className="pl-10 text-right"
+                      className="pl-10 text-right h-10"
                       value={item.unitPrice}
                       onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                     />
@@ -188,7 +167,7 @@ export function ItemsTable({
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
                     <Input
                       type="number"
-                      className="pl-10 text-right"
+                      className="pl-10 text-right h-10"
                       value={item.amount.toFixed(2)}
                       disabled
                     />

@@ -1,36 +1,27 @@
 
 import { useState, useEffect } from "react";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-  SheetFooter
-} from "@/components/ui/sheet";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Input } from "@/components/ui/input";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
 import { categoryService } from "@/services";
-import { Category, CategoryItem } from "@/types/database";
-import { X, Minus, Plus, FolderCheck, Search } from "lucide-react";
+import { Category, Subcategory, PricingOption } from "@/types/database";
 
 export interface SelectedItem {
   id: string;
-  categoryId: string;
-  name: string;
   description: string;
-  price: number;
   quantity: number;
   unit: string;
+  price: number;
 }
 
 interface CategoryItemSelectorProps {
@@ -39,334 +30,267 @@ interface CategoryItemSelectorProps {
   onSelectItems: (items: SelectedItem[]) => void;
 }
 
-export function CategoryItemSelector({
-  open,
-  onOpenChange,
-  onSelectItems
-}: CategoryItemSelectorProps) {
+export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: CategoryItemSelectorProps) {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryItems, setCategoryItems] = useState<Record<string, CategoryItem[]>>({});
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const categoriesData = await categoryService.getAll();
+        setCategories(categoriesData);
+        
+        const subcategoriesData = await categoryService.getAllSubcategories();
+        setSubcategories(subcategoriesData);
+        
+        const pricingOptionsData = await categoryService.getAllPricingOptions();
+        setPricingOptions(pricingOptionsData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
     if (open) {
-      fetchCategories();
-      // Reset state when opening
-      setSelectedItems([]);
-      setSearchQuery("");
+      fetchData();
     }
   }, [open]);
-
-  const fetchCategories = async () => {
-    try {
-      setIsLoading(true);
-      const data = await categoryService.getAll();
-      setCategories(data);
+  
+  // Reset selected items when modal opens
+  useEffect(() => {
+    if (open) {
+      setSelectedItems([]);
+      setSearchTerm("");
+    }
+  }, [open]);
+  
+  const toggleItemSelection = (pricingOption: PricingOption) => {
+    setSelectedItems(prevItems => {
+      const existingItem = prevItems.find(item => item.id === pricingOption.id);
       
-      // Fetch items for each category
-      const itemsRecord: Record<string, CategoryItem[]> = {};
-      for (const category of data) {
-        const items = await categoryService.getItemsByCategoryId(category.id);
-        itemsRecord[category.id] = items;
-      }
-      setCategoryItems(itemsRecord);
-      
-      // Expand all categories by default if there are only a few
-      if (data.length <= 5) {
-        setExpandedCategories(data.map(cat => cat.id));
-      }
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch categories and items.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
-
-  const handleSelectItem = (categoryId: string, item: CategoryItem) => {
-    const existingItemIndex = selectedItems.findIndex(
-      (selected) => selected.id === item.id
-    );
-    
-    if (existingItemIndex >= 0) {
-      // Update quantity if already selected
-      const newSelectedItems = [...selectedItems];
-      newSelectedItems[existingItemIndex].quantity += 1;
-      setSelectedItems(newSelectedItems);
-    } else {
-      // Add new item
-      setSelectedItems([
-        ...selectedItems,
-        {
-          id: item.id,
-          categoryId,
-          name: item.name,
-          description: item.description || "",
-          price: item.price,
-          quantity: 1,
-          unit: item.unit || "Unit"
-        }
-      ]);
-    }
-  };
-
-  const handleUpdateQuantity = (index: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      // Remove if quantity becomes 0
-      handleRemoveItem(index);
-      return;
-    }
-    
-    const newSelectedItems = [...selectedItems];
-    newSelectedItems[index].quantity = newQuantity;
-    setSelectedItems(newSelectedItems);
-  };
-
-  const handleRemoveItem = (index: number) => {
-    setSelectedItems(selectedItems.filter((_, i) => i !== index));
-  };
-
-  const handleDone = () => {
-    if (selectedItems.length === 0) {
-      toast({
-        title: "No Items Selected",
-        description: "Please select at least one item to add.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    onSelectItems(selectedItems);
-    onOpenChange(false);
-  };
-
-  const handleCancel = () => {
-    if (selectedItems.length > 0) {
-      // Confirm before discarding selections
-      if (confirm("You have selected items. Are you sure you want to discard them?")) {
-        onOpenChange(false);
-      }
-    } else {
-      onOpenChange(false);
-    }
-  };
-
-  const calculateTotal = () => {
-    return selectedItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-  };
-
-  // Filter categories and items based on search query
-  const filteredCategories = categories.map(category => {
-    const filteredItems = (categoryItems[category.id] || []).filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.description || "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    return {
-      ...category,
-      hasMatchingItems: filteredItems.length > 0
-    };
-  }).filter(category => 
-    searchQuery === "" || 
-    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.hasMatchingItems
-  );
-
-  const handleAccordionChange = (value: string) => {
-    setExpandedCategories(prev => {
-      if (prev.includes(value)) {
-        return prev.filter(id => id !== value);
+      if (existingItem) {
+        // Item exists, remove it
+        return prevItems.filter(item => item.id !== pricingOption.id);
       } else {
-        return [...prev, value];
+        // Item doesn't exist, add it
+        return [...prevItems, {
+          id: pricingOption.id,
+          description: pricingOption.name,
+          quantity: 1,
+          unit: pricingOption.unit,
+          price: pricingOption.price
+        }];
       }
     });
   };
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[540px] sm:max-w-md p-0 flex flex-col h-full">
-        <SheetHeader className="p-6 pb-2">
-          <SheetTitle>Select Items from Categories</SheetTitle>
-          <SheetDescription>
-            Browse through categories and select items to add to your document.
-          </SheetDescription>
-          
-          <div className="mt-4 relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search categories and items..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </SheetHeader>
+  
+  const updateItemQuantity = (id: string, quantity: number) => {
+    setSelectedItems(prevItems => 
+      prevItems.map(item => 
+        item.id === id ? { ...item, quantity } : item
+      )
+    );
+  };
+  
+  const getSubcategoriesForCategory = (categoryId: string) => {
+    return subcategories.filter(subcategory => subcategory.category_id === categoryId);
+  };
+  
+  const getPricingOptionsForSubcategory = (subcategoryId: string) => {
+    return pricingOptions.filter(option => option.subcategory_id === subcategoryId);
+  };
+  
+  const isItemSelected = (id: string) => {
+    return selectedItems.some(item => item.id === id);
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  };
+  
+  const handleSubmit = () => {
+    onSelectItems(selectedItems);
+    onOpenChange(false);
+  };
+  
+  // Filter categories based on search term
+  const filteredCategories = searchTerm
+    ? categories.filter(category => {
+        // Check if category name matches
+        if (category.name.toLowerCase().includes(searchTerm)) return true;
         
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <ScrollArea className="flex-1 p-6 pt-2">
-            {isLoading ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Loading categories and items...</p>
-            ) : filteredCategories.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No categories or items match your search.</p>
-            ) : (
-              <Accordion 
-                type="multiple" 
-                value={expandedCategories} 
-                className="w-full"
-              >
-                {filteredCategories.map((category) => (
-                  <AccordionItem key={category.id} value={category.id} className="border-b">
-                    <AccordionTrigger 
-                      onClick={() => handleAccordionChange(category.id)}
-                      className="hover:bg-muted/50 px-4 rounded-md -mx-4"
-                    >
+        // Check if any subcategory matches
+        const relatedSubcategories = getSubcategoriesForCategory(category.id);
+        if (relatedSubcategories.some(sub => sub.name.toLowerCase().includes(searchTerm))) return true;
+        
+        // Check if any pricing option matches
+        return relatedSubcategories.some(sub => {
+          const options = getPricingOptionsForSubcategory(sub.id);
+          return options.some(option => option.name.toLowerCase().includes(searchTerm));
+        });
+      })
+    : categories;
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>Select Items from Categories</DialogTitle>
+          <DialogDescription>
+            Choose services from your categories to add to your quotation.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search categories, subcategories or items..."
+            className="pl-9 h-10"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </div>
+        
+        <div className="overflow-y-auto max-h-[50vh] mt-4 pr-1">
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin h-8 w-8 border-2 border-t-blue-500 rounded-full"></div>
+            </div>
+          ) : filteredCategories.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No categories found matching your search.
+            </div>
+          ) : (
+            <Accordion
+              type="multiple"
+              value={expandedCategories}
+              onValueChange={setExpandedCategories}
+              className="w-full"
+            >
+              {filteredCategories.map(category => {
+                const categorySubcategories = getSubcategoriesForCategory(category.id);
+                
+                return (
+                  <AccordionItem value={category.id} key={category.id} className="border rounded-md mb-2">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
                       {category.name}
                     </AccordionTrigger>
-                    <AccordionContent>
-                      <ScrollArea className="h-full max-h-60 pr-4">
-                        <div className="space-y-2 mt-2">
-                          {(categoryItems[category.id] || [])
-                            .filter(item => 
-                              searchQuery === "" || 
-                              item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              (item.description || "").toLowerCase().includes(searchQuery.toLowerCase())
-                            )
-                            .map((item) => (
-                              <div key={item.id} className="border rounded-md p-3 hover:bg-muted/50">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h4 className="font-medium text-sm">{item.name}</h4>
-                                    <p className="text-muted-foreground text-xs mt-1">
-                                      {item.description || "No description provided"}
-                                    </p>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="font-medium">RM {item.price.toFixed(2)}</p>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-8 px-2 mt-1"
-                                      onClick={() => handleSelectItem(category.id, item)}
-                                    >
-                                      <Plus className="h-4 w-4" />
-                                      Add
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          {(categoryItems[category.id] || []).filter(item => 
-                            searchQuery === "" || 
-                            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            (item.description || "").toLowerCase().includes(searchQuery.toLowerCase())
-                          ).length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-2">
-                              No items match your search in this category.
-                            </p>
-                          )}
+                    <AccordionContent className="px-4 py-2 overflow-y-auto max-h-[300px]">
+                      {categorySubcategories.length === 0 ? (
+                        <div className="text-center py-2 text-sm text-gray-500">
+                          No items in this category
                         </div>
-                      </ScrollArea>
+                      ) : (
+                        categorySubcategories.map(subcategory => {
+                          const subcategoryOptions = getPricingOptionsForSubcategory(subcategory.id);
+                          
+                          if (subcategoryOptions.length === 0) return null;
+                          
+                          return (
+                            <div key={subcategory.id} className="mb-4">
+                              <h4 className="font-medium text-sm mb-2">{subcategory.name}</h4>
+                              {subcategory.description && (
+                                <p className="text-sm text-gray-600 mb-2">{subcategory.description}</p>
+                              )}
+                              
+                              <div className="space-y-2">
+                                {subcategoryOptions.map(option => {
+                                  const isSelected = isItemSelected(option.id);
+                                  const selectedItem = selectedItems.find(item => item.id === option.id);
+                                  
+                                  return (
+                                    <div 
+                                      key={option.id} 
+                                      className={`flex items-center justify-between p-2 rounded-md transition-colors ${
+                                        isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      <div className="flex items-center">
+                                        <Checkbox
+                                          id={option.id}
+                                          checked={isSelected}
+                                          onCheckedChange={() => toggleItemSelection(option)}
+                                          className="mr-2"
+                                        />
+                                        <label
+                                          htmlFor={option.id}
+                                          className="text-sm cursor-pointer flex-1"
+                                        >
+                                          {option.name}
+                                        </label>
+                                      </div>
+                                      
+                                      <div className="flex items-center space-x-3">
+                                        {isSelected && (
+                                          <div className="flex items-center space-x-2">
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="icon"
+                                              className="h-7 w-7 rounded-full"
+                                              onClick={() => updateItemQuantity(option.id, Math.max(1, (selectedItem?.quantity || 1) - 1))}
+                                            >
+                                              <span>-</span>
+                                            </Button>
+                                            <span className="text-sm font-medium w-6 text-center">
+                                              {selectedItem?.quantity || 1}
+                                            </span>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="icon"
+                                              className="h-7 w-7 rounded-full"
+                                              onClick={() => updateItemQuantity(option.id, (selectedItem?.quantity || 1) + 1)}
+                                            >
+                                              <span>+</span>
+                                            </Button>
+                                          </div>
+                                        )}
+                                        <span className="text-sm font-medium whitespace-nowrap">
+                                          RM {option.price.toFixed(2)} / {option.unit}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </AccordionContent>
                   </AccordionItem>
-                ))}
-              </Accordion>
-            )}
-          </ScrollArea>
-          
-          {/* Selected Items Section */}
-          <div className="border-t">
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium">Selected Items ({selectedItems.length})</h4>
-                {selectedItems.length > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setSelectedItems([])}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Clear All
-                  </Button>
-                )}
-              </div>
-              
-              <ScrollArea className="h-28">
-                {selectedItems.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-2">
-                    No items selected yet.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {selectedItems.map((item, index) => (
-                      <div key={`${item.id}-${index}`} className="flex justify-between items-center border-b pb-2">
-                        <div className="flex-1 mr-2">
-                          <p className="text-sm font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">RM {item.price.toFixed(2)} per {item.unit}</p>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7" 
-                            onClick={() => handleUpdateQuantity(index, item.quantity - 1)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <div className="w-8 text-center">
-                            <p className="text-sm">{item.quantity}</p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7" 
-                            onClick={() => handleUpdateQuantity(index, item.quantity + 1)}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-red-500 hover:text-red-600" 
-                            onClick={() => handleRemoveItem(index)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-              
-              <div className="mt-2 flex justify-between items-center text-sm pt-2">
-                <span className="font-medium">Total Amount:</span>
-                <span className="font-bold">RM {calculateTotal().toFixed(2)}</span>
-              </div>
-            </div>
-            
-            <SheetFooter className="px-4 pb-4 pt-0 sm:justify-between">
-              <Button variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button onClick={handleDone} disabled={selectedItems.length === 0}>
-                <FolderCheck className="mr-2 h-4 w-4" />
-                Add Selected Items
-              </Button>
-            </SheetFooter>
+                );
+              })}
+            </Accordion>
+          )}
+        </div>
+        
+        <div className="flex justify-between items-center pt-4 mt-2 border-t">
+          <div className="text-sm">
+            {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''} selected
+          </div>
+          <div className="flex space-x-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={selectedItems.length === 0}
+            >
+              Add {selectedItems.length} Item{selectedItems.length !== 1 ? 's' : ''}
+            </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

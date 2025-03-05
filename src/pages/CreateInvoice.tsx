@@ -3,13 +3,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
-import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 import { invoiceService, customerService, quotationService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -208,100 +207,6 @@ export default function CreateInvoice() {
     }
   };
 
-  const handleSendWhatsapp = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before sending the invoice.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Format phone number (remove any non-digit characters)
-      let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
-      
-      if (!phoneNumber) {
-        toast({
-          title: "Missing Phone Number",
-          description: "Customer doesn't have a phone number for WhatsApp.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Make sure phone number starts with country code
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
-      } else if (!phoneNumber.startsWith('6')) {
-        phoneNumber = '60' + phoneNumber;
-      }
-      
-      // WhatsApp message text
-      const message = `Dear ${customer.name},\n\nPlease find attached Invoice ${documentNumber}.\n\nThank you.`;
-      
-      // Open WhatsApp web with the prepared message
-      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-      
-      toast({
-        title: "WhatsApp Opened",
-        description: "WhatsApp has been opened with the invoice message. The document PDF will need to be attached manually.",
-      });
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDownloadPDF = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before downloading the PDF.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const pdf = generateInvoicePDF({
-        documentNumber: documentNumber,
-        documentDate: invoiceDate,
-        customerName: customer.name,
-        unitNumber: unitNumber,
-        expiryDate: dueDate,
-        dueDate: dueDate,
-        paymentMethod: paymentMethod,
-        notes: notes,
-        items: items,
-        subject: subject,
-        isDepositInvoice: isDepositInvoice,
-        depositAmount: depositAmount,
-        depositPercentage: depositPercentage,
-        quotationReference: quotationReference
-      });
-      
-      downloadPDF(pdf, `Invoice_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-      
-      toast({
-        title: "PDF Generated",
-        description: "Invoice PDF has been downloaded successfully.",
-      });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="page-container">
       <PageHeader
@@ -312,10 +217,6 @@ export default function CreateInvoice() {
             <Button variant="outline" onClick={() => navigate("/invoices")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Invoices
-            </Button>
-            <Button variant="secondary" onClick={handleDownloadPDF}>
-              <FileDown className="mr-2 h-4 w-4" />
-              Download PDF
             </Button>
           </div>
         }
@@ -360,7 +261,6 @@ export default function CreateInvoice() {
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
           isSubmitting={isSubmitting}
-          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>

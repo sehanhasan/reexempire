@@ -3,13 +3,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown, Save, Send } from "lucide-react"; // Add Send import
+import { ArrowLeft, Save, CheckCircle, XCircle, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
-import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -195,94 +194,38 @@ export default function EditQuotation() {
     }
   };
 
-  const handleDownloadPDF = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before downloading the PDF.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleStatusChange = async (newStatus: string) => {
+    if (!id) return;
+    
     try {
-      const pdf = generateQuotationPDF({
-        documentNumber: documentNumber,
-        documentDate: quotationDate,
-        customerName: customer.name,
-        unitNumber: unitNumber,
-        expiryDate: validUntil,
-        validUntil: validUntil,
-        notes: notes,
-        items: items,
-        subject: subject,
-        depositInfo: depositInfo
-      });
-      
-      downloadPDF(pdf, `Quotation_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
+      await quotationService.update(id, { status: newStatus });
+      setStatus(newStatus);
       
       toast({
-        title: "PDF Generated",
-        description: "Quotation PDF has been downloaded successfully.",
+        title: "Status Updated",
+        description: `Quotation status has been updated to "${newStatus}".`,
       });
+      
+      // If status is changed to "Accepted", show option to convert to invoice
+      if (newStatus === "Accepted") {
+        toast({
+          title: "Quotation Accepted",
+          description: "You can now convert this quotation to an invoice.",
+        });
+      }
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Error updating status:", error);
       toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
+        title: "Error",
+        description: "Failed to update quotation status. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleSendWhatsapp = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before sending the quotation.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Format phone number (remove any non-digit characters)
-      let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
-      
-      if (!phoneNumber) {
-        toast({
-          title: "Missing Phone Number",
-          description: "Customer doesn't have a phone number for WhatsApp.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Make sure phone number starts with country code
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
-      } else if (!phoneNumber.startsWith('6')) {
-        phoneNumber = '60' + phoneNumber;
-      }
-      
-      // WhatsApp message text
-      const message = `Dear ${customer.name},\n\nPlease find attached Quotation ${documentNumber}.\n\nThank you.`;
-      
-      // Open WhatsApp web with the prepared message
-      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-      
-      toast({
-        title: "WhatsApp Opened",
-        description: "WhatsApp has been opened with the quotation message. The document PDF will need to be attached manually.",
-      });
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handleConvertToInvoice = () => {
+    // Navigate to create invoice page with quotation ID
+    navigate("/invoices/create", { state: { quotationId: id } });
   };
 
   if (isLoading) {
@@ -310,13 +253,60 @@ export default function EditQuotation() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
-            <Button variant="secondary" onClick={handleDownloadPDF}>
-              <FileDown className="mr-2 h-4 w-4" />
-              Download PDF
-            </Button>
           </div>
         }
       />
+
+      {/* Status actions bar - shown for "Sent" status */}
+      {status === "Sent" && (
+        <div className="bg-muted/50 rounded-md p-4 mt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 className="font-medium">Quotation Status: <span className="text-amber-600">Sent</span></h3>
+              <p className="text-sm text-muted-foreground">Update the status of this quotation</p>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="border-red-200 bg-red-50 hover:bg-red-100 text-red-600"
+                onClick={() => handleStatusChange("Rejected")}
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Mark as Rejected
+              </Button>
+              <Button 
+                variant="outline"
+                className="border-green-200 bg-green-50 hover:bg-green-100 text-green-600"
+                onClick={() => handleStatusChange("Accepted")}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Mark as Accepted
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Convert to Invoice button - shown for "Accepted" status */}
+      {status === "Accepted" && (
+        <div className="bg-muted/50 rounded-md p-4 mt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
+              <p className="text-sm text-muted-foreground">This quotation has been accepted by the customer</p>
+            </div>
+            <div>
+              <Button 
+                onClick={handleConvertToInvoice}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Convert to Invoice
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <CustomerInfoCard 
@@ -333,7 +323,6 @@ export default function EditQuotation() {
           setSubject={setSubject}
           unitNumber={unitNumber}
           setUnitNumber={setUnitNumber}
-          // Remove the readOnly prop as it's not in the interface
         />
         
         <QuotationItemsCard 
@@ -344,26 +333,15 @@ export default function EditQuotation() {
           calculateItemAmount={calculateItemAmount}
         />
         
-        <div className="flex flex-col md:flex-row gap-4 justify-end">
-          <Button 
-            variant="default" // Change 'primary' to 'default' as per available variants
-            type="submit"
-            disabled={isSubmitting}
-            className="flex items-center"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isSubmitting ? "Saving..." : "Save Changes"}
-          </Button>
-          <Button 
-            variant="outline" 
-            type="button"
-            onClick={handleSendWhatsapp}
-            className="flex items-center bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
-          >
-            <Send className="mr-2 h-4 w-4" />
-            Send via WhatsApp
-          </Button>
-        </div>
+        <AdditionalInfoCard 
+          notes={notes}
+          setNotes={setNotes}
+          onSubmit={handleSubmit}
+          onCancel={() => navigate("/quotations")}
+          documentType="quotation"
+          isSubmitting={isSubmitting}
+          saveButtonText="Update Quotation"
+        />
       </form>
     </div>
   );

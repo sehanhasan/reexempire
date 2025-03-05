@@ -77,3 +77,59 @@
 .radix-dropdown-content {
   --transition-duration: 100ms !important;
 }
+
+/* Consistent input field heights */
+.input, 
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+select {
+  height: 40px !important;
+}
+
+/* Modal styles (for CategoryItemSelector) */
+.item-selector-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-selector-content {
+  background: white;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.accordion-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Hide table initially */
+.items-table-hidden {
+  display: none;
+}
+
+/* Quotation status action buttons */
+.status-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.status-actions button {
+  flex: 1;
+}

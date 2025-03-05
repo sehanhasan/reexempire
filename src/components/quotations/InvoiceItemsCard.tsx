@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, FolderSearch, Wallet } from "lucide-react";
+import { Plus, FolderOpen, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { InvoiceItem } from "./types";
@@ -41,6 +41,7 @@ export function InvoiceItemsCard({
   calculateItemAmount
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [showItemsTable, setShowItemsTable] = useState(false);
   const isMobile = useIsMobile();
   
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
@@ -59,6 +60,7 @@ export function InvoiceItemsCard({
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     setItems([...items, { id: newId, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }]);
+    setShowItemsTable(true);
   };
 
   const removeItem = (id: number) => {
@@ -93,13 +95,6 @@ export function InvoiceItemsCard({
     }
   };
 
-  useEffect(() => {
-    // Update deposit amount when total changes
-    if (isDepositInvoice) {
-      setDepositAmount(calculateSubtotal() * (depositPercentage / 100));
-    }
-  }, [items, isDepositInvoice]);
-
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     // Convert selected items to invoice items format
     const newItems = selectedItems.map((selectedItem, index) => ({
@@ -113,6 +108,7 @@ export function InvoiceItemsCard({
 
     // Add the new items to the existing items
     setItems([...items, ...newItems]);
+    setShowItemsTable(true);
     
     toast({
       title: "Items Added",
@@ -122,33 +118,45 @@ export function InvoiceItemsCard({
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Invoice Items</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="isDepositInvoice" 
-              checked={isDepositInvoice}
-              onCheckedChange={(checked) => setIsDepositInvoice(!!checked)}
-            />
-            <label
-              htmlFor="isDepositInvoice"
-              className="text-sm font-medium flex items-center cursor-pointer"
-            >
-              <Wallet className="h-4 w-4 mr-1" />
-              Deposit Invoice
-            </label>
+      <Card className="shadow-sm">
+        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center gap-4">
+            <CardTitle className="text-base lg:text-lg">Invoice Items</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="isDepositInvoice" 
+                checked={isDepositInvoice}
+                onCheckedChange={(checked) => setIsDepositInvoice(!!checked)}
+              />
+              <label
+                htmlFor="isDepositInvoice"
+                className="text-sm font-medium flex items-center cursor-pointer"
+              >
+                <Wallet className="h-4 w-4 mr-1" />
+                Deposit Invoice
+              </label>
+            </div>
           </div>
+          {showItemsTable && items.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowItemsTable(!showItemsTable)}
+              className="h-8 w-8 p-0"
+            >
+              {showItemsTable ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          )}
         </CardHeader>
-        <CardContent>
-          <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-4`}>
+        <CardContent className="py-3 px-4">
+          <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
             <Button
               type="button"
               variant="outline"
               onClick={addItem}
-              className={isMobile ? "w-full" : ""}
+              className={`${isMobile ? "w-full h-10" : "h-10"} text-sm`}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-1 h-3.5 w-3.5" />
               Add Item
             </Button>
             
@@ -156,74 +164,78 @@ export function InvoiceItemsCard({
               type="button"
               variant="outline"
               onClick={() => setShowCategorySelector(true)}
-              className={isMobile ? "w-full" : ""}
+              className={`${isMobile ? "w-full h-10" : "h-10"} text-sm`}
             >
-              <FolderSearch className="mr-2 h-4 w-4" />
+              <FolderOpen className="mr-1 h-3.5 w-3.5" />
               Select from Categories
             </Button>
           </div>
 
-          <ItemsTable
-            items={items}
-            handleItemChange={handleItemChange}
-            removeItem={removeItem}
-            showDescription={true}
-          />
-          
-          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-6`}>
-            <div className={isMobile ? "w-full" : "w-72"}>
-              <div className="flex justify-between py-2">
-                <span className="font-medium">Subtotal:</span>
-                <span>RM {calculateSubtotal().toFixed(2)}</span>
-              </div>
-
-              {/* Deposit Section */}
-              {isDepositInvoice && (
-                <div className="space-y-2 border-t pt-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="depositPercentage" className="text-xs">Deposit (%)</Label>
-                      <div className="relative">
-                        <Input
-                          id="depositPercentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={depositPercentage.toFixed(0)}
-                          onChange={(e) => handleDepositPercentageChange(parseFloat(e.target.value))}
-                          className="pr-8"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                        <Input
-                          id="depositAmount"
-                          type="number"
-                          min="0"
-                          value={depositAmount.toFixed(2)}
-                          onChange={(e) => handleDepositAmountChange(parseFloat(e.target.value))}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
+          {showItemsTable && (
+            <>
+              <ItemsTable
+                items={items}
+                handleItemChange={handleItemChange}
+                removeItem={removeItem}
+                showDescription={true}
+              />
+              
+              <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
+                <div className={isMobile ? "w-full" : "w-72"}>
+                  <div className="flex justify-between py-1.5 text-sm">
+                    <span className="font-medium">Subtotal:</span>
+                    <span>RM {calculateSubtotal().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm py-1">
-                    <span>Balance Due (Future Invoice):</span>
-                    <span>RM {(calculateSubtotal() - depositAmount).toFixed(2)}</span>
+
+                  {/* Deposit Section */}
+                  {isDepositInvoice && (
+                    <div className="space-y-2 border-t pt-2 mt-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label htmlFor="depositPercentage" className="text-xs">Deposit (%)</Label>
+                          <div className="relative">
+                            <Input
+                              id="depositPercentage"
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={depositPercentage.toFixed(0)}
+                              onChange={(e) => handleDepositPercentageChange(parseFloat(e.target.value))}
+                              className="pr-7 h-10 text-sm"
+                            />
+                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
+                            <Input
+                              id="depositAmount"
+                              type="number"
+                              min="0"
+                              value={depositAmount.toFixed(2)}
+                              onChange={(e) => handleDepositAmountChange(parseFloat(e.target.value))}
+                              className="pl-8 h-10 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-sm py-1">
+                        <span>Balance Due (Future Invoice):</span>
+                        <span>RM {(calculateSubtotal() - depositAmount).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between py-2 border-t mt-1">
+                    <span className="font-semibold text-base">Total:</span>
+                    <span className="font-semibold text-base">RM {calculateTotal().toFixed(2)}</span>
                   </div>
                 </div>
-              )}
-
-              <div className="flex justify-between py-2 border-t">
-                <span className="font-semibold text-lg">Total:</span>
-                <span className="font-semibold text-lg">RM {calculateTotal().toFixed(2)}</span>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

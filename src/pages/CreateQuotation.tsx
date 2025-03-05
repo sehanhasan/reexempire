@@ -3,13 +3,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
-import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -154,57 +153,6 @@ export default function CreateQuotation() {
     }
   };
 
-  const handleConvertToInvoice = () => {
-    // In a real app, this would create an invoice from the quotation data
-    // For this demo, we'll just navigate to the invoice creation page
-    toast({
-      title: "Convert to Invoice",
-      description: "This would convert the quotation to an invoice in a real app.",
-    });
-    
-    navigate("/invoices/create");
-  };
-
-  const handleDownloadPDF = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before downloading the PDF.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const pdf = generateQuotationPDF({
-        documentNumber: documentNumber,
-        documentDate: quotationDate,
-        customerName: customer.name,
-        unitNumber: unitNumber,
-        expiryDate: validUntil,
-        validUntil: validUntil,
-        notes: notes,
-        items: items,
-        subject: subject,
-        depositInfo: depositInfo
-      });
-      
-      downloadPDF(pdf, `Quotation_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-      
-      toast({
-        title: "PDF Generated",
-        description: "Quotation PDF has been downloaded successfully.",
-      });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="page-container">
       <PageHeader
@@ -215,10 +163,6 @@ export default function CreateQuotation() {
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
-            </Button>
-            <Button variant="secondary" onClick={handleDownloadPDF}>
-              <FileDown className="mr-2 h-4 w-4" />
-              Download PDF
             </Button>
           </div>
         }
@@ -254,7 +198,6 @@ export default function CreateQuotation() {
           setNotes={setNotes}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/quotations")}
-          onConvertToInvoice={handleConvertToInvoice}
           documentType="quotation"
           isSubmitting={isSubmitting}
         />
