@@ -9,8 +9,6 @@ import {
   Edit,
   MoreHorizontal,
   Trash,
-  FolderPlus,
-  ChevronRight,
   List
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -101,10 +99,7 @@ export default function Categories() {
   };
 
   const columns = [
-    {
-      header: "ID",
-      accessorKey: "id" as keyof Category,
-    },
+    // ID and Description columns are now hidden as per requirements
     {
       header: "Name",
       accessorKey: "name" as keyof Category,
@@ -114,13 +109,8 @@ export default function Categories() {
           onClick={() => handleEditCategory(category)}
         >
           {category.name}
-          <ChevronRight className="ml-1 h-4 w-4" />
         </div>
       ),
-    },
-    {
-      header: "Description",
-      accessorKey: "description" as keyof Category,
     },
     {
       header: "Subcategories",
@@ -185,12 +175,7 @@ export default function Categories() {
       <PageHeader 
         title="Service Categories" 
         description="Manage your service categories and subcategories."
-        actions={
-          <Button className="flex items-center" onClick={() => navigate("/categories/add")}>
-            <FolderPlus className="mr-2 h-4 w-4" />
-            Add Category
-          </Button>
-        }
+        // Removed "Add Category" button from header as requested
       />
       
       <div className="mt-8">

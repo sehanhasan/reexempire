@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Home, FileText, Receipt,
@@ -67,7 +68,9 @@ export function AppSidebar() {
                     md:translate-x-0 md:static md:flex flex-col flex-shrink-0 w-64 bg-sidebar border-r border-sidebar-border overflow-hidden`}>
         <div className="flex flex-col h-full">
           <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border bg-white">
-            <h1 className="text-lg font-semibold text-blue-800">RenovateProX</h1>
+            <div className="flex items-center">
+              <img src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" alt="Reex Empire Logo" className="h-10 mr-2" />
+            </div>
             <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hidden md:flex">
               <Menu size={20} />
             </Button>

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -15,12 +15,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const [items, setItems] = useState<QuotationItem[]>([
     { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
-  const [customerId, setCustomerId] = useState("");
+  // Check if customerId is passed via location state (from customer details)
+  const initialCustomerId = location.state?.customerId || "";
+  const [customerId, setCustomerId] = useState(initialCustomerId);
+  
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [quotationDate, setQuotationDate] = useState(
     new Date().toISOString().split("T")[0]

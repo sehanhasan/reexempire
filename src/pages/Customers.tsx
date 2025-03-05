@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -14,7 +14,6 @@ import {
   Eye,
   Mail,
   Phone,
-  UserPlus,
   Loader2,
   MapPin
 } from "lucide-react";
@@ -52,6 +51,7 @@ import { Customer } from "@/types/database";
 
 export default function Customers() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -62,6 +62,8 @@ export default function Customers() {
   const fetchCustomers = async () => {
     try {
       const data = await customerService.getAll();
+      // Sort by most recent first (created_at in descending order)
+      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setCustomers(data);
       setIsLoading(false);
     } catch (error) {
@@ -150,12 +152,12 @@ export default function Customers() {
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           {customer.phone ? (
             <a 
-              href={`https://wa.me/60${customer.phone}`} 
+              href={`https://wa.me/${customer.phone.replace(/^\+/, '')}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
             >
-              +60 {customer.phone}
+              {customer.phone}
             </a>
           ) : (
             <span className="text-muted-foreground">Not provided</span>
@@ -234,12 +236,7 @@ export default function Customers() {
       <PageHeader 
         title="Customers" 
         description="Manage your customer database."
-        actions={
-          <Button className="flex items-center" onClick={() => navigate("/customers/add")}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Customer
-          </Button>
-        }
+        // Removed "Add Customer" button from header as requested
       />
       
       <div className="mt-8">
@@ -280,12 +277,12 @@ export default function Customers() {
                   <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                   {selectedCustomer.phone ? (
                     <a 
-                      href={`https://wa.me/60${selectedCustomer.phone}`}
+                      href={`https://wa.me/${selectedCustomer.phone.replace(/^\+/, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline"
                     >
-                      +60 {selectedCustomer.phone}
+                      {selectedCustomer.phone}
                     </a>
                   ) : (
                     <span className="text-muted-foreground">Not provided</span>
