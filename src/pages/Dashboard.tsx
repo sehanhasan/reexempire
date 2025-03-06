@@ -44,8 +44,11 @@ export default function Dashboard() {
 
         // Calculate total revenue from invoices - ensure we're working with numbers
         const totalRevenue = invoices.reduce((sum: number, invoice) => {
-          // Ensure invoice.total is a number
-          const invoiceTotal = Number(invoice.total || 0);
+          // Convert invoice.total to a number explicitly
+          const invoiceTotal = typeof invoice.total === 'string' 
+            ? parseFloat(invoice.total) 
+            : (typeof invoice.total === 'number' ? invoice.total : 0);
+          
           return sum + invoiceTotal;
         }, 0);
 
