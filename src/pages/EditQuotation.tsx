@@ -19,7 +19,7 @@ export default function EditQuotation() {
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<QuotationItem[]>([
-    { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
   const [customerId, setCustomerId] = useState("");
@@ -32,7 +32,6 @@ export default function EditQuotation() {
   );
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
-  const [unitNumber, setUnitNumber] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [status, setStatus] = useState("Draft");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,10 +71,6 @@ export default function EditQuotation() {
           if (quotation.customer_id) {
             const customerData = await customerService.getById(quotation.customer_id);
             setCustomer(customerData);
-            
-            if (customerData?.unit_number) {
-              setUnitNumber(customerData.unit_number);
-            }
           }
           
           // Fetch quotation items
@@ -84,6 +79,7 @@ export default function EditQuotation() {
             setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
+              category: "",
               quantity: item.quantity,
               unit: item.unit,
               unitPrice: item.unit_price,
@@ -109,7 +105,8 @@ export default function EditQuotation() {
   }, [id, navigate]);
 
   const calculateItemAmount = (item: QuotationItem) => {
-    return item.quantity * item.unitPrice;
+    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+    return qty * item.unitPrice;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +133,10 @@ export default function EditQuotation() {
     }
     
     // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const subtotal = items.reduce((sum, item) => {
+      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+      return sum + (qty * item.unitPrice);
+    }, 0);
     
     try {
       setIsSubmitting(true);
@@ -164,13 +164,14 @@ export default function EditQuotation() {
       // Add updated quotation items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
+          const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await quotationService.createItem({
             quotation_id: id,
             description: item.description,
-            quantity: item.quantity,
+            quantity: qty,
             unit: item.unit,
             unit_price: item.unitPrice,
-            amount: item.quantity * item.unitPrice
+            amount: qty * item.unitPrice
           });
         }
       }
@@ -310,7 +311,7 @@ export default function EditQuotation() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <CustomerInfoCard 
-          customer={customerId}
+          customerId={customerId}
           setCustomer={setCustomerId}
           documentType="quotation"
           documentNumber={documentNumber}
@@ -321,8 +322,6 @@ export default function EditQuotation() {
           setExpiryDate={setValidUntil}
           subject={subject}
           setSubject={setSubject}
-          unitNumber={unitNumber}
-          setUnitNumber={setUnitNumber}
         />
         
         <QuotationItemsCard 

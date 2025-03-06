@@ -44,6 +44,16 @@ export function ItemsTable({
                 <div className="mb-1 font-medium text-sm text-slate-500">Item #{index + 1}</div>
                 
                 <div className="space-y-2">
+                  <label className="block text-xs mb-1 text-slate-600 font-medium">Category</label>
+                  <Input
+                    placeholder="Enter category"
+                    value={item.category || ""}
+                    onChange={(e) => handleItemChange(item.id, 'category', e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <label className="block text-xs mb-1 text-slate-600 font-medium">Description</label>
                   <Input
                     placeholder="Enter item description"
@@ -57,26 +67,12 @@ export function ItemsTable({
                   <div className="space-y-1">
                     <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
                     <Input
-                      type="number"
-                      min="1"
                       value={item.quantity}
-                      onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                      className="h-10 text-center"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="block text-xs mb-1 text-slate-600 font-medium">Unit</label>
-                    <Input
-                      placeholder="Unit"
-                      value={item.unit}
-                      onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
+                      onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
                       className="h-10"
                     />
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
+                  
                   <div className="space-y-1">
                     <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price</label>
                     <div className="relative">
@@ -91,18 +87,18 @@ export function ItemsTable({
                       />
                     </div>
                   </div>
-                  
-                  <div className="space-y-1">
-                    <label className="block text-xs mb-1 text-slate-600 font-medium">Amount</label>
-                    <div className="relative">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                      <Input
-                        type="number"
-                        className="pl-8 h-10 text-right bg-gray-50"
-                        value={item.amount.toFixed(2)}
-                        disabled
-                      />
-                    </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="block text-xs mb-1 text-slate-600 font-medium">Amount</label>
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
+                    <Input
+                      type="number"
+                      className="pl-8 h-10 text-right bg-gray-50"
+                      value={item.amount.toFixed(2)}
+                      disabled
+                    />
                   </div>
                 </div>
               </div>
@@ -115,9 +111,9 @@ export function ItemsTable({
           <thead>
             <tr className="border-b">
               <th className="py-2 px-1 text-left font-medium text-sm w-6">#</th>
+              <th className="py-2 px-2 text-left font-medium text-sm">Category</th>
               <th className="py-2 px-2 text-left font-medium text-sm">Description</th>
               <th className="py-2 px-2 text-right font-medium text-sm w-20">Qty</th>
-              <th className="py-2 px-2 text-right font-medium text-sm w-24">Unit</th>
               <th className="py-2 px-2 text-right font-medium text-sm w-32">Unit Price (RM)</th>
               <th className="py-2 px-2 text-right font-medium text-sm w-32">Amount (RM)</th>
               <th className="py-2 px-1 w-12"></th>
@@ -131,6 +127,14 @@ export function ItemsTable({
                 </td>
                 <td className="py-3 px-2">
                   <Input
+                    placeholder="Enter category"
+                    value={item.category || ""}
+                    onChange={(e) => handleItemChange(item.id, 'category', e.target.value)}
+                    className="h-10"
+                  />
+                </td>
+                <td className="py-3 px-2">
+                  <Input
                     placeholder="Enter item description"
                     value={item.description}
                     onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
@@ -139,19 +143,9 @@ export function ItemsTable({
                 </td>
                 <td className="py-3 px-2">
                   <Input
-                    type="number"
-                    min="1"
                     value={item.quantity}
-                    onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                    onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
                     className="text-right h-10"
-                  />
-                </td>
-                <td className="py-3 px-2">
-                  <Input
-                    placeholder="Unit"
-                    value={item.unit}
-                    onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
-                    className="h-10"
                   />
                 </td>
                 <td className="py-3 px-2">

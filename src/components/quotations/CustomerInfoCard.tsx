@@ -13,7 +13,7 @@ import { customerService } from "@/services";
 import { Customer } from "@/types/database";
 
 interface CustomerInfoCardProps {
-  customer: string;
+  customerId: string;
   setCustomer: (id: string) => void;
   documentType: "quotation" | "invoice";
   documentNumber: string;
@@ -27,12 +27,10 @@ interface CustomerInfoCardProps {
   quotationReference?: string;
   subject?: string;
   setSubject?: (subject: string) => void;
-  unitNumber?: string;
-  setUnitNumber?: (unit: string) => void;
 }
 
 export function CustomerInfoCard({
-  customer,
+  customerId,
   setCustomer,
   documentType,
   documentNumber,
@@ -45,9 +43,7 @@ export function CustomerInfoCard({
   setPaymentMethod,
   quotationReference,
   subject,
-  setSubject,
-  unitNumber,
-  setUnitNumber
+  setSubject
 }: CustomerInfoCardProps) {
   const [customerSearch, setCustomerSearch] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -73,11 +69,11 @@ export function CustomerInfoCard({
 
   // Set customer details when customer ID changes
   useEffect(() => {
-    if (customer && customers.length > 0) {
-      const found = customers.find((c) => c.id === customer);
+    if (customerId && customers.length > 0) {
+      const found = customers.find((c) => c.id === customerId);
       setSelectedCustomer(found || null);
     }
-  }, [customer, customers]);
+  }, [customerId, customers]);
 
   // Handle customer search
   useEffect(() => {
@@ -90,7 +86,8 @@ export function CustomerInfoCard({
           (c) =>
             c.name.toLowerCase().includes(search) ||
             c.email?.toLowerCase().includes(search) ||
-            c.phone?.toLowerCase().includes(search)
+            c.phone?.toLowerCase().includes(search) ||
+            c.unit_number?.toLowerCase().includes(search)
         )
       );
     }
@@ -100,12 +97,6 @@ export function CustomerInfoCard({
   const handleSelectCustomer = (selected: Customer) => {
     setCustomer(selected.id);
     setSelectedCustomer(selected);
-    
-    // Auto-fill unit number if available
-    if (selected.unit_number && setUnitNumber) {
-      setUnitNumber(selected.unit_number);
-    }
-    
     setCustomerDialogOpen(false);
   };
 
@@ -130,7 +121,11 @@ export function CustomerInfoCard({
                   {selectedCustomer ? (
                     <>
                       <UserRound className="mr-2 h-4 w-4 text-gray-500" />
-                      <span className="truncate">{selectedCustomer.name}</span>
+                      <span className="truncate">
+                        {selectedCustomer.unit_number ? 
+                          `${selectedCustomer.unit_number} - ${selectedCustomer.name}` : 
+                          selectedCustomer.name}
+                      </span>
                     </>
                   ) : (
                     <>
@@ -141,18 +136,6 @@ export function CustomerInfoCard({
                 </Button>
               </div>
             </div>
-
-            {unitNumber !== undefined && setUnitNumber && (
-              <div className="space-y-2">
-                <Label htmlFor="unitNumber">Unit Number / Property</Label>
-                <Input
-                  id="unitNumber"
-                  value={unitNumber}
-                  onChange={(e) => setUnitNumber(e.target.value)}
-                  className="h-10"
-                />
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="documentNumber">
@@ -182,7 +165,37 @@ export function CustomerInfoCard({
               </div>
             </div>
 
-            {/* Hide Valid Until date picker as requested */}
+            {documentType === "quotation" && (
+              <div className="space-y-2">
+                <Label htmlFor="validUntil">Valid Until</Label>
+                <Select
+                  value={expiryDate}
+                  onValueChange={setExpiryDate}
+                >
+                  <SelectTrigger id="validUntil" className="h-10">
+                    <SelectValue placeholder="Select validity period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      7 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      14 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      30 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      60 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      90 days
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {documentType === "invoice" && (
               <div className="space-y-2">
                 <Label htmlFor="dueDate">Due Date</Label>
@@ -277,9 +290,11 @@ export function CustomerInfoCard({
                       onClick={() => handleSelectCustomer(c)}
                     >
                       <div className="flex flex-col items-start">
-                        <span className="font-medium">{c.name}</span>
+                        <span className="font-medium">
+                          {c.unit_number || "No Unit #"}
+                        </span>
                         <span className="text-xs text-gray-500">
-                          {c.email || c.phone || "No contact info"}
+                          {c.name}
                         </span>
                       </div>
                     </Button>

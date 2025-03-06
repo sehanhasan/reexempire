@@ -18,7 +18,7 @@ export default function CreateQuotation() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [items, setItems] = useState<QuotationItem[]>([
-    { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
   // Check if customerId is passed via location state (from customer details)
@@ -34,7 +34,6 @@ export default function CreateQuotation() {
   );
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
-  const [unitNumber, setUnitNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
@@ -59,11 +58,6 @@ export default function CreateQuotation() {
         try {
           const customerData = await customerService.getById(customerId);
           setCustomer(customerData);
-          
-          // Auto-fill unit number if available
-          if (customerData?.unit_number) {
-            setUnitNumber(customerData.unit_number);
-          }
         } catch (error) {
           console.error("Error fetching customer:", error);
         }
@@ -74,7 +68,9 @@ export default function CreateQuotation() {
   }, [customerId]);
 
   const calculateItemAmount = (item: QuotationItem) => {
-    return item.quantity * item.unitPrice;
+    // Handle quantity as number or string
+    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+    return qty * item.unitPrice;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,7 +97,10 @@ export default function CreateQuotation() {
     }
     
     // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const subtotal = items.reduce((sum, item) => {
+      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+      return sum + (qty * item.unitPrice);
+    }, 0);
     
     try {
       setIsSubmitting(true);
@@ -127,13 +126,14 @@ export default function CreateQuotation() {
       // Add quotation items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
+          const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await quotationService.createItem({
             quotation_id: createdQuotation.id,
             description: item.description,
-            quantity: item.quantity,
+            quantity: qty,
             unit: item.unit,
             unit_price: item.unitPrice,
-            amount: item.quantity * item.unitPrice
+            amount: qty * item.unitPrice
           });
         }
       }
@@ -174,7 +174,7 @@ export default function CreateQuotation() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <CustomerInfoCard 
-          customer={customerId}
+          customerId={customerId}
           setCustomer={setCustomerId}
           documentType="quotation"
           documentNumber={documentNumber}
@@ -185,8 +185,6 @@ export default function CreateQuotation() {
           setExpiryDate={setValidUntil}
           subject={subject}
           setSubject={setSubject}
-          unitNumber={unitNumber}
-          setUnitNumber={setUnitNumber}
         />
         
         <QuotationItemsCard 

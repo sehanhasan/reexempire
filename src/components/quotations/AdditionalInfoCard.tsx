@@ -1,20 +1,27 @@
 
-import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Send } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Send, Save, Ban } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AdditionalInfoCardProps {
   notes: string;
-  setNotes: React.Dispatch<React.SetStateAction<string>>;
+  setNotes: (notes: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
-  onConvertToInvoice?: () => void;
   documentType: "quotation" | "invoice";
   isSubmitting?: boolean;
-  onSendWhatsapp?: () => void;
   saveButtonText?: string;
+  onSendWhatsapp?: () => void;
 }
 
 export function AdditionalInfoCard({
@@ -22,91 +29,76 @@ export function AdditionalInfoCard({
   setNotes,
   onSubmit,
   onCancel,
-  onConvertToInvoice,
   documentType,
   isSubmitting = false,
+  saveButtonText,
   onSendWhatsapp,
-  saveButtonText
 }: AdditionalInfoCardProps) {
   const isMobile = useIsMobile();
-
+  
   return (
     <Card className="shadow-sm">
       <CardHeader className="py-3 px-4">
         <CardTitle className="text-base lg:text-lg">Additional Information</CardTitle>
       </CardHeader>
       <CardContent className="py-3 px-4">
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <label htmlFor="notes" className="block text-sm font-medium">
-              Notes (Optional)
-            </label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={`Add any additional ${documentType} notes here...`}
-              rows={3}
-              className="resize-none text-sm"
-            />
-          </div>
-
-          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} gap-2 pt-3 border-t`}>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              className={`${isMobile ? "w-full order-2 md:order-1" : ""} h-8 text-sm`}
-            >
-              Cancel
-            </Button>
-            
-            {onConvertToInvoice && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onConvertToInvoice}
-                className={`${isMobile ? "w-full order-1 md:order-2" : ""} h-8 text-sm`}
-              >
-                Convert to Invoice
-              </Button>
-            )}
-            
-            {onSendWhatsapp && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onSendWhatsapp}
-                className={`${isMobile ? "w-full order-2 md:order-3" : ""} h-8 text-sm bg-green-50 hover:bg-green-100 text-green-600 border-green-200`}
-              >
-                <Send className="mr-1 h-3.5 w-3.5" />
-                Send via WhatsApp
-              </Button>
-            )}
-            
-            <Button
-              type="submit"
-              onClick={onSubmit}
-              disabled={isSubmitting}
-              className={`${isMobile ? "w-full order-3 md:order-4" : ""} h-8 text-sm`}
-            >
-              {isSubmitting ? (
-                "Saving..."
-              ) : saveButtonText ? (
-                <>
-                  <CheckCircle className="mr-1 h-3.5 w-3.5" />
-                  {saveButtonText}
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-1 h-3.5 w-3.5" />
-                  Create {documentType.charAt(0).toUpperCase() + documentType.slice(1)}
-                </>
-              )}
-            </Button>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea
+            id="notes"
+            placeholder={`Add any additional notes to this ${documentType}...`}
+            className="resize-none h-24"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
         </div>
       </CardContent>
+      <CardFooter className={`pt-2 px-4 pb-4 ${isMobile ? "flex-col" : "justify-end"}`}>
+        <div className={`${isMobile ? "w-full flex flex-col gap-2" : "flex gap-2"}`}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            <Ban className="mr-1.5 h-4 w-4" />
+            Cancel
+          </Button>
+          
+          {onSendWhatsapp && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-10"
+              onClick={onSendWhatsapp}
+              disabled={isSubmitting}
+            >
+              <Send className="mr-1.5 h-4 w-4" />
+              Send to WhatsApp
+            </Button>
+          )}
+          
+          <Button 
+            type="submit" 
+            className="h-10"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-1.5 h-4 w-4" />
+                {saveButtonText || `Save ${documentType.charAt(0).toUpperCase() + documentType.slice(1)}`}
+              </>
+            )}
+          </Button>
+        </div>
+      </CardFooter>
     </Card>
   );
 }

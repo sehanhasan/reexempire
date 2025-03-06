@@ -42,19 +42,12 @@ export function InvoiceItemsCard({
   calculateItemAmount
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [showItemsTable, setShowItemsTable] = useState(false);
+  const [showItemsTable, setShowItemsTable] = useState(true);
   const isMobile = useIsMobile();
   const location = useLocation();
   
   // Determine if we're on an edit page or create page
   const isEditPage = location.pathname.includes('edit');
-  
-  // Set showItemsTable to true automatically if on edit page
-  useEffect(() => {
-    if (isEditPage && items.length > 0) {
-      setShowItemsTable(true);
-    }
-  }, [isEditPage, items.length]);
   
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems =>
@@ -71,8 +64,7 @@ export function InvoiceItemsCard({
 
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items, { id: newId, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }]);
-    setShowItemsTable(true);
+    setItems([...items, { id: newId, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }]);
   };
 
   const removeItem = (id: number) => {
@@ -112,6 +104,7 @@ export function InvoiceItemsCard({
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
       description: selectedItem.description,
+      category: selectedItem.category || "",
       quantity: selectedItem.quantity,
       unit: selectedItem.unit,
       unitPrice: selectedItem.price,
@@ -120,7 +113,6 @@ export function InvoiceItemsCard({
 
     // Add the new items to the existing items
     setItems([...items, ...newItems]);
-    setShowItemsTable(true);
     
     toast({
       title: "Items Added",
@@ -149,7 +141,7 @@ export function InvoiceItemsCard({
               </label>
             </div>
           </div>
-          {showItemsTable && items.length > 0 && (
+          {items.length > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 

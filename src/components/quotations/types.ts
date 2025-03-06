@@ -2,7 +2,8 @@
 export interface ItemBase {
   id: number;
   description: string;
-  quantity: number;
+  category?: string;
+  quantity: number | string;
   unit: string;
   unitPrice: number;
   amount: number;

@@ -20,7 +20,7 @@ export default function EditInvoice() {
   const isMobile = useIsMobile();
   
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: 1, description: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
   const [customerId, setCustomerId] = useState("");
@@ -34,7 +34,6 @@ export default function EditInvoice() {
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
-  const [unitNumber, setUnitNumber] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
@@ -86,6 +85,7 @@ export default function EditInvoice() {
             setItems(invoiceItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
+              category: "",
               quantity: item.quantity,
               unit: item.unit,
               unitPrice: item.unit_price,
@@ -122,11 +122,6 @@ export default function EditInvoice() {
         try {
           const customerData = await customerService.getById(customerId);
           setCustomer(customerData);
-          
-          // Auto-fill unit number if available
-          if (customerData?.unit_number) {
-            setUnitNumber(customerData.unit_number);
-          }
         } catch (error) {
           console.error("Error fetching customer:", error);
         }
@@ -137,7 +132,8 @@ export default function EditInvoice() {
   }, [customerId]);
 
   const calculateItemAmount = (item: InvoiceItem) => {
-    return item.quantity * item.unitPrice;
+    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+    return qty * item.unitPrice;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,7 +160,10 @@ export default function EditInvoice() {
     }
     
     // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const subtotal = items.reduce((sum, item) => {
+      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+      return sum + (qty * item.unitPrice);
+    }, 0);
     const total = isDepositInvoice ? depositAmount : subtotal;
     
     try {
@@ -194,13 +193,14 @@ export default function EditInvoice() {
       // Add invoice items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
+          const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await invoiceService.createItem({
             invoice_id: id!,
             description: item.description,
-            quantity: item.quantity,
+            quantity: qty,
             unit: item.unit,
             unit_price: item.unitPrice,
-            amount: item.quantity * item.unitPrice
+            amount: qty * item.unitPrice
           });
         }
       }
@@ -289,7 +289,7 @@ export default function EditInvoice() {
         documentNumber: documentNumber,
         documentDate: invoiceDate,
         customerName: customer.name,
-        unitNumber: unitNumber,
+        unitNumber: customer.unit_number || "",
         expiryDate: dueDate,
         dueDate: dueDate,
         paymentMethod: paymentMethod,
@@ -353,7 +353,7 @@ export default function EditInvoice() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <CustomerInfoCard 
-          customer={customerId}
+          customerId={customerId}
           setCustomer={setCustomerId}
           documentType="invoice"
           documentNumber={documentNumber}
@@ -367,8 +367,6 @@ export default function EditInvoice() {
           quotationReference={quotationReference}
           subject={subject}
           setSubject={setSubject}
-          unitNumber={unitNumber}
-          setUnitNumber={setUnitNumber}
         />
         
         <InvoiceItemsCard 
