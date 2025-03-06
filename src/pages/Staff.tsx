@@ -148,12 +148,12 @@ export default function StaffPage() {
     {
       header: "Name",
       accessorKey: "name" as keyof Staff,
-      cell: (staff: Staff) => (
+      cell: ({ row }: { row: { original: Staff } }) => (
         <div 
           className="font-medium text-blue-600 cursor-pointer"
-          onClick={() => handleView(staff)}
+          onClick={() => handleView(row.original)}
         >
-          {staff.name}
+          {row.original.name}
         </div>
       ),
     },
@@ -164,11 +164,11 @@ export default function StaffPage() {
     {
       header: "Phone",
       accessorKey: "phone" as keyof Staff,
-      cell: (staff: Staff) => (
+      cell: ({ row }: { row: { original: Staff } }) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          <a href={`tel:${staff.phone}`} className="hover:underline text-blue-600">
-            {staff.phone}
+          <a href={`tel:${row.original.phone}`} className="hover:underline text-blue-600">
+            {row.original.phone}
           </a>
         </div>
       ),
@@ -176,21 +176,21 @@ export default function StaffPage() {
     {
       header: "Join Date",
       accessorKey: "join_date" as keyof Staff,
-      cell: (staff: Staff) => {
-        return staff.join_date ? format(new Date(staff.join_date), "MMM dd, yyyy") : "N/A";
+      cell: ({ row }: { row: { original: Staff } }) => {
+        return row.original.join_date ? format(new Date(row.original.join_date), "MMM dd, yyyy") : "N/A";
       },
     },
     {
       header: "Status",
       accessorKey: "status" as keyof Staff,
-      cell: (staff: Staff) => {
+      cell: ({ row }: { row: { original: Staff } }) => {
         return (
           <Badge className={
-            staff.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
-            staff.status === "On Leave" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
+            row.original.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
+            row.original.status === "On Leave" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
             "bg-gray-100 text-gray-800 hover:bg-gray-200"
           }>
-            {staff.status}
+            {row.original.status}
           </Badge>
         );
       },
@@ -198,7 +198,7 @@ export default function StaffPage() {
     {
       header: "Actions",
       accessorKey: "id" as keyof Staff,
-      cell: (staff: Staff) => {
+      cell: ({ row }: { row: { original: Staff } }) => {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -209,39 +209,39 @@ export default function StaffPage() {
             <DropdownMenuContent align="end" className="w-[180px]">
               <DropdownMenuItem 
                 className="cursor-pointer"
-                onClick={() => handleView(staff)}
+                onClick={() => handleView(row.original)}
               >
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="cursor-pointer"
-                onClick={() => handleEdit(staff)}
+                onClick={() => handleEdit(row.original)}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {staff.status !== "Active" && (
+              {row.original.status !== "Active" && (
                 <DropdownMenuItem 
                   className="cursor-pointer text-green-600"
-                  onClick={() => handleStatusChange(staff, "Active")}
+                  onClick={() => handleStatusChange(row.original, "Active")}
                 >
                   Set as Active
                 </DropdownMenuItem>
               )}
-              {staff.status !== "On Leave" && (
+              {row.original.status !== "On Leave" && (
                 <DropdownMenuItem 
                   className="cursor-pointer text-amber-600"
-                  onClick={() => handleStatusChange(staff, "On Leave")}
+                  onClick={() => handleStatusChange(row.original, "On Leave")}
                 >
                   Set as On Leave
                 </DropdownMenuItem>
               )}
-              {staff.status !== "Inactive" && (
+              {row.original.status !== "Inactive" && (
                 <DropdownMenuItem 
                   className="cursor-pointer text-gray-600"
-                  onClick={() => handleStatusChange(staff, "Inactive")}
+                  onClick={() => handleStatusChange(row.original, "Inactive")}
                 >
                   Set as Inactive
                 </DropdownMenuItem>
@@ -249,7 +249,7 @@ export default function StaffPage() {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
-                onClick={() => handleDelete(staff)}
+                onClick={() => handleDelete(row.original)}
               >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete

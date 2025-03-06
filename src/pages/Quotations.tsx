@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -297,14 +298,14 @@ export default function Quotations() {
     {
       header: "ID",
       accessorKey: "reference_number",
-      cell: quotation => <button className="font-medium text-blue-600 hover:underline" onClick={() => handleView(quotation)}>
-          {quotation.reference_number}
+      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => <button className="font-medium text-blue-600 hover:underline" onClick={() => handleView(row.original)}>
+          {row.original.reference_number}
         </button>
     },
     {
       header: "Unit #",
       accessorKey: "unit_number",
-      cell: quotation => quotation.unit_number || "N/A"
+      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => row.original.unit_number || "N/A"
     },
     {
       header: "Customer",
@@ -313,23 +314,23 @@ export default function Quotations() {
     {
       header: "Amount",
       accessorKey: "total",
-      cell: quotation => `RM ${parseFloat(quotation.total.toString()).toFixed(2)}`
+      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => `RM ${parseFloat(row.original.total.toString()).toFixed(2)}`
     },
     {
       header: "Issue Date",
       accessorKey: "issue_date",
-      cell: quotation => format(new Date(quotation.issue_date), "MMM dd, yyyy")
+      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => format(new Date(row.original.issue_date), "MMM dd, yyyy")
     },
     {
       header: "Valid Until",
       accessorKey: "expiry_date",
-      cell: quotation => format(new Date(quotation.expiry_date), "MMM dd, yyyy")
+      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => format(new Date(row.original.expiry_date), "MMM dd, yyyy")
     },
     {
       header: "Status",
       accessorKey: "status",
-      cell: quotation => {
-        const status = quotation.status;
+      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => {
+        const status = row.original.status;
         return <Badge className={status === "Accepted" ? "bg-green-100 text-green-800 hover:bg-green-200" : status === "Sent" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : status === "Draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" : "bg-red-100 text-red-800 hover:bg-red-200"}>
               {status}
             </Badge>;
@@ -338,7 +339,7 @@ export default function Quotations() {
     {
       header: "Actions",
       accessorKey: "id",
-      cell: quotation => {
+      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => {
         return (
           <div className="flex items-center">
             <DropdownMenu>
@@ -348,45 +349,45 @@ export default function Quotations() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[160px]" sideOffset={5}>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => handleView(quotation)}>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => handleView(row.original)}>
                   <Eye className="mr-2 h-4 w-4" />
                   View
                 </DropdownMenuItem>
                 
-                {quotation.status === "Draft" && (
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleEdit(quotation)}>
+                {row.original.status === "Draft" && (
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleEdit(row.original)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
                 )}
                 
-                <DropdownMenuItem className="cursor-pointer" onClick={() => handleDownload(quotation)}>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => handleDownload(row.original)}>
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
                 
-                {quotation.status === "Draft" && (
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleSend(quotation)}>
+                {row.original.status === "Draft" && (
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => handleSend(row.original)}>
                     <Send className="mr-2 h-4 w-4" />
                     Send
                   </DropdownMenuItem>
                 )}
                 
-                {quotation.status === "Sent" && (
+                {row.original.status === "Sent" && (
                   <>
-                    <DropdownMenuItem className="cursor-pointer text-green-600" onClick={() => handleMarkAsAccepted(quotation)}>
+                    <DropdownMenuItem className="cursor-pointer text-green-600" onClick={() => handleMarkAsAccepted(row.original)}>
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Mark as Accepted
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleMarkAsRejected(quotation)}>
+                    <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleMarkAsRejected(row.original)}>
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Mark as Rejected
                     </DropdownMenuItem>
                   </>
                 )}
                 
-                {quotation.status === "Accepted" && (
-                  <DropdownMenuItem className="cursor-pointer text-blue-600" onClick={() => handleConvertToInvoice(quotation)}>
+                {row.original.status === "Accepted" && (
+                  <DropdownMenuItem className="cursor-pointer text-blue-600" onClick={() => handleConvertToInvoice(row.original)}>
                     <Receipt className="mr-2 h-4 w-4" />
                     Convert to Invoice
                   </DropdownMenuItem>
@@ -394,7 +395,7 @@ export default function Quotations() {
                 
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDelete(quotation)}>
+                <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDelete(row.original)}>
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>

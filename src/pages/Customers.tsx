@@ -128,36 +128,36 @@ export default function Customers() {
     {
       header: "Unit #",
       accessorKey: "unit_number" as keyof Customer,
-      cell: (customer: Customer) => (
-        <div className="font-medium">{customer.unit_number || 'N/A'}</div>
+      cell: ({ row }: { row: { original: Customer } }) => (
+        <div className="font-medium">{row.original.unit_number || 'N/A'}</div>
       ),
     },
     {
       header: "Name",
       accessorKey: "name" as keyof Customer,
-      cell: (customer: Customer) => (
+      cell: ({ row }: { row: { original: Customer } }) => (
         <div 
           className="font-medium text-blue-600 cursor-pointer"
-          onClick={() => handleView(customer)}
+          onClick={() => handleView(row.original)}
         >
-          {customer.name}
+          {row.original.name}
         </div>
       ),
     },
     {
       header: "WhatsApp",
       accessorKey: "phone" as keyof Customer,
-      cell: (customer: Customer) => (
+      cell: ({ row }: { row: { original: Customer } }) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          {customer.phone ? (
+          {row.original.phone ? (
             <a 
-              href={`https://wa.me/${customer.phone.replace(/^\+/, '')}`} 
+              href={`https://wa.me/${row.original.phone.replace(/^\+/, '')}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
             >
-              {customer.phone}
+              {row.original.phone}
             </a>
           ) : (
             <span className="text-muted-foreground">Not provided</span>
@@ -168,14 +168,14 @@ export default function Customers() {
     {
       header: "Address",
       accessorKey: "address" as keyof Customer,
-      cell: (customer: Customer) => (
-        <span>{customer.address || 'Not provided'}</span>
+      cell: ({ row }: { row: { original: Customer } }) => (
+        <span>{row.original.address || 'Not provided'}</span>
       ),
     },
     {
       header: "Actions",
       accessorKey: "id" as keyof Customer,
-      cell: (customer: Customer) => {
+      cell: ({ row }: { row: { original: Customer } }) => {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -186,14 +186,14 @@ export default function Customers() {
             <DropdownMenuContent align="end" className="w-[160px]">
               <DropdownMenuItem 
                 className="cursor-pointer"
-                onClick={() => handleView(customer)}
+                onClick={() => handleView(row.original)}
               >
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="cursor-pointer"
-                onClick={() => handleEdit(customer)}
+                onClick={() => handleEdit(row.original)}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
@@ -201,7 +201,7 @@ export default function Customers() {
               <DropdownMenuItem 
                 className="cursor-pointer"
                 onClick={() => {
-                  navigate("/quotations/create", { state: { customerId: customer.id } });
+                  navigate("/quotations/create", { state: { customerId: row.original.id } });
                 }}
               >
                 <Mail className="mr-2 h-4 w-4" />
@@ -210,7 +210,7 @@ export default function Customers() {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
-                onClick={() => handleDelete(customer)}
+                onClick={() => handleDelete(row.original)}
               >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete

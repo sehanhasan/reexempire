@@ -103,30 +103,30 @@ export default function Categories() {
     {
       header: "Name",
       accessorKey: "name" as keyof Category,
-      cell: (category: Category) => (
+      cell: ({ row }: { row: { original: Category } }) => (
         <div 
           className="flex items-center font-medium text-blue-600 cursor-pointer"
-          onClick={() => handleEditCategory(category)}
+          onClick={() => handleEditCategory(row.original)}
         >
-          {category.name}
+          {row.original.name}
         </div>
       ),
     },
     {
       header: "Subcategories",
       accessorKey: "subcategories" as keyof Category,
-      cell: (category: Category) => (
+      cell: ({ row }: { row: { original: Category } }) => (
         <div className="flex items-center">
-          <span className="mr-2">{category.subcategories?.length || 0}</span>
-          {(category.subcategories?.length || 0) > 0 && (
+          <span className="mr-2">{row.original.subcategories?.length || 0}</span>
+          {(row.original.subcategories?.length || 0) > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
               className="text-blue-600"
               onClick={() => {
                 toast({
-                  title: "Subcategories for " + category.name,
-                  description: category.subcategories?.map(sub => sub.name).join(", "),
+                  title: "Subcategories for " + row.original.name,
+                  description: row.original.subcategories?.map(sub => sub.name).join(", "),
                 });
               }}
             >
@@ -139,7 +139,7 @@ export default function Categories() {
     {
       header: "Actions",
       accessorKey: "id" as keyof Category,
-      cell: (category: Category) => {
+      cell: ({ row }: { row: { original: Category } }) => {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -150,7 +150,7 @@ export default function Categories() {
             <DropdownMenuContent align="end" className="w-[160px]">
               <DropdownMenuItem 
                 className="cursor-pointer"
-                onClick={() => handleEditCategory(category)}
+                onClick={() => handleEditCategory(row.original)}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
@@ -158,7 +158,7 @@ export default function Categories() {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
-                onClick={() => handleDeleteCategory(category)}
+                onClick={() => handleDeleteCategory(row.original)}
               >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
