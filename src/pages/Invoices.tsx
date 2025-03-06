@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -144,7 +143,7 @@ export default function Invoices() {
       toast({
         title: "Payment Recorded",
         description: "The invoice has been marked as paid.",
-        variant: "success"
+        variant: "default"
       });
     } catch (error) {
       console.error("Error marking invoice as paid:", error);

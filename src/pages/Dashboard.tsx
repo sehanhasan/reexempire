@@ -5,7 +5,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Chart } from "@/components/dashboard/Chart";
-import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar } from "lucide-react";
+import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt } from "lucide-react";
 import { quotationService, invoiceService, customerService, appointmentService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
@@ -43,7 +43,7 @@ export default function Dashboard() {
         setCustomersMap(customersMapData);
 
         // Calculate total revenue from invoices
-        const totalRevenue = invoices.reduce((sum, invoice) => sum + invoice.total, 0);
+        const totalRevenue = invoices.reduce((sum, invoice) => sum + Number(invoice.total), 0);
 
         // Set stats
         setStats({
