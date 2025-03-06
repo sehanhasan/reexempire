@@ -79,7 +79,7 @@ export default function AddAppointment() {
     }
     
     try {
-      // Prepare the appointment data
+      // Prepare the appointment data - adding description field to fix the type error
       const appointmentData = {
         title,
         customer_id: selectedCustomer.id,
@@ -89,7 +89,8 @@ export default function AddAppointment() {
         end_time: endTime,
         status,
         notes: notes || null,
-        location: selectedCustomer.address || null
+        location: selectedCustomer.address || null,
+        description: null, // Adding the missing description field
       };
       
       // Save the appointment
