@@ -1,7 +1,7 @@
 
-export * from './customerService';
-export * from './staffService';
-export * from './quotationService';
-export * from './invoiceService';
-export * from './categoryService';
-export * from './appointmentService';
+export { categoryService } from "./categoryService";
+export { customerService } from "./customerService";
+export { invoiceService } from "./invoiceService";
+export { quotationService } from "./quotationService";
+export { staffService } from "./staffService";
+export { appointmentService } from "./appointmentService";

@@ -1,4 +1,5 @@
 
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
@@ -7,86 +8,101 @@ import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
-
-// Types for our events
-interface ScheduleEvent {
-  id: string;
-  title: string;
-  customer: string;
-  staff: string[];
-  start: string; // "HH:MM"
-  end: string; // "HH:MM"
-  status: "Confirmed" | "Pending" | "Completed" | "Cancelled";
-}
-
-// Mock data for days with events
-interface DayEvents {
-  [key: string]: ScheduleEvent[]; // "YYYY-MM-DD" -> events[]
-}
+import { appointmentService, customerService, staffService } from "@/services";
+import { formatDate } from "@/utils/formatters";
+import { Appointment, Customer, Staff } from "@/types/database";
 
 export default function Schedule() {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("week");
-  const [events, setEvents] = useState<DayEvents>({});
+  const [customersMap, setCustomersMap] = useState<Record<string, Customer>>({});
+  const [staffMap, setStaffMap] = useState<Record<string, Staff>>({});
 
-  // Load events from localStorage on component mount
-  useEffect(() => {
-    const storedEvents = localStorage.getItem('scheduleEvents');
-    if (storedEvents) {
-      setEvents(JSON.parse(storedEvents));
-    } else {
-      // If no events in localStorage, use mock data
-      setEvents(mockEvents);
-    }
-  }, []);
+  // Fetch appointments using React Query
+  const { data: appointments = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['appointments'],
+    queryFn: appointmentService.getAll,
+  });
 
-  // Mock data - would come from API in real app
-  const mockEvents: DayEvents = {
-    "2023-09-11": [
-      { id: "E001", title: "Bathroom Renovation", customer: "John Smith", staff: ["Mike Johnson", "Sarah Williams"], start: "09:00", end: "12:00", status: "Confirmed" },
-      { id: "E002", title: "Electrical Inspection", customer: "Emma Brown", staff: ["Mike Johnson"], start: "14:00", end: "15:30", status: "Confirmed" },
-    ],
-    "2023-09-12": [
-      { id: "E003", title: "Kitchen Cabinets", customer: "Robert Wilson", staff: ["Tom Brown", "Jane Smith"], start: "10:00", end: "16:00", status: "Pending" },
-    ],
-    "2023-09-13": [
-      { id: "E004", title: "Flooring Installation", customer: "Michael Davis", staff: ["Tom Brown"], start: "09:00", end: "17:00", status: "Confirmed" },
-    ],
-    "2023-09-14": [
-      { id: "E005", title: "Painting - Living Room", customer: "Lisa Jones", staff: ["Jane Smith"], start: "13:00", end: "18:00", status: "Confirmed" },
-    ],
-    "2023-09-15": [
-      { id: "E006", title: "Final Inspection", customer: "John Smith", staff: ["John Doe"], start: "11:00", end: "12:00", status: "Pending" },
-      { id: "E007", title: "Plumbing Repair", customer: "David Martin", staff: ["Sarah Williams"], start: "14:30", end: "16:30", status: "Confirmed" },
-    ],
-  };
-
-  // Helper functions for calendar
-  const getDaysInMonth = (year: number, month: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (year: number, month: number) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const formatDateKey = (date: Date) => {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  };
-
+  // Get week start and end dates for fetching appointments in date range
   const getWeekDates = () => {
     const dates = [];
     const curr = new Date(currentDate);
     const first = curr.getDate() - curr.getDay();
     
     for (let i = 0; i < 7; i++) {
-      const day = new Date(curr.setDate(first + i));
+      const day = new Date(curr);
+      day.setDate(first + i);
       dates.push(day);
     }
     
     return dates;
   };
+
+  // Format the appointments data for the calendar
+  const formatEventsForCalendar = () => {
+    const events: Record<string, any[]> = {};
+    
+    appointments.forEach((appointment: Appointment) => {
+      const dateKey = appointment.appointment_date;
+      
+      if (!events[dateKey]) {
+        events[dateKey] = [];
+      }
+      
+      const customerName = customersMap[appointment.customer_id]?.name || "Unknown Customer";
+      const unitNumber = customersMap[appointment.customer_id]?.unit_number || "";
+      
+      events[dateKey].push({
+        id: appointment.id,
+        title: appointment.title,
+        customer: customerName,
+        unitNumber: unitNumber,
+        staff: appointment.staff_id ? [staffMap[appointment.staff_id]?.name || "Unassigned"] : ["Unassigned"],
+        start: appointment.start_time,
+        end: appointment.end_time,
+        status: appointment.status,
+      });
+    });
+    
+    return events;
+  };
+
+  // Fetch customers and staff data
+  useEffect(() => {
+    const fetchCustomersAndStaff = async () => {
+      try {
+        const customersData = await customerService.getAll();
+        const customersMapData: Record<string, Customer> = {};
+        customersData.forEach(customer => {
+          customersMapData[customer.id] = customer;
+        });
+        setCustomersMap(customersMapData);
+
+        const staffData = await staffService.getAll();
+        const staffMapData: Record<string, Staff> = {};
+        staffData.forEach(staff => {
+          staffMapData[staff.id] = staff;
+        });
+        setStaffMap(staffMapData);
+      } catch (error) {
+        console.error("Error fetching reference data:", error);
+        toast({
+          title: "Error",
+          description: "Could not load customer and staff data",
+          variant: "destructive"
+        });
+      }
+    };
+
+    fetchCustomersAndStaff();
+  }, []);
+
+  // Refresh appointments when date changes
+  useEffect(() => {
+    refetch();
+  }, [currentDate, refetch]);
 
   const prevMonth = () => {
     const date = new Date(currentDate);
@@ -118,10 +134,15 @@ export default function Schedule() {
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
+  const formatDateKey = (date: Date) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
   // Render week view
   const renderWeekView = () => {
     const weekDates = getWeekDates();
     const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 7 AM to 6 PM
+    const events = formatEventsForCalendar();
     
     return (
       <div className="bg-white rounded-lg border shadow">
@@ -187,7 +208,9 @@ export default function Schedule() {
                         left: '4px',
                       }}
                     >
-                      <div className="text-xs font-semibold">{event.title}</div>
+                      <div className="text-xs font-semibold">
+                        {event.unitNumber ? `#${event.unitNumber} - ${event.title}` : event.title}
+                      </div>
                       <div className="text-xs mt-1">{formatTime(event.start)} - {formatTime(event.end)}</div>
                       {duration > 50 && (
                         <>
@@ -223,7 +246,7 @@ export default function Schedule() {
         }
       />
       
-      <div className="flex items-center justify-between mt-8 mb-4">
+      <div className="flex flex-wrap items-center justify-between mt-8 mb-4 gap-2">
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
@@ -243,7 +266,7 @@ export default function Schedule() {
           </Button>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 order-last md:order-none w-full md:w-auto justify-center my-2 md:my-0">
           <Button
             variant="outline"
             size="icon"
@@ -252,7 +275,7 @@ export default function Schedule() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-md md:text-lg font-semibold whitespace-nowrap">
             {view === "week" 
               ? `${getWeekDates()[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${getWeekDates()[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
               : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -278,7 +301,15 @@ export default function Schedule() {
       </div>
       
       <div className="mt-2 overflow-x-auto pb-6">
-        {view === "week" ? renderWeekView() : (
+        {isLoading ? (
+          <div className="bg-white rounded-lg border shadow p-8 text-center">
+            Loading appointments...
+          </div>
+        ) : error ? (
+          <div className="bg-white rounded-lg border shadow p-8 text-center text-red-500">
+            Error loading appointments. Please try again.
+          </div>
+        ) : view === "week" ? renderWeekView() : (
           <div className="bg-white rounded-lg border shadow p-4">
             <div className="text-center text-muted-foreground">Month view coming soon</div>
           </div>

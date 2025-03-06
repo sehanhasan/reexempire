@@ -32,7 +32,10 @@ export function MainLayout({ children }: MainLayoutProps) {
       return "Invoices";
     }
     if (path.includes("/staff")) return "Staff";
-    if (path.includes("/schedule")) return "Schedule";
+    if (path.includes("/schedule")) {
+      if (path.includes("/add")) return "Add Appointment";
+      return "Schedule";
+    }
     if (path.includes("/profile")) return "Profile";
     
     return "Reex Empire";
@@ -47,7 +50,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   
   return (
     <div className="flex min-h-screen bg-background">
-      <AppSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      <div className="sticky top-0 h-screen flex-shrink-0">
+        <AppSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      </div>
       
       <div className="flex-1 overflow-auto">
         {isMobile && (

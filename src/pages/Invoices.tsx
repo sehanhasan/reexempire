@@ -8,26 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, AlertTriangle, FileCheck } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { invoiceService, customerService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Invoice } from "@/types/database";
 
 export default function Invoices() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  const [invoices, setInvoices] = useState([]);
-  const [filteredInvoices, setFilteredInvoices] = useState([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [customers, setCustomers] = useState({});
+  const [customers, setCustomers] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [invoiceToDelete, setInvoiceToDelete] = useState(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const fetchData = async () => {
     try {
@@ -39,7 +40,7 @@ export default function Invoices() {
       
       // Fetch customers for mapping
       const customerData = await customerService.getAll();
-      const customerMap = {};
+      const customerMap: Record<string, any> = {};
       customerData.forEach(customer => {
         customerMap[customer.id] = customer;
       });
@@ -89,31 +90,31 @@ export default function Invoices() {
     {
       header: "Invoice #",
       accessorKey: "reference_number",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: any }) => (
         <div className="font-medium">{row.original.reference_number}</div>
       ),
     },
     {
       header: "Customer",
       accessorKey: "customer_id",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: any }) => (
         <div>{customers[row.original.customer_id]?.name || "Unknown"}</div>
       ),
     },
     {
       header: "Date",
       accessorKey: "issue_date",
-      cell: ({ row }) => <div>{formatDate(row.original.issue_date)}</div>,
+      cell: ({ row }: { row: any }) => <div>{formatDate(row.original.issue_date)}</div>,
     },
     {
       header: "Due Date",
       accessorKey: "due_date",
-      cell: ({ row }) => <div>{formatDate(row.original.due_date)}</div>,
+      cell: ({ row }: { row: any }) => <div>{formatDate(row.original.due_date)}</div>,
     },
     {
       header: "Status",
       accessorKey: "payment_status",
-      cell: ({ row }) => {
+      cell: ({ row }: { row: any }) => {
         const status = row.original.payment_status;
         let statusColor = "bg-gray-100 text-gray-800";
         
@@ -135,7 +136,7 @@ export default function Invoices() {
     {
       header: "Total",
       accessorKey: "total",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: any }) => (
         <div className="text-right font-medium">
           RM {Number(row.original.total).toFixed(2)}
         </div>
@@ -144,7 +145,7 @@ export default function Invoices() {
     {
       header: "Actions",
       accessorKey: "actions",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: any }) => (
         <div className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
