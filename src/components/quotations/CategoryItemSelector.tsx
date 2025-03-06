@@ -18,6 +18,7 @@ import { Category, Subcategory, PricingOption } from "@/types/database";
 export interface SelectedItem {
   id: string;
   description: string;
+  category?: string;
   quantity: number;
   unit: string;
   price: number;
