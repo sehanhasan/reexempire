@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast";
 import { appointmentService, customerService, staffService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { Appointment, Customer, Staff } from "@/types/database";
+import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ export default function Schedule() {
   const [view, setView] = useState<"month" | "week">("week");
   const [customersMap, setCustomersMap] = useState<Record<string, Customer>>({});
   const [staffMap, setStaffMap] = useState<Record<string, Staff>>({});
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
 
   // Fetch appointments using React Query
   const { data: appointments = [], isLoading, error, refetch } = useQuery({
@@ -63,6 +66,7 @@ export default function Schedule() {
         start: appointment.start_time,
         end: appointment.end_time,
         status: appointment.status,
+        original: appointment // Store the original appointment data
       });
     });
     
@@ -138,6 +142,11 @@ export default function Schedule() {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
+  const handleAppointmentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsAppointmentDetailsOpen(true);
+  };
+
   // Render week view
   const renderWeekView = () => {
     const weekDates = getWeekDates();
@@ -196,7 +205,7 @@ export default function Schedule() {
                   return (
                     <div
                       key={eventIndex}
-                      className={`absolute rounded-md p-2 overflow-hidden shadow border-l-4 w-[calc(100%-8px)] ${
+                      className={`absolute rounded-md p-2 overflow-hidden shadow border-l-4 w-[calc(100%-8px)] cursor-pointer hover:opacity-90 ${
                         event.status === "Confirmed" ? "bg-blue-50 border-blue-500" :
                         event.status === "Pending" ? "bg-amber-50 border-amber-500" :
                         event.status === "Completed" ? "bg-green-50 border-green-500" :
@@ -207,6 +216,7 @@ export default function Schedule() {
                         height: `${duration}px`,
                         left: '4px',
                       }}
+                      onClick={() => handleAppointmentClick(event.original)}
                     >
                       <div className="text-xs font-semibold">
                         {event.unitNumber ? `#${event.unitNumber} - ${event.title}` : event.title}
@@ -317,6 +327,14 @@ export default function Schedule() {
       </div>
 
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />
+
+      <AppointmentDetailsDialog
+        open={isAppointmentDetailsOpen}
+        onClose={() => setIsAppointmentDetailsOpen(false)}
+        appointment={selectedAppointment}
+        customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
+        assignedStaff={selectedAppointment?.staff_id ? staffMap[selectedAppointment.staff_id] : null}
+      />
     </div>
   );
 }

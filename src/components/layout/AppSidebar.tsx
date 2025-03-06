@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, FolderTree, Users, FileText, Receipt, UserCircle, Calendar, Settings, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, Settings, LogOut, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 interface AppSidebarProps {
   open?: boolean;
@@ -20,15 +21,11 @@ export function AppSidebar({
   // Logo image
   const logoUrl = "https://i.ibb.co/Ltyts5K/reex-empire-logo.png";
 
-  // Navigation items
+  // Navigation items - rearranged order
   const navItems = [{
     title: "Dashboard",
     icon: <LayoutDashboard className="h-5 w-5" />,
-    href: "/dashboard"
-  }, {
-    title: "Categories",
-    icon: <FolderTree className="h-5 w-5" />,
-    href: "/categories"
+    href: "/"
   }, {
     title: "Customers",
     icon: <Users className="h-5 w-5" />,
@@ -42,21 +39,25 @@ export function AppSidebar({
     icon: <Receipt className="h-5 w-5" />,
     href: "/invoices"
   }, {
+    title: "Schedule",
+    icon: <Calendar className="h-5 w-5" />,
+    href: "/schedule"
+  }, {
     title: "Staff",
     icon: <UserCircle className="h-5 w-5" />,
     href: "/staff"
   }, {
-    title: "Schedule",
-    icon: <Calendar className="h-5 w-5" />,
-    href: "/schedule"
+    title: "Categories",
+    icon: <FolderTree className="h-5 w-5" />,
+    href: "/categories"
   }];
 
   // Function to check if a nav item is active
   const isActiveRoute = (href: string) => {
-    if (href === "/dashboard" && location.pathname === "/") {
+    if (href === "/" && location.pathname === "/") {
       return true;
     }
-    return location.pathname.startsWith(href);
+    return location.pathname.startsWith(href) && href !== "/" ? true : false;
   };
 
   // Mobile overlay for sidebar

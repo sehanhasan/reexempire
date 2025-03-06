@@ -1,13 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Chart } from "@/components/dashboard/Chart";
-import { Users, ReceiptText, CreditCard, Clock, ChevronRight } from "lucide-react";
+import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar } from "lucide-react";
 import { quotationService, invoiceService, customerService, appointmentService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -16,14 +19,28 @@ export default function Dashboard() {
     invoices: 0,
     revenue: 0
   });
-  const [upcomingJobs, setUpcomingJobs] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentQuotations, setRecentQuotations] = useState([]);
   const [recentInvoices, setRecentInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [customersMap, setCustomersMap] = useState({});
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [customers, quotations, invoices, appointments] = await Promise.all([customerService.getAll(), quotationService.getAll(), invoiceService.getAll(), appointmentService.getAll()]);
+        const [customers, quotations, invoices, appointments] = await Promise.all([
+          customerService.getAll(), 
+          quotationService.getAll(), 
+          invoiceService.getAll(), 
+          appointmentService.getAll()
+        ]);
+
+        // Create customers map for easy lookup
+        const customersMapData = {};
+        customers.forEach(customer => {
+          customersMapData[customer.id] = customer;
+        });
+        setCustomersMap(customersMapData);
 
         // Calculate total revenue from invoices
         const totalRevenue = invoices.reduce((sum, invoice) => sum + invoice.total, 0);
@@ -38,20 +55,31 @@ export default function Dashboard() {
 
         // Get upcoming appointments/jobs
         const now = new Date();
-        const upcomingAppointments = appointments.filter(appt => new Date(appt.start_time) > now).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()).slice(0, 5);
-
-        // We're accessing job.quotation_id which doesn't exist on Appointment type
-        // So we'll need to modify this part to use a different approach
-        const jobsWithQuotations = await Promise.all(upcomingAppointments.map(async job => {
-          // Find quotations related to this customer
-          const customerQuotations = quotations.filter(q => q.customer_id === job.customer_id);
+        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        
+        // Filter appointments that are today or in the future
+        const upcomingAppts = appointments
+          .filter(appt => appt.appointment_date >= today)
+          .sort((a, b) => {
+            // Sort by date, then by start time
+            if (a.appointment_date !== b.appointment_date) {
+              return new Date(a.appointment_date) - new Date(b.appointment_date);
+            }
+            return a.start_time.localeCompare(b.start_time);
+          })
+          .slice(0, 5);
+        
+        // Enhance appointments with customer data
+        const enhancedAppointments = upcomingAppts.map(appointment => {
+          const customer = customersMapData[appointment.customer_id] || {};
           return {
-            ...job,
-            // Add related quotations if any
-            related_quotations: customerQuotations.length ? customerQuotations : []
+            ...appointment,
+            customer_name: customer.name || "Unknown Customer",
+            unit_number: customer.unit_number || ""
           };
-        }));
-        setUpcomingJobs(jobsWithQuotations);
+        });
+        
+        setUpcomingAppointments(enhancedAppointments);
 
         // Get recent quotations and invoices
         setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
@@ -64,17 +92,31 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, []);
+  
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
+  
+  const formatTime = (time) => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours, 10);
+    return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
+  };
+  
   const navigateToQuotation = id => {
     navigate(`/quotations/${id}`);
   };
+  
   const navigateToInvoice = id => {
     navigate(`/invoices/${id}`);
+  };
+  
+  const navigateToAppointment = id => {
+    navigate(`/schedule`);
   };
 
   // Sample data for the revenue chart
@@ -97,6 +139,7 @@ export default function Dashboard() {
     month: "Jun",
     revenue: 19000
   }];
+  
   const salesByCategory = [{
     name: "Bathroom",
     value: 35
@@ -110,6 +153,7 @@ export default function Dashboard() {
     name: "Electrical",
     value: 15
   }];
+  
   return <div className="page-container">
       <PageHeader title="Dashboard" description="Overview of your business performance" />
 
@@ -127,7 +171,7 @@ export default function Dashboard() {
         <StatCard title="Invoices Issued" value={stats.invoices} trend={{
         value: 2,
         isPositive: true
-      }} description="vs last month" icon={<CreditCard className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
+      }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
         
         <StatCard title="Total Revenue" value={formatMoney(stats.revenue)} trend={{
         value: 8,
@@ -147,34 +191,53 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Jobs</CardTitle>
-            
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Upcoming Appointments</CardTitle>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => navigate("/schedule")}>
+              View All
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent>
-            {upcomingJobs.length === 0 ? <p className="text-center py-10 text-muted-foreground">No upcoming jobs scheduled</p> : <div className="space-y-4">
-                {upcomingJobs.map(job => <div key={job.id} className="flex items-center justify-between border-b pb-3">
+            {loading ? (
+              <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div>
+            ) : upcomingAppointments.length === 0 ? (
+              <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div>
+            ) : (
+              <div className="space-y-4">
+                {upcomingAppointments.map(appointment => (
+                  <div 
+                    key={appointment.id} 
+                    className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2"
+                    onClick={() => navigateToAppointment(appointment.id)}
+                  >
                     <div>
-                      <h3 className="font-medium">{job.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(job.start_time), {
-                    addSuffix: true
-                  })}
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">
+                          {appointment.unit_number ? `#${appointment.unit_number} - ` : ""}
+                          {appointment.title}
+                        </h3>
+                        <Badge variant="outline" className="text-xs">
+                          {appointment.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {new Date(appointment.appointment_date).toLocaleDateString()} 
+                        {' • '}
+                        {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                       </p>
-                      <p className="text-sm">{job.customer_name}</p>
+                      <p className="text-sm">{appointment.customer_name}</p>
                     </div>
-                    <div className="flex space-x-2">
-                      {job.related_quotations && job.related_quotations.length > 0 && <Button variant="outline" size="sm" onClick={() => navigateToQuotation(job.related_quotations[0].id)}>
-                          <ReceiptText className="h-4 w-4 mr-1" />
-                          Quotation
-                        </Button>}
-                      <Button variant="outline" size="sm" onClick={() => navigate(`/schedule`)}>
-                        <Clock className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
-                    </div>
-                  </div>)}
-              </div>}
+                    <Button variant="outline" size="sm" className="flex-shrink-0">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Details
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

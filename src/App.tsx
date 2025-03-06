@@ -52,6 +52,7 @@ const App = () => (
           
           <Route path="/schedule" element={<MainLayout><Schedule /></MainLayout>} />
           <Route path="/schedule/add" element={<MainLayout><AddAppointment /></MainLayout>} />
+          <Route path="/schedule/edit/:id" element={<MainLayout><AddAppointment /></MainLayout>} />
           
           <Route path="/categories" element={<MainLayout><Categories /></MainLayout>} />
           <Route path="/categories/add" element={<MainLayout><AddCategory /></MainLayout>} />

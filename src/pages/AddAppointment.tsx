@@ -38,6 +38,7 @@ export default function AddAppointment() {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Confirmed");
   const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
+  const [staffNotes, setStaffNotes] = useState<Record<string, string>>({});
   
   // Customer selection
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -52,9 +53,21 @@ export default function AddAppointment() {
   const toggleStaffSelection = (staffId: string) => {
     if (selectedStaff.includes(staffId)) {
       setSelectedStaff(selectedStaff.filter(id => id !== staffId));
+      
+      // Create a new object without the removed staff's notes
+      const newStaffNotes = { ...staffNotes };
+      delete newStaffNotes[staffId];
+      setStaffNotes(newStaffNotes);
     } else {
       setSelectedStaff([...selectedStaff, staffId]);
     }
+  };
+  
+  const handleStaffNoteChange = (staffId: string, note: string) => {
+    setStaffNotes(prev => ({
+      ...prev,
+      [staffId]: note
+    }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,6 +105,20 @@ export default function AddAppointment() {
         location: selectedCustomer.address || null,
         description: null, // Adding the missing description field
       };
+      
+      // Save staff notes in the appointment notes if any
+      if (Object.keys(staffNotes).length > 0) {
+        const staffNotesText = Object.entries(staffNotes)
+          .map(([staffId, note]) => {
+            const staffMember = staffMembers.find((staff: Staff) => staff.id === staffId);
+            return `${staffMember?.name || 'Staff'}: ${note}`;
+          })
+          .join('\n\n');
+        
+        appointmentData.notes = appointmentData.notes 
+          ? `${appointmentData.notes}\n\n--- Staff Notes ---\n${staffNotesText}` 
+          : `--- Staff Notes ---\n${staffNotesText}`;
+      }
       
       // Save the appointment
       await appointmentService.create(appointmentData);
@@ -155,6 +182,7 @@ export default function AddAppointment() {
                     {selectedCustomer ? (
                       <span className="flex items-center">
                         <Check className="mr-2 h-4 w-4 text-green-500" />
+                        {selectedCustomer.unit_number ? `#${selectedCustomer.unit_number} - ` : ""}
                         {selectedCustomer.name}
                       </span>
                     ) : (
@@ -216,25 +244,46 @@ export default function AddAppointment() {
             {isLoadingStaff ? (
               <div className="text-center py-4">Loading staff members...</div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-4">
                 {staffMembers.map((staff: Staff) => (
-                  <label
-                    key={staff.id}
-                    className="flex items-center space-x-2 p-2 border rounded-md hover:bg-muted cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      name="staff[]"
-                      value={staff.id}
-                      checked={selectedStaff.includes(staff.id)}
-                      onChange={() => toggleStaffSelection(staff.id)}
-                      className="h-4 w-4 accent-blue-600"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{staff.name}</p>
-                      <p className="text-xs text-muted-foreground">{staff.position || "Staff"}</p>
+                  <div key={staff.id} className="border rounded-md p-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="staff[]"
+                        value={staff.id}
+                        checked={selectedStaff.includes(staff.id)}
+                        onChange={() => toggleStaffSelection(staff.id)}
+                        className="h-4 w-4 accent-blue-600"
+                        id={`staff-${staff.id}`}
+                      />
+                      <label 
+                        htmlFor={`staff-${staff.id}`}
+                        className="flex-1 flex items-center space-x-2 cursor-pointer"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">{staff.name}</p>
+                          <p className="text-xs text-muted-foreground">{staff.position || "Staff"}</p>
+                        </div>
+                      </label>
                     </div>
-                  </label>
+                    
+                    {selectedStaff.includes(staff.id) && (
+                      <div className="mt-3 pl-6">
+                        <Label htmlFor={`staff-notes-${staff.id}`} className="text-xs">
+                          Notes for {staff.name}
+                        </Label>
+                        <Textarea
+                          id={`staff-notes-${staff.id}`}
+                          placeholder={`Instructions or notes for ${staff.name}...`}
+                          rows={2}
+                          className="mt-1 text-sm"
+                          value={staffNotes[staff.id] || ''}
+                          onChange={(e) => handleStaffNoteChange(staff.id, e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

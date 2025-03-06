@@ -42,7 +42,8 @@ export function CustomerSelector({ open, onClose, onSelectCustomer, selectedCust
     (customer) =>
       customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase()))
+      (customer.phone && customer.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (customer.unit_number && customer.unit_number.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -81,8 +82,11 @@ export function CustomerSelector({ open, onClose, onSelectCustomer, selectedCust
                   onClick={() => onSelectCustomer(customer)}
                 >
                   <div>
-                    <div className="font-medium">{customer.name}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-medium">
+                      {customer.unit_number ? `#${customer.unit_number}` : "No Unit"} 
+                    </div>
+                    <div className="text-sm">{customer.name}</div>
+                    <div className="text-xs text-gray-500">
                       {customer.email || customer.phone || "No contact info"}
                     </div>
                   </div>
