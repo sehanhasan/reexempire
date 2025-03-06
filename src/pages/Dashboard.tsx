@@ -44,10 +44,17 @@ export default function Dashboard() {
 
         // Calculate total revenue from invoices - ensure we're working with numbers
         const totalRevenue = invoices.reduce((sum: number, invoice) => {
-          // Convert invoice.total to a number explicitly
-          const invoiceTotal = typeof invoice.total === 'string' 
-            ? parseFloat(invoice.total) 
-            : (typeof invoice.total === 'number' ? invoice.total : 0);
+          let invoiceTotal = 0;
+          
+          // Safely convert invoice.total to a number
+          if (typeof invoice.total === 'string') {
+            const parsed = parseFloat(invoice.total);
+            if (!isNaN(parsed)) {
+              invoiceTotal = parsed;
+            }
+          } else if (typeof invoice.total === 'number') {
+            invoiceTotal = invoice.total;
+          }
           
           return sum + invoiceTotal;
         }, 0);
