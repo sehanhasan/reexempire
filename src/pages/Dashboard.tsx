@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -46,17 +47,19 @@ export default function Dashboard() {
         const totalRevenue = invoices.reduce((sum: number, invoice) => {
           let invoiceTotal = 0;
           
-          // Safely convert invoice.total to a number
-          if (typeof invoice.total === 'string') {
-            const parsed = parseFloat(invoice.total);
-            if (!isNaN(parsed)) {
-              invoiceTotal = parsed;
+          if (invoice.total !== undefined && invoice.total !== null) {
+            if (typeof invoice.total === 'string') {
+              const parsed = parseFloat(invoice.total);
+              if (!isNaN(parsed)) {
+                invoiceTotal = parsed;
+              }
+            } else if (typeof invoice.total === 'number') {
+              invoiceTotal = invoice.total;
             }
-          } else if (typeof invoice.total === 'number') {
-            invoiceTotal = invoice.total;
           }
           
-          return sum + invoiceTotal;
+          // Ensure both operands are numbers
+          return Number(sum) + Number(invoiceTotal);
         }, 0);
 
         // Set stats
