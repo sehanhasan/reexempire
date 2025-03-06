@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -10,6 +9,7 @@ import { quotationService, invoiceService, customerService, appointmentService }
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/utils/formatters";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -42,8 +42,14 @@ export default function Dashboard() {
         });
         setCustomersMap(customersMapData);
 
-        // Calculate total revenue from invoices
-        const totalRevenue = invoices.reduce((sum, invoice) => sum + Number(invoice.total), 0);
+        // Calculate total revenue from invoices - ensure we're working with numbers
+        const totalRevenue = invoices.reduce((sum, invoice) => {
+          // Convert invoice.total to a number if it's not already
+          const invoiceTotal = typeof invoice.total === 'number' ? invoice.total : Number(invoice.total);
+          // Convert sum to a number if it's not already
+          const numSum = typeof sum === 'number' ? sum : Number(sum);
+          return numSum + invoiceTotal;
+        }, 0);
 
         // Set stats
         setStats({
