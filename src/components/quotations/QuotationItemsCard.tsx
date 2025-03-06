@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -38,7 +37,6 @@ export function QuotationItemsCard({
   const isMobile = useIsMobile();
   const location = useLocation();
   
-  // Determine if we're on an edit page or create page
   const isEditPage = location.pathname.includes('edit');
   
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
@@ -87,7 +85,6 @@ export function QuotationItemsCard({
   };
 
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
-    // Convert selected items to quotation items format
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
       description: selectedItem.description,
@@ -98,7 +95,6 @@ export function QuotationItemsCard({
       amount: selectedItem.quantity * selectedItem.price
     }));
 
-    // Add the new items to the existing items
     setItems([...items, ...newItems]);
     
     toast({

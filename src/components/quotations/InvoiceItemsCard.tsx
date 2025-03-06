@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -46,7 +45,6 @@ export function InvoiceItemsCard({
   const isMobile = useIsMobile();
   const location = useLocation();
   
-  // Determine if we're on an edit page or create page
   const isEditPage = location.pathname.includes('edit');
   
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
@@ -78,7 +76,6 @@ export function InvoiceItemsCard({
   };
 
   const calculateTotal = () => {
-    // If this is a deposit invoice, return only the deposit amount
     if (isDepositInvoice) {
       return depositAmount;
     }
@@ -92,7 +89,6 @@ export function InvoiceItemsCard({
 
   const handleDepositAmountChange = (value: number) => {
     setDepositAmount(value);
-    // Update percentage based on the amount
     const subtotal = calculateSubtotal();
     if (subtotal > 0) {
       setDepositPercentage((value / subtotal) * 100);
@@ -100,7 +96,6 @@ export function InvoiceItemsCard({
   };
 
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
-    // Convert selected items to invoice items format
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
       description: selectedItem.description,
@@ -111,7 +106,6 @@ export function InvoiceItemsCard({
       amount: selectedItem.quantity * selectedItem.price
     }));
 
-    // Add the new items to the existing items
     setItems([...items, ...newItems]);
     
     toast({
@@ -191,7 +185,6 @@ export function InvoiceItemsCard({
                     <span>RM {calculateSubtotal().toFixed(2)}</span>
                   </div>
 
-                  {/* Deposit Section */}
                   {isDepositInvoice && (
                     <div className="space-y-2 border-t pt-2 mt-1">
                       <div className="grid grid-cols-2 gap-2">
