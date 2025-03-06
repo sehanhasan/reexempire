@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export interface Column<T> {
   header: string;
   accessorKey: keyof T | string;
-  cell?: (item: T) => React.ReactNode;
+  cell?: ({ row }: { row: { original: T } }) => React.ReactNode;
 }
 
 interface DataTableProps<T> {
@@ -17,7 +17,7 @@ interface DataTableProps<T> {
   data: T[];
   searchKey?: keyof T;
   isLoading?: boolean;
-  emptyMessage?: string; // Added this prop
+  emptyMessage?: string;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -25,7 +25,7 @@ export function DataTable<T extends Record<string, any>>({
   data,
   searchKey,
   isLoading = false,
-  emptyMessage = "No data available", // Added default value
+  emptyMessage = "No data available",
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -103,7 +103,7 @@ export function DataTable<T extends Record<string, any>>({
                         if (column.header === "Actions") {
                           return (
                             <div key={getCellKey(column, colIndex, rowIndex)} className="border-t p-2 bg-muted/20 flex justify-end">
-                              {column.cell ? column.cell(row) : row[column.accessorKey]}
+                              {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
                             </div>
                           );
                         }
@@ -114,7 +114,7 @@ export function DataTable<T extends Record<string, any>>({
                               {getMobileLabel(column)}
                             </span>
                             <div className="mt-1">
-                              {column.cell ? column.cell(row) : row[column.accessorKey]}
+                              {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
                             </div>
                           </div>
                         );
@@ -139,7 +139,7 @@ export function DataTable<T extends Record<string, any>>({
                     <TableRow key={getRowKey(row, rowIndex)} className="data-table-row">
                       {columns.map((column, colIndex) => (
                         <TableCell key={getCellKey(column, colIndex, rowIndex)} className="data-table-cell">
-                          {column.cell ? column.cell(row) : row[column.accessorKey]}
+                          {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
                         </TableCell>
                       ))}
                     </TableRow>

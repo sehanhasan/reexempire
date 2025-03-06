@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -89,31 +90,31 @@ export default function Invoices() {
     {
       header: "Invoice #",
       accessorKey: "reference_number",
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: { original: Invoice } }) => (
         <div className="font-medium">{row.original.reference_number}</div>
       ),
     },
     {
       header: "Customer",
       accessorKey: "customer_id",
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: { original: Invoice } }) => (
         <div>{customers[row.original.customer_id]?.name || "Unknown"}</div>
       ),
     },
     {
       header: "Date",
       accessorKey: "issue_date",
-      cell: ({ row }: { row: any }) => <div>{formatDate(row.original.issue_date)}</div>,
+      cell: ({ row }: { row: { original: Invoice } }) => <div>{formatDate(row.original.issue_date)}</div>,
     },
     {
       header: "Due Date",
       accessorKey: "due_date",
-      cell: ({ row }: { row: any }) => <div>{formatDate(row.original.due_date)}</div>,
+      cell: ({ row }: { row: { original: Invoice } }) => <div>{formatDate(row.original.due_date)}</div>,
     },
     {
       header: "Status",
       accessorKey: "payment_status",
-      cell: ({ row }: { row: any }) => {
+      cell: ({ row }: { row: { original: Invoice } }) => {
         const status = row.original.payment_status;
         let statusColor = "bg-gray-100 text-gray-800";
         
@@ -135,7 +136,7 @@ export default function Invoices() {
     {
       header: "Total",
       accessorKey: "total",
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: { original: Invoice } }) => (
         <div className="text-right font-medium">
           RM {Number(row.original.total).toFixed(2)}
         </div>
@@ -144,7 +145,7 @@ export default function Invoices() {
     {
       header: "Actions",
       accessorKey: "actions",
-      cell: ({ row }: { row: any }) => (
+      cell: ({ row }: { row: { original: Invoice } }) => (
         <div className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
