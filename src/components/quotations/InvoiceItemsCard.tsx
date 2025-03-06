@@ -3,12 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, FolderOpen, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
@@ -16,7 +11,6 @@ import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "react-router-dom";
-
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
   setItems: React.Dispatch<React.SetStateAction<InvoiceItem[]>>;
@@ -28,10 +22,9 @@ interface InvoiceItemsCardProps {
   setDepositPercentage: React.Dispatch<React.SetStateAction<number>>;
   calculateItemAmount: (item: InvoiceItem) => number;
 }
-
-export function InvoiceItemsCard({ 
-  items, 
-  setItems, 
+export function InvoiceItemsCard({
+  items,
+  setItems,
   isDepositInvoice,
   setIsDepositInvoice,
   depositAmount,
@@ -44,57 +37,57 @@ export function InvoiceItemsCard({
   const [showItemsTable, setShowItemsTable] = useState(true);
   const isMobile = useIsMobile();
   const location = useLocation();
-  
   const isEditPage = location.pathname.includes('edit');
-  
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
-    setItems(prevItems =>
-      prevItems.map(item => {
-        if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          updatedItem.amount = calculateItemAmount(updatedItem);
-          return updatedItem;
-        }
-        return item;
-      })
-    );
+    setItems(prevItems => prevItems.map(item => {
+      if (item.id === id) {
+        const updatedItem = {
+          ...item,
+          [field]: value
+        };
+        updatedItem.amount = calculateItemAmount(updatedItem);
+        return updatedItem;
+      }
+      return item;
+    }));
   };
-
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items, { id: newId, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }]);
+    setItems([...items, {
+      id: newId,
+      description: "",
+      category: "",
+      quantity: 1,
+      unit: "Unit",
+      unitPrice: 0,
+      amount: 0
+    }]);
   };
-
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
-
   const calculateSubtotal = () => {
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
-
   const calculateTotal = () => {
     if (isDepositInvoice) {
       return depositAmount;
     }
     return calculateSubtotal();
   };
-
   const handleDepositPercentageChange = (value: number) => {
     setDepositPercentage(value);
     setDepositAmount(calculateSubtotal() * (value / 100));
   };
-
   const handleDepositAmountChange = (value: number) => {
     setDepositAmount(value);
     const subtotal = calculateSubtotal();
     if (subtotal > 0) {
-      setDepositPercentage((value / subtotal) * 100);
+      setDepositPercentage(value / subtotal * 100);
     }
   };
-
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
@@ -105,78 +98,42 @@ export function InvoiceItemsCard({
       unitPrice: selectedItem.price,
       amount: selectedItem.quantity * selectedItem.price
     }));
-
     setItems([...items, ...newItems]);
-    
     toast({
       title: "Items Added",
-      description: `${newItems.length} item(s) have been added to the invoice.`,
+      description: `${newItems.length} item(s) have been added to the invoice.`
     });
   };
-
-  return (
-    <>
+  return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-4">
             <CardTitle className="text-base lg:text-lg">Invoice Items</CardTitle>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="isDepositInvoice" 
-                checked={isDepositInvoice}
-                onCheckedChange={(checked) => setIsDepositInvoice(!!checked)}
-              />
-              <label
-                htmlFor="isDepositInvoice"
-                className="text-sm font-medium flex items-center cursor-pointer"
-              >
+              <Checkbox id="isDepositInvoice" checked={isDepositInvoice} onCheckedChange={checked => setIsDepositInvoice(!!checked)} />
+              <label htmlFor="isDepositInvoice" className="text-sm font-medium flex items-center cursor-pointer">
                 <Wallet className="h-4 w-4 mr-1" />
                 Deposit Invoice
               </label>
             </div>
           </div>
-          {items.length > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowItemsTable(!showItemsTable)}
-              className="h-8 w-8 p-0"
-            >
-              {showItemsTable ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-          )}
+          {items.length > 0}
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addItem}
-              className={`${isMobile ? "w-full" : ""} text-sm h-10`}
-            >
+            <Button type="button" variant="outline" onClick={addItem} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Item
             </Button>
             
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCategorySelector(true)}
-              className={`${isMobile ? "w-full" : ""} text-sm h-10`}
-            >
+            <Button type="button" variant="outline" onClick={() => setShowCategorySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
               <FolderOpen className="mr-1 h-3.5 w-3.5" />
               Select from Categories
             </Button>
           </div>
 
-          {showItemsTable && (
-            <>
-              <ItemsTable
-                items={items}
-                handleItemChange={handleItemChange}
-                removeItem={removeItem}
-                showDescription={true}
-              />
+          {showItemsTable && <>
+              <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
               
               <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
                 <div className={isMobile ? "w-full" : "w-72"}>
@@ -185,21 +142,12 @@ export function InvoiceItemsCard({
                     <span>RM {calculateSubtotal().toFixed(2)}</span>
                   </div>
 
-                  {isDepositInvoice && (
-                    <div className="space-y-2 border-t pt-2 mt-1">
+                  {isDepositInvoice && <div className="space-y-2 border-t pt-2 mt-1">
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <Label htmlFor="depositPercentage" className="text-xs">Deposit (%)</Label>
                           <div className="relative">
-                            <Input
-                              id="depositPercentage"
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={depositPercentage.toFixed(0)}
-                              onChange={(e) => handleDepositPercentageChange(parseFloat(e.target.value))}
-                              className="pr-7 h-10 text-sm"
-                            />
+                            <Input id="depositPercentage" type="number" min="0" max="100" value={depositPercentage.toFixed(0)} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value))} className="pr-7 h-10 text-sm" />
                             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
                           </div>
                         </div>
@@ -207,14 +155,7 @@ export function InvoiceItemsCard({
                           <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
                           <div className="relative">
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                            <Input
-                              id="depositAmount"
-                              type="number"
-                              min="0"
-                              value={depositAmount.toFixed(2)}
-                              onChange={(e) => handleDepositAmountChange(parseFloat(e.target.value))}
-                              className="pl-8 h-10 text-sm"
-                            />
+                            <Input id="depositAmount" type="number" min="0" value={depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value))} className="pl-8 h-10 text-sm" />
                           </div>
                         </div>
                       </div>
@@ -222,8 +163,7 @@ export function InvoiceItemsCard({
                         <span>Balance Due (Future Invoice):</span>
                         <span>RM {(calculateSubtotal() - depositAmount).toFixed(2)}</span>
                       </div>
-                    </div>
-                  )}
+                    </div>}
 
                   <div className="flex justify-between py-2 border-t mt-1">
                     <span className="font-semibold text-base">Total:</span>
@@ -231,16 +171,10 @@ export function InvoiceItemsCard({
                   </div>
                 </div>
               </div>
-            </>
-          )}
+            </>}
         </CardContent>
       </Card>
 
-      <CategoryItemSelector
-        open={showCategorySelector}
-        onOpenChange={setShowCategorySelector}
-        onSelectItems={handleItemsFromCategories}
-      />
-    </>
-  );
+      <CategoryItemSelector open={showCategorySelector} onOpenChange={setShowCategorySelector} onSelectItems={handleItemsFromCategories} />
+    </>;
 }
