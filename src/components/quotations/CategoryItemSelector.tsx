@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -64,7 +63,6 @@ export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: Cate
     }
   }, [open]);
   
-  // Reset selected items when modal opens
   useEffect(() => {
     if (open) {
       setSelectedItems([]);
@@ -72,18 +70,17 @@ export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: Cate
     }
   }, [open]);
   
-  const toggleItemSelection = (pricingOption: PricingOption) => {
+  const toggleItemSelection = (pricingOption: PricingOption, subcategoryName: string) => {
     setSelectedItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === pricingOption.id);
       
       if (existingItem) {
-        // Item exists, remove it
         return prevItems.filter(item => item.id !== pricingOption.id);
       } else {
-        // Item doesn't exist, add it
         return [...prevItems, {
           id: pricingOption.id,
           description: pricingOption.name,
+          category: subcategoryName,
           quantity: 1,
           unit: pricingOption.unit,
           price: pricingOption.price
@@ -121,17 +118,13 @@ export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: Cate
     onOpenChange(false);
   };
   
-  // Filter categories based on search term
   const filteredCategories = searchTerm
     ? categories.filter(category => {
-        // Check if category name matches
         if (category.name.toLowerCase().includes(searchTerm)) return true;
         
-        // Check if any subcategory matches
         const relatedSubcategories = getSubcategoriesForCategory(category.id);
         if (relatedSubcategories.some(sub => sub.name.toLowerCase().includes(searchTerm))) return true;
         
-        // Check if any pricing option matches
         return relatedSubcategories.some(sub => {
           const options = getPricingOptionsForSubcategory(sub.id);
           return options.some(option => option.name.toLowerCase().includes(searchTerm));
@@ -217,7 +210,7 @@ export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: Cate
                                         <Checkbox
                                           id={option.id}
                                           checked={isSelected}
-                                          onCheckedChange={() => toggleItemSelection(option)}
+                                          onCheckedChange={() => toggleItemSelection(option, subcategory.name)}
                                           className="mr-2"
                                         />
                                         <label
