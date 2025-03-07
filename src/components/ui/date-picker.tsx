@@ -27,12 +27,35 @@ export function DatePicker({
   disabled,
 }: DatePickerProps) {
   return (
-    <Calendar
-      mode={mode}
-      selected={selected}
-      onSelect={onSelect as any}
-      disabled={disabled}
-      className={cn("p-3 pointer-events-auto", className)}
-    />
+    <div className={cn("p-3", className)}>
+      {mode === "single" && (
+        <Calendar
+          mode="single"
+          selected={selected as Date}
+          onSelect={onSelect}
+          disabled={disabled}
+          className="pointer-events-auto"
+        />
+      )}
+      {mode === "range" && (
+        <Calendar
+          mode="range"
+          selected={selected as { from: Date; to?: Date }}
+          onSelect={onSelect as (date: { from: Date; to?: Date }) => void}
+          disabled={disabled}
+          className="pointer-events-auto"
+        />
+      )}
+      {mode === "multiple" && (
+        <Calendar
+          mode="multiple"
+          selected={selected as Date[]}
+          onSelect={onSelect as (date: Date[]) => void}
+          disabled={disabled}
+          className="pointer-events-auto"
+        />
+      )}
+    </div>
   );
 }
+
