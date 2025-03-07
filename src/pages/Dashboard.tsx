@@ -44,7 +44,7 @@ export default function Dashboard() {
         setCustomersMap(customersMapData);
 
         // Calculate total revenue from invoices - ensure we're working with numbers
-        const totalRevenue = invoices.reduce((sum: number, invoice) => {
+        const totalRevenue = invoices.reduce((sum, invoice) => {
           let invoiceTotal = 0;
           
           if (invoice.total !== undefined && invoice.total !== null) {
@@ -58,8 +58,11 @@ export default function Dashboard() {
             }
           }
           
-          // Ensure both operands are numbers
-          return Number(sum) + Number(invoiceTotal);
+          // Explicitly convert both operands to numbers and ensure they're valid
+          const numericSum = typeof sum === 'number' ? sum : 0;
+          const numericInvoiceTotal = typeof invoiceTotal === 'number' ? invoiceTotal : 0;
+          
+          return numericSum + numericInvoiceTotal;
         }, 0);
 
         // Set stats
