@@ -57,11 +57,8 @@ export default function Dashboard() {
             }
           }
           
-          // Ensure sum is a number
-          const numericSum = typeof sum === 'number' ? sum : 0;
-          
-          // Explicitly convert both to numbers to ensure numeric addition
-          return Number(numericSum) + Number(invoiceTotal);
+          // Convert sum and invoiceTotal to numbers explicitly before addition
+          return Number(sum) + Number(invoiceTotal);
         }, 0);
 
         // Set stats
