@@ -19,7 +19,7 @@ import { Invoice } from "@/types/database";
 import { CSVLink } from "react-csv";
 
 const Financials = () => {
-  const [dateRange, setDateRange] = useState<DateRange>({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
     to: new Date()
   });

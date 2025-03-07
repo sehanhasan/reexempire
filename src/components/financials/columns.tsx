@@ -68,7 +68,7 @@ export const columns: ColumnDef<Invoice>[] = [
     cell: ({ row }) => {
       const status = row.getValue("payment_status") as string;
       return (
-        <Badge variant={status === "paid" ? "success" : "destructive"}>
+        <Badge variant={status === "paid" ? "default" : "destructive"}>
           {status}
         </Badge>
       );
