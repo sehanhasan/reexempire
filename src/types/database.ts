@@ -114,6 +114,7 @@ export interface QuotationItem {
   unit: string;
   unit_price: number;
   amount: number;
+  category?: string | null; // Added category field
   created_at: string;
   updated_at: string;
 }
