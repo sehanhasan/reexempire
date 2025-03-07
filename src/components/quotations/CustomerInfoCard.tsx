@@ -162,7 +162,20 @@ export function CustomerInfoCard({
                 </div>
               </div>}
 
-            {documentType === "invoice" && paymentMethod !== undefined && setPaymentMethod}
+            {documentType === "invoice" && paymentMethod !== undefined && setPaymentMethod && <div className="space-y-2">
+                  <Label htmlFor="paymentMethod">Payment Method</Label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger id="paymentMethod" className="h-10">
+                      <SelectValue placeholder="Select Payment Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="credit_card">Credit Card</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>}
 
             {quotationReference && <div className="space-y-2">
                 <Label htmlFor="quotationReference">Quotation Reference</Label>

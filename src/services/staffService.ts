@@ -42,29 +42,27 @@ export const staffService = {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
-    // Create a new object with required properties
+    // Create a new object with required properties to satisfy TypeScript
     const staffData = {
       name: staff.name || "",
       join_date: staff.join_date,
-      first_name: staff.first_name || "",
-      last_name: staff.last_name || "",
-      position: staff.position || "",
-      email: staff.email || null,
-      phone: staff.phone || null,
+      position: staff.position,
+      email: staff.email,
+      phone: staff.phone,
       status: staff.status || "Active",
-      department: staff.department || null,
-      employment_type: staff.employment_type || null,
-      gender: staff.gender || null,
-      address: staff.address || null,
-      city: staff.city || null,
-      state: staff.state || null,
-      postal_code: staff.postal_code || null,
-      passport: staff.passport || null,
-      username: staff.username || null,
-      emergency_contact_name: staff.emergency_contact_name || null,
-      emergency_contact_relationship: staff.emergency_contact_relationship || null,
-      emergency_contact_phone: staff.emergency_contact_phone || null,
-      emergency_contact_email: staff.emergency_contact_email || null
+      department: staff.department,
+      employment_type: staff.employment_type,
+      gender: staff.gender,
+      address: staff.address,
+      city: staff.city,
+      state: staff.state,
+      postal_code: staff.postal_code,
+      passport: staff.passport,
+      username: staff.username,
+      emergency_contact_name: staff.emergency_contact_name,
+      emergency_contact_relationship: staff.emergency_contact_relationship,
+      emergency_contact_phone: staff.emergency_contact_phone,
+      emergency_contact_email: staff.emergency_contact_email
     };
 
     const { data, error } = await supabase
@@ -102,18 +100,13 @@ export const staffService = {
   },
 
   async delete(id: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from("staff")
-        .delete()
-        .eq("id", id);
+    const { error } = await supabase
+      .from("staff")
+      .delete()
+      .eq("id", id);
 
-      if (error) {
-        console.error(`Error deleting staff member with id ${id}:`, error);
-        throw error;
-      }
-    } catch (error) {
-      console.error(`Failed to delete staff member:`, error);
+    if (error) {
+      console.error(`Error deleting staff member with id ${id}:`, error);
       throw error;
     }
   }

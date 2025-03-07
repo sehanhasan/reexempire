@@ -200,7 +200,6 @@ export type Database = {
           quotation_id: string | null
           reference_number: string
           status: string
-          subject: string | null
           subtotal: number
           tax_amount: number
           tax_rate: number | null
@@ -222,7 +221,6 @@ export type Database = {
           quotation_id?: string | null
           reference_number: string
           status?: string
-          subject?: string | null
           subtotal?: number
           tax_amount?: number
           tax_rate?: number | null
@@ -244,7 +242,6 @@ export type Database = {
           quotation_id?: string | null
           reference_number?: string
           status?: string
-          subject?: string | null
           subtotal?: number
           tax_amount?: number
           tax_rate?: number | null
@@ -310,7 +307,6 @@ export type Database = {
       quotation_items: {
         Row: {
           amount: number
-          category: string | null
           created_at: string
           description: string
           id: string
@@ -322,7 +318,6 @@ export type Database = {
         }
         Insert: {
           amount?: number
-          category?: string | null
           created_at?: string
           description: string
           id?: string
@@ -334,7 +329,6 @@ export type Database = {
         }
         Update: {
           amount?: number
-          category?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -367,7 +361,6 @@ export type Database = {
           reference_number: string
           requires_deposit: boolean | null
           status: string
-          subject: string | null
           subtotal: number
           terms: string | null
           total: number
@@ -385,7 +378,6 @@ export type Database = {
           reference_number: string
           requires_deposit?: boolean | null
           status?: string
-          subject?: string | null
           subtotal?: number
           terms?: string | null
           total?: number
@@ -403,7 +395,6 @@ export type Database = {
           reference_number?: string
           requires_deposit?: boolean | null
           status?: string
-          subject?: string | null
           subtotal?: number
           terms?: string | null
           total?: number
@@ -431,11 +422,9 @@ export type Database = {
           emergency_contact_phone: string | null
           emergency_contact_relationship: string | null
           employment_type: string | null
-          first_name: string
           gender: string | null
           id: string
           join_date: string
-          last_name: string
           name: string
           passport: string | null
           phone: string | null
@@ -457,11 +446,9 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relationship?: string | null
           employment_type?: string | null
-          first_name: string
           gender?: string | null
           id?: string
           join_date: string
-          last_name: string
           name: string
           passport?: string | null
           phone?: string | null
@@ -483,11 +470,9 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relationship?: string | null
           employment_type?: string | null
-          first_name?: string
           gender?: string | null
           id?: string
           join_date?: string
-          last_name?: string
           name?: string
           passport?: string | null
           phone?: string | null
@@ -507,7 +492,6 @@ export type Database = {
           description: string | null
           id: string
           name: string
-          price: number
           updated_at: string
         }
         Insert: {
@@ -516,7 +500,6 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
-          price: number
           updated_at?: string
         }
         Update: {
@@ -525,7 +508,6 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
-          price?: number
           updated_at?: string
         }
         Relationships: [

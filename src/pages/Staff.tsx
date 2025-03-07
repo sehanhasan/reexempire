@@ -55,7 +55,6 @@ export default function StaffPage() {
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   
   const fetchStaff = async () => {
     try {
@@ -102,9 +101,10 @@ export default function StaffPage() {
     if (!staffToDelete) return;
     
     try {
-      setIsDeleting(true);
       await staffService.delete(staffToDelete.id);
       setStaffMembers(staffMembers.filter(s => s.id !== staffToDelete.id));
+      setShowDeleteConfirm(false);
+      setStaffToDelete(null);
       
       toast({
         title: "Staff Removed",
@@ -118,10 +118,6 @@ export default function StaffPage() {
         description: "Failed to delete staff member. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      setStaffToDelete(null);
     }
   };
 
@@ -191,9 +187,9 @@ export default function StaffPage() {
       cell: ({ row }: { row: { original: Staff } }) => {
         return (
           <Badge className={
-            row.original.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-100" :
-            row.original.status === "On Leave" ? "bg-amber-100 text-amber-800 hover:bg-amber-100" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-100"
+            row.original.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
+            row.original.status === "On Leave" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
+            "bg-gray-100 text-gray-800 hover:bg-gray-200"
           }>
             {row.original.status}
           </Badge>
@@ -270,6 +266,7 @@ export default function StaffPage() {
     <div className="page-container">
       <PageHeader 
         title="Staff" 
+        description="Manage your team members."
         actions={
           <Button className="flex items-center" onClick={() => navigate("/staff/add")}>
             <UserPlus className="mr-2 h-4 w-4" />
@@ -295,6 +292,9 @@ export default function StaffPage() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Staff Details</DialogTitle>
+              <DialogDescription>
+                Complete information about this staff member.
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
@@ -392,13 +392,12 @@ export default function StaffPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
               className="bg-red-600 hover:bg-red-700"
-              disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -5,15 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FolderOpen, Wallet } from "lucide-react";
+import { Plus, FolderOpen, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "react-router-dom";
-import { categoryService } from "@/services";
-import { useQuery } from "@tanstack/react-query";
 
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
@@ -43,20 +41,13 @@ export function InvoiceItemsCard({
   const isMobile = useIsMobile();
   const location = useLocation();
   const isEditPage = location.pathname.includes('edit');
-  const isCreatePage = location.pathname.includes('create');
-  
-  // Get all categories for mapping category names
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoryService.getAll(),
-  });
   
   // If we're on the edit page, show the items table by default
   useEffect(() => {
-    if (isEditPage || (items.length > 0 && items[0].description)) {
+    if (isEditPage) {
       setShowItemsTable(true);
     }
-  }, [isEditPage, items]);
+  }, [isEditPage]);
   
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
@@ -73,11 +64,13 @@ export function InvoiceItemsCard({
   };
   
   const addItem = () => {
-    // Show the items table when adding an item
-    setShowItemsTable(true);
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
     
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items.filter(item => item.description || item.unitPrice > 0), {
+    setItems([...items, {
       id: newId,
       description: "",
       category: "",
@@ -89,12 +82,9 @@ export function InvoiceItemsCard({
   };
   
   const removeItem = (id: number) => {
-    const updatedItems = items.filter(item => item.id !== id);
-    if (updatedItems.length === 0) {
-      // If removing the last item, hide the table
-      setShowItemsTable(false);
+    if (items.length > 1) {
+      setItems(items.filter(item => item.id !== id));
     }
-    setItems(updatedItems.length ? updatedItems : []);
   };
   
   const calculateSubtotal = () => {
@@ -132,8 +122,10 @@ export function InvoiceItemsCard({
   };
   
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
-    // Show the items table when items are selected
-    setShowItemsTable(true);
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
     
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
@@ -145,9 +137,7 @@ export function InvoiceItemsCard({
       amount: selectedItem.quantity * selectedItem.price
     }));
     
-    // Filter out empty items before adding new ones
-    const existingItems = items.filter(item => item.description || item.unitPrice > 0);
-    setItems([...existingItems, ...newItems]);
+    setItems([...items, ...newItems]);
     
     toast({
       title: "Items Added",
@@ -158,7 +148,7 @@ export function InvoiceItemsCard({
   return (
     <>
       <Card className="shadow-sm">
-        <CardHeader className="py-3 px-4">
+        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-4">
             <CardTitle className="text-base lg:text-lg">Invoice Items</CardTitle>
             <div className="flex items-center space-x-2">
@@ -176,6 +166,17 @@ export function InvoiceItemsCard({
               </label>
             </div>
           </div>
+          
+          {items.length > 0 && !showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(true)}>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          )}
+          {items.length > 0 && showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(false)}>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+          )}
         </CardHeader>
         
         <CardContent className="py-3 px-4">
@@ -201,14 +202,13 @@ export function InvoiceItemsCard({
             </Button>
           </div>
 
-          {showItemsTable && items.length > 0 && (
+          {showItemsTable && (
             <>
               <ItemsTable 
                 items={items} 
                 handleItemChange={handleItemChange} 
                 removeItem={removeItem} 
                 showDescription={true} 
-                categories={categories}
               />
               
               <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>

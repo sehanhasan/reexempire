@@ -1,17 +1,17 @@
-
 import { useState, useEffect } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Spinner } from "@/components/common/Spinner";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
 import { categoryService } from "@/services";
 import { Category, Subcategory, PricingOption } from "@/types/database";
 
@@ -19,9 +19,9 @@ export interface SelectedItem {
   id: string;
   description: string;
   category?: string;
-  price: number;
   quantity: number;
   unit: string;
+  price: number;
 }
 
 interface CategoryItemSelectorProps {
@@ -30,244 +30,228 @@ interface CategoryItemSelectorProps {
   onSelectItems: (items: SelectedItem[]) => void;
 }
 
-export function CategoryItemSelector({
-  open,
-  onOpenChange,
-  onSelectItems
-}: CategoryItemSelectorProps) {
+export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: CategoryItemSelectorProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [selectedItems, setSelectedItems] = useState<{ [key: string]: SelectedItem }>({});
-  const [search, setSearch] = useState("");
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const categoriesData = await categoryService.getAll();
+        setCategories(categoriesData);
+        
+        const subcategoriesData = await categoryService.getAllSubcategories();
+        setSubcategories(subcategoriesData);
+        
+        const pricingOptionsData = await categoryService.getAllPricingOptions();
+        setPricingOptions(pricingOptionsData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
     if (open) {
-      loadData();
-    } else {
-      // Clear selections when dialog closes
-      setSelectedItems({});
-      setSearch("");
+      fetchData();
     }
   }, [open]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [categoriesData, subcategoriesData, pricingOptionsData] = await Promise.all([
-        categoryService.getAll(),
-        categoryService.getAllSubcategories(),
-        categoryService.getAllPricingOptions()
-      ]);
-      
-      setCategories(categoriesData);
-      setSubcategories(subcategoriesData);
-      setPricingOptions(pricingOptionsData);
-      
-      if (categoriesData.length > 0) {
-        setActiveCategory(categoriesData[0].id);
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error("Error loading categories:", error);
-      setLoading(false);
+  
+  useEffect(() => {
+    if (open) {
+      setSelectedItems([]);
+      setSearchTerm("");
     }
-  };
-
-  const getSubcategoriesForCategory = (categoryId: string) => {
-    return subcategories.filter(sub => sub.category_id === categoryId);
-  };
-
-  const getPricingOptionsForSubcategory = (subcategoryId: string) => {
-    return pricingOptions.filter(opt => opt.subcategory_id === subcategoryId);
-  };
-
-  const toggleItemSelection = (item: PricingOption, category: Category) => {
-    if (selectedItems[item.id]) {
-      // Remove item
-      const { [item.id]: removedItem, ...rest } = selectedItems;
-      setSelectedItems(rest);
-    } else {
-      // Add item
-      setSelectedItems({
-        ...selectedItems,
-        [item.id]: {
-          id: item.id,
-          description: item.name,
-          category: category.name,
-          price: item.price,
+  }, [open]);
+  
+  const toggleItemSelection = (pricingOption: PricingOption, subcategoryName: string) => {
+    setSelectedItems(prevItems => {
+      const existingItem = prevItems.find(item => item.id === pricingOption.id);
+      
+      if (existingItem) {
+        return prevItems.filter(item => item.id !== pricingOption.id);
+      } else {
+        return [...prevItems, {
+          id: pricingOption.id,
+          description: pricingOption.name,
+          category: subcategoryName,
           quantity: 1,
-          unit: item.unit
-        }
-      });
-    }
+          unit: pricingOption.unit,
+          price: pricingOption.price
+        }];
+      }
+    });
   };
-
-  const updateItemQuantity = (itemId: string, quantity: number) => {
-    if (selectedItems[itemId]) {
-      setSelectedItems({
-        ...selectedItems,
-        [itemId]: {
-          ...selectedItems[itemId],
-          quantity
-        }
-      });
-    }
-  };
-
-  const filteredCategories = search 
-    ? categories.filter(cat => 
-        cat.name.toLowerCase().includes(search.toLowerCase()) ||
-        getSubcategoriesForCategory(cat.id).some(sub => 
-          sub.name.toLowerCase().includes(search.toLowerCase()) ||
-          getPricingOptionsForSubcategory(sub.id).some(opt => 
-            opt.name.toLowerCase().includes(search.toLowerCase())
-          )
-        )
+  
+  const updateItemQuantity = (id: string, quantity: number) => {
+    setSelectedItems(prevItems => 
+      prevItems.map(item => 
+        item.id === id ? { ...item, quantity } : item
       )
-    : categories;
-
-  const handleAddItems = () => {
-    onSelectItems(Object.values(selectedItems));
+    );
+  };
+  
+  const getSubcategoriesForCategory = (categoryId: string) => {
+    return subcategories.filter(subcategory => subcategory.category_id === categoryId);
+  };
+  
+  const getPricingOptionsForSubcategory = (subcategoryId: string) => {
+    return pricingOptions.filter(option => option.subcategory_id === subcategoryId);
+  };
+  
+  const isItemSelected = (id: string) => {
+    return selectedItems.some(item => item.id === id);
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  };
+  
+  const handleSubmit = () => {
+    onSelectItems(selectedItems);
     onOpenChange(false);
   };
-
-  if (loading) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[600px]">
-          <div className="flex justify-center items-center h-40">
-            <Spinner size="lg" />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
+  
+  const filteredCategories = searchTerm
+    ? categories.filter(category => {
+        if (category.name.toLowerCase().includes(searchTerm)) return true;
+        
+        const relatedSubcategories = getSubcategoriesForCategory(category.id);
+        if (relatedSubcategories.some(sub => sub.name.toLowerCase().includes(searchTerm))) return true;
+        
+        return relatedSubcategories.some(sub => {
+          const options = getPricingOptionsForSubcategory(sub.id);
+          return options.some(option => option.name.toLowerCase().includes(searchTerm));
+        });
+      })
+    : categories;
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-xl">Select Items from Categories</DialogTitle>
+          <DialogTitle>Select Items from Categories</DialogTitle>
+          <DialogDescription>
+            Choose services from your categories to add to your quotation.
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="mb-3">
-          <Input 
-            placeholder="Search items, categories or subcategories..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full"
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search categories, subcategories or items..."
+            className="pl-9 h-10"
+            value={searchTerm}
+            onChange={handleSearchChange}
           />
         </div>
-
-        <div className="flex-1 overflow-hidden">
-          {filteredCategories.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              No categories found
+        
+        <div className="overflow-y-auto max-h-[50vh] mt-4 pr-1">
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin h-8 w-8 border-2 border-t-blue-500 rounded-full"></div>
+            </div>
+          ) : filteredCategories.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No categories found matching your search.
             </div>
           ) : (
-            <Tabs 
-              defaultValue={activeCategory || ""} 
-              onValueChange={(value) => setActiveCategory(value)}
-              className="h-full flex flex-col"
+            <Accordion
+              type="multiple"
+              value={expandedCategories}
+              onValueChange={setExpandedCategories}
+              className="w-full"
             >
-              <TabsList className="w-full justify-start overflow-x-auto pb-1 mb-2">
-                {filteredCategories.map((category) => (
-                  <TabsTrigger 
-                    key={category.id} 
-                    value={category.id}
-                    className="px-3 py-1.5"
-                  >
-                    {category.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <div className="flex-1 overflow-y-auto pr-1">
-                {filteredCategories.map((category) => (
-                  <TabsContent 
-                    key={category.id} 
-                    value={category.id}
-                    className="mt-0 border-0 data-[state=active]:block h-full"
-                  >
-                    <div className="space-y-4">
-                      {getSubcategoriesForCategory(category.id).length === 0 ? (
-                        <div className="text-center py-4 text-gray-500">
-                          No subcategories in this category
+              {filteredCategories.map(category => {
+                const categorySubcategories = getSubcategoriesForCategory(category.id);
+                
+                return (
+                  <AccordionItem value={category.id} key={category.id} className="border rounded-md mb-2">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                      {category.name}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 py-2 overflow-y-auto max-h-[300px]">
+                      {categorySubcategories.length === 0 ? (
+                        <div className="text-center py-2 text-sm text-gray-500">
+                          No items in this category
                         </div>
                       ) : (
-                        getSubcategoriesForCategory(category.id).map((subcategory) => {
-                          const options = getPricingOptionsForSubcategory(subcategory.id);
-                          if (options.length === 0) return null;
-                            
+                        categorySubcategories.map(subcategory => {
+                          const subcategoryOptions = getPricingOptionsForSubcategory(subcategory.id);
+                          
+                          if (subcategoryOptions.length === 0) return null;
+                          
                           return (
-                            <div key={subcategory.id} className="border rounded-md p-3">
-                              <h3 className="font-medium mb-2">{subcategory.name}</h3>
+                            <div key={subcategory.id} className="mb-4">
+                              <h4 className="font-medium text-sm mb-2">{subcategory.name}</h4>
+                              {subcategory.description && (
+                                <p className="text-sm text-gray-600 mb-2">{subcategory.description}</p>
+                              )}
+                              
                               <div className="space-y-2">
-                                {options.map((option) => {
-                                  const isSelected = !!selectedItems[option.id];
+                                {subcategoryOptions.map(option => {
+                                  const isSelected = isItemSelected(option.id);
+                                  const selectedItem = selectedItems.find(item => item.id === option.id);
+                                  
                                   return (
-                                    <div key={option.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md">
-                                      <div className="flex items-center gap-3">
-                                        <Checkbox 
-                                          checked={isSelected} 
-                                          onCheckedChange={() => toggleItemSelection(option, category)}
-                                          id={`option-${option.id}`}
+                                    <div 
+                                      key={option.id} 
+                                      className={`flex items-center justify-between p-2 rounded-md transition-colors ${
+                                        isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      <div className="flex items-center">
+                                        <Checkbox
+                                          id={option.id}
+                                          checked={isSelected}
+                                          onCheckedChange={() => toggleItemSelection(option, subcategory.name)}
+                                          className="mr-2"
                                         />
-                                        <div>
-                                          <label 
-                                            htmlFor={`option-${option.id}`}
-                                            className="font-medium cursor-pointer"
-                                          >
-                                            {option.name}
-                                          </label>
-                                          <div className="text-sm text-gray-500">
-                                            {option.unit} · RM {option.price.toFixed(2)}
-                                          </div>
-                                        </div>
+                                        <label
+                                          htmlFor={option.id}
+                                          className="text-sm cursor-pointer flex-1"
+                                        >
+                                          {option.name}
+                                        </label>
                                       </div>
                                       
-                                      {isSelected && (
-                                        <div className="flex items-center gap-1 w-24">
-                                          <Button 
-                                            type="button"
-                                            variant="outline" 
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            onClick={() => updateItemQuantity(
-                                              option.id, 
-                                              Math.max(1, selectedItems[option.id].quantity - 1)
-                                            )}
-                                          >
-                                            -
-                                          </Button>
-                                          <Input 
-                                            type="number"
-                                            min="1"
-                                            className="h-7 text-center px-1"
-                                            value={selectedItems[option.id].quantity}
-                                            onChange={(e) => updateItemQuantity(
-                                              option.id, 
-                                              parseInt(e.target.value) || 1
-                                            )}
-                                          />
-                                          <Button 
-                                            type="button"
-                                            variant="outline" 
-                                            size="icon"
-                                            className="h-7 w-7"
-                                            onClick={() => updateItemQuantity(
-                                              option.id, 
-                                              selectedItems[option.id].quantity + 1
-                                            )}
-                                          >
-                                            +
-                                          </Button>
-                                        </div>
-                                      )}
+                                      <div className="flex items-center space-x-3">
+                                        {isSelected && (
+                                          <div className="flex items-center space-x-2">
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="icon"
+                                              className="h-7 w-7 rounded-full"
+                                              onClick={() => updateItemQuantity(option.id, Math.max(1, (selectedItem?.quantity || 1) - 1))}
+                                            >
+                                              <span>-</span>
+                                            </Button>
+                                            <span className="text-sm font-medium w-6 text-center">
+                                              {selectedItem?.quantity || 1}
+                                            </span>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="icon"
+                                              className="h-7 w-7 rounded-full"
+                                              onClick={() => updateItemQuantity(option.id, (selectedItem?.quantity || 1) + 1)}
+                                            >
+                                              <span>+</span>
+                                            </Button>
+                                          </div>
+                                        )}
+                                        <span className="text-sm font-medium whitespace-nowrap">
+                                          RM {option.price.toFixed(2)} / {option.unit}
+                                        </span>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -276,39 +260,29 @@ export function CategoryItemSelector({
                           );
                         })
                       )}
-                    </div>
-                  </TabsContent>
-                ))}
-              </div>
-            </Tabs>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           )}
         </div>
-
-        <div className="pt-2 border-t mt-2">
-          <div className="flex justify-between mb-3">
-            <div className="text-sm">
-              {Object.keys(selectedItems).length} items selected
-            </div>
-            <div className="text-sm font-medium">
-              Total: RM {Object.values(selectedItems).reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
-            </div>
+        
+        <div className="flex justify-between items-center pt-4 mt-2 border-t">
+          <div className="text-sm">
+            {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''} selected
           </div>
-          <DialogFooter className="sm:justify-end">
+          <div className="flex space-x-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
             <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
+              onClick={handleSubmit} 
+              disabled={selectedItems.length === 0}
             >
-              Cancel
+              Add {selectedItems.length} Item{selectedItems.length !== 1 ? 's' : ''}
             </Button>
-            <Button 
-              type="button"
-              onClick={handleAddItems}
-              disabled={Object.keys(selectedItems).length === 0}
-            >
-              Add Selected Items
-            </Button>
-          </DialogFooter>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -98,7 +98,6 @@ export interface Quotation {
   total: number;
   notes: string | null;
   terms: string | null;
-  subject: string | null; // Add this field
   requires_deposit: boolean;
   deposit_amount: number;
   deposit_percentage: number;
@@ -114,7 +113,6 @@ export interface QuotationItem {
   unit: string;
   unit_price: number;
   amount: number;
-  category?: string | null; // Added category field
   created_at: string;
   updated_at: string;
 }
