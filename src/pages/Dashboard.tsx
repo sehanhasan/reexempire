@@ -47,8 +47,11 @@ export default function Dashboard() {
 
         // Calculate total revenue from invoices - ensure we're working with numbers
         const totalRevenue = invoices.reduce((sum, invoice) => {
-          // Convert both sum and invoice.total to numbers to fix the TypeScript error
-          return Number(sum) + Number(invoice.total || 0);
+          // Make sure both operands are numbers to fix the TypeScript error
+          const numSum = typeof sum === 'number' ? sum : 0;
+          const invoiceTotal = typeof invoice.total === 'number' ? invoice.total : 
+                              (invoice.total ? Number(invoice.total) : 0);
+          return numSum + invoiceTotal;
         }, 0);
 
         // Set stats
