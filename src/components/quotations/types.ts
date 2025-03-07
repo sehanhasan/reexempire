@@ -1,29 +1,19 @@
 
-export interface QuotationItem {
+export interface ItemBase {
   id: number;
   description: string;
-  category: string;
+  category?: string;
   quantity: number | string;
   unit: string;
   unitPrice: number;
   amount: number;
 }
 
-export interface InvoiceItem extends QuotationItem {
-  // Same structure as QuotationItem, may add invoice-specific properties later
-}
+export type QuotationItem = ItemBase;
+export type InvoiceItem = ItemBase;
 
 export interface DepositInfo {
   requiresDeposit: boolean;
   depositAmount: number;
   depositPercentage: number | string;
-}
-
-export interface SelectedItem {
-  id: string;
-  description: string;
-  category?: string;
-  quantity: number;
-  unit: string;
-  price: number;
 }

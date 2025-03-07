@@ -17,8 +17,9 @@ export default function CreateInvoice() {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [items, setItems] = useState<InvoiceItem[]>([]);
-  const [showItemsTable, setShowItemsTable] = useState(false);
+  const [items, setItems] = useState<InvoiceItem[]>([
+    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+  ]);
 
   const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -28,6 +29,7 @@ export default function CreateInvoice() {
   const [dueDate, setDueDate] = useState(
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
@@ -95,7 +97,6 @@ export default function CreateInvoice() {
                 unitPrice: item.unit_price,
                 amount: item.amount
               })));
-              setShowItemsTable(true);
             }
             
             toast({
@@ -163,7 +164,6 @@ export default function CreateInvoice() {
         tax_amount: 0,
         total: total,
         notes: notes || null,
-        subject: subject || null,
         terms: null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
@@ -211,6 +211,7 @@ export default function CreateInvoice() {
     <div className="page-container">
       <PageHeader
         title="Create Invoice"
+        description="Create a new invoice for a customer."
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/invoices")}>
@@ -232,6 +233,8 @@ export default function CreateInvoice() {
           setDocumentDate={setInvoiceDate}
           expiryDate={dueDate}
           setExpiryDate={setDueDate}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
           quotationReference={quotationReference}
           subject={subject}
           setSubject={setSubject}

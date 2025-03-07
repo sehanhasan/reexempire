@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FolderOpen, Wallet } from "lucide-react";
+import { Plus, FolderOpen, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { InvoiceItem } from "./types";
@@ -64,8 +64,10 @@ export function InvoiceItemsCard({
   };
   
   const addItem = () => {
-    // Always show items table after adding an item
-    setShowItemsTable(true);
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
     
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     setItems([...items, {
@@ -120,8 +122,10 @@ export function InvoiceItemsCard({
   };
   
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
-    // Always show items table after adding items
-    setShowItemsTable(true);
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
     
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
@@ -144,7 +148,7 @@ export function InvoiceItemsCard({
   return (
     <>
       <Card className="shadow-sm">
-        <CardHeader className="py-3 px-4">
+        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-4">
             <CardTitle className="text-base lg:text-lg">Invoice Items</CardTitle>
             <div className="flex items-center space-x-2">
@@ -162,6 +166,17 @@ export function InvoiceItemsCard({
               </label>
             </div>
           </div>
+          
+          {items.length > 0 && !showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(true)}>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          )}
+          {items.length > 0 && showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(false)}>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+          )}
         </CardHeader>
         
         <CardContent className="py-3 px-4">
@@ -187,8 +202,7 @@ export function InvoiceItemsCard({
             </Button>
           </div>
 
-          {/* Always show items table if there are items */}
-          {items.length > 0 && showItemsTable && (
+          {showItemsTable && (
             <>
               <ItemsTable 
                 items={items} 
