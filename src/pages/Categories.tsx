@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -99,7 +98,6 @@ export default function Categories() {
   };
 
   const columns = [
-    // ID and Description columns are now hidden as per requirements
     {
       header: "Name",
       accessorKey: "name" as keyof Category,
@@ -174,8 +172,6 @@ export default function Categories() {
     <div className="page-container">
       <PageHeader 
         title="Service Categories" 
-        description="Manage your service categories and subcategories."
-        // Removed "Add Category" button from header as requested
       />
       
       <div className="mt-8">

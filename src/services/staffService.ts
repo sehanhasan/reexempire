@@ -64,7 +64,8 @@ export const staffService = {
       emergency_contact_name: staff.emergency_contact_name || null,
       emergency_contact_relationship: staff.emergency_contact_relationship || null,
       emergency_contact_phone: staff.emergency_contact_phone || null,
-      emergency_contact_email: staff.emergency_contact_email || null
+      emergency_contact_email: staff.emergency_contact_email || null,
+      notes: staff.notes || null
     };
 
     const { data, error } = await supabase

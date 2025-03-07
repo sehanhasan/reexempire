@@ -48,6 +48,7 @@ export interface Category {
   updated_at: string;
   name: string;
   description: string | null;
+  subcategories?: Subcategory[]; // Added for front-end use
 }
 
 export interface Subcategory {

@@ -1,3 +1,4 @@
+
 import { ReactNode, useState, useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileHeader } from "./MobileHeader";
@@ -15,7 +16,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { isAdmin, isStaff, profile, signOut } = useAuth();
+  const { isAdmin, isStaff, logout } = useAuth();
   const navigate = useNavigate();
   
   const getPageTitle = () => {
@@ -46,7 +47,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   
   const handleLogout = async () => {
     try {
-      await signOut();
+      await logout();
       navigate("/auth");
     } catch (error) {
       console.error("Error signing out:", error);

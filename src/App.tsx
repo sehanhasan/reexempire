@@ -38,90 +38,85 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        element: <MainLayout />,
+        path: "/",
+        element: <MainLayout><Index /></MainLayout>
+      },
+      {
+        path: "/dashboard",
+        element: <MainLayout><Dashboard /></MainLayout>
+      },
+      {
+        path: "/profile",
+        element: <MainLayout><Profile /></MainLayout>
+      },
+      // Staff-only routes
+      {
+        path: "/staff-schedule",
+        element: <MainLayout><StaffSchedule /></MainLayout>
+      },
+      // Admin-only routes
+      {
+        element: <ProtectedRoute requiredRole="admin" />,
         children: [
           {
-            path: "/",
-            element: <Index />
+            path: "/customers",
+            element: <MainLayout><Customers /></MainLayout>
           },
           {
-            path: "/dashboard",
-            element: <Dashboard />
+            path: "/customers/add",
+            element: <MainLayout><AddCustomer /></MainLayout>
           },
           {
-            path: "/profile",
-            element: <Profile />
+            path: "/staff",
+            element: <MainLayout><Staff /></MainLayout>
           },
-          // Staff-only routes
           {
-            path: "/staff-schedule",
-            element: <StaffSchedule />
+            path: "/staff/add",
+            element: <MainLayout><AddStaffMember /></MainLayout>
           },
-          // Admin-only routes
           {
-            element: <ProtectedRoute requiredRole="admin" />,
-            children: [
-              {
-                path: "/customers",
-                element: <Customers />
-              },
-              {
-                path: "/customers/add",
-                element: <AddCustomer />
-              },
-              {
-                path: "/staff",
-                element: <Staff />
-              },
-              {
-                path: "/staff/add",
-                element: <AddStaffMember />
-              },
-              {
-                path: "/staff/:id/edit",
-                element: <EditStaffMember />
-              },
-              {
-                path: "/schedule",
-                element: <Schedule />
-              },
-              {
-                path: "/appointments/add",
-                element: <AddAppointment />
-              },
-              {
-                path: "/categories",
-                element: <Categories />
-              },
-              {
-                path: "/categories/add",
-                element: <AddCategory />
-              },
-              {
-                path: "/quotations",
-                element: <Quotations />
-              },
-              {
-                path: "/quotations/create",
-                element: <CreateQuotation />
-              },
-              {
-                path: "/quotations/:id/edit",
-                element: <EditQuotation />
-              },
-              {
-                path: "/invoices",
-                element: <Invoices />
-              },
-              {
-                path: "/invoices/create",
-                element: <CreateInvoice />
-              },
-              {
-                path: "/invoices/:id/edit",
-                element: <EditInvoice />
-              }
-            ]
+            path: "/staff/:id/edit",
+            element: <MainLayout><EditStaffMember /></MainLayout>
+          },
+          {
+            path: "/schedule",
+            element: <MainLayout><Schedule /></MainLayout>
+          },
+          {
+            path: "/appointments/add",
+            element: <MainLayout><AddAppointment /></MainLayout>
+          },
+          {
+            path: "/categories",
+            element: <MainLayout><Categories /></MainLayout>
+          },
+          {
+            path: "/categories/add",
+            element: <MainLayout><AddCategory /></MainLayout>
+          },
+          {
+            path: "/quotations",
+            element: <MainLayout><Quotations /></MainLayout>
+          },
+          {
+            path: "/quotations/create",
+            element: <MainLayout><CreateQuotation /></MainLayout>
+          },
+          {
+            path: "/quotations/:id/edit",
+            element: <MainLayout><EditQuotation /></MainLayout>
+          },
+          {
+            path: "/invoices",
+            element: <MainLayout><Invoices /></MainLayout>
+          },
+          {
+            path: "/invoices/create",
+            element: <MainLayout><CreateInvoice /></MainLayout>
+          },
+          {
+            path: "/invoices/:id/edit",
+            element: <MainLayout><EditInvoice /></MainLayout>
           }
         ]
       }
