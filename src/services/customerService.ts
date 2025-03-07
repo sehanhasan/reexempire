@@ -1,14 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types/database";
-
-export const getCustomerList = async (): Promise<Customer[]> => {
-  const { data, error } = await supabase
-    .from("customers")
-    .select("*")
-    .order("name");
-  if (error) throw error;
-  return data as Customer[];
-};
 
 export const customerService = {
   async getAll(): Promise<Customer[]> {

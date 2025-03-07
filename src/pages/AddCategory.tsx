@@ -24,6 +24,7 @@ interface SubCategory {
   name: string;
   description: string;
   price: number;
+  unit: string;
 }
 
 export default function AddCategory() {
@@ -36,7 +37,7 @@ export default function AddCategory() {
   
   const [categoryName, setCategoryName] = useState("");
   const [subcategories, setSubcategories] = useState<SubCategory[]>([
-    { id: 1, name: "", description: "", price: null }
+    { id: 1, name: "", description: "", price: 0, unit: "Unit" }
   ]);
   
   // Fetch category data if editing
@@ -80,14 +81,15 @@ export default function AddCategory() {
               id: index + 1,
               name: sub.name || "",
               description: sub.description || "",
-              price: firstOption?.price || null
+              price: firstOption?.price || 0,
+              unit: firstOption?.unit || "Unit"
             };
           })
         );
         
         setSubcategories(subcategoriesWithPricing.length > 0 ? 
           subcategoriesWithPricing : 
-          [{ id: 1, name: "", description: "", price: null }]
+          [{ id: 1, name: "", description: "", price: 0, unit: "Unit" }]
         );
       };
       
@@ -97,7 +99,7 @@ export default function AddCategory() {
   
   const addSubcategory = () => {
     const newId = subcategories.length > 0 ? Math.max(...subcategories.map(item => item.id)) + 1 : 1;
-    setSubcategories([...subcategories, { id: newId, name: "", description: "", price: null }]);
+    setSubcategories([...subcategories, { id: newId, name: "", description: "", price: 0, unit: "Unit" }]);
   };
   
   const removeSubcategory = (id: number) => {
@@ -175,8 +177,8 @@ export default function AddCategory() {
             if (newSubcategory) {
               await categoryService.createPricingOption({
                 name: sub.name,
-                price: sub.price || 0,
-                unit: "Unit", // Default unit
+                price: sub.price,
+                unit: sub.unit,
                 subcategory_id: newSubcategory.id
               });
             }
@@ -298,16 +300,22 @@ export default function AddCategory() {
                         type="number"
                         min="0"
                         step="0.01"
-                        value={subcategory.price || ''}
-                        onChange={(e) => handleSubcategoryChange(
-                          subcategory.id, 
-                          "price", 
-                          e.target.value === '' ? null : parseFloat(e.target.value)
-                        )}
+                        value={subcategory.price}
+                        onChange={(e) => handleSubcategoryChange(subcategory.id, "price", parseFloat(e.target.value) || 0)}
                         className="pl-10"
                         placeholder="0.00"
                       />
                     </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor={`subUnit-${subcategory.id}`}>Unit</Label>
+                    <Input
+                      id={`subUnit-${subcategory.id}`}
+                      value={subcategory.unit}
+                      onChange={(e) => handleSubcategoryChange(subcategory.id, "unit", e.target.value)}
+                      placeholder="e.g. Per Unit, Per Hour, etc."
+                    />
                   </div>
                 </div>
               </div>

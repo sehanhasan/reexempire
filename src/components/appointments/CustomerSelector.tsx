@@ -1,21 +1,42 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Check } from "lucide-react";
+import { customerService } from "@/services";
 import { Customer } from "@/types/database";
 
-export interface CustomerSelectorProps {
-  customers: Customer[];
-  selectedCustomer: Customer | null;
+interface CustomerSelectorProps {
+  open: boolean;
+  onClose: () => void;
   onSelectCustomer: (customer: Customer) => void;
-  isLoading: boolean;
+  selectedCustomerId?: string;
 }
 
-export function CustomerSelector({ customers, selectedCustomer, onSelectCustomer, isLoading }: CustomerSelectorProps) {
+export function CustomerSelector({ open, onClose, onSelectCustomer, selectedCustomerId }: CustomerSelectorProps) {
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const data = await customerService.getAll();
+      setCustomers(data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      fetchCustomers();
+    }
+  }, [open]);
 
   const filteredCustomers = customers.filter(
     (customer) =>
@@ -26,7 +47,7 @@ export function CustomerSelector({ customers, selectedCustomer, onSelectCustomer
   );
 
   return (
-    <Dialog open={true} onOpenChange={() => onSelectCustomer(selectedCustomer!)}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Select Customer</DialogTitle>
@@ -44,7 +65,7 @@ export function CustomerSelector({ customers, selectedCustomer, onSelectCustomer
         </div>
 
         <div className="max-h-[300px] overflow-y-auto">
-          {isLoading ? (
+          {loading ? (
             <div className="py-4 text-center text-sm text-gray-500">Loading customers...</div>
           ) : filteredCustomers.length === 0 ? (
             <div className="py-4 text-center text-sm text-gray-500">
@@ -56,7 +77,7 @@ export function CustomerSelector({ customers, selectedCustomer, onSelectCustomer
                 <div
                   key={customer.id}
                   className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-gray-100 ${
-                    selectedCustomer?.id === customer.id ? "bg-blue-50" : ""
+                    selectedCustomerId === customer.id ? "bg-blue-50" : ""
                   }`}
                   onClick={() => onSelectCustomer(customer)}
                 >
@@ -69,7 +90,7 @@ export function CustomerSelector({ customers, selectedCustomer, onSelectCustomer
                       {customer.email || customer.phone || "No contact info"}
                     </div>
                   </div>
-                  {selectedCustomer?.id === customer.id && (
+                  {selectedCustomerId === customer.id && (
                     <Badge className="ml-2 bg-blue-500">
                       <Check className="h-3 w-3 mr-1" />
                       Selected
@@ -82,7 +103,7 @@ export function CustomerSelector({ customers, selectedCustomer, onSelectCustomer
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onSelectCustomer(selectedCustomer!)}>
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
         </DialogFooter>

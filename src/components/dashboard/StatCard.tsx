@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
-export interface StatCardProps {
+interface StatCardProps {
   title: string;
   value: string | number;
   description?: string;
@@ -13,8 +13,6 @@ export interface StatCardProps {
   } | string;
   className?: string;
   onClick?: () => void;
-  loading?: boolean;
-  error?: unknown;
 }
 
 export function StatCard({ 
@@ -24,9 +22,7 @@ export function StatCard({
   icon, 
   trend, 
   className,
-  onClick,
-  loading,
-  error
+  onClick
 }: StatCardProps) {
   // Process trend to handle both string and object formats
   const trendDisplay = typeof trend === 'string' 
@@ -35,32 +31,6 @@ export function StatCard({
   
   // Determine if trend is positive (for styling)
   const isTrendPositive = typeof trend === 'object' ? trend.isPositive : false;
-  
-  // Show loading state
-  if (loading) {
-    return (
-      <div className={cn(
-        "bg-white rounded-lg border border-slate-200 p-5 shadow-sm animate-pulse",
-        className
-      )}>
-        <div className="h-4 bg-slate-200 rounded mb-2 w-1/3"></div>
-        <div className="h-8 bg-slate-200 rounded w-1/2 mt-2"></div>
-      </div>
-    );
-  }
-  
-  // Show error state
-  if (error) {
-    return (
-      <div className={cn(
-        "bg-white rounded-lg border border-red-200 p-5 shadow-sm",
-        className
-      )}>
-        <p className="text-sm font-medium text-red-500">{title}</p>
-        <p className="text-xs text-red-400 mt-1">Failed to load data</p>
-      </div>
-    );
-  }
   
   return (
     <div 

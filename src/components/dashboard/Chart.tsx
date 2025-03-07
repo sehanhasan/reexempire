@@ -29,11 +29,11 @@ interface ChartProps {
 }
 
 export function Chart({
-  type = "bar",
-  data = [],
-  categories = ["value"],
-  index = "name",
-  colors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"],
+  type,
+  data,
+  categories,
+  index,
+  colors,
   valueFormatter = (value: number) => value.toString(),
   height = 300
 }: ChartProps) {
@@ -68,9 +68,9 @@ export function Chart({
                       </div>
                     </div>
                   </div>
-                );
+                )
               }
-              return null;
+              return null
             }}
           />
           <Bar dataKey={categories[0]} radius={[4, 4, 0, 0]}>
@@ -115,9 +115,9 @@ export function Chart({
                       </div>
                     </div>
                   </div>
-                );
+                )
               }
-              return null;
+              return null
             }}
           />
           <Legend />

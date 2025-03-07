@@ -23,11 +23,11 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Save, Calendar, User, Check } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { appointmentService, customerService, staffService } from "@/services";
+import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
 
-const AddAppointment = () => {
+export default function AddAppointment() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
@@ -48,25 +48,11 @@ const AddAppointment = () => {
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
   
   // Fetch staff members
-  const {
-    data: staffData,
-    isLoading: isLoadingStaff,
-    error: staffError,
-  } = useQuery({
-    queryKey: ["staff"],
+  const { data: staffMembers = [], isLoading: isLoadingStaff } = useQuery({
+    queryKey: ['staff'],
     queryFn: staffService.getAll,
   });
-
-  // Fetch customer members
-  const {
-    data: customersData,
-    isLoading: isCustomersLoading,
-    error: customersError,
-  } = useQuery({
-    queryKey: ["customers"],
-    queryFn: customerService.getAll,
-  });
-
+  
   // Fetch appointment data when in edit mode
   useEffect(() => {
     if (isEditMode) {
@@ -132,11 +118,6 @@ const AddAppointment = () => {
     }));
   };
   
-  const handleCustomerChange = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsCustomerSelectorOpen(false);
-  };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -177,9 +158,7 @@ const AddAppointment = () => {
       if (Object.keys(staffNotes).length > 0) {
         const staffNotesText = Object.entries(staffNotes)
           .map(([staffId, note]) => {
-            const staffMember = staffData && Array.isArray(staffData) ? 
-              staffData.find((staff: Staff) => staff.id === staffId) : 
-              undefined;
+            const staffMember = staffMembers.find((staff: Staff) => staff.id === staffId);
             return `${staffMember?.name || 'Staff'}: ${note}`;
           })
           .join('\n\n');
@@ -326,7 +305,7 @@ const AddAppointment = () => {
                 <div className="text-center py-4">Loading staff members...</div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {staffData && Array.isArray(staffData) && staffData.map((staff: Staff) => (
+                  {staffMembers.map((staff: Staff) => (
                     <div key={staff.id} className="border rounded-md p-4">
                       <div className="flex items-center space-x-2">
                         <input
@@ -414,16 +393,15 @@ const AddAppointment = () => {
         </form>
       )}
       
-      {isCustomerSelectorOpen && (
-        <CustomerSelector
-          customers={customersData && Array.isArray(customersData) ? customersData : []}
-          selectedCustomer={selectedCustomer}
-          onSelectCustomer={handleCustomerChange}
-          isLoading={isCustomersLoading}
-        />
-      )}
+      <CustomerSelector
+        open={isCustomerSelectorOpen}
+        onClose={() => setIsCustomerSelectorOpen(false)}
+        onSelectCustomer={(customer) => {
+          setSelectedCustomer(customer);
+          setIsCustomerSelectorOpen(false);
+        }}
+        selectedCustomerId={selectedCustomer?.id}
+      />
     </div>
   );
-};
-
-export default AddAppointment;
+}
