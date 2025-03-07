@@ -172,11 +172,11 @@ export function QuotationItemsCard({
                   <div className="border-t pt-2 mt-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={checked => setDepositInfo({
-                    ...depositInfo,
-                    requiresDeposit: !!checked,
-                    depositPercentage: 0,
-                    depositAmount: 0
-                  })} />
+                        ...depositInfo,
+                        requiresDeposit: !!checked,
+                        depositPercentage: 0,
+                        depositAmount: 0
+                      })} />
                       <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
                         <Wallet className="h-3.5 w-3.5 mr-1" />
                         Require Deposit Payment

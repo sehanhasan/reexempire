@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Category, Subcategory, PricingOption, CategoryItem } from "@/types/database";
 
@@ -105,7 +104,7 @@ export const categoryService = {
     return data || [];
   },
 
-  async create(category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
+  async create(category: { name: string; description: string; subcategories?: { name: string; description: string; price?: number; id?: string }[] }): Promise<Category> {
     // First create the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
@@ -125,12 +124,13 @@ export const categoryService = {
         const subcategoryData = {
           category_id: categoryData.id,  // Make sure category_id is set
           name: sub.name || sub.description, // Ensure name is set
-          description: sub.description
+          description: sub.description,
+          price: sub.price || 0 // Add default price to fix TypeScript error
         };
 
         const { error: subcatError } = await supabase
           .from("subcategories")
-          .insert(subcategoryData);
+          .insert([subcategoryData]);  // Add array brackets to fix the type error
 
         if (subcatError) {
           console.error("Error creating subcategory:", subcatError);
@@ -142,7 +142,7 @@ export const categoryService = {
     return categoryData;
   },
 
-  async update(id: string, category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
+  async update(id: string, category: { name: string; description: string; subcategories?: { name: string; description: string; price?: number; id?: string }[] }): Promise<Category> {
     // Update the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
@@ -165,7 +165,8 @@ export const categoryService = {
             .from("subcategories")
             .update({
               name: sub.name || sub.description,
-              description: sub.description
+              description: sub.description,
+              price: sub.price || 0 // Add default price to fix TypeScript error
             })
             .eq("id", sub.id);
 
@@ -178,12 +179,13 @@ export const categoryService = {
           const subcategoryData = {
             category_id: id,
             name: sub.name || sub.description,
-            description: sub.description
+            description: sub.description,
+            price: sub.price || 0 // Add default price to fix TypeScript error
           };
 
           const { error: createError } = await supabase
             .from("subcategories")
-            .insert(subcategoryData);
+            .insert([subcategoryData]);  // Add array brackets to fix the type error
 
           if (createError) {
             console.error("Error creating new subcategory:", createError);
@@ -326,4 +328,3 @@ export const categoryService = {
     }
   }
 };
-

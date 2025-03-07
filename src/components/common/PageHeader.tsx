@@ -3,13 +3,11 @@ import { ReactNode } from 'react';
 
 interface PageHeaderProps {
   title: string;
-  description?: string;
   actions?: ReactNode;
 }
 
 export function PageHeader({
   title,
-  description,
   actions
 }: PageHeaderProps) {
   return <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
