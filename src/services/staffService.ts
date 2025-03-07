@@ -17,7 +17,7 @@ export const staffService = {
     // Convert the data to Staff type with notes property
     const staffWithNotes = data?.map(staff => ({
       ...staff,
-      notes: null // Add notes property with null default
+      notes: staff.notes || null // Use existing notes or null
     })) || [];
 
     return staffWithNotes;
@@ -38,7 +38,7 @@ export const staffService = {
     // Add notes property to staff data
     return data ? {
       ...data,
-      notes: null // Add notes property with null default
+      notes: data.notes || null // Use existing notes or null
     } : null;
   },
 
@@ -52,8 +52,7 @@ export const staffService = {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
-    // Create a new object with required properties for database insert
-    // Remove the notes property as it's not in the database schema
+    // Extract notes to handle separately
     const { notes, ...staffDataForInsert } = {
       name: staff.name || "",
       join_date: staff.join_date,
@@ -75,7 +74,8 @@ export const staffService = {
       emergency_contact_phone: staff.emergency_contact_phone || null,
       emergency_contact_email: staff.emergency_contact_email || null,
       first_name: staff.first_name || "",
-      last_name: staff.last_name || ""
+      last_name: staff.last_name || "",
+      notes: staff.notes || null // Include notes in the extraction
     };
 
     try {
@@ -93,7 +93,7 @@ export const staffService = {
       // Add notes property to returned data
       return {
         ...data,
-        notes: null
+        notes: notes
       };
     } catch (error) {
       console.error("Failed to create staff member:", error);
@@ -106,7 +106,7 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
-    // Remove the notes property if it exists since it's not in the database schema
+    // Extract notes to handle separately
     const { notes, ...staffDataForUpdate } = staff;
 
     try {
@@ -125,7 +125,7 @@ export const staffService = {
       // Add notes property to returned data
       return {
         ...data,
-        notes: null
+        notes: notes || null
       };
     } catch (error) {
       console.error(`Failed to update staff member with id ${id}:`, error);

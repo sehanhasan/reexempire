@@ -84,7 +84,7 @@ export interface Staff {
   emergency_contact_relationship?: string;
   emergency_contact_phone?: string;
   emergency_contact_email?: string;
-  notes?: string | null; // Add notes field for UI use
+  notes?: string | null; // Make sure notes is properly defined
 }
 
 export interface Quotation {
