@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -7,58 +6,45 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
-
 export default function AddCategory() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const categoryId = searchParams.get("id");
-  
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState({
     name: "",
-    description: "",
+    description: ""
   });
-  
-  const [subcategories, setSubcategories] = useState([
-    { tempId: Date.now(), price: "", description: "" }
-  ]);
-  
+  const [subcategories, setSubcategories] = useState([{
+    tempId: Date.now(),
+    price: "",
+    description: ""
+  }]);
   const [edit, setEdit] = useState(false);
-  
   useEffect(() => {
     if (categoryId) {
       setEdit(true);
       fetchCategory(categoryId);
     }
   }, [categoryId]);
-  
-  const fetchCategory = async (id) => {
+  const fetchCategory = async id => {
     try {
       setLoading(true);
       const data = await categoryService.getById(id);
       if (data) {
         setCategory({
           name: data.name || "",
-          description: data.description || "",
+          description: data.description || ""
         });
-        
         if (data.subcategories && data.subcategories.length > 0) {
           setSubcategories(data.subcategories.map(sub => ({
             id: sub.id,
             tempId: sub.id,
-            price: sub.price_options && sub.price_options.length > 0 ? 
-              parseFloat(sub.price_options[0].price).toString() : "",
-            description: sub.description || "",
+            price: sub.price_options && sub.price_options.length > 0 ? parseFloat(sub.price_options[0].price).toString() : "",
+            description: sub.description || ""
           })));
         }
       }
@@ -68,103 +54,98 @@ export default function AddCategory() {
       toast({
         title: "Error",
         description: "Failed to load category details",
-        variant: "destructive",
+        variant: "destructive"
       });
       setLoading(false);
       navigate("/categories");
     }
   };
-  
-  const handleCategoryChange = (e) => {
-    const { name, value } = e.target;
+  const handleCategoryChange = e => {
+    const {
+      name,
+      value
+    } = e.target;
     setCategory(prev => ({
       ...prev,
       [name]: value
     }));
   };
-  
   const handleSubcategoryChange = (index, field, value) => {
     const updatedSubcategories = [...subcategories];
     updatedSubcategories[index][field] = value;
     setSubcategories(updatedSubcategories);
   };
-  
   const addSubcategory = () => {
-    setSubcategories([
-      ...subcategories,
-      { tempId: Date.now(), price: "", description: "" }
-    ]);
+    setSubcategories([...subcategories, {
+      tempId: Date.now(),
+      price: "",
+      description: ""
+    }]);
   };
-  
-  const removeSubcategory = (index) => {
+  const removeSubcategory = index => {
     if (subcategories.length === 1) {
       // Don't remove the last one, just clear it
-      setSubcategories([{ tempId: Date.now(), price: "", description: "" }]);
+      setSubcategories([{
+        tempId: Date.now(),
+        price: "",
+        description: ""
+      }]);
     } else {
       const updated = subcategories.filter((_, i) => i !== index);
       setSubcategories(updated);
     }
   };
-  
   const validate = () => {
     if (!category.name) {
       toast({
         title: "Validation Error",
         description: "Category name is required",
-        variant: "destructive",
+        variant: "destructive"
       });
       return false;
     }
-    
     for (let i = 0; i < subcategories.length; i++) {
       const sub = subcategories[i];
-      
       if (!sub.description) {
         toast({
           title: "Validation Error",
           description: `Subcategory ${i + 1} description is required`,
-          variant: "destructive",
+          variant: "destructive"
         });
         return false;
       }
-      
       const price = parseFloat(sub.price);
       if (isNaN(price) || price < 0) {
         toast({
           title: "Validation Error",
           description: `Invalid price for subcategory ${i + 1}`,
-          variant: "destructive",
+          variant: "destructive"
         });
         return false;
       }
     }
-    
     return true;
   };
-  
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    
     if (!validate()) return;
-    
     try {
       setLoading(true);
-      
       if (edit) {
         // Update existing category
         await categoryService.update(categoryId, {
           name: category.name,
           description: category.description,
           subcategories: subcategories.map(sub => ({
-            id: sub.id, // Only for existing subcategories
+            id: sub.id,
+            // Only for existing subcategories
             description: sub.description,
-            price: parseFloat(sub.price) || 0,
-          })),
+            price: parseFloat(sub.price) || 0
+          }))
         });
-        
         toast({
           title: "Success",
-          description: "Category updated successfully",
+          description: "Category updated successfully"
         });
       } else {
         // Create new category
@@ -173,43 +154,31 @@ export default function AddCategory() {
           description: category.description,
           subcategories: subcategories.map(sub => ({
             description: sub.description,
-            price: parseFloat(sub.price) || 0,
-          })),
+            price: parseFloat(sub.price) || 0
+          }))
         });
-        
         toast({
           title: "Success",
-          description: "New category created successfully",
+          description: "New category created successfully"
         });
       }
-      
       setLoading(false);
       navigate("/categories");
     } catch (error) {
       console.error("Error saving category:", error);
-      
       toast({
         title: "Error",
         description: `Failed to ${edit ? "update" : "create"} category. Please try again.`,
-        variant: "destructive",
+        variant: "destructive"
       });
-      
       setLoading(false);
     }
   };
-  
-  return (
-    <div className="page-container">
-      <PageHeader 
-        title={edit ? "Edit Category" : "Add Category"} 
-        description={edit ? "Update existing category and subcategories" : "Create a new category with subcategories"}
-        actions={
-          <Button variant="outline" onClick={() => navigate("/categories")}>
+  return <div className="page-container">
+      <PageHeader title={edit ? "Edit Category" : "Add Category"} description={edit ? "Update existing category and subcategories" : "Create a new category with subcategories"} actions={<Button variant="outline" onClick={() => navigate("/categories")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
-          </Button>
-        }
-      />
+          </Button>} />
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mt-6">
@@ -223,27 +192,10 @@ export default function AddCategory() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="name">Category Name*</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  placeholder="e.g. Bathroom Renovation" 
-                  value={category.name}
-                  onChange={handleCategoryChange}
-                  required
-                />
+                <Input id="name" name="name" placeholder="e.g. Bathroom Renovation" value={category.name} onChange={handleCategoryChange} required />
               </div>
               
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  name="description" 
-                  placeholder="Enter a description for this category" 
-                  value={category.description}
-                  onChange={handleCategoryChange}
-                  rows={3}
-                />
-              </div>
+              
             </CardContent>
           </Card>
           
@@ -255,17 +207,10 @@ export default function AddCategory() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {subcategories.map((subcategory, index) => (
-                <div key={subcategory.tempId} className="space-y-4 pb-4 border-b last:border-b-0">
+              {subcategories.map((subcategory, index) => <div key={subcategory.tempId} className="space-y-4 pb-4 border-b last:border-b-0">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Subcategory {index + 1}</h3>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => removeSubcategory(index)}
-                      disabled={subcategories.length === 1 && !edit}
-                    >
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeSubcategory(index)} disabled={subcategories.length === 1 && !edit}>
                       <Trash className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
@@ -273,59 +218,33 @@ export default function AddCategory() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor={`subcategory-description-${index}`}>Description*</Label>
-                      <Textarea 
-                        id={`subcategory-description-${index}`}
-                        placeholder="e.g. Complete bathroom renovation" 
-                        value={subcategory.description}
-                        onChange={(e) => handleSubcategoryChange(index, 'description', e.target.value)}
-                        rows={3}
-                        required
-                      />
+                      <Textarea id={`subcategory-description-${index}`} placeholder="e.g. Complete bathroom renovation" value={subcategory.description} onChange={e => handleSubcategoryChange(index, 'description', e.target.value)} rows={3} required />
                     </div>
                     
                     <div>
                       <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
-                      <Input 
-                        id={`subcategory-price-${index}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Enter price" 
-                        value={subcategory.price}
-                        onChange={(e) => handleSubcategoryChange(index, 'price', e.target.value)}
-                      />
+                      <Input id={`subcategory-price-${index}`} type="number" min="0" step="0.01" placeholder="Enter price" value={subcategory.price} onChange={e => handleSubcategoryChange(index, 'price', e.target.value)} />
                     </div>
                   </div>
-                </div>
-              ))}
+                </div>)}
               
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={addSubcategory}
-                className="w-full"
-              >
+              <Button type="button" variant="outline" onClick={addSubcategory} className="w-full">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Another Subcategory
               </Button>
             </CardContent>
             <CardFooter className="flex justify-end border-t p-6">
               <div className="space-x-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => navigate("/categories")}
-                >
+                <Button type="button" variant="outline" onClick={() => navigate("/categories")}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Saving...' : (edit ? 'Update Category' : 'Add Category')}
+                  {loading ? 'Saving...' : edit ? 'Update Category' : 'Add Category'}
                 </Button>
               </div>
             </CardFooter>
           </Card>
         </div>
       </form>
-    </div>
-  );
+    </div>;
 }
