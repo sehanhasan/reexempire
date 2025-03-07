@@ -1,10 +1,11 @@
-export { categoryService } from "./categoryService";
-export { customerService } from "./customerService";
-export { invoiceService } from "./invoiceService";
-export { quotationService } from "./quotationService";
-export { staffService } from "./staffService";
-export { appointmentService } from "./appointmentService";
-export { exportService } from "./exportService";
+
+import { categoryService } from "./categoryService";
+import { customerService } from "./customerService";
+import { invoiceService } from "./invoiceService";
+import { quotationService } from "./quotationService";
+import { staffService } from "./staffService";
+import { appointmentService } from "./appointmentService";
+import { exportService } from "./exportService";
 import { authService } from './authService';
 
 export {

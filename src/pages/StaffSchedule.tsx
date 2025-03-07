@@ -1,292 +1,269 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
-import { appointmentService, customerService } from "@/services";
-import { useAuth } from "@/contexts/AuthContext";
-import { Appointment, Customer } from "@/types/database";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Appointment, Staff } from "@/types/database";
+import { appointmentService, staffService } from "@/services";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
+import { format, parseISO, isToday, isBefore, differenceInDays } from "date-fns";
+import { Calendar as CalendarIcon, Clock, User, Check, X, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function StaffSchedule() {
-  const { profile } = useAuth();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [customersMap, setCustomersMap] = useState<Record<string, Customer>>({});
+  const navigate = useNavigate();
+  const [date, setDate] = useState<Date>(new Date());
+  const [view, setView] = useState<"day" | "upcoming">("day");
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [staffMembers, setStaffMembers] = useState<Staff[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const isMobile = useIsMobile();
+  const { profile } = useAuth();
 
-  // Fetch staff appointments using React Query
-  const { data: appointments = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['staff-appointments', profile?.staff_id],
-    queryFn: () => profile?.staff_id ? appointmentService.getByStaffId(profile.staff_id) : [],
-    enabled: !!profile?.staff_id,
-  });
-
-  // Get week start and end dates for displaying appointments
-  const getWeekDates = () => {
-    const dates = [];
-    const curr = new Date(currentDate);
-    const first = curr.getDate() - curr.getDay();
-    
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(curr);
-      day.setDate(first + i);
-      dates.push(day);
-    }
-    
-    return dates;
-  };
-
-  // Fetch customers data
+  // Fetch appointments and staff data
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchData = async () => {
       try {
-        const customersData = await customerService.getAll();
-        const customersMapData: Record<string, Customer> = {};
-        customersData.forEach(customer => {
-          customersMapData[customer.id] = customer;
-        });
-        setCustomersMap(customersMapData);
+        setIsLoading(true);
+        
+        // First fetch the staff member associated with this profile
+        if (!profile || !profile.staff_id) {
+          toast({
+            title: "Error",
+            description: "Your account is not linked to a staff member. Please contact an administrator.",
+            variant: "destructive"
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // Fetch appointments for this staff member only
+        const appointmentsData = await appointmentService.getAppointmentsByStaffId(profile.staff_id);
+        setAppointments(appointmentsData);
+        
+        // Fetch staff information
+        const staffData = await staffService.getById(profile.staff_id);
+        setStaffMembers(staffData ? [staffData] : []);
+        
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching customer data:", error);
+        console.error("Error fetching data:", error);
         toast({
           title: "Error",
-          description: "Could not load customer data",
+          description: "Failed to load schedule data. Please try again.",
           variant: "destructive"
         });
+        setIsLoading(false);
       }
     };
+    
+    fetchData();
+  }, [profile]);
 
-    fetchCustomers();
-  }, []);
+  // Filter appointments based on selected date and view
+  const filteredAppointments = appointments.filter(appointment => {
+    if (view === "day") {
+      return appointment.appointment_date === format(date, "yyyy-MM-dd");
+    }
+    
+    // For "upcoming" view, show all future appointments
+    const appointmentDate = parseISO(appointment.appointment_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return !isBefore(appointmentDate, today) || isToday(appointmentDate);
+  }).sort((a, b) => {
+    // Sort by date first
+    const dateA = a.appointment_date;
+    const dateB = b.appointment_date;
+    
+    if (dateA !== dateB) {
+      return dateA.localeCompare(dateB);
+    }
+    
+    // Then sort by start time
+    return a.start_time.localeCompare(b.start_time);
+  });
 
-  // Refresh appointments when date changes
-  useEffect(() => {
-    refetch();
-  }, [currentDate, refetch]);
-
-  const prevWeek = () => {
-    const date = new Date(currentDate);
-    date.setDate(date.getDate() - 7);
-    setCurrentDate(date);
+  const getStaffName = (staffId: string | null | undefined) => {
+    if (!staffId) return "Unassigned";
+    const staff = staffMembers.find(s => s.id === staffId);
+    return staff ? staff.name : "Unknown";
   };
 
-  const nextWeek = () => {
-    const date = new Date(currentDate);
-    date.setDate(date.getDate() + 7);
-    setCurrentDate(date);
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "rescheduled":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      default:
+        return "bg-blue-100 text-blue-800 border-blue-200";
+    }
   };
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
+  const getDaysSinceOrUntil = (dateString: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const appointmentDate = parseISO(dateString);
+    const days = differenceInDays(appointmentDate, today);
+    
+    if (days === 0) {
+      return "Today";
+    } else if (days === 1) {
+      return "Tomorrow";
+    } else if (days === -1) {
+      return "Yesterday";
+    } else if (days > 0) {
+      return `In ${days} days`;
+    } else {
+      return `${Math.abs(days)} days ago`;
+    }
   };
 
-  const formatDateKey = (date: Date) => {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  };
-
-  const handleAppointmentClick = (appointment: Appointment) => {
+  const handleViewAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
-    setIsAppointmentDetailsOpen(true);
-  };
-
-  // Format the appointments data for the calendar
-  const formatEventsForCalendar = () => {
-    const events: Record<string, any[]> = {};
-    
-    appointments.forEach((appointment: Appointment) => {
-      const dateKey = appointment.appointment_date;
-      
-      if (!events[dateKey]) {
-        events[dateKey] = [];
-      }
-      
-      const customerName = customersMap[appointment.customer_id]?.name || "Unknown Customer";
-      const unitNumber = customersMap[appointment.customer_id]?.unit_number || "";
-      
-      events[dateKey].push({
-        id: appointment.id,
-        title: appointment.title,
-        customer: customerName,
-        unitNumber: unitNumber,
-        start: appointment.start_time,
-        end: appointment.end_time,
-        status: appointment.status,
-        original: appointment
-      });
-    });
-    
-    return events;
-  };
-
-  // Render week view
-  const renderWeekView = () => {
-    const weekDates = getWeekDates();
-    const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 7 AM to 6 PM
-    const events = formatEventsForCalendar();
-    
-    return (
-      <div className="bg-white rounded-lg border shadow">
-        <div className="grid grid-cols-8 border-b">
-          <div className="py-4 px-2 text-center font-semibold text-muted-foreground border-r">
-            Time
-          </div>
-          {weekDates.map((date, i) => (
-            <div 
-              key={i} 
-              className={`py-4 px-2 text-center ${
-                date.toDateString() === new Date().toDateString() 
-                  ? "bg-blue-50 font-semibold text-blue-600" 
-                  : "font-semibold"
-              }`}
-            >
-              <div>{date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-              <div className="text-xl mt-1">{date.getDate()}</div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="grid grid-cols-8 divide-x">
-          <div className="divide-y">
-            {hours.map((hour) => (
-              <div key={hour} className="h-24 p-1 text-xs text-muted-foreground">
-                {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}
-              </div>
-            ))}
-          </div>
-          
-          {weekDates.map((date, dateIndex) => {
-            const dateKey = formatDateKey(date);
-            const dateEvents = events[dateKey] || [];
-            
-            return (
-              <div key={dateIndex} className="divide-y relative">
-                {hours.map((hour) => (
-                  <div key={hour} className="h-24 p-1 relative"></div>
-                ))}
-                
-                {dateEvents.map((event, eventIndex) => {
-                  const startHour = parseInt(event.start.split(':')[0], 10);
-                  const startMinute = parseInt(event.start.split(':')[1], 10);
-                  const endHour = parseInt(event.end.split(':')[0], 10);
-                  const endMinute = parseInt(event.end.split(':')[1], 10);
-                  
-                  const startPosition = ((startHour - 7) * 60 + startMinute) * (24 / 60);
-                  const duration = ((endHour - startHour) * 60 + (endMinute - startMinute)) * (24 / 60);
-                  
-                  return (
-                    <div
-                      key={eventIndex}
-                      className={`absolute rounded-md p-2 overflow-hidden shadow border-l-4 w-[calc(100%-8px)] cursor-pointer hover:opacity-90 ${
-                        event.status === "Confirmed" ? "bg-blue-50 border-blue-500" :
-                        event.status === "Pending" ? "bg-amber-50 border-amber-500" :
-                        event.status === "Completed" ? "bg-green-50 border-green-500" :
-                        "bg-gray-50 border-gray-500"
-                      }`}
-                      style={{
-                        top: `${startPosition}px`,
-                        height: `${duration}px`,
-                        left: '4px',
-                      }}
-                      onClick={() => handleAppointmentClick(event.original)}
-                    >
-                      <div className="text-xs font-semibold">
-                        {event.unitNumber ? `#${event.unitNumber} - ${event.title}` : event.title}
-                      </div>
-                      <div className="text-xs mt-1">{formatTime(event.start)} - {formatTime(event.end)}</div>
-                      {duration > 50 && (
-                        <>
-                          <div className="text-xs mt-1 text-gray-600">{event.customer}</div>
-                          {duration > 80 && (
-                            <Badge className="mt-1 text-xs" variant="outline">
-                              {event.status}
-                            </Badge>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
+    setDialogOpen(true);
   };
 
   return (
-    <div className="page-container">
+    <>
       <PageHeader 
         title="My Schedule" 
-        actions={
-          <Button>
-            <Calendar className="mr-2 h-4 w-4" />
-            Today
-          </Button>
-        }
       />
       
-      <div className="flex flex-wrap items-center justify-between mt-8 mb-4 gap-2">
-        <div className="flex items-center gap-2 md:gap-4 order-last md:order-none w-full md:w-auto justify-center my-2 md:my-0">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={prevWeek}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className={`${isMobile ? 'w-full' : 'w-80'} mb-4`}>
+          <Card>
+            <CardContent className="p-4">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(newDate) => newDate && setDate(newDate)}
+                className="rounded-md border"
+              />
+            </CardContent>
+          </Card>
           
-          <h3 className="text-md md:text-lg font-semibold whitespace-nowrap">
-            {`${getWeekDates()[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${getWeekDates()[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-          </h3>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={nextWeek}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <div className="mt-4">
+            <Tabs defaultValue="day" onValueChange={(v) => setView(v as "day" | "upcoming")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="day">Daily View</TabsTrigger>
+                <TabsTrigger value="upcoming">All Upcoming</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
         
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setCurrentDate(new Date())}
-        >
-          Today
-        </Button>
+        <div className="flex-1">
+          <div className="text-xl font-bold mb-4">
+            {view === "day" ? (
+              <span className="flex items-center">
+                <CalendarIcon className="mr-2 h-5 w-5" />
+                {format(date, "MMMM d, yyyy")}
+                {isToday(date) && <Badge className="ml-2 bg-blue-500">Today</Badge>}
+              </span>
+            ) : (
+              <span className="flex items-center">
+                <CalendarIcon className="mr-2 h-5 w-5" />
+                All Upcoming Appointments
+              </span>
+            )}
+          </div>
+          
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <div className="text-center py-16 px-4 border rounded-lg bg-gray-50">
+              <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">No appointments found</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                {view === "day" 
+                  ? `You have no appointments scheduled for ${format(date, "MMMM d, yyyy")}.`
+                  : "You have no upcoming appointments scheduled."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredAppointments.map((appointment) => (
+                <Card key={appointment.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col md:flex-row">
+                      <div className="p-4 md:p-5 flex-1">
+                        <div className="mb-3">
+                          <Badge className={`${getStatusColor(appointment.status)}`}>
+                            {appointment.status}
+                          </Badge>
+                          {view === "upcoming" && (
+                            <Badge variant="outline" className="ml-2">
+                              {getDaysSinceOrUntil(appointment.appointment_date)}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <h3 className="text-lg font-semibold truncate mb-1">{appointment.title}</h3>
+                        
+                        <div className="space-y-2 text-sm text-gray-600">
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-2 text-gray-400" />
+                            <span>{format(parseISO(`2000-01-01T${appointment.start_time}`), "h:mm a")} - {format(parseISO(`2000-01-01T${appointment.end_time}`), "h:mm a")}</span>
+                          </div>
+                          
+                          {appointment.location && (
+                            <div className="flex items-center">
+                              <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>{appointment.location}</span>
+                            </div>
+                          )}
+                          
+                          {view === "upcoming" && (
+                            <div className="flex items-center">
+                              <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
+                              <span>{format(parseISO(appointment.appointment_date), "MMMM d, yyyy")}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="mt-4">
+                          <Button 
+                            onClick={() => handleViewAppointment(appointment)}
+                            variant="outline" 
+                            size="sm"
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       
-      <div className="mt-2 overflow-x-auto pb-6">
-        {isLoading ? (
-          <div className="bg-white rounded-lg border shadow p-8 text-center">
-            Loading appointments...
-          </div>
-        ) : error ? (
-          <div className="bg-white rounded-lg border shadow p-8 text-center text-red-500">
-            Error loading appointments. Please try again.
-          </div>
-        ) : appointments.length === 0 ? (
-          <div className="bg-white rounded-lg border shadow p-8 text-center">
-            You have no upcoming appointments.
-          </div>
-        ) : renderWeekView()}
-      </div>
-
-      <AppointmentDetailsDialog
-        open={isAppointmentDetailsOpen}
-        onClose={() => setIsAppointmentDetailsOpen(false)}
-        appointment={selectedAppointment}
-        customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
-        assignedStaff={null}
-      />
-    </div>
+      {selectedAppointment && (
+        <AppointmentDetailsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          appointment={selectedAppointment}
+          staffName={getStaffName(selectedAppointment.staff_id)}
+          readOnly={true}
+        />
+      )}
+    </>
   );
 }

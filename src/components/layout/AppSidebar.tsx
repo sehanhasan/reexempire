@@ -1,175 +1,140 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  FileText,
+  Home,
+  Layers,
+  LogOut,
+  Receipt,
+  User,
+  Users,
+  Settings,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, Settings, LogOut, X } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface AppSidebarProps {
-  open?: boolean;
-  setOpen?: (open: boolean) => void;
-  isAdmin?: boolean;
-  isStaff?: boolean;
-  onLogout?: () => void;
-}
-
-export function AppSidebar({
-  open,
-  setOpen,
-  isAdmin = false,
-  isStaff = false,
-  onLogout
-}: AppSidebarProps) {
+export function AppSidebar() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const isMobile = useIsMobile();
+  const { logout, isAdmin, profile } = useAuth();
 
-  // Logo image
-  const logoUrl = "https://i.ibb.co/Ltyts5K/reex-empire-logo.png";
-
-  // Navigation items - rearranged order
-  const navItems = [
-    {
-      title: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      href: "/",
-      showFor: ['admin', 'staff']
-    }, 
-    {
-      title: "Customers",
-      icon: <Users className="h-5 w-5" />,
-      href: "/customers",
-      showFor: ['admin']
-    }, 
-    {
-      title: "Quotations",
-      icon: <FileText className="h-5 w-5" />,
-      href: "/quotations",
-      showFor: ['admin']
-    }, 
-    {
-      title: "Invoices",
-      icon: <Receipt className="h-5 w-5" />,
-      href: "/invoices",
-      showFor: ['admin']
-    }, 
-    {
-      title: "Schedule",
-      icon: <Calendar className="h-5 w-5" />,
-      href: "/schedule",
-      showFor: ['admin', 'staff']
-    }, 
-    {
-      title: "Staff",
-      icon: <UserCircle className="h-5 w-5" />,
-      href: "/staff",
-      showFor: ['admin']
-    }, 
-    {
-      title: "Categories",
-      icon: <FolderTree className="h-5 w-5" />,
-      href: "/categories",
-      showFor: ['admin']
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/auth");
+    } catch (error) {
+      console.error("Logout error:", error);
     }
-  ];
-
-  // Filter navigation items based on user role
-  const filteredNavItems = navItems.filter(item => {
-    if (isAdmin) return item.showFor.includes('admin');
-    if (isStaff) return item.showFor.includes('staff');
-    return false;
-  });
-
-  // Function to check if a nav item is active
-  const isActiveRoute = (href: string) => {
-    if (href === "/" && location.pathname === "/") {
-      return true;
-    }
-    return location.pathname.startsWith(href) && href !== "/" ? true : false;
   };
 
-  // Mobile overlay for sidebar
-  const mobileOverlay = isMobile && (
-    <div 
-      className={cn(
-        "fixed inset-0 bg-black/50 z-40 transition-opacity", 
-        open ? "opacity-100" : "opacity-0 pointer-events-none"
-      )} 
-      onClick={() => setOpen && setOpen(false)} 
-    />
-  );
-
   return (
-    <>
-      {mobileOverlay}
-      
-      <aside className={cn(
-        "bg-white border-r border-gray-200 h-screen flex flex-col z-50", 
-        isMobile ? "fixed transition-transform transform w-72" : "relative w-64",
-        isMobile && !open && "-translate-x-full"
-      )}>
-        <div className="h-14 flex items-center px-4 border-b justify-between">
-          <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="Reex Empire Logo" className="h-8" />
+    <div className="hidden md:flex flex-col h-screen w-64 bg-slate-900 text-white">
+      <div className="p-6 border-b border-slate-800">
+        <h1 className="text-xl font-bold">CRM</h1>
+      </div>
+
+      {profile && (
+        <div className="p-4 border-b border-slate-800">
+          <div className="font-medium">{profile.full_name}</div>
+          <div className="text-sm text-slate-400">{profile.email}</div>
+          <div className="mt-2 text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded-full inline-block">
+            {profile.role === 'admin' ? 'Administrator' : 'Staff Member'}
           </div>
-          {isMobile && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setOpen && setOpen(false)} 
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
         </div>
-        
-        <ScrollArea className="flex-1 py-2">
-          <nav className="space-y-1 px-2">
-            {filteredNavItems.map(item => (
-              <Button 
-                key={item.href} 
-                variant="ghost" 
-                className={cn(
-                  "w-full justify-start text-gray-600 h-10", 
-                  isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
-                )} 
-                onClick={() => {
-                  navigate(item.href);
-                  if (isMobile) {
-                    setOpen && setOpen(false);
-                  }
-                }}
+      )}
+
+      <nav className="flex-1 p-4">
+        <div className="space-y-1">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
+          >
+            <Home className="h-4 w-4" />
+            <span>Dashboard</span>
+          </Link>
+
+          {isAdmin ? (
+            // Admin navigation
+            <>
+              <Link
+                to="/customers"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
               >
-                {item.icon}
-                <span className="ml-3">{item.title}</span>
-              </Button>
-            ))}
-          </nav>
-        </ScrollArea>
-        
-        <div className="border-t border-gray-200 p-2">
-          <div className="mt-2 p-2">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-gray-600 h-10" 
-              onClick={() => navigate("/profile")}
+                <User className="h-4 w-4" />
+                <span>Customers</span>
+              </Link>
+
+              <Link
+                to="/staff"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
+              >
+                <Users className="h-4 w-4" />
+                <span>Staff</span>
+              </Link>
+
+              <Link
+                to="/schedule"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
+              >
+                <Calendar className="h-4 w-4" />
+                <span>Schedule</span>
+              </Link>
+
+              <Link
+                to="/categories"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
+              >
+                <Layers className="h-4 w-4" />
+                <span>Categories</span>
+              </Link>
+
+              <Link
+                to="/quotations"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
+              >
+                <FileText className="h-4 w-4" />
+                <span>Quotations</span>
+              </Link>
+
+              <Link
+                to="/invoices"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
+              >
+                <Receipt className="h-4 w-4" />
+                <span>Invoices</span>
+              </Link>
+            </>
+          ) : (
+            // Staff navigation
+            <Link
+              to="/staff-schedule"
+              className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
             >
-              <Settings className="h-5 w-5" />
-              <span className="ml-3">Settings</span>
-            </Button>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-gray-600 h-10" 
-              onClick={onLogout}
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="ml-3">Logout</span>
-            </Button>
-          </div>
+              <Calendar className="h-4 w-4" />
+              <span>My Schedule</span>
+            </Link>
+          )}
+
+          <Link
+            to="/profile"
+            className="flex items-center gap-2 px-4 py-2 text-sm rounded-md hover:bg-slate-800"
+          >
+            <Settings className="h-4 w-4" />
+            <span>Profile</span>
+          </Link>
         </div>
-      </aside>
-    </>
+      </nav>
+
+      <div className="p-4 border-t border-slate-800">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-white hover:bg-slate-800 px-4"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          <span>Logout</span>
+        </Button>
+      </div>
+    </div>
   );
 }
