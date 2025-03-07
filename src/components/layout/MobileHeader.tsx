@@ -1,6 +1,6 @@
 
-import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 
 interface MobileHeaderProps {
   title: string;
@@ -16,7 +16,7 @@ export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
         onClick={onMenuClick}
         className="lg:hidden"
       >
-        <HamburgerMenuIcon className="h-5 w-5" />
+        <Menu className="h-5 w-5" />
       </Button>
       <h1 className="font-semibold">{title}</h1>
       <div className="w-9" />

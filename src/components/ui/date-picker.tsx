@@ -1,81 +1,117 @@
 
-"use client"
+"use client";
 
-import * as React from "react"
-import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import * as React from "react";
+import { DayPicker } from "react-day-picker";
+import { Calendar as CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
 export type DatePickerProps = {
+  mode?: "single" | "multiple" | "range";
+  selected?: Date | Date[] | { from: Date; to?: Date | undefined };
+  onSelect?: (date: Date | Date[] | { from: Date; to?: Date | undefined }) => void;
   className?: string;
-  mode?: "single" | "range" | "multiple";
-  selected?: Date | Date[] | { from: Date; to?: Date };
-  onSelect?: (date: Date | Date[] | { from: Date; to?: Date } | undefined) => void;
-}
+  error?: string;
+  initialFocus?: boolean;
+  placeholder?: string;
+};
 
 export function DatePicker({
-  className,
   mode = "single",
   selected,
   onSelect,
+  className,
+  error,
+  initialFocus = true,
+  placeholder = "Pick a date",
 }: DatePickerProps) {
-  // Determine what to display in the button based on the mode and selected value
-  const getDisplayValue = () => {
-    if (!selected) return "Pick a date";
+  const Component = (
+    <div className={cn("grid gap-2", className)}>
+      {error && <p className="text-sm text-red-500">{error}</p>}
+      <DayPicker
+        className={cn("p-3", error && "border-red-500")}
+        initialFocus={initialFocus}
+        // Type assertion based on mode to ensure correct type
+        {...(mode === "single"
+          ? {
+              mode: "single" as const,
+              selected: selected as Date,
+              onSelect: onSelect as (date: Date | undefined) => void,
+            }
+          : mode === "range"
+          ? {
+              mode: "range" as const,
+              selected: selected as { from: Date; to?: Date },
+              onSelect: onSelect as (range: { from: Date; to?: Date } | undefined) => void,
+            }
+          : {
+              mode: "multiple" as const,
+              selected: selected as Date[],
+              onSelect: onSelect as (dates: Date[] | undefined) => void,
+            })}
+      />
+    </div>
+  );
+  return Component;
+}
 
-    if (mode === "range" && typeof selected === "object" && "from" in selected) {
-      const { from, to } = selected;
-      if (from && to) {
-        return `${format(from, "PPP")} - ${format(to, "PPP")}`;
-      }
-      return format(from, "PPP");
+export function DatePickerWithInput({
+  mode = "single",
+  selected,
+  onSelect,
+  className,
+  error,
+}: DatePickerProps) {
+  const [date, setDate] = React.useState<Date | undefined>(
+    (selected as Date) || undefined
+  );
+
+  React.useEffect(() => {
+    if (selected && mode === "single") {
+      setDate(selected as Date);
     }
+  }, [selected, mode]);
 
-    if (mode === "multiple" && Array.isArray(selected)) {
-      return selected.length > 0 
-        ? `${selected.length} dates selected`
-        : "Pick dates";
+  const handleSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    if (onSelect && mode === "single") {
+      onSelect(selectedDate as Date);
     }
-
-    if (mode === "single" && selected instanceof Date) {
-      return format(selected, "PPP");
-    }
-
-    return "Pick a date";
   };
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className={className}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
-            id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
-              !selected && "text-muted-foreground"
+              "w-full justify-start text-left font-normal",
+              !date && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {getDisplayValue()}
+            {date ? date.toLocaleDateString() : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode={mode}
-            selected={selected}
-            onSelect={onSelect}
+        <PopoverContent className="w-auto p-0">
+          <DatePicker
+            mode="single"
+            selected={date}
+            onSelect={handleSelect}
             initialFocus
           />
         </PopoverContent>
       </Popover>
+      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
     </div>
-  )
+  );
 }

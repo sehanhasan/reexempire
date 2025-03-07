@@ -125,7 +125,8 @@ export const categoryService = {
         const subcategoryData = {
           category_id: categoryData.id,  // Make sure category_id is set
           name: sub.name || sub.description, // Ensure name is set
-          description: sub.description
+          description: sub.description,
+          price: sub.price || 0 // Add default price
         };
 
         const { error: subcatError } = await supabase
@@ -165,7 +166,8 @@ export const categoryService = {
             .from("subcategories")
             .update({
               name: sub.name || sub.description,
-              description: sub.description
+              description: sub.description,
+              price: sub.price || 0 // Add default price
             })
             .eq("id", sub.id);
 
@@ -178,7 +180,8 @@ export const categoryService = {
           const subcategoryData = {
             category_id: id,
             name: sub.name || sub.description,
-            description: sub.description
+            description: sub.description,
+            price: sub.price || 0 // Add default price
           };
 
           const { error: createError } = await supabase
@@ -225,9 +228,15 @@ export const categoryService = {
   },
 
   async createSubcategory(subcategory: Omit<Subcategory, "id" | "created_at" | "updated_at">): Promise<Subcategory> {
+    // Ensure price is provided
+    const subcategoryData = {
+      ...subcategory,
+      price: subcategory.price || 0 // Add default price if not provided
+    };
+
     const { data, error } = await supabase
       .from("subcategories")
-      .insert([subcategory])
+      .insert([subcategoryData])
       .select()
       .single();
 
@@ -326,4 +335,3 @@ export const categoryService = {
     }
   }
 };
-

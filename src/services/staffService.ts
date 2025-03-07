@@ -14,10 +14,10 @@ export const staffService = {
       throw error;
     }
 
-    // Ensure all staff members have the required properties
+    // Convert the data to Staff type with notes property
     const staffWithNotes = data?.map(staff => ({
       ...staff,
-      notes: staff.notes || null // Ensure notes property exists
+      notes: null // Add notes property with null default
     })) || [];
 
     return staffWithNotes;
@@ -35,10 +35,10 @@ export const staffService = {
       throw error;
     }
 
-    // Ensure the staff member has the notes property
+    // Add notes property to staff data
     return data ? {
       ...data,
-      notes: data.notes || null
+      notes: null // Add notes property with null default
     } : null;
   },
 
@@ -52,34 +52,36 @@ export const staffService = {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
-    // Create a new object with required properties to satisfy TypeScript
-    const staffData = {
+    // Create a new object with required properties for database insert
+    // Remove the notes property as it's not in the database schema
+    const { notes, ...staffDataForInsert } = {
       name: staff.name || "",
       join_date: staff.join_date,
-      position: staff.position,
-      email: staff.email,
-      phone: staff.phone,
+      position: staff.position || null,
+      email: staff.email || null,
+      phone: staff.phone || null,
       status: staff.status || "Active",
-      department: staff.department,
-      employment_type: staff.employment_type,
-      gender: staff.gender,
-      address: staff.address,
-      city: staff.city,
-      state: staff.state,
-      postal_code: staff.postal_code,
-      passport: staff.passport,
-      username: staff.username,
-      emergency_contact_name: staff.emergency_contact_name,
-      emergency_contact_relationship: staff.emergency_contact_relationship,
-      emergency_contact_phone: staff.emergency_contact_phone,
-      emergency_contact_email: staff.emergency_contact_email,
-      notes: staff.notes || null  // Ensure notes property is included
+      department: staff.department || null,
+      employment_type: staff.employment_type || null,
+      gender: staff.gender || null,
+      address: staff.address || null,
+      city: staff.city || null,
+      state: staff.state || null,
+      postal_code: staff.postal_code || null,
+      passport: staff.passport || null,
+      username: staff.username || null,
+      emergency_contact_name: staff.emergency_contact_name || null,
+      emergency_contact_relationship: staff.emergency_contact_relationship || null,
+      emergency_contact_phone: staff.emergency_contact_phone || null,
+      emergency_contact_email: staff.emergency_contact_email || null,
+      first_name: staff.first_name || "",
+      last_name: staff.last_name || ""
     };
 
     try {
       const { data, error } = await supabase
         .from("staff")
-        .insert(staffData)
+        .insert(staffDataForInsert)
         .select()
         .single();
 
@@ -88,7 +90,11 @@ export const staffService = {
         throw error;
       }
 
-      return data;
+      // Add notes property to returned data
+      return {
+        ...data,
+        notes: null
+      };
     } catch (error) {
       console.error("Failed to create staff member:", error);
       throw error;
@@ -100,16 +106,13 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
-    // Ensure the notes field is included
-    const updatedStaff = {
-      ...staff,
-      notes: staff.notes !== undefined ? staff.notes : null
-    };
+    // Remove the notes property if it exists since it's not in the database schema
+    const { notes, ...staffDataForUpdate } = staff;
 
     try {
       const { data, error } = await supabase
         .from("staff")
-        .update(updatedStaff)
+        .update(staffDataForUpdate)
         .eq("id", id)
         .select()
         .single();
@@ -119,7 +122,11 @@ export const staffService = {
         throw error;
       }
 
-      return data;
+      // Add notes property to returned data
+      return {
+        ...data,
+        notes: null
+      };
     } catch (error) {
       console.error(`Failed to update staff member with id ${id}:`, error);
       throw error;
