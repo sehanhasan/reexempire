@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -24,6 +23,7 @@ export default function Dashboard() {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentQuotations, setRecentQuotations] = useState([]);
   const [recentInvoices, setRecentInvoices] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [customersMap, setCustomersMap] = useState({});
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
         // Calculate total revenue from invoices - ensure we're working with numbers
         const totalRevenue = invoices.reduce((acc, invoice) => {
-          // Explicitly convert the accumulator to a number to avoid type errors
+          // Make sure acc is a number
           const numAcc = typeof acc === 'number' ? acc : 0;
           
           // Handle invoice.total - ensuring it's a valid number
@@ -73,13 +73,18 @@ export default function Dashboard() {
           revenue: totalRevenue
         });
 
-        // Get upcoming appointments/jobs
-        const now = new Date();
-        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        // Generate monthly revenue data
+        const monthlyRevenueData = generateMonthlyRevenueData(invoices);
+        setRevenueData(monthlyRevenueData);
+
+        // Get upcoming appointments/jobs (only future appointments)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day
+        const todayString = today.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
         
         // Filter appointments that are today or in the future
         const upcomingAppts = appointments
-          .filter(appt => appt.appointment_date >= today)
+          .filter(appt => appt.appointment_date >= todayString)
           .sort((a, b) => {
             // Sort by date, then by start time
             if (a.appointment_date !== b.appointment_date) {
@@ -113,6 +118,37 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
   
+  // Function to generate monthly revenue data from invoices
+  const generateMonthlyRevenueData = (invoices) => {
+    // Create a map of months (0-11) to initialize with zero revenue
+    const monthlyRevenue = Array.from({ length: 12 }, (_, i) => ({
+      month: new Date(0, i).toLocaleString('default', { month: 'short' }),
+      revenue: 0
+    }));
+    
+    // Sum revenues by month
+    invoices.forEach(invoice => {
+      // Only count paid invoices
+      if (invoice.payment_status === 'Paid' && invoice.issue_date) {
+        const invoiceDate = new Date(invoice.issue_date);
+        const monthIndex = invoiceDate.getMonth();
+        
+        // Add invoice total to the corresponding month
+        let amount = 0;
+        if (typeof invoice.total === 'number') {
+          amount = invoice.total;
+        } else if (invoice.total !== null && invoice.total !== undefined) {
+          const parsed = Number(invoice.total);
+          amount = isNaN(parsed) ? 0 : parsed;
+        }
+        
+        monthlyRevenue[monthIndex].revenue += amount;
+      }
+    });
+    
+    return monthlyRevenue;
+  };
+  
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -143,41 +179,6 @@ export default function Dashboard() {
   const navigateToEditAppointment = id => {
     navigate(`/schedule/edit/${id}`);
   };
-
-  // Sample data for the revenue chart
-  const revenueData = [{
-    month: "Jan",
-    revenue: 12000
-  }, {
-    month: "Feb",
-    revenue: 15000
-  }, {
-    month: "Mar",
-    revenue: 18000
-  }, {
-    month: "Apr",
-    revenue: 16000
-  }, {
-    month: "May",
-    revenue: 21000
-  }, {
-    month: "Jun",
-    revenue: 19000
-  }];
-  
-  const salesByCategory = [{
-    name: "Bathroom",
-    value: 35
-  }, {
-    name: "Kitchen",
-    value: 30
-  }, {
-    name: "Flooring",
-    value: 20
-  }, {
-    name: "Electrical",
-    value: 15
-  }];
   
   return <div className="page-container">
       <PageHeader title="Dashboard" description="Overview of your business performance" />
@@ -198,20 +199,34 @@ export default function Dashboard() {
         isPositive: true
       }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
         
-        <StatCard title="Total Revenue" value={formatMoney(stats.revenue)} trend={{
-        value: 8,
-        isPositive: true
-      }} description="vs last month" icon={<CreditCard className="h-4 w-4" />} />
+        <StatCard 
+          title="Total Revenue" 
+          value={formatMoney(stats.revenue)} 
+          trend={{
+            value: 8,
+            isPositive: true
+          }} 
+          description="vs last month" 
+          icon={<CreditCard className="h-4 w-4" />}
+          onClick={() => navigate("/financials")}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         <Card>
           <CardHeader>
             <CardTitle>Revenue</CardTitle>
-            
           </CardHeader>
           <CardContent>
-            <Chart type="bar" data={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={300} />
+            <Chart 
+              type="bar" 
+              data={revenueData} 
+              categories={["revenue"]} 
+              index="month" 
+              colors={["#3b82f6"]} 
+              valueFormatter={value => `RM ${value.toLocaleString()}`} 
+              height={300} 
+            />
           </CardContent>
         </Card>
 

@@ -88,7 +88,7 @@ export default function StaffPage() {
   };
 
   const handleEdit = (staff: Staff) => {
-    navigate(`/staff/add?id=${staff.id}`);
+    navigate(`/staff/edit/${staff.id}`);
   };
 
   const handleDelete = (staff: Staff) => {
@@ -154,6 +154,15 @@ export default function StaffPage() {
           onClick={() => handleView(row.original)}
         >
           {row.original.name}
+        </div>
+      ),
+    },
+    {
+      header: "Username",
+      accessorKey: "username" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
+        <div className="text-gray-700">
+          {row.original.username || "—"}
         </div>
       ),
     },
@@ -305,6 +314,16 @@ export default function StaffPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Position</p>
                 <p>{selectedStaff.position}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Username</p>
+                <p>{selectedStaff.username || "—"}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Passport #</p>
+                <p>{selectedStaff.passport || "—"}</p>
               </div>
               
               <div>

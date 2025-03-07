@@ -1,4 +1,3 @@
-
 // Database Types
 export interface Category {
   id: string;
@@ -63,6 +62,8 @@ export interface Staff {
   join_date: string;
   created_at: string;
   updated_at: string;
+  username: string | null;
+  passport: string | null;
 }
 
 export interface Quotation {

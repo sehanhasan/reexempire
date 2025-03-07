@@ -4,12 +4,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, Settings, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, Settings, LogOut, X, PieChart } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface AppSidebarProps {
   open?: boolean;
   setOpen?: (open: boolean) => void;
 }
+
 export function AppSidebar({
   open,
   setOpen
@@ -39,6 +41,10 @@ export function AppSidebar({
     icon: <Receipt className="h-5 w-5" />,
     href: "/invoices"
   }, {
+    title: "Financials",
+    icon: <PieChart className="h-5 w-5" />,
+    href: "/financials"
+  }, {
     title: "Schedule",
     icon: <Calendar className="h-5 w-5" />,
     href: "/schedule"
@@ -62,6 +68,7 @@ export function AppSidebar({
 
   // Mobile overlay for sidebar
   const mobileOverlay = isMobile && <div className={cn("fixed inset-0 bg-black/50 z-40 transition-opacity", open ? "opacity-100" : "opacity-0 pointer-events-none")} onClick={() => setOpen && setOpen(false)} />;
+  
   return <>
       {mobileOverlay}
       
