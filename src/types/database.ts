@@ -40,6 +40,8 @@ export interface Staff {
   emergency_contact_relationship: string | null;
   emergency_contact_phone: string | null;
   emergency_contact_email: string | null;
+  date_of_birth?: string | null;
+  employee_id?: string | null;
 }
 
 export interface Category {

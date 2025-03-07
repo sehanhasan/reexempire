@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -44,7 +43,6 @@ import { type Staff } from "@/types/database";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 
-// Define form validation schema
 const staffFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   position: z.string().optional(),
@@ -75,7 +73,6 @@ export default function EditStaffMember() {
   const [loading, setLoading] = useState(false);
   const [isNew, setIsNew] = useState(!id);
   
-  // Set up React Hook Form with zod validation
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
     defaultValues: {
@@ -101,7 +98,6 @@ export default function EditStaffMember() {
     }
   });
   
-  // Fetch staff data if editing existing record
   const { isLoading: isLoadingStaff } = useQuery({
     queryKey: ["staff", id],
     queryFn: () => staffService.getById(id as string),
@@ -117,7 +113,6 @@ export default function EditStaffMember() {
         } else if (data) {
           const joinDate = data.join_date ? format(new Date(data.join_date), "yyyy-MM-dd") : "";
           
-          // Set form values from fetched data
           form.reset({
             name: data.name || "",
             position: data.position || "",
@@ -144,26 +139,22 @@ export default function EditStaffMember() {
     }
   });
   
-  // Handle form submission
   const onSubmit = async (data: StaffFormValues) => {
     try {
       setLoading(true);
       
-      // Format the data
       const staffData = {
         ...data
       };
       
       let result;
       if (isNew) {
-        // Create new staff member
         result = await staffService.create(staffData);
         toast({
           title: "Success",
           description: "Staff member created successfully.",
         });
       } else {
-        // Update existing staff member
         result = await staffService.update(id!, staffData);
         toast({
           title: "Success", 
@@ -188,7 +179,6 @@ export default function EditStaffMember() {
     <div className="page-container">
       <PageHeader 
         title={isNew ? "Add Staff Member" : "Edit Staff Member"} 
-        description={isNew ? "Add a new staff member to your team" : "Update staff member information"}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate("/staff")}>
@@ -201,7 +191,6 @@ export default function EditStaffMember() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            {/* Personal Information */}
             <Card className="md:col-span-2">
               <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
@@ -363,7 +352,6 @@ export default function EditStaffMember() {
               </CardContent>
             </Card>
             
-            {/* Status & Contact */}
             <Card>
               <CardHeader>
                 <CardTitle>Status & Contact</CardTitle>
@@ -429,7 +417,6 @@ export default function EditStaffMember() {
               </CardContent>
             </Card>
             
-            {/* Address Information */}
             <Card className="md:col-span-3">
               <CardHeader>
                 <CardTitle>Address</CardTitle>
@@ -500,7 +487,6 @@ export default function EditStaffMember() {
               </CardContent>
             </Card>
             
-            {/* Emergency Contact */}
             <Card className="md:col-span-3">
               <CardHeader>
                 <CardTitle>Emergency Contact</CardTitle>

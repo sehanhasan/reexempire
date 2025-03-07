@@ -181,7 +181,7 @@ export default function StaffSchedule() {
       {selectedAppointment && (
         <AppointmentDetailsDialog 
           open={showAppointmentDetails}
-          setOpen={setShowAppointmentDetails}
+          onOpenChange={setShowAppointmentDetails}
           appointment={selectedAppointment}
           staffName={staffData?.name || ""}
           readOnly={true}

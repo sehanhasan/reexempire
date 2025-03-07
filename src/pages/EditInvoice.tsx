@@ -1,396 +1,254 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown, Send } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { InvoiceItem } from "@/components/quotations/types";
-import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
-import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
-import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
-import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 import { invoiceService, customerService } from "@/services";
-import { Customer } from "@/types/database";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Invoice, Customer } from "@/types/database";
+import { format, parseISO } from 'date-fns';
+import { DatePicker } from "@/components/ui/date-picker";
+import { cn } from "@/lib/utils";
+import { Calendar } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function EditInvoice() {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const isMobile = useIsMobile();
-  
-  const [items, setItems] = useState<InvoiceItem[]>([
-    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
-  ]);
-
-  const [customerId, setCustomerId] = useState("");
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [dueDate, setDueDate] = useState(
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  );
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
-  const [notes, setNotes] = useState("");
-  const [subject, setSubject] = useState("");
-  const [isDepositInvoice, setIsDepositInvoice] = useState(false);
-  const [depositAmount, setDepositAmount] = useState(0);
-  const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
-  const [quotationReference, setQuotationReference] = useState("");
-  const [quotationId, setQuotationId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [documentNumber, setDocumentNumber] = useState("");
+  const [invoiceData, setInvoiceData] = useState<Invoice | null>(null);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch invoice details when the component mounts
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<string | undefined>(undefined);
+  const [issueDate, setIssueDate] = useState<Date | undefined>(undefined);
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  
   useEffect(() => {
-    const fetchInvoiceData = async () => {
-      if (!id) {
-        navigate("/invoices");
-        return;
-      }
-
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const invoice = await invoiceService.getById(id);
         
-        if (invoice) {
-          setCustomerId(invoice.customer_id);
-          setDocumentNumber(invoice.reference_number);
-          setInvoiceDate(invoice.issue_date);
-          setDueDate(invoice.due_date);
-          setNotes(invoice.notes || "");
-          setIsDepositInvoice(invoice.is_deposit_invoice || false);
-          setDepositAmount(invoice.deposit_amount || 0);
-          setDepositPercentage(invoice.deposit_percentage || 30);
-          
-          if (invoice.quotation_id) {
-            setQuotationId(invoice.quotation_id);
-            
-            // Try to fetch quotation reference
-            try {
-              const quotation = await invoiceService.getById(invoice.quotation_id);
-              if (quotation) {
-                setQuotationReference(quotation.reference_number);
-              }
-            } catch (error) {
-              console.error("Error fetching quotation:", error);
-            }
-          }
-          
-          // Fetch invoice items
-          const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
-          if (invoiceItems && invoiceItems.length > 0) {
-            setItems(invoiceItems.map((item, index) => ({
-              id: index + 1,
-              description: item.description,
-              category: "",
-              quantity: item.quantity,
-              unit: item.unit,
-              unitPrice: item.unit_price,
-              amount: item.amount
-            })));
-          }
-        } else {
-          toast({
-            title: "Invoice Not Found",
-            description: "The invoice you're trying to edit doesn't exist.",
-            variant: "destructive",
-          });
-          navigate("/invoices");
+        // Fetch invoice data
+        if (id) {
+          const invoice = await invoiceService.getById(id);
+          setInvoiceData(invoice);
+          setSelectedCustomer(invoice?.customer_id);
+          setIssueDate(invoice.issue_date ? parseISO(invoice.issue_date) : undefined);
+          setDueDate(invoice.due_date ? parseISO(invoice.due_date) : undefined);
         }
+        
+        // Fetch customers
+        const customersData = await customerService.getAll();
+        setCustomers(customersData);
       } catch (error) {
-        console.error("Error fetching invoice:", error);
+        console.error("Error fetching data:", error);
         toast({
           title: "Error",
-          description: "Failed to load invoice data. Please try again.",
-          variant: "destructive",
+          description: "Failed to load invoice details.",
+          variant: "destructive"
         });
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchInvoiceData();
-  }, [id, navigate]);
-
-  // Fetch customer details when customer ID changes
-  useEffect(() => {
-    if (customerId) {
-      const fetchCustomer = async () => {
-        try {
-          const customerData = await customerService.getById(customerId);
-          setCustomer(customerData);
-        } catch (error) {
-          console.error("Error fetching customer:", error);
-        }
-      };
-      
-      fetchCustomer();
-    }
-  }, [customerId]);
-
-  const calculateItemAmount = (item: InvoiceItem) => {
-    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-    return qty * item.unitPrice;
+    fetchData();
+  }, [id]);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setInvoiceData(prev => ({ ...prev, [name]: value } as Invoice));
   };
-
+  
+  const handleCustomerChange = (value: string) => {
+    setSelectedCustomer(value);
+    setInvoiceData(prev => ({ ...prev, customer_id: value } as Invoice));
+  };
+  
+  const handleIssueDateChange = (date: Date | undefined) => {
+    setIssueDate(date);
+    setInvoiceData(prev => ({ ...prev, issue_date: date ? format(date, 'yyyy-MM-dd') : null } as Invoice));
+  };
+  
+  const handleDueDateChange = (date: Date | undefined) => {
+    setDueDate(date);
+    setInvoiceData(prev => ({ ...prev, due_date: date ? format(date, 'yyyy-MM-dd') : null } as Invoice));
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!customerId) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before saving the invoice.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Validate that there is at least one item with a value
-    const validItems = items.filter(item => item.description && item.unitPrice > 0);
-    if (validItems.length === 0) {
-      toast({
-        title: "Missing Items",
-        description: "Please add at least one item to the invoice.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Calculate totals
-    const subtotal = items.reduce((sum, item) => {
-      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-      return sum + (qty * item.unitPrice);
-    }, 0);
-    const total = isDepositInvoice ? depositAmount : subtotal;
+    setIsSaving(true);
     
     try {
-      setIsSubmitting(true);
-      
-      // Update invoice in database
-      await invoiceService.update(id!, {
-        customer_id: customerId,
-        quotation_id: quotationId,
-        reference_number: documentNumber,
-        issue_date: invoiceDate,
-        due_date: dueDate,
-        subtotal: subtotal,
-        tax_rate: 0, // No SST as requested
-        tax_amount: 0,
-        total: total,
-        notes: notes || null,
-        terms: null,
-        is_deposit_invoice: isDepositInvoice,
-        deposit_amount: isDepositInvoice ? depositAmount : 0,
-        deposit_percentage: isDepositInvoice ? depositPercentage : 0
-      });
-      
-      // Delete existing items and add new ones
-      await invoiceService.deleteAllItems(id!);
-      
-      // Add invoice items
-      for (const item of items) {
-        if (item.description && item.unitPrice > 0) {
-          const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-          await invoiceService.createItem({
-            invoice_id: id!,
-            description: item.description,
-            quantity: qty,
-            unit: item.unit,
-            unit_price: item.unitPrice,
-            amount: qty * item.unitPrice
-          });
-        }
+      if (invoiceData) {
+        await invoiceService.update(id!, invoiceData);
+        toast({
+          title: "Success",
+          description: "Invoice updated successfully."
+        });
+        navigate("/invoices");
       }
-      
-      toast({
-        title: "Invoice Updated",
-        description: `Invoice for ${customer?.name} has been updated successfully.`,
-      });
-      
-      // Navigate back to the invoices list
-      navigate("/invoices");
     } catch (error) {
       console.error("Error updating invoice:", error);
       toast({
         title: "Error",
-        description: "There was an error updating the invoice. Please try again.",
-        variant: "destructive",
+        description: "Failed to update invoice. Please try again.",
+        variant: "destructive"
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
   };
-
-  const handleSendWhatsapp = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before sending the invoice.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // Format phone number (remove any non-digit characters)
-      let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
-      
-      if (!phoneNumber) {
-        toast({
-          title: "Missing Phone Number",
-          description: "Customer doesn't have a phone number for WhatsApp.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Make sure phone number starts with country code
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
-      } else if (!phoneNumber.startsWith('6')) {
-        phoneNumber = '60' + phoneNumber;
-      }
-      
-      // WhatsApp message text
-      const message = `Dear ${customer.name},\n\nPlease find attached Invoice ${documentNumber}.\n\nThank you.`;
-      
-      // Open WhatsApp web with the prepared message
-      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-      
-      toast({
-        title: "WhatsApp Opened",
-        description: "WhatsApp has been opened with the invoice message. The document PDF will need to be attached manually.",
-      });
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDownloadPDF = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before downloading the PDF.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const pdf = generateInvoicePDF({
-        documentNumber: documentNumber,
-        documentDate: invoiceDate,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || "",
-        expiryDate: dueDate,
-        dueDate: dueDate,
-        paymentMethod: paymentMethod,
-        notes: notes,
-        items: items,
-        subject: subject,
-        isDepositInvoice: isDepositInvoice,
-        depositAmount: depositAmount,
-        depositPercentage: depositPercentage,
-        quotationReference: quotationReference
-      });
-      
-      downloadPDF(pdf, `Invoice_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-      
-      toast({
-        title: "PDF Generated",
-        description: "Invoice PDF has been downloaded successfully.",
-      });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
+  
   if (isLoading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading invoice data...</p>
-        </div>
-      </div>
-    );
+    return <div>Loading invoice details...</div>;
   }
-
+  
   return (
     <div className="page-container">
-      <PageHeader
-        title="Edit Invoice"
-        description="Update invoice details for this customer."
+      <PageHeader 
+        title={`Edit Invoice: ${invoiceData?.reference_number || ""}`}
         actions={
-          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/invoices")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Invoices
-            </Button>
-            <Button variant="secondary" onClick={handleDownloadPDF}>
-              <FileDown className="mr-2 h-4 w-4" />
-              Download PDF
-            </Button>
-            <Button variant="default" onClick={handleSendWhatsapp}>
-              <Send className="mr-2 h-4 w-4" />
-              Send to WhatsApp
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => navigate("/invoices")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Invoices
+          </Button>
         }
       />
-
+      
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <CustomerInfoCard 
-          customerId={customerId}
-          setCustomer={setCustomerId}
-          documentType="invoice"
-          documentNumber={documentNumber}
-          setDocumentNumber={setDocumentNumber}
-          documentDate={invoiceDate}
-          setDocumentDate={setInvoiceDate}
-          expiryDate={dueDate}
-          setExpiryDate={setDueDate}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
-          quotationReference={quotationReference}
-          subject={subject}
-          setSubject={setSubject}
-        />
+        <Card>
+          <CardContent className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="reference_number">Reference Number</Label>
+                <Input 
+                  id="reference_number"
+                  name="reference_number"
+                  value={invoiceData?.reference_number || ""}
+                  onChange={handleInputChange}
+                  placeholder="Enter reference number"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="customer_id">Customer</Label>
+                <Select value={selectedCustomer} onValueChange={handleCustomerChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map(customer => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Issue Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !issueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {issueDate ? format(issueDate, "yyyy-MM-dd") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <DatePicker
+                      mode="single"
+                      selected={issueDate}
+                      onSelect={handleIssueDateChange}
+                      className="border-0"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div>
+                <Label>Due Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !dueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {dueDate ? format(dueDate, "yyyy-MM-dd") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <DatePicker
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={handleDueDateChange}
+                      className="border-0"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                name="notes"
+                value={invoiceData?.notes || ""}
+                onChange={handleInputChange}
+                placeholder="Enter any notes"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="terms">Terms</Label>
+              <Textarea
+                id="terms"
+                name="terms"
+                value={invoiceData?.terms || ""}
+                onChange={handleInputChange}
+                placeholder="Enter terms and conditions"
+              />
+            </div>
+          </CardContent>
+        </Card>
         
-        <InvoiceItemsCard 
-          items={items}
-          setItems={setItems}
-          isDepositInvoice={isDepositInvoice}
-          setIsDepositInvoice={setIsDepositInvoice}
-          depositAmount={depositAmount}
-          setDepositAmount={setDepositAmount}
-          depositPercentage={depositPercentage}
-          setDepositPercentage={setDepositPercentage}
-          calculateItemAmount={calculateItemAmount}
-        />
-        
-        <AdditionalInfoCard 
-          notes={notes}
-          setNotes={setNotes}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/invoices")}
-          documentType="invoice"
-          isSubmitting={isSubmitting}
-          onSendWhatsapp={handleSendWhatsapp}
-          saveButtonText="Update Invoice"
-        />
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Save className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Update Invoice
+              </>
+            )}
+          </Button>
+        </div>
       </form>
     </div>
   );
