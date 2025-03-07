@@ -1,111 +1,69 @@
-
-// Database Types
-export interface Category {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-  subcategories?: Subcategory[]; // Add this property to fix the TypeScript error
-}
-
-export interface Subcategory {
-  id?: string;
-  category_id: string; // Make this required as per Supabase schema
-  name: string;
-  description: string | null;
-  created_at?: string;
-  updated_at?: string;
-  price_options?: PricingOption[]; // Add this property for pricing options
-  price?: number; // Add this for direct price access
-  tempId?: number | string; // Used in forms - can be number or string
-}
-
-export interface PricingOption {
-  id: string;
-  subcategory_id: string;
-  name: string;
-  price: number;
-  unit: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Adding CategoryItem type for the CategoryItemSelector component
-export interface CategoryItem {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  unit: string;
-  subcategory_id?: string;
-}
-
 export interface Customer {
   id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  address: string | null;
-  unit_number: string | null;
-  city: string | null;
-  state: string | null;
-  postal_code: string | null;
-  notes: string | null;
   created_at: string;
   updated_at: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  notes: string;
+  unit_number?: string;
 }
 
 export interface Staff {
   id: string;
+  created_at: string;
+  updated_at: string;
   name: string;
-  position: string | null;
-  email: string | null;
-  phone: string | null;
-  status: string;
-  join_date: string; // This is required as per Supabase schema
-  created_at: string;
-  updated_at: string;
-  
-  // Add missing properties that are used in Staff pages
-  first_name?: string;
-  last_name?: string;
-  passport?: string;
-  gender?: string;
-  date_of_birth?: string;
-  username?: string;
-  department?: string;
-  employment_type?: string;
-  employee_id?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  postal_code?: string;
-  emergency_contact_name?: string;
-  emergency_contact_relationship?: string;
-  emergency_contact_phone?: string;
-  emergency_contact_email?: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  notes: string;
 }
 
-export interface Quotation {
+export interface Category {
   id: string;
-  reference_number: string;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  description: string;
+}
+
+export interface Appointment {
+  id: string;
+  created_at: string;
+  updated_at: string;
   customer_id: string;
-  issue_date: string;
-  expiry_date: string;
+  staff_id?: string;
+  appointment_date: string;
+  start_time: string;
+  end_time: string;
+  title: string;
+  description: string;
   status: string;
-  subtotal: number;
-  total: number;
-  notes: string | null;
-  terms: string | null;
-  subject: string | null; // Add this field
-  requires_deposit: boolean;
-  deposit_amount: number;
-  deposit_percentage: number;
+}
+
+// Add interface for application user profiles
+export interface Profile {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string;
+  role: 'admin' | 'staff';
+  staff_id?: string;
   created_at: string;
   updated_at: string;
 }
 
+// Make sure QuotationItem has the category field
 export interface QuotationItem {
   id: string;
   quotation_id: string;
@@ -114,57 +72,27 @@ export interface QuotationItem {
   unit: string;
   unit_price: number;
   amount: number;
-  category?: string | null; // Added category field
+  category?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface Invoice {
+// Make sure Quotation has the subject field
+export interface Quotation {
   id: string;
-  reference_number: string;
-  quotation_id: string | null;
   customer_id: string;
+  reference_number: string;
   issue_date: string;
-  due_date: string;
+  expiry_date: string;
   status: string;
   subtotal: number;
-  tax_rate: number;
-  tax_amount: number;
   total: number;
-  notes: string | null;
-  terms: string | null;
-  is_deposit_invoice: boolean;
-  deposit_amount: number;
-  deposit_percentage: number;
-  payment_status: string;
+  notes?: string;
+  terms?: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface InvoiceItem {
-  id: string;
-  invoice_id: string;
-  description: string;
-  quantity: number;
-  unit: string;
-  unit_price: number;
-  amount: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Appointment {
-  id: string;
-  customer_id: string;
-  staff_id: string | null;
-  title: string;
-  description: string | null;
-  appointment_date: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  location: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
+  requires_deposit?: boolean;
+  deposit_amount?: number;
+  deposit_percentage?: number;
+  subject?: string;
 }

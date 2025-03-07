@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -70,7 +69,8 @@ export const appointmentService = {
       .from("appointments")
       .select("*")
       .eq("staff_id", staffId)
-      .order("appointment_date", { ascending: false });
+      .order("appointment_date", { ascending: true })
+      .order("start_time", { ascending: true });
 
     if (error) {
       console.error(`Error fetching appointments for staff ${staffId}:`, error);
