@@ -248,13 +248,6 @@ export default function Quotations() {
       )
     },
     {
-      header: "Customer",
-      accessorKey: "customer_name",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
-        <div>{row.original.customer_name}</div>
-      )
-    },
-    {
       header: "Unit #",
       accessorKey: "unit_number",
       cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
@@ -268,20 +261,6 @@ export default function Quotations() {
         <div className="text-right font-medium">
           RM {Number(row.original.total).toFixed(2)}
         </div>
-      )
-    },
-    {
-      header: "Date",
-      accessorKey: "issue_date",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
-        <div>{formatDate(row.original.issue_date)}</div>
-      )
-    },
-    {
-      header: "Valid Until",
-      accessorKey: "expiry_date",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
-        <div>{formatDate(row.original.expiry_date)}</div>
       )
     },
     {
@@ -374,6 +353,7 @@ export default function Quotations() {
       )
     }
   ];
+  
 
   return (
     <div className="page-container">
