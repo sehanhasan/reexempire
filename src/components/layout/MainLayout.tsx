@@ -69,8 +69,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     <div className="flex min-h-screen bg-background">
       <div className="sticky top-0 h-screen flex-shrink-0">
         <AppSidebar 
-          open={sidebarOpen} 
-          setOpen={setSidebarOpen} 
+          isOpen={sidebarOpen} 
+          onOpenChange={setSidebarOpen} 
           isAdmin={isAdmin}
           isStaff={isStaff}
           onLogout={handleLogout} 
@@ -80,7 +80,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="flex-1 overflow-auto">
         {isMobile && (
           <MobileHeader 
-            title={getPageTitle()} 
+            pageTitle={getPageTitle()} 
             onMenuClick={() => setSidebarOpen(true)} 
           />
         )}

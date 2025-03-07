@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "@/services/categoryService";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   DropdownMenu,
@@ -43,20 +45,8 @@ export default function Categories() {
   const { data: categories = [], refetch } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const categories = await categoryService.getAll();
-      
-      // Fetch subcategories for each category
-      const categoriesWithSubcategories = await Promise.all(
-        categories.map(async (category) => {
-          const subcategories = await categoryService.getSubcategoriesByCategoryId(category.id);
-          return {
-            ...category,
-            subcategories: subcategories || []
-          };
-        })
-      );
-      
-      return categoriesWithSubcategories;
+      // Fetch all categories with their subcategories
+      return await categoryService.getAll();
     }
   });
 

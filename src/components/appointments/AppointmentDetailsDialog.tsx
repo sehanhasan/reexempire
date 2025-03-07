@@ -5,21 +5,28 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User, MapPin, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
+import { Dispatch, SetStateAction } from "react";
 
 interface AppointmentDetailsDialogProps {
   open: boolean;
   onClose: () => void;
+  onOpenChange?: Dispatch<SetStateAction<boolean>>;
   appointment: Appointment | null;
-  customer: Customer | null;
-  assignedStaff: Staff | null;
+  customer?: Customer | null;
+  assignedStaff?: Staff | null;
+  staffName?: string;
+  readOnly?: boolean;
 }
 
 export function AppointmentDetailsDialog({ 
   open, 
-  onClose, 
+  onClose,
+  onOpenChange,
   appointment, 
   customer, 
-  assignedStaff 
+  assignedStaff,
+  staffName,
+  readOnly = false
 }: AppointmentDetailsDialogProps) {
   const navigate = useNavigate();
 
@@ -33,7 +40,13 @@ export function AppointmentDetailsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(value) => {
+      if (onOpenChange) {
+        onOpenChange(value);
+      } else {
+        if (!value) onClose();
+      }
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl">{appointment.title}</DialogTitle>
@@ -97,6 +110,16 @@ export function AppointmentDetailsDialog({
               </div>
             )}
 
+            {staffName && (
+              <div className="flex items-start gap-2">
+                <User className="h-4 w-4 mt-1 text-gray-500" />
+                <div>
+                  <p className="font-medium">Assigned Staff</p>
+                  <p className="text-sm">{staffName}</p>
+                </div>
+              </div>
+            )}
+
             {appointment.location && (
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 mt-1 text-gray-500" />
@@ -122,13 +145,15 @@ export function AppointmentDetailsDialog({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={() => {
-            onClose();
-            navigate(`/schedule/edit/${appointment.id}`);
-          }} className="gap-2">
-            <Edit className="h-4 w-4" />
-            Edit Appointment
-          </Button>
+          {!readOnly && (
+            <Button onClick={() => {
+              onClose();
+              navigate(`/schedule/edit/${appointment.id}`);
+            }} className="gap-2">
+              <Edit className="h-4 w-4" />
+              Edit Appointment
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

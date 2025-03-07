@@ -152,25 +152,60 @@ export default function AddCategory() {
     try {
       setIsSaving(true);
       
-      const formattedData = {
+      // Only include category name and description for the API call
+      const categoryData = {
         name: category.name,
-        description: category.description,
-        subcategories: subcategories.map(sub => ({
-          ...(sub.id ? { id: sub.id } : {}),
-          description: sub.description,
-          price: sub.price ? parseFloat(sub.price) : 0,
-          name: sub.description
-        }))
+        description: category.description
       };
       
       if (edit && categoryId) {
-        await categoryService.update(categoryId, formattedData);
+        await categoryService.update(categoryId, categoryData);
+        
+        // Handle subcategories separately
+        for (const sub of subcategories) {
+          if (sub.id) {
+            // Update existing subcategory
+            await supabase
+              .from("subcategories")
+              .update({
+                name: sub.description,
+                description: sub.description,
+                price: sub.price ? parseFloat(sub.price) : 0
+              })
+              .eq("id", sub.id);
+          } else {
+            // Create new subcategory
+            await supabase
+              .from("subcategories")
+              .insert({
+                name: sub.description,
+                description: sub.description,
+                price: sub.price ? parseFloat(sub.price) : 0,
+                category_id: categoryId
+              });
+          }
+        }
+        
         toast({
           title: "Success",
           description: "Category updated successfully"
         });
       } else {
-        await categoryService.create(formattedData);
+        // Create new category
+        const newCategory = await categoryService.create(categoryData);
+        
+        // Create subcategories
+        for (const sub of subcategories) {
+          await supabase
+            .from("subcategories")
+            .insert({
+              name: sub.description,
+              description: sub.description,
+              price: sub.price ? parseFloat(sub.price) : 0,
+              category_id: newCategory.id
+            });
+        }
+        
         toast({
           title: "Success",
           description: "New category created successfully"

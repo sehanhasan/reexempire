@@ -139,8 +139,8 @@ export default function StaffSchedule() {
                       <div className="flex-grow">
                         <div className="font-medium">{appointment.title}</div>
                         <div className="text-sm text-gray-500">
-                          {format(parseISO(appointment.start_time), "h:mm a")} - 
-                          {format(parseISO(appointment.end_time), "h:mm a")}
+                          {appointment.start_time.substring(0, 5)} - 
+                          {appointment.end_time.substring(0, 5)}
                         </div>
                         {appointment.location && (
                           <div className="text-sm text-gray-500 mt-1">
@@ -181,6 +181,7 @@ export default function StaffSchedule() {
       {selectedAppointment && (
         <AppointmentDetailsDialog 
           open={showAppointmentDetails}
+          onClose={() => setShowAppointmentDetails(false)}
           onOpenChange={setShowAppointmentDetails}
           appointment={selectedAppointment}
           staffName={staffData?.name || ""}
