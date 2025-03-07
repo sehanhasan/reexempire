@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -47,9 +46,9 @@ export default function Dashboard() {
         setCustomersMap(customersMapData);
 
         // Calculate total revenue from invoices - ensure we're working with numbers
-        const totalRevenue = invoices.reduce((sum: number, invoice) => {
-          const invoiceTotal = Number(invoice.total) || 0; // Converts to number, uses 0 if invalid
-          return sum + invoiceTotal;
+        const totalRevenue = invoices.reduce((sum, invoice) => {
+          // Convert both sum and invoice.total to numbers to fix the TypeScript error
+          return Number(sum) + Number(invoice.total || 0);
         }, 0);
 
         // Set stats
@@ -328,10 +327,10 @@ export default function Dashboard() {
       {/* Appointment Details Dialog */}
       <AppointmentDetailsDialog
         open={isAppointmentDetailOpen}
-        onOpenChange={setIsAppointmentDetailOpen}
+        onClose={() => setIsAppointmentDetailOpen(false)}
         appointment={selectedAppointment}
         customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
-        onEdit={navigateToEditAppointment}
+        assignedStaff={null}
       />
     </div>;
 }
