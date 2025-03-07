@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Staff } from "@/types/database";
 
@@ -36,13 +37,37 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
+    // Ensure join_date is set as it's required by Supabase
     if (!staff.join_date) {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
+    // Create a new object with required properties to satisfy TypeScript
+    const staffData = {
+      name: staff.name || "",
+      join_date: staff.join_date,
+      position: staff.position,
+      email: staff.email,
+      phone: staff.phone,
+      status: staff.status || "Active",
+      department: staff.department,
+      employment_type: staff.employment_type,
+      gender: staff.gender,
+      address: staff.address,
+      city: staff.city,
+      state: staff.state,
+      postal_code: staff.postal_code,
+      passport: staff.passport,
+      username: staff.username,
+      emergency_contact_name: staff.emergency_contact_name,
+      emergency_contact_relationship: staff.emergency_contact_relationship,
+      emergency_contact_phone: staff.emergency_contact_phone,
+      emergency_contact_email: staff.emergency_contact_email
+    };
+
     const { data, error } = await supabase
       .from("staff")
-      .insert(staff)
+      .insert(staffData)
       .select()
       .single();
 
