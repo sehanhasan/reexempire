@@ -64,6 +64,17 @@ export interface Staff {
   updated_at: string;
   username: string | null;
   passport: string | null;
+  gender: string | null;
+  department: string | null;
+  employment_type: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_relationship: string | null;
+  emergency_contact_phone: string | null;
+  emergency_contact_email: string | null;
 }
 
 export interface Quotation {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/utils/formatters";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
 
-export default function Dashboard() {
+const Dashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     customers: 0,
@@ -29,6 +29,10 @@ export default function Dashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
 
+  const calculateTotalRevenue = (invoices: Invoice[]) => {
+    return invoices.reduce((acc, invoice) => acc + Number(invoice.total), 0);
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -39,33 +43,13 @@ export default function Dashboard() {
           appointmentService.getAll()
         ]);
 
-        // Create customers map for easy lookup
         const customersMapData = {};
         customers.forEach(customer => {
           customersMapData[customer.id] = customer;
         });
         setCustomersMap(customersMapData);
 
-        // Calculate total revenue from invoices - ensure we're working with numbers
-        const totalRevenue = invoices.reduce((acc, invoice) => {
-          // Make sure acc is a number
-          const numAcc = typeof acc === 'number' ? acc : 0;
-          
-          // Handle invoice.total - ensuring it's a valid number
-          let invoiceTotal = 0;
-          if (typeof invoice.total === 'number') {
-            invoiceTotal = invoice.total;
-          } else if (invoice.total !== null && invoice.total !== undefined) {
-            // Convert the value to a number
-            const parsed = Number(invoice.total);
-            invoiceTotal = isNaN(parsed) ? 0 : parsed;
-          }
-          
-          // Return the sum as a number
-          return numAcc + invoiceTotal;
-        }, 0);
-
-        // Set stats
+        const totalRevenue = calculateTotalRevenue(invoices);
         setStats({
           customers: customers.length,
           quotations: quotations.length,
@@ -73,28 +57,23 @@ export default function Dashboard() {
           revenue: totalRevenue
         });
 
-        // Generate monthly revenue data
         const monthlyRevenueData = generateMonthlyRevenueData(invoices);
         setRevenueData(monthlyRevenueData);
 
-        // Get upcoming appointments/jobs (only future appointments)
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to start of day
-        const todayString = today.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-        
-        // Filter appointments that are today or in the future
+        today.setHours(0, 0, 0, 0);
+        const todayString = today.toISOString().split('T')[0];
+
         const upcomingAppts = appointments
           .filter(appt => appt.appointment_date >= todayString)
           .sort((a, b) => {
-            // Sort by date, then by start time
             if (a.appointment_date !== b.appointment_date) {
               return new Date(a.appointment_date) - new Date(b.appointment_date);
             }
             return a.start_time.localeCompare(b.start_time);
           })
           .slice(0, 5);
-        
-        // Enhance appointments with customer data
+
         const enhancedAppointments = upcomingAppts.map(appointment => {
           const customer = customersMapData[appointment.customer_id] || {};
           return {
@@ -103,10 +82,9 @@ export default function Dashboard() {
             unit_number: customer.unit_number || ""
           };
         });
-        
+
         setUpcomingAppointments(enhancedAppointments);
 
-        // Get recent quotations and invoices
         setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
         setRecentInvoices(invoices.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
         setLoading(false);
@@ -117,23 +95,18 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, []);
-  
-  // Function to generate monthly revenue data from invoices
+
   const generateMonthlyRevenueData = (invoices) => {
-    // Create a map of months (0-11) to initialize with zero revenue
     const monthlyRevenue = Array.from({ length: 12 }, (_, i) => ({
       month: new Date(0, i).toLocaleString('default', { month: 'short' }),
       revenue: 0
     }));
-    
-    // Sum revenues by month
+
     invoices.forEach(invoice => {
-      // Only count paid invoices
       if (invoice.payment_status === 'Paid' && invoice.issue_date) {
         const invoiceDate = new Date(invoice.issue_date);
         const monthIndex = invoiceDate.getMonth();
         
-        // Add invoice total to the corresponding month
         let amount = 0;
         if (typeof invoice.total === 'number') {
           amount = invoice.total;
@@ -145,59 +118,60 @@ export default function Dashboard() {
         monthlyRevenue[monthIndex].revenue += amount;
       }
     });
-    
+
     return monthlyRevenue;
   };
-  
+
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
-  
+
   const formatTime = (time) => {
     if (!time) return "";
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
-  
+
   const navigateToQuotation = id => {
     navigate(`/quotations/edit/${id}`);
   };
-  
+
   const navigateToInvoice = id => {
     navigate(`/invoices/edit/${id}`);
   };
-  
+
   const showAppointmentDetails = appointment => {
     setSelectedAppointment(appointment);
     setIsAppointmentDetailOpen(true);
   };
-  
+
   const navigateToEditAppointment = id => {
     navigate(`/schedule/edit/${id}`);
   };
-  
-  return <div className="page-container">
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
       <PageHeader title="Dashboard" description="Overview of your business performance" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <StatCard title="Total Customers" value={stats.customers} trend={{
-        value: 12,
-        isPositive: true
-      }} description="vs last month" icon={<Users className="h-4 w-4" />} onClick={() => navigate("/customers")} />
+          value: 12,
+          isPositive: true
+        }} description="vs last month" icon={<Users className="h-4 w-4" />} onClick={() => navigate("/customers")} />
         
         <StatCard title="Active Quotations" value={stats.quotations} trend={{
-        value: 4,
-        isPositive: true
-      }} description="vs last month" icon={<ReceiptText className="h-4 w-4" />} onClick={() => navigate("/quotations")} />
+          value: 4,
+          isPositive: true
+        }} description="vs last month" icon={<ReceiptText className="h-4 w-4" />} onClick={() => navigate("/quotations")} />
         
         <StatCard title="Invoices Issued" value={stats.invoices} trend={{
-        value: 2,
-        isPositive: true
-      }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
+          value: 2,
+          isPositive: true
+        }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
         
         <StatCard 
           title="Total Revenue" 
@@ -290,7 +264,6 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Quotations</CardTitle>
-              
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate("/quotations")}>
               View All
@@ -323,7 +296,6 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Invoices</CardTitle>
-              
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate("/invoices")}>
               View All
@@ -353,7 +325,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Appointment Details Dialog */}
       <AppointmentDetailsDialog
         open={isAppointmentDetailOpen}
         onClose={() => setIsAppointmentDetailOpen(false)}
@@ -361,5 +332,8 @@ export default function Dashboard() {
         customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
         assignedStaff={null}
       />
-    </div>;
-}
+    </div>
+  );
+};
+
+export default Dashboard;
