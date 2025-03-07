@@ -118,8 +118,7 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, []);
-  
-  // Generate revenue data for the past 6 months based on paid invoices
+
   const generateRevenueByMonth = (paidInvoices) => {
     const data = [];
     
@@ -145,38 +144,38 @@ export default function Dashboard() {
     
     return data;
   };
-  
+
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
-  
+
   const formatTime = (time) => {
     if (!time) return "";
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
-  
+
   const navigateToQuotation = id => {
     navigate(`/quotations/edit/${id}`);
   };
-  
+
   const navigateToInvoice = id => {
     navigate(`/invoices/edit/${id}`);
   };
-  
+
   const showAppointmentDetails = appointment => {
     setSelectedAppointment(appointment);
     setIsAppointmentDetailOpen(true);
   };
-  
+
   const navigateToEditAppointment = id => {
     navigate(`/schedule/edit/${id}`);
   };
-  
+
   const salesByCategory = [{
     name: "Bathroom",
     value: 35
@@ -190,7 +189,7 @@ export default function Dashboard() {
     name: "Electrical",
     value: 15
   }];
-  
+
   return (
     <div className="page-container">
       <PageHeader title="Dashboard" description="Overview of your business performance" />
@@ -385,7 +384,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Appointment Details Dialog */}
       <AppointmentDetailsDialog
         open={isAppointmentDetailOpen}
         onClose={() => setIsAppointmentDetailOpen(false)}

@@ -11,6 +11,7 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 export default function EditQuotation() {
   const navigate = useNavigate();
   const {
@@ -44,14 +45,12 @@ export default function EditQuotation() {
     depositPercentage: 30
   });
 
-  // Fetch quotation data
   useEffect(() => {
     if (!id) return;
     const fetchQuotationData = async () => {
       try {
         setIsLoading(true);
 
-        // Fetch quotation details
         const quotation = await quotationService.getById(id);
         if (quotation) {
           setCustomerId(quotation.customer_id);
@@ -61,20 +60,17 @@ export default function EditQuotation() {
           setNotes(quotation.notes || "");
           setStatus(quotation.status);
 
-          // Set deposit info
           setDepositInfo({
             requiresDeposit: quotation.requires_deposit || false,
             depositAmount: quotation.deposit_amount || 0,
             depositPercentage: quotation.deposit_percentage || 30
           });
 
-          // Fetch customer details
           if (quotation.customer_id) {
             const customerData = await customerService.getById(quotation.customer_id);
             setCustomer(customerData);
           }
 
-          // Fetch quotation items
           const quotationItems = await quotationService.getItemsByQuotationId(id);
           if (quotationItems && quotationItems.length > 0) {
             setItems(quotationItems.map((item, index) => ({
@@ -102,10 +98,12 @@ export default function EditQuotation() {
     };
     fetchQuotationData();
   }, [id, navigate]);
+
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerId || !id) {
@@ -117,7 +115,6 @@ export default function EditQuotation() {
       return;
     }
 
-    // Validate that there are at least one item with a value
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
@@ -128,15 +125,18 @@ export default function EditQuotation() {
       return;
     }
 
-    // Calculate totals
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + qty * item.unitPrice;
     }, 0);
+
     try {
       setIsSubmitting(true);
 
-      // Update quotation in database
+      const depositPercentageValue = typeof depositInfo.depositPercentage === 'string' 
+        ? parseFloat(depositInfo.depositPercentage) 
+        : depositInfo.depositPercentage;
+
       const quotation = {
         customer_id: customerId,
         reference_number: documentNumber,
@@ -145,18 +145,16 @@ export default function EditQuotation() {
         status: status,
         subtotal: subtotal,
         total: subtotal,
-        // No tax for quotations
         notes: notes || null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
+        deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
       };
+
       await quotationService.update(id, quotation);
 
-      // Delete all existing items and add the new ones
       await quotationService.deleteAllItems(id);
 
-      // Add updated quotation items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -170,12 +168,12 @@ export default function EditQuotation() {
           });
         }
       }
+
       toast({
         title: "Quotation Updated",
         description: `Quotation for ${customer?.name} has been updated successfully.`
       });
 
-      // Navigate back to the quotations list
       navigate("/quotations");
     } catch (error) {
       console.error("Error updating quotation:", error);
@@ -188,6 +186,7 @@ export default function EditQuotation() {
       setIsSubmitting(false);
     }
   };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
@@ -200,7 +199,6 @@ export default function EditQuotation() {
         description: `Quotation status has been updated to "${newStatus}".`
       });
 
-      // If status is changed to "Accepted", show option to convert to invoice
       if (newStatus === "Accepted") {
         toast({
           title: "Quotation Accepted",
@@ -216,14 +214,15 @@ export default function EditQuotation() {
       });
     }
   };
+
   const handleConvertToInvoice = () => {
-    // Navigate to create invoice page with quotation ID
     navigate("/invoices/create", {
       state: {
         quotationId: id
       }
     });
   };
+
   if (isLoading) {
     return <div className="page-container">
         <PageHeader title="Edit Quotation" description="Loading quotation data..." />
@@ -232,6 +231,7 @@ export default function EditQuotation() {
         </div>
       </div>;
   }
+
   return <div className="page-container">
       <PageHeader title="Edit Quotation" description="Update an existing quotation." actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
@@ -240,7 +240,6 @@ export default function EditQuotation() {
             </Button>
           </div>} />
 
-      {/* Status actions bar - shown for "Sent" status */}
       {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <div>
@@ -260,7 +259,6 @@ export default function EditQuotation() {
           </div>
         </div>}
 
-      {/* Convert to Invoice button - shown for "Accepted" status */}
       {status === "Accepted" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <div>

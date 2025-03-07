@@ -156,7 +156,7 @@ export default function Invoices() {
       });
       
       // Export to CSV
-      exportService.exportToCSV(exportData, 'invoices');
+      exportService.downloadCSV(exportData, 'invoices');
       
       toast({
         title: "Export Complete",

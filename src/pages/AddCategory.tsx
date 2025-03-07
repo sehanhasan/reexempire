@@ -53,12 +53,13 @@ export default function AddCategory() {
         });
         
         if (data.subcategories && data.subcategories.length > 0) {
-          setSubcategories(data.subcategories.map(sub => ({
+          const formSubcategories = data.subcategories.map(sub => ({
             id: sub.id,
             tempId: Date.now(),
             price: sub.price ? sub.price.toString() : "",
             description: sub.description || ""
-          })));
+          }));
+          setSubcategories(formSubcategories);
         }
       }
       setLoading(false);
@@ -162,7 +163,7 @@ export default function AddCategory() {
         }))
       };
       
-      if (edit) {
+      if (edit && categoryId) {
         // Update existing category
         await categoryService.update(categoryId, formattedData);
         toast({

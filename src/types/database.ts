@@ -18,7 +18,7 @@ export interface Subcategory {
   updated_at: string;
   price_options?: PricingOption[]; // Add this property for pricing options
   price?: number; // Add this for direct price access
-  tempId?: number | string; // Used in forms
+  tempId?: number | string; // Used in forms - can be number or string
 }
 
 export interface PricingOption {
