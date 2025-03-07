@@ -14,7 +14,7 @@ import {
 interface DatePickerProps {
   mode?: "single" | "range" | "multiple";
   selected?: Date | Date[] | undefined;
-  onSelect?: (date: Date | undefined) => void;
+  onSelect?: (date: Date | Date[] | { from: Date; to?: Date } | undefined) => void;
   className?: string;
   disabled?: (date: Date) => boolean;
 }
@@ -32,7 +32,7 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={selected as Date}
-          onSelect={onSelect}
+          onSelect={onSelect as (date: Date | undefined) => void}
           disabled={disabled}
           className="pointer-events-auto"
         />
@@ -41,7 +41,7 @@ export function DatePicker({
         <Calendar
           mode="range"
           selected={selected as { from: Date; to?: Date }}
-          onSelect={onSelect as (date: { from: Date; to?: Date }) => void}
+          onSelect={onSelect as (date: { from: Date; to?: Date } | undefined) => void}
           disabled={disabled}
           className="pointer-events-auto"
         />
@@ -50,7 +50,7 @@ export function DatePicker({
         <Calendar
           mode="multiple"
           selected={selected as Date[]}
-          onSelect={onSelect as (date: Date[]) => void}
+          onSelect={onSelect as (date: Date[] | undefined) => void}
           disabled={disabled}
           className="pointer-events-auto"
         />
@@ -58,4 +58,3 @@ export function DatePicker({
     </div>
   );
 }
-
