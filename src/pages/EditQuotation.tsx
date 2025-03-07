@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -12,30 +11,33 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 export default function EditQuotation() {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
-  const [items, setItems] = useState<QuotationItem[]>([
-    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
-  ]);
-
+  const [items, setItems] = useState<QuotationItem[]>([{
+    id: 1,
+    description: "",
+    category: "",
+    quantity: 1,
+    unit: "Unit",
+    unitPrice: 0,
+    amount: 0
+  }]);
   const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [quotationDate, setQuotationDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [validUntil, setValidUntil] = useState(
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  );
+  const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split("T")[0]);
+  const [validUntil, setValidUntil] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [status, setStatus] = useState("Draft");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
     depositAmount: 0,
@@ -45,11 +47,10 @@ export default function EditQuotation() {
   // Fetch quotation data
   useEffect(() => {
     if (!id) return;
-
     const fetchQuotationData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch quotation details
         const quotation = await quotationService.getById(id);
         if (quotation) {
@@ -59,20 +60,20 @@ export default function EditQuotation() {
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
           setStatus(quotation.status);
-          
+
           // Set deposit info
           setDepositInfo({
             requiresDeposit: quotation.requires_deposit || false,
             depositAmount: quotation.deposit_amount || 0,
             depositPercentage: quotation.deposit_percentage || 30
           });
-          
+
           // Fetch customer details
           if (quotation.customer_id) {
             const customerData = await customerService.getById(quotation.customer_id);
             setCustomer(customerData);
           }
-          
+
           // Fetch quotation items
           const quotationItems = await quotationService.getItemsByQuotationId(id);
           if (quotationItems && quotationItems.length > 0) {
@@ -87,7 +88,6 @@ export default function EditQuotation() {
             })));
           }
         }
-        
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching quotation:", error);
@@ -95,52 +95,47 @@ export default function EditQuotation() {
         toast({
           title: "Error",
           description: "Failed to fetch quotation data. Please try again.",
-          variant: "destructive",
+          variant: "destructive"
         });
         navigate("/quotations");
       }
     };
-    
     fetchQuotationData();
   }, [id, navigate]);
-
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!customerId || !id) {
       toast({
         title: "Missing Information",
         description: "Please select a customer before updating the quotation.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-    
+
     // Validate that there are at least one item with a value
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
         title: "Missing Items",
         description: "Please add at least one item to the quotation.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-    
+
     // Calculate totals
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-      return sum + (qty * item.unitPrice);
+      return sum + qty * item.unitPrice;
     }, 0);
-    
     try {
       setIsSubmitting(true);
-      
+
       // Update quotation in database
       const quotation = {
         customer_id: customerId,
@@ -149,18 +144,18 @@ export default function EditQuotation() {
         expiry_date: validUntil,
         status: status,
         subtotal: subtotal,
-        total: subtotal, // No tax for quotations
+        total: subtotal,
+        // No tax for quotations
         notes: notes || null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
       };
-      
       await quotationService.update(id, quotation);
-      
+
       // Delete all existing items and add the new ones
       await quotationService.deleteAllItems(id);
-      
+
       // Add updated quotation items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
@@ -175,12 +170,11 @@ export default function EditQuotation() {
           });
         }
       }
-      
       toast({
         title: "Quotation Updated",
-        description: `Quotation for ${customer?.name} has been updated successfully.`,
+        description: `Quotation for ${customer?.name} has been updated successfully.`
       });
-      
+
       // Navigate back to the quotations list
       navigate("/quotations");
     } catch (error) {
@@ -188,30 +182,29 @@ export default function EditQuotation() {
       toast({
         title: "Error",
         description: "There was an error updating the quotation. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
-    
     try {
-      await quotationService.update(id, { status: newStatus });
+      await quotationService.update(id, {
+        status: newStatus
+      });
       setStatus(newStatus);
-      
       toast({
         title: "Status Updated",
-        description: `Quotation status has been updated to "${newStatus}".`,
+        description: `Quotation status has been updated to "${newStatus}".`
       });
-      
+
       // If status is changed to "Accepted", show option to convert to invoice
       if (newStatus === "Accepted") {
         toast({
           title: "Quotation Accepted",
-          description: "You can now convert this quotation to an invoice.",
+          description: "You can now convert this quotation to an invoice."
         });
       }
     } catch (error) {
@@ -219,129 +212,76 @@ export default function EditQuotation() {
       toast({
         title: "Error",
         description: "Failed to update quotation status. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleConvertToInvoice = () => {
     // Navigate to create invoice page with quotation ID
-    navigate("/invoices/create", { state: { quotationId: id } });
+    navigate("/invoices/create", {
+      state: {
+        quotationId: id
+      }
+    });
   };
-
   if (isLoading) {
-    return (
-      <div className="page-container">
-        <PageHeader
-          title="Edit Quotation"
-          description="Loading quotation data..."
-        />
+    return <div className="page-container">
+        <PageHeader title="Edit Quotation" description="Loading quotation data..." />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="page-container">
-      <PageHeader
-        title="Edit Quotation"
-        description="Update an existing quotation."
-        actions={
-          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+  return <div className="page-container">
+      <PageHeader title="Edit Quotation" description="Update an existing quotation." actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
-          </div>
-        }
-      />
+          </div>} />
 
       {/* Status actions bar - shown for "Sent" status */}
-      {status === "Sent" && (
-        <div className="bg-muted/50 rounded-md p-4 mt-4">
+      {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <div>
               <h3 className="font-medium">Quotation Status: <span className="text-amber-600">Sent</span></h3>
               <p className="text-sm text-muted-foreground">Update the status of this quotation</p>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                className="border-red-200 bg-red-50 hover:bg-red-100 text-red-600"
-                onClick={() => handleStatusChange("Rejected")}
-              >
+              <Button variant="outline" className="border-red-200 bg-red-50 hover:bg-red-100 text-red-600" onClick={() => handleStatusChange("Rejected")}>
                 <XCircle className="mr-2 h-4 w-4" />
                 Mark as Rejected
               </Button>
-              <Button 
-                variant="outline"
-                className="border-green-200 bg-green-50 hover:bg-green-100 text-green-600"
-                onClick={() => handleStatusChange("Accepted")}
-              >
+              <Button variant="outline" className="border-green-200 bg-green-50 hover:bg-green-100 text-green-600" onClick={() => handleStatusChange("Accepted")}>
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Mark as Accepted
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Convert to Invoice button - shown for "Accepted" status */}
-      {status === "Accepted" && (
-        <div className="bg-muted/50 rounded-md p-4 mt-4">
+      {status === "Accepted" && <div className="bg-muted/50 rounded-md p-4 mt-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <div>
               <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
               <p className="text-sm text-muted-foreground">This quotation has been accepted by the customer</p>
             </div>
             <div>
-              <Button 
-                onClick={handleConvertToInvoice}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
+              <Button onClick={handleConvertToInvoice} className="bg-blue-600 hover:bg-blue-700">
                 <FileText className="mr-2 h-4 w-4" />
                 Convert to Invoice
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        </div>}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <CustomerInfoCard 
-          customerId={customerId}
-          setCustomer={setCustomerId}
-          documentType="quotation"
-          documentNumber={documentNumber}
-          setDocumentNumber={setDocumentNumber}
-          documentDate={quotationDate}
-          setDocumentDate={setQuotationDate}
-          expiryDate={validUntil}
-          setExpiryDate={setValidUntil}
-          subject={subject}
-          setSubject={setSubject}
-        />
+        <CustomerInfoCard customerId={customerId} setCustomer={setCustomerId} documentType="quotation" documentNumber={documentNumber} setDocumentNumber={setDocumentNumber} documentDate={quotationDate} setDocumentDate={setQuotationDate} expiryDate={validUntil} setExpiryDate={setValidUntil} subject={subject} setSubject={setSubject} />
         
-        <QuotationItemsCard 
-          items={items}
-          setItems={setItems}
-          depositInfo={depositInfo}
-          setDepositInfo={setDepositInfo}
-          calculateItemAmount={calculateItemAmount}
-        />
+        <QuotationItemsCard items={items} setItems={setItems} depositInfo={depositInfo} setDepositInfo={setDepositInfo} calculateItemAmount={calculateItemAmount} />
         
-        <AdditionalInfoCard 
-          notes={notes}
-          setNotes={setNotes}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/quotations")}
-          documentType="quotation"
-          isSubmitting={isSubmitting}
-          saveButtonText="Update Quotation"
-        />
+        <AdditionalInfoCard notes={notes} setNotes={setNotes} onSubmit={handleSubmit} onCancel={() => navigate("/quotations")} documentType="quotation" isSubmitting={isSubmitting} saveButtonText="Update Quotation" />
       </form>
-    </div>
-  );
+    </div>;
 }
