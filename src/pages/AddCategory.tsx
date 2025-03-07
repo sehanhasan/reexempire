@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -15,6 +16,7 @@ interface SubcategoryForm {
   tempId: number | string;
   price: string;
   description: string;
+  name?: string;
 }
 
 export default function AddCategory() {
@@ -22,6 +24,7 @@ export default function AddCategory() {
   const [searchParams] = useSearchParams();
   const categoryId = searchParams.get("id");
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [category, setCategory] = useState({
     name: "",
     description: ""
@@ -53,9 +56,10 @@ export default function AddCategory() {
         if (data.subcategories && data.subcategories.length > 0) {
           const formSubcategories = data.subcategories.map(sub => ({
             id: sub.id,
-            tempId: Date.now(),
+            tempId: sub.id || Date.now(),
             price: sub.price ? sub.price.toString() : "",
-            description: sub.description || ""
+            description: sub.description || "",
+            name: sub.name || sub.description || ""
           }));
           setSubcategories(formSubcategories);
         }
@@ -146,7 +150,7 @@ export default function AddCategory() {
     if (!validate()) return;
     
     try {
-      setLoading(true);
+      setIsSaving(true);
       
       const formattedData = {
         name: category.name,
@@ -173,7 +177,6 @@ export default function AddCategory() {
         });
       }
       
-      setLoading(false);
       navigate("/categories");
     } catch (error) {
       console.error("Error saving category:", error);
@@ -182,14 +185,14 @@ export default function AddCategory() {
         description: `Failed to ${edit ? "update" : "create"} category. Please try again.`,
         variant: "destructive"
       });
-      setLoading(false);
+    } finally {
+      setIsSaving(false);
     }
   };
   
   return <div className="page-container">
       <PageHeader 
         title={edit ? "Edit Category" : "Add Category"} 
-        description={edit ? "Update existing category and subcategories" : "Create a new category with subcategories"} 
         actions={
           <Button variant="outline" onClick={() => navigate("/categories")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -203,9 +206,6 @@ export default function AddCategory() {
           <Card>
             <CardHeader>
               <CardTitle>Category Information</CardTitle>
-              <CardDescription>
-                Enter the basic information for this category.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -225,9 +225,6 @@ export default function AddCategory() {
           <Card>
             <CardHeader>
               <CardTitle>Subcategories</CardTitle>
-              <CardDescription>
-                Add subcategories and pricing for this category.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {subcategories.map((subcategory, index) => (
@@ -284,8 +281,8 @@ export default function AddCategory() {
                 <Button type="button" variant="outline" onClick={() => navigate("/categories")}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Saving...' : edit ? 'Update Category' : 'Add Category'}
+                <Button type="submit" disabled={loading || isSaving}>
+                  {isSaving ? 'Saving...' : edit ? 'Update Category' : 'Add Category'}
                 </Button>
               </div>
             </CardFooter>

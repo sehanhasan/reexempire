@@ -1,22 +1,32 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { Trash } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { QuotationItem } from "./types";
+import { Category } from "@/types/database";
 
 interface ItemsTableProps {
   items: QuotationItem[];
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
   showDescription?: boolean;
+  categories?: Category[];
 }
 
 export function ItemsTable({ 
   items, 
   handleItemChange, 
   removeItem,
-  showDescription = true 
+  showDescription = true,
+  categories = []
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
   
@@ -39,7 +49,6 @@ export function ItemsTable({
                   size="icon"
                   className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                   onClick={() => removeItem(item.id)}
-                  disabled={items.length <= 1}
                 >
                   <Trash className="h-4 w-4" />
                 </Button>
@@ -50,12 +59,20 @@ export function ItemsTable({
                 
                 <div className="space-y-2">
                   <label className="block text-xs mb-1 text-slate-600 font-medium">Category</label>
-                  <Input
-                    placeholder="Enter category"
+                  <Select
                     value={item.category || ""}
-                    onChange={(e) => handleItemChange(item.id, 'category', e.target.value)}
-                    className="h-10"
-                  />
+                    onValueChange={(value) => handleItemChange(item.id, 'category', value)}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Category</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="space-y-2">
@@ -125,12 +142,20 @@ export function ItemsTable({
                   {index + 1}
                 </td>
                 <td className="py-3 px-2">
-                  <Input
-                    placeholder="Enter category"
+                  <Select
                     value={item.category || ""}
-                    onChange={(e) => handleItemChange(item.id, 'category', e.target.value)}
-                    className="h-10"
-                  />
+                    onValueChange={(value) => handleItemChange(item.id, 'category', value)}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Category</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>{category.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </td>
                 <td className="py-3 px-2">
                   <Input
@@ -170,7 +195,6 @@ export function ItemsTable({
                     size="icon"
                     className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50"
                     onClick={() => removeItem(item.id)}
-                    disabled={items.length <= 1}
                   >
                     <Trash className="h-4 w-4" />
                   </Button>

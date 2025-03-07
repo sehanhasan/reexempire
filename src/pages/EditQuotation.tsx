@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -55,6 +56,7 @@ export default function EditQuotation() {
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
           setStatus(quotation.status);
+          setSubject(quotation.subject || "");
 
           setDepositInfo({
             requiresDeposit: quotation.requires_deposit || false,
@@ -72,7 +74,7 @@ export default function EditQuotation() {
             setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
-              category: "",
+              category: item.category || "",
               quantity: item.quantity,
               unit: item.unit,
               unitPrice: item.unit_price,
@@ -161,7 +163,8 @@ export default function EditQuotation() {
             quantity: qty,
             unit: item.unit,
             unit_price: item.unitPrice,
-            amount: qty * item.unitPrice
+            amount: qty * item.unitPrice,
+            category: item.category || null
           });
         }
       }
@@ -222,7 +225,7 @@ export default function EditQuotation() {
 
   if (isLoading) {
     return <div className="page-container">
-        <PageHeader title="Edit Quotation" description="Loading quotation data..." />
+        <PageHeader title="Edit Quotation" />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
         </div>
@@ -232,7 +235,6 @@ export default function EditQuotation() {
   return <div className="page-container">
       <PageHeader 
         title="Edit Quotation" 
-        description="Update an existing quotation." 
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
