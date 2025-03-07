@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Category, Subcategory, PricingOption, CategoryItem } from "@/types/database";
 
@@ -119,17 +120,17 @@ export const categoryService = {
 
     // If there are subcategories, create them
     if (category.subcategories && category.subcategories.length > 0) {
-      const subcategoriesToCreate = category.subcategories.map(sub => ({
-        category_id: categoryData.id,
-        name: sub.name,
-        description: sub.description,
-      }));
-
       // Insert each subcategory individually
-      for (const sub of subcategoriesToCreate) {
+      for (const sub of category.subcategories) {
+        const subcategoryData = {
+          category_id: categoryData.id,  // Make sure category_id is set
+          name: sub.name || sub.description, // Ensure name is set
+          description: sub.description
+        };
+
         const { error: subcatError } = await supabase
           .from("subcategories")
-          .insert(sub);
+          .insert(subcategoryData);
 
         if (subcatError) {
           console.error("Error creating subcategory:", subcatError);
@@ -156,7 +157,6 @@ export const categoryService = {
     }
 
     // Handle subcategories - this is a simplified approach
-    // For a real app, we might want more sophisticated logic to update/delete existing ones
     if (category.subcategories && category.subcategories.length > 0) {
       for (const sub of category.subcategories) {
         if (sub.id) {
@@ -164,7 +164,7 @@ export const categoryService = {
           const { error: updateError } = await supabase
             .from("subcategories")
             .update({
-              name: sub.name,
+              name: sub.name || sub.description,
               description: sub.description
             })
             .eq("id", sub.id);
@@ -175,13 +175,15 @@ export const categoryService = {
           }
         } else {
           // Create new subcategory
+          const subcategoryData = {
+            category_id: id,
+            name: sub.name || sub.description,
+            description: sub.description
+          };
+
           const { error: createError } = await supabase
             .from("subcategories")
-            .insert([{
-              category_id: id,
-              name: sub.name,
-              description: sub.description
-            }]);
+            .insert(subcategoryData);
 
           if (createError) {
             console.error("Error creating new subcategory:", createError);

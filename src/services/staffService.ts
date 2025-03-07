@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Staff } from "@/types/database";
 
@@ -33,17 +32,14 @@ export const staffService = {
   },
 
   async create(staff: Partial<Staff>): Promise<Staff> {
-    // Ensure name is present as it's required by the database
     if (!staff.name && staff.first_name && staff.last_name) {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
-    // Make sure join_date is present if not provided
     if (!staff.join_date) {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
-    // Fix the insert operation - make sure staff is passed correctly
     const { data, error } = await supabase
       .from("staff")
       .insert(staff)
@@ -59,7 +55,6 @@ export const staffService = {
   },
 
   async update(id: string, staff: Partial<Staff>): Promise<Staff> {
-    // Ensure name is present if first_name and last_name are provided
     if (staff.first_name && staff.last_name) {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }

@@ -11,7 +11,7 @@ export interface Category {
 
 export interface Subcategory {
   id?: string;
-  category_id?: string;
+  category_id: string; // Make this required as per Supabase schema
   name: string;
   description: string | null;
   created_at?: string;
@@ -63,7 +63,7 @@ export interface Staff {
   email: string | null;
   phone: string | null;
   status: string;
-  join_date?: string;
+  join_date: string; // This is required as per Supabase schema
   created_at: string;
   updated_at: string;
   
