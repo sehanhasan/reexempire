@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -46,23 +47,22 @@ export default function Dashboard() {
         setCustomersMap(customersMapData);
 
         // Calculate total revenue from invoices - ensure we're working with numbers
-        const totalRevenue = invoices.reduce((sum, invoice) => {
-          // Ensure sum is a number
-          const numericSum = typeof sum === 'number' ? sum : 0;
+        const totalRevenue = invoices.reduce((acc, invoice) => {
+          // Explicitly convert the accumulator to a number to avoid type errors
+          const numAcc = typeof acc === 'number' ? acc : 0;
           
-          // Ensure invoice.total is a number
+          // Handle invoice.total - ensuring it's a valid number
           let invoiceTotal = 0;
           if (typeof invoice.total === 'number') {
             invoiceTotal = invoice.total;
           } else if (invoice.total !== null && invoice.total !== undefined) {
-            // Try to convert to number if it's a string or other convertible type
-            invoiceTotal = Number(invoice.total);
-            // If conversion results in NaN, use 0
-            if (isNaN(invoiceTotal)) invoiceTotal = 0;
+            // Convert the value to a number
+            const parsed = Number(invoice.total);
+            invoiceTotal = isNaN(parsed) ? 0 : parsed;
           }
           
-          // Now both operands are guaranteed to be numbers
-          return numericSum + invoiceTotal;
+          // Return the sum as a number
+          return numAcc + invoiceTotal;
         }, 0);
 
         // Set stats
