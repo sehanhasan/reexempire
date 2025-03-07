@@ -14,10 +14,10 @@ export const staffService = {
       throw error;
     }
 
-    // Convert the data to Staff type with notes property
+    // Convert the data to Staff type
     const staffWithNotes = data?.map(staff => ({
       ...staff,
-      notes: staff.notes || null // Use existing notes or null
+      notes: null // Add notes property with null default
     })) || [];
 
     return staffWithNotes;
@@ -38,7 +38,7 @@ export const staffService = {
     // Add notes property to staff data
     return data ? {
       ...data,
-      notes: data.notes || null // Use existing notes or null
+      notes: null // Add notes property with null default
     } : null;
   },
 
@@ -52,8 +52,12 @@ export const staffService = {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
-    // Extract notes to handle separately
-    const { notes, ...staffDataForInsert } = {
+    // Create a new object with required properties for database insert
+    // Store notes separately as it's not in the database schema
+    const notesValue = staff.notes;
+    
+    // Remove notes from the object to be inserted
+    const staffDataForInsert = {
       name: staff.name || "",
       join_date: staff.join_date,
       position: staff.position || null,
@@ -74,8 +78,7 @@ export const staffService = {
       emergency_contact_phone: staff.emergency_contact_phone || null,
       emergency_contact_email: staff.emergency_contact_email || null,
       first_name: staff.first_name || "",
-      last_name: staff.last_name || "",
-      notes: staff.notes || null // Include notes in the extraction
+      last_name: staff.last_name || ""
     };
 
     try {
@@ -93,7 +96,7 @@ export const staffService = {
       // Add notes property to returned data
       return {
         ...data,
-        notes: notes
+        notes: notesValue
       };
     } catch (error) {
       console.error("Failed to create staff member:", error);
@@ -106,7 +109,10 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
-    // Extract notes to handle separately
+    // Store notes separately as it's not in the database schema
+    const notesValue = staff.notes;
+    
+    // Create a new object without notes for database update
     const { notes, ...staffDataForUpdate } = staff;
 
     try {
@@ -125,7 +131,7 @@ export const staffService = {
       // Add notes property to returned data
       return {
         ...data,
-        notes: notes || null
+        notes: notesValue
       };
     } catch (error) {
       console.error(`Failed to update staff member with id ${id}:`, error);
