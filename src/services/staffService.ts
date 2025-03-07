@@ -32,7 +32,12 @@ export const staffService = {
     return data;
   },
 
-  async create(staff: Omit<Staff, "id" | "created_at" | "updated_at">): Promise<Staff> {
+  async create(staff: Partial<Staff>): Promise<Staff> {
+    // Ensure name is present as it's required by the database
+    if (!staff.name && staff.first_name && staff.last_name) {
+      staff.name = `${staff.first_name} ${staff.last_name}`;
+    }
+
     const { data, error } = await supabase
       .from("staff")
       .insert([staff])
@@ -47,7 +52,12 @@ export const staffService = {
     return data;
   },
 
-  async update(id: string, staff: Partial<Omit<Staff, "id" | "created_at" | "updated_at">>): Promise<Staff> {
+  async update(id: string, staff: Partial<Staff>): Promise<Staff> {
+    // Ensure name is present if first_name and last_name are provided
+    if (staff.first_name && staff.last_name) {
+      staff.name = `${staff.first_name} ${staff.last_name}`;
+    }
+
     const { data, error } = await supabase
       .from("staff")
       .update(staff)

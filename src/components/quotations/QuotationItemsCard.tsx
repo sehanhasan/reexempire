@@ -96,7 +96,7 @@ export function QuotationItemsCard({
     setDepositInfo({
       ...depositInfo,
       depositAmount: value,
-      depositPercentage: total > 0 ? value / total * 100 : depositInfo.depositPercentage
+      depositPercentage: total > 0 ? value / total * 100 : 0
     });
   };
 
@@ -168,7 +168,7 @@ export function QuotationItemsCard({
                       <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={checked => setDepositInfo({
                     ...depositInfo,
                     requiresDeposit: !!checked,
-                    depositPercentage: "",
+                    depositPercentage: 0,
                     depositAmount: 0
                   })} />
                       <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
@@ -182,7 +182,7 @@ export function QuotationItemsCard({
                           <div className="space-y-1">
                             <Label htmlFor="depositPercentage" className="text-xs">Percentage</Label>
                             <div className="relative">
-                              <Input id="depositPercentage" type="number" min="0" max="100" value={depositInfo.depositPercentage} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value))} className="pr-7 h-10 text-sm" />
+                              <Input id="depositPercentage" type="number" min="0" max="100" value={depositInfo.depositPercentage || ""} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value) || 0)} className="pr-7 h-10 text-sm" />
                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
                             </div>
                           </div>

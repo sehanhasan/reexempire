@@ -15,5 +15,5 @@ export type InvoiceItem = ItemBase;
 export interface DepositInfo {
   requiresDeposit: boolean;
   depositAmount: number;
-  depositPercentage: number;
+  depositPercentage: number | string;
 }
