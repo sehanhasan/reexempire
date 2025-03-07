@@ -1,7 +1,8 @@
 
-export { categoryService } from "./categoryService";
-export { customerService } from "./customerService";
-export { invoiceService } from "./invoiceService";
-export { quotationService } from "./quotationService";
-export { staffService } from "./staffService";
-export { appointmentService } from "./appointmentService";
+// Export all services from this index file
+export * from "./appointmentService";
+export * from "./categoryService";
+export * from "./customerService";
+export * from "./invoiceService";
+export * from "./quotationService";
+export * from "./staffService";

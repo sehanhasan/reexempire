@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 import {
@@ -32,7 +33,7 @@ const Financials = () => {
 
   useEffect(() => {
     if (data) {
-      setInvoices(data);
+      setInvoices(data as Invoice[]);
     }
   }, [data]);
 

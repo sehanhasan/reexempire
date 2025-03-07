@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +26,7 @@ import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
 
-export default function AddAppointment() {
+const AddAppointment = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
@@ -48,11 +47,25 @@ export default function AddAppointment() {
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
   
   // Fetch staff members
-  const { data: staffMembers = [], isLoading: isLoadingStaff } = useQuery({
-    queryKey: ['staff'],
+  const {
+    data: staffData,
+    isLoading: isStaffLoading,
+    error: staffError,
+  } = useQuery({
+    queryKey: ["staff"],
     queryFn: staffService.getAll,
   });
-  
+
+  // Fetch customer members
+  const {
+    data: customersData,
+    isLoading: isCustomersLoading,
+    error: customersError,
+  } = useQuery({
+    queryKey: ["customers"],
+    queryFn: customerService.getAll,
+  });
+
   // Fetch appointment data when in edit mode
   useEffect(() => {
     if (isEditMode) {
@@ -118,6 +131,11 @@ export default function AddAppointment() {
     }));
   };
   
+  const handleCustomerChange = (customerId: string) => {
+    const customer = customersData?.find((c) => c.id === customerId);
+    setSelectedCustomer(customer);
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -158,7 +176,7 @@ export default function AddAppointment() {
       if (Object.keys(staffNotes).length > 0) {
         const staffNotesText = Object.entries(staffNotes)
           .map(([staffId, note]) => {
-            const staffMember = staffMembers.find((staff: Staff) => staff.id === staffId);
+            const staffMember = staffData.find((staff: Staff) => staff.id === staffId);
             return `${staffMember?.name || 'Staff'}: ${note}`;
           })
           .join('\n\n');
@@ -305,7 +323,7 @@ export default function AddAppointment() {
                 <div className="text-center py-4">Loading staff members...</div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {staffMembers.map((staff: Staff) => (
+                  {staffData && staffData.map((staff: Staff) => (
                     <div key={staff.id} className="border rounded-md p-4">
                       <div className="flex items-center space-x-2">
                         <input
@@ -394,14 +412,13 @@ export default function AddAppointment() {
       )}
       
       <CustomerSelector
-        open={isCustomerSelectorOpen}
-        onClose={() => setIsCustomerSelectorOpen(false)}
-        onSelectCustomer={(customer) => {
-          setSelectedCustomer(customer);
-          setIsCustomerSelectorOpen(false);
-        }}
-        selectedCustomerId={selectedCustomer?.id}
+        customers={customersData || []}
+        selectedCustomer={selectedCustomer}
+        onSelectCustomer={handleCustomerChange}
+        isLoading={isCustomersLoading}
       />
     </div>
   );
-}
+};
+
+export default AddAppointment;

@@ -1,337 +1,236 @@
 import { useEffect, useState } from "react";
-import { PageHeader } from "@/components/common/PageHeader";
-import { StatCard } from "@/components/dashboard/StatCard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
-import { Chart } from "@/components/dashboard/Chart";
-import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt } from "lucide-react";
-import { quotationService, invoiceService, customerService, appointmentService } from "@/services";
-import { Button } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/utils/formatters";
-import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
+import Chart from "@/components/dashboard/Chart";
+import StatCard from "@/components/dashboard/StatCard";
+import { useQuery } from "@tanstack/react-query";
+import { getAppointmentList } from "@/services/appointmentService";
+import { getInvoiceList } from "@/services/invoiceService";
+import { getCustomerList } from "@/services/customerService";
+import { format } from "date-fns";
+import { Invoice } from "@/types/database";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    customers: 0,
-    quotations: 0,
-    invoices: 0,
-    revenue: 0
-  });
-  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
-  const [recentQuotations, setRecentQuotations] = useState([]);
-  const [recentInvoices, setRecentInvoices] = useState([]);
-  const [revenueData, setRevenueData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [customersMap, setCustomersMap] = useState({});
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [pendingAppointments, setPendingAppointments] = useState<number>(0);
+  const [totalCustomers, setTotalCustomers] = useState<number>(0);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<
+    { name: string; revenue: number }[]
+  >([]);
 
-  const calculateTotalRevenue = (invoices: Invoice[]) => {
-    return invoices.reduce((acc, invoice) => acc + Number(invoice.total), 0);
-  };
+  // Fetch appointments
+  const {
+    data: appointments,
+    isLoading: appointmentsLoading,
+    error: appointmentsError,
+  } = useQuery({
+    queryKey: ["appointments"],
+    queryFn: getAppointmentList,
+  });
+
+  // Fetch invoices
+  const {
+    data: invoices,
+    isLoading: invoicesLoading,
+    error: invoicesError,
+  } = useQuery({
+    queryKey: ["invoices"],
+    queryFn: getInvoiceList,
+  });
+
+  // Fetch customers
+  const {
+    data: customers,
+    isLoading: customersLoading,
+    error: customersError,
+  } = useQuery({
+    queryKey: ["customers"],
+    queryFn: getCustomerList,
+  });
+
+  // Calculate statistics based on data
+  useEffect(() => {
+    if (invoices && invoices.length > 0) {
+      // Calculate total revenue (sum of all invoice totals)
+      const revenue = invoices.reduce(
+        (sum: number, invoice: Invoice) => sum + Number(invoice.total),
+        0
+      );
+      setTotalRevenue(revenue);
+
+      // Calculate monthly revenue
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const currentYear = new Date().getFullYear();
+      
+      const monthlyData = months.map((month, index) => {
+        const monthInvoices = invoices.filter((invoice: Invoice) => {
+          const invoiceDate = new Date(invoice.issue_date);
+          return (
+            invoiceDate.getMonth() === index && 
+            invoiceDate.getFullYear() === currentYear
+          );
+        });
+        
+        const monthlyTotal = monthInvoices.reduce(
+          (sum: number, invoice: Invoice) => sum + Number(invoice.total),
+          0
+        );
+        
+        return {
+          name: month,
+          revenue: monthlyTotal,
+        };
+      });
+      
+      setMonthlyRevenue(monthlyData);
+    }
+  }, [invoices]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [customers, quotations, invoices, appointments] = await Promise.all([
-          customerService.getAll(), 
-          quotationService.getAll(), 
-          invoiceService.getAll(), 
-          appointmentService.getAll()
-        ]);
+    if (appointments && appointments.length > 0) {
+      // Calculate pending appointments
+      const pending = appointments.filter(
+        (appointment) => appointment.status === "pending"
+      ).length;
+      setPendingAppointments(pending);
+    }
+  }, [appointments]);
 
-        const customersMapData = {};
-        customers.forEach(customer => {
-          customersMapData[customer.id] = customer;
-        });
-        setCustomersMap(customersMapData);
+  useEffect(() => {
+    if (customers && customers.length > 0) {
+      // Calculate total customers
+      setTotalCustomers(customers.length);
+    }
+  }, [customers]);
 
-        const totalRevenue = calculateTotalRevenue(invoices);
-        setStats({
-          customers: customers.length,
-          quotations: quotations.length,
-          invoices: invoices.length,
-          revenue: totalRevenue
-        });
-
-        const monthlyRevenueData = generateMonthlyRevenueData(invoices);
-        setRevenueData(monthlyRevenueData);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayString = today.toISOString().split('T')[0];
-
-        const upcomingAppts = appointments
-          .filter(appt => appt.appointment_date >= todayString)
-          .sort((a, b) => {
-            if (a.appointment_date !== b.appointment_date) {
-              return new Date(a.appointment_date) - new Date(b.appointment_date);
-            }
-            return a.start_time.localeCompare(b.start_time);
-          })
-          .slice(0, 5);
-
-        const enhancedAppointments = upcomingAppts.map(appointment => {
-          const customer = customersMapData[appointment.customer_id] || {};
-          return {
-            ...appointment,
-            customer_name: customer.name || "Unknown Customer",
-            unit_number: customer.unit_number || ""
-          };
-        });
-
-        setUpcomingAppointments(enhancedAppointments);
-
-        setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
-        setRecentInvoices(invoices.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        setLoading(false);
-      }
-    };
-    fetchDashboardData();
-  }, []);
-
-  const generateMonthlyRevenueData = (invoices) => {
-    const monthlyRevenue = Array.from({ length: 12 }, (_, i) => ({
-      month: new Date(0, i).toLocaleString('default', { month: 'short' }),
-      revenue: 0
-    }));
-
-    invoices.forEach(invoice => {
-      if (invoice.payment_status === 'Paid' && invoice.issue_date) {
-        const invoiceDate = new Date(invoice.issue_date);
-        const monthIndex = invoiceDate.getMonth();
-        
-        let amount = 0;
-        if (typeof invoice.total === 'number') {
-          amount = invoice.total;
-        } else if (invoice.total !== null && invoice.total !== undefined) {
-          const parsed = Number(invoice.total);
-          amount = isNaN(parsed) ? 0 : parsed;
-        }
-        
-        monthlyRevenue[monthIndex].revenue += amount;
-      }
-    });
-
-    return monthlyRevenue;
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+    }
   };
-
-  const formatMoney = amount => {
-    return `RM ${amount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`;
-  };
-
-  const formatTime = (time) => {
-    if (!time) return "";
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
-  };
-
-  const navigateToQuotation = id => {
-    navigate(`/quotations/edit/${id}`);
-  };
-
-  const navigateToInvoice = id => {
-    navigate(`/invoices/edit/${id}`);
-  };
-
-  const showAppointmentDetails = appointment => {
-    setSelectedAppointment(appointment);
-    setIsAppointmentDetailOpen(true);
-  };
-
-  const navigateToEditAppointment = id => {
-    navigate(`/schedule/edit/${id}`);
-  };
-
+  
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <PageHeader title="Dashboard" description="Overview of your business performance" />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <StatCard title="Total Customers" value={stats.customers} trend={{
-          value: 12,
-          isPositive: true
-        }} description="vs last month" icon={<Users className="h-4 w-4" />} onClick={() => navigate("/customers")} />
-        
-        <StatCard title="Active Quotations" value={stats.quotations} trend={{
-          value: 4,
-          isPositive: true
-        }} description="vs last month" icon={<ReceiptText className="h-4 w-4" />} onClick={() => navigate("/quotations")} />
-        
-        <StatCard title="Invoices Issued" value={stats.invoices} trend={{
-          value: 2,
-          isPositive: true
-        }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
-        
-        <StatCard 
-          title="Total Revenue" 
-          value={formatMoney(stats.revenue)} 
-          trend={{
-            value: 8,
-            isPositive: true
-          }} 
-          description="vs last month" 
-          icon={<CreditCard className="h-4 w-4" />}
-          onClick={() => navigate("/financials")}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Revenue"
+          value={`$${totalRevenue.toFixed(2)}`}
+          loading={invoicesLoading}
+          error={invoicesError}
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <StatCard
+          title="Pending Appointments"
+          value={pendingAppointments.toString()}
+          loading={appointmentsLoading}
+          error={appointmentsError}
+        />
+        <StatCard
+          title="Total Customers"
+          value={totalCustomers.toString()}
+          loading={customersLoading}
+          error={customersError}
+        />
         <Card>
           <CardHeader>
-            <CardTitle>Revenue</CardTitle>
+            <CardTitle>Calendar</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Chart 
-              type="bar" 
-              data={revenueData} 
-              categories={["revenue"]} 
-              index="month" 
-              colors={["#3b82f6"]} 
-              valueFormatter={value => `RM ${value.toLocaleString()}`} 
-              height={300} 
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Upcoming Appointments</CardTitle>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/schedule")}>
-              View All
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div>
-            ) : upcomingAppointments.length === 0 ? (
-              <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div>
+          <CardContent className="grid gap-4">
+            <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} />
+            {selectedDate ? (
+              <p>
+                You selected{" "}
+                {format(selectedDate, "PPP")}
+                .
+              </p>
             ) : (
-              <div className="space-y-4">
-                {upcomingAppointments.map(appointment => (
-                  <div 
-                    key={appointment.id} 
-                    className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2"
-                    onClick={() => showAppointmentDetails(appointment)}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">
-                          {appointment.unit_number ? `#${appointment.unit_number} - ` : ""}
-                          {appointment.title}
-                        </h3>
-                        <Badge variant="outline" className="text-xs">
-                          {appointment.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {new Date(appointment.appointment_date).toLocaleDateString()} 
-                        {' • '}
-                        {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
-                      </p>
-                      <p className="text-sm">{appointment.customer_name}</p>
-                    </div>
-                    <Button variant="outline" size="sm" className="flex-shrink-0" onClick={(e) => {
-                      e.stopPropagation();
-                      showAppointmentDetails(appointment);
-                    }}>
-                      <Calendar className="h-4 w-4 mr-1" />
-                      Details
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <p>Please select a date.</p>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent Quotations</CardTitle>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/quotations")}>
-              View All
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Monthly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            {recentQuotations.length === 0 ? <p className="text-center py-10 text-muted-foreground">No quotations found</p> : <div className="space-y-4">
-                {recentQuotations.map(quotation => <div key={quotation.id} className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" onClick={() => navigateToQuotation(quotation.id)}>
-                    <div>
-                      <h3 className="font-medium">{quotation.reference_number}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(quotation.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatMoney(quotation.total)}</p>
-                      <p className="text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs ${quotation.status === 'Approved' ? 'bg-green-100 text-green-800' : quotation.status === 'Draft' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {quotation.status}
-                        </span>
-                      </p>
-                    </div>
-                  </div>)}
-              </div>}
+            <Chart data={monthlyRevenue} />
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent Invoices</CardTitle>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/invoices")}>
-              View All
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
-          <CardContent>
-            {recentInvoices.length === 0 ? <p className="text-center py-10 text-muted-foreground">No invoices found</p> : <div className="space-y-4">
-                {recentInvoices.map(invoice => <div key={invoice.id} className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" onClick={() => navigateToInvoice(invoice.id)}>
-                    <div>
-                      <h3 className="font-medium">{invoice.reference_number}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(invoice.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatMoney(invoice.total)}</p>
-                      <p className="text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs ${invoice.payment_status === 'Paid' ? 'bg-green-100 text-green-800' : invoice.payment_status === 'Unpaid' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {invoice.payment_status}
-                        </span>
-                      </p>
-                    </div>
-                  </div>)}
-              </div>}
+          <CardContent className="pl-2">
+            <Tabs defaultvalue="appointments" className="w-full">
+              <TabsList>
+                <TabsTrigger value="appointments">Appointments</TabsTrigger>
+                <TabsTrigger value="invoices">Invoices</TabsTrigger>
+              </TabsList>
+              <TabsContent value="appointments">
+                {appointmentsLoading ? (
+                  <div>Loading appointments...</div>
+                ) : appointmentsError ? (
+                  <div>Error loading appointments.</div>
+                ) : appointments && appointments.length > 0 ? (
+                  <ul className="list-none space-y-2">
+                    {appointments.slice(0, 5).map((appointment) => (
+                      <li key={appointment.id} className="border rounded-md p-2">
+                        <div className="font-bold">{appointment.title}</div>
+                        <div className="text-sm">
+                          {format(new Date(appointment.appointment_date), "PPP")}
+                        </div>
+                        <Badge variant="secondary">{appointment.status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div>No recent appointments.</div>
+                )}
+              </TabsContent>
+              <TabsContent value="invoices">
+                {invoicesLoading ? (
+                  <div>Loading invoices...</div>
+                ) : invoicesError ? (
+                  <div>Error loading invoices.</div>
+                ) : invoices && invoices.length > 0 ? (
+                  <ul className="list-none space-y-2">
+                    {invoices.slice(0, 5).map((invoice) => (
+                      <li key={invoice.id} className="border rounded-md p-2">
+                        <div className="font-bold">Invoice #{invoice.reference_number}</div>
+                        <div className="text-sm">
+                          {format(new Date(invoice.issue_date), "PPP")}
+                        </div>
+                        <Badge variant="secondary">{invoice.payment_status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div>No recent invoices.</div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
-
-      <AppointmentDetailsDialog
-        open={isAppointmentDetailOpen}
-        onClose={() => setIsAppointmentDetailOpen(false)}
-        appointment={selectedAppointment}
-        customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
-        assignedStaff={null}
-      />
     </div>
   );
 };

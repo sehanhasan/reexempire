@@ -1,6 +1,11 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice, InvoiceItem } from "@/types/database";
+import type { Invoice, InvoiceItem } from "@/types/database";
+
+export const getInvoiceList = async (): Promise<Invoice[]> => {
+  const { data, error } = await supabase.from("invoices").select("*");
+  if (error) throw error;
+  return data as Invoice[];
+};
 
 export const invoiceService = {
   async getAll(): Promise<Invoice[]> {

@@ -1,334 +1,428 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { PageHeader } from "@/components/common/PageHeader";
+import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, User } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
-import { staffService } from "@/services/staffService";
-import { Staff } from "@/types/database";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { getStaffMember, updateStaffMember } from "@/services/staffService";
+import type { Staff } from "@/types/database";
 
-export default function EditStaffMember() {
-  const navigate = useNavigate();
+const EditStaffMember = () => {
   const { id } = useParams<{ id: string }>();
-  const isMobile = useIsMobile();
-  
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [formData, setFormData] = useState({
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [staff, setStaff] = useState<Staff>({
+    id: "",
     name: "",
     position: "",
     email: "",
     phone: "",
-    status: "Active",
+    status: "active",
     join_date: new Date().toISOString().split("T")[0],
+    created_at: "",
+    updated_at: "",
+    username: "",
     passport: "",
-    username: ""
+    gender: "male",
+    department: "",
+    employment_type: "full-time",
+    address: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    emergency_contact_name: "",
+    emergency_contact_relationship: "",
+    emergency_contact_phone: "",
+    emergency_contact_email: "",
   });
-  
-  // Fetch staff data
-  const { data: staffData, isLoading, error } = useQuery({
-    queryKey: ['staff', id],
-    queryFn: async () => {
-      if (!id) return null;
-      return staffService.getById(id);
+
+  const { isLoading, error } = useQuery({
+    queryKey: ["staff", id],
+    queryFn: () => getStaffMember(id as string),
+    onSuccess: (data) => {
+      if (data) {
+        setStaff(data);
+      }
     },
-    enabled: !!id
   });
-  
-  // Update form data when staff data is loaded
+
   useEffect(() => {
-    if (staffData) {
-      setFormData({
-        name: staffData.name || "",
-        position: staffData.position || "",
-        email: staffData.email || "",
-        phone: staffData.phone || "",
-        status: staffData.status || "Active",
-        join_date: staffData.join_date ? new Date(staffData.join_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-        passport: staffData.passport || "",
-        username: staffData.username || ""
-      });
-    }
-  }, [staffData]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const validateForm = () => {
-    if (!formData.name.trim()) {
+    if (error) {
       toast({
-        title: "Missing Information",
-        description: "Staff name is required",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to fetch staff member",
+        variant: "destructive",
       });
-      return false;
     }
-    
-    return true;
+  }, [error, toast]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setStaff((prevStaff) => ({
+      ...prevStaff,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
     try {
-      setIsProcessing(true);
-      
-      const staffData = {
-        name: formData.name,
-        position: formData.position,
-        email: formData.email,
-        phone: formData.phone,
-        status: formData.status,
-        join_date: formData.join_date,
-        passport: formData.passport,
-        username: formData.username
-      };
-      
       if (id) {
-        // Update existing staff
-        await staffService.update(id, staffData);
+        await updateStaffMember(id, staff);
         toast({
           title: "Success",
-          description: "Staff member has been updated"
+          description: "Staff member updated successfully",
         });
+        navigate("/staff");
       } else {
-        // Create new staff
-        await staffService.create(staffData);
         toast({
-          title: "Success",
-          description: "New staff member has been added"
+          title: "Error",
+          description: "Staff ID is missing",
+          variant: "destructive",
         });
       }
-      
-      navigate("/staff");
-    } catch (error) {
-      console.error("Error saving staff member:", error);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to save staff member. Please try again.",
-        variant: "destructive"
+        description: error.message || "Failed to update staff member",
+        variant: "destructive",
       });
-    } finally {
-      setIsProcessing(false);
     }
   };
 
   if (isLoading) {
-    return <div className="page-container">Loading staff details...</div>;
-  }
-
-  if (error) {
-    return <div className="page-container">Error loading staff details. Please try again.</div>;
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="page-container">
-      <PageHeader
-        title={id ? "Edit Staff Member" : "Add Staff Member"}
-        description="Manage staff information and account details"
-        actions={
-          <Button variant="outline" onClick={() => navigate("/staff")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Staff
-          </Button>
-        }
-      />
-
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <Tabs defaultValue="basic" className="w-full">
-          <TabsList>
-            <TabsTrigger value="basic">Basic Information</TabsTrigger>
-            <TabsTrigger value="account">Account Details</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="basic" className="mt-4 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Full name"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="passport">Passport #</Label>
-                    <Input
-                      id="passport"
-                      name="passport"
-                      value={formData.passport}
-                      onChange={handleChange}
-                      placeholder="Passport number"
-                    />
-                  </div>
-                </div>
-
-                <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="Email address"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="Phone number"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Employment Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Position</Label>
-                    <Input
-                      id="position"
-                      name="position"
-                      value={formData.position}
-                      onChange={handleChange}
-                      placeholder="Job position"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) => handleSelectChange("status", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="On Leave">On Leave</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="join_date">Join Date</Label>
+    <div className="container mx-auto p-6 space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Staff Member</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
+                  Name
+                </label>
+                <div className="mt-2">
                   <Input
-                    id="join_date"
-                    name="join_date"
+                    type="text"
+                    name="name"
+                    id="name"
+                    value={staff.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="position" className="block text-sm font-medium leading-6 text-gray-900">
+                  Position
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="position"
+                    id="position"
+                    value={staff.position || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+                  Email
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="email"
+                    name="email"
+                    id="email"
+                    value={staff.email || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium leading-6 text-gray-900">
+                  Phone
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    value={staff.phone || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium leading-6 text-gray-900">
+                  Status
+                </label>
+                <div className="mt-2">
+                  <Select value={staff.status} onValueChange={(value) => setStaff((prevStaff) => ({ ...prevStaff, status: value }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="join_date" className="block text-sm font-medium leading-6 text-gray-900">
+                  Join Date
+                </label>
+                <div className="mt-2">
+                  <Input
                     type="date"
-                    value={formData.join_date}
-                    onChange={handleChange}
+                    name="join_date"
+                    id="join_date"
+                    value={staff.join_date}
+                    onChange={handleInputChange}
+                    required
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
 
-          <TabsContent value="account" className="mt-4 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
+                  Username
+                </label>
+                <div className="mt-2">
                   <Input
-                    id="username"
+                    type="text"
                     name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    placeholder="Username for login"
+                    id="username"
+                    value={staff.username || ""}
+                    onChange={handleInputChange}
                   />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    This username will be used for staff login in the future.
-                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </div>
+              <div>
+                <label htmlFor="passport" className="block text-sm font-medium leading-6 text-gray-900">
+                  Passport
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="passport"
+                    id="passport"
+                    value={staff.passport || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
 
-        <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline" 
-            onClick={() => navigate("/staff")}
-            disabled={isProcessing}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit"
-            disabled={isProcessing}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isProcessing ? "Saving..." : "Save Staff Member"}
-          </Button>
-        </div>
-      </form>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="gender" className="block text-sm font-medium leading-6 text-gray-900">
+                  Gender
+                </label>
+                <div className="mt-2">
+                  <Select value={staff.gender || "male"} onValueChange={(value) => setStaff((prevStaff) => ({ ...prevStaff, gender: value }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="department" className="block text-sm font-medium leading-6 text-gray-900">
+                  Department
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="department"
+                    id="department"
+                    value={staff.department || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="employment_type" className="block text-sm font-medium leading-6 text-gray-900">
+                  Employment Type
+                </label>
+                <div className="mt-2">
+                  <Select value={staff.employment_type || "full-time"} onValueChange={(value) => setStaff((prevStaff) => ({ ...prevStaff, employment_type: value }))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select employment type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-time">Full-time</SelectItem>
+                      <SelectItem value="part-time">Part-time</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                      <SelectItem value="temporary">Temporary</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="address" className="block text-sm font-medium leading-6 text-gray-900">
+                  Address
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="address"
+                    id="address"
+                    value={staff.address || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="city" className="block text-sm font-medium leading-6 text-gray-900">
+                  City
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="city"
+                    id="city"
+                    value={staff.city || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="state" className="block text-sm font-medium leading-6 text-gray-900">
+                  State
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="state"
+                    id="state"
+                    value={staff.state || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="postal_code" className="block text-sm font-medium leading-6 text-gray-900">
+                  Postal Code
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="postal_code"
+                    id="postal_code"
+                    value={staff.postal_code || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="emergency_contact_name" className="block text-sm font-medium leading-6 text-gray-900">
+                  Emergency Contact Name
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="emergency_contact_name"
+                    id="emergency_contact_name"
+                    value={staff.emergency_contact_name || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="emergency_contact_relationship" className="block text-sm font-medium leading-6 text-gray-900">
+                  Emergency Contact Relationship
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="text"
+                    name="emergency_contact_relationship"
+                    id="emergency_contact_relationship"
+                    value={staff.emergency_contact_relationship || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="emergency_contact_phone" className="block text-sm font-medium leading-6 text-gray-900">
+                  Emergency Contact Phone
+                </label>
+                <div className="mt-2">
+                  <Input
+                    type="tel"
+                    name="emergency_contact_phone"
+                    id="emergency_contact_phone"
+                    value={staff.emergency_contact_phone || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="emergency_contact_email" className="block text-sm font-medium leading-6 text-gray-900">
+                Emergency Contact Email
+              </label>
+              <div className="mt-2">
+                <Input
+                  type="email"
+                  name="emergency_contact_email"
+                  id="emergency_contact_email"
+                  value={staff.emergency_contact_email || ""}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
+            <Button type="submit">Update Staff Member</Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default EditStaffMember;
