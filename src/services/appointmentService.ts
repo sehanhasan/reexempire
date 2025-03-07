@@ -2,6 +2,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
+export const getAppointmentList = async (): Promise<Appointment[]> => {
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("*")
+    .order("appointment_date", { ascending: true });
+  if (error) throw error;
+  return data as Appointment[];
+};
+
 export const appointmentService = {
   async getAll(): Promise<Appointment[]> {
     const { data, error } = await supabase

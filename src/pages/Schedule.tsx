@@ -1,17 +1,16 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, addMonths, subMonths } from 'date-fns';
 
-import { useQuery } from "@tanstack/react-query";
-import { PageHeader } from "@/components/common/PageHeader";
-import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
-import { appointmentService, customerService, staffService } from "@/services";
-import { formatDate } from "@/utils/formatters";
-import { Appointment, Customer, Staff } from "@/types/database";
-import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
+import { Calendar } from '@/components/ui/calendar';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
+import { AppointmentDetailsDialog } from '@/components/appointments/AppointmentDetailsDialog';
+import { FloatingActionButton } from '@/components/common/FloatingActionButton';
+import { appointmentService, staffService } from '@/services';
+import { Appointment, Staff } from '@/types/database';
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -22,13 +21,11 @@ export default function Schedule() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
 
-  // Fetch appointments using React Query
   const { data: appointments = [], isLoading, error, refetch } = useQuery({
     queryKey: ['appointments'],
     queryFn: appointmentService.getAll,
   });
 
-  // Get week start and end dates for fetching appointments in date range
   const getWeekDates = () => {
     const dates = [];
     const curr = new Date(currentDate);
@@ -43,7 +40,6 @@ export default function Schedule() {
     return dates;
   };
 
-  // Format the appointments data for the calendar
   const formatEventsForCalendar = () => {
     const events: Record<string, any[]> = {};
     
@@ -66,14 +62,13 @@ export default function Schedule() {
         start: appointment.start_time,
         end: appointment.end_time,
         status: appointment.status,
-        original: appointment // Store the original appointment data
+        original: appointment
       });
     });
     
     return events;
   };
 
-  // Fetch customers and staff data
   useEffect(() => {
     const fetchCustomersAndStaff = async () => {
       try {
@@ -103,7 +98,6 @@ export default function Schedule() {
     fetchCustomersAndStaff();
   }, []);
 
-  // Refresh appointments when date changes
   useEffect(() => {
     refetch();
   }, [currentDate, refetch]);
@@ -147,10 +141,9 @@ export default function Schedule() {
     setIsAppointmentDetailsOpen(true);
   };
 
-  // Render week view
   const renderWeekView = () => {
     const weekDates = getWeekDates();
-    const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 7 AM to 6 PM
+    const hours = Array.from({ length: 12 }, (_, i) => i + 7);
     const events = formatEventsForCalendar();
     
     return (
@@ -250,7 +243,7 @@ export default function Schedule() {
         description="Manage your team's appointments and service schedule."
         actions={
           <Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
-            <CalendarPlus className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4" />
             Add Appointment
           </Button>
         }

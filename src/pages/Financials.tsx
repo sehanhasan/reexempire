@@ -57,10 +57,13 @@ const Financials = () => {
   };
 
   const prepareCSVData = () => {
-    const headers = columns.map((column) => ({
-      label: column.header as string,
-      key: column.accessorKey as string,
-    }));
+    const csvColumns = columns.map((column) => {
+      const key = typeof column.accessorKey === 'string' ? column.accessorKey : '';
+      return {
+        label: column.header as string,
+        key: key,
+      };
+    }).filter(col => col.key);
 
     const dataToExport = invoices.map((invoice) => ({
       reference_number: invoice.reference_number,

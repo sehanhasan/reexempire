@@ -1,16 +1,17 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import Chart from "@/components/dashboard/Chart";
-import StatCard from "@/components/dashboard/StatCard";
+import { Chart } from "@/components/dashboard/Chart";
+import { StatCard } from "@/components/dashboard/StatCard";
 import { useQuery } from "@tanstack/react-query";
-import { getAppointmentList } from "@/services/appointmentService";
+import { getAppointmentList } from "@/services";
 import { getInvoiceList } from "@/services/invoiceService";
-import { getCustomerList } from "@/services/customerService";
+import { getCustomerList } from "@/services";
 import { format } from "date-fns";
-import { Invoice } from "@/types/database";
+import { Invoice, Appointment, Customer } from "@/types/database";
 
 const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -53,7 +54,7 @@ const Dashboard = () => {
 
   // Calculate statistics based on data
   useEffect(() => {
-    if (invoices && invoices.length > 0) {
+    if (invoices && Array.isArray(invoices) && invoices.length > 0) {
       // Calculate total revenue (sum of all invoice totals)
       const revenue = invoices.reduce(
         (sum: number, invoice: Invoice) => sum + Number(invoice.total),
@@ -63,18 +64,8 @@ const Dashboard = () => {
 
       // Calculate monthly revenue
       const months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
       ];
       const currentYear = new Date().getFullYear();
       
@@ -103,17 +94,17 @@ const Dashboard = () => {
   }, [invoices]);
 
   useEffect(() => {
-    if (appointments && appointments.length > 0) {
+    if (appointments && Array.isArray(appointments) && appointments.length > 0) {
       // Calculate pending appointments
       const pending = appointments.filter(
-        (appointment) => appointment.status === "pending"
+        (appointment: Appointment) => appointment.status === "Pending"
       ).length;
       setPendingAppointments(pending);
     }
   }, [appointments]);
 
   useEffect(() => {
-    if (customers && customers.length > 0) {
+    if (customers && Array.isArray(customers) && customers.length > 0) {
       // Calculate total customers
       setTotalCustomers(customers.length);
     }
@@ -171,7 +162,15 @@ const Dashboard = () => {
             <CardTitle>Monthly Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <Chart data={monthlyRevenue} />
+            <Chart 
+              data={monthlyRevenue} 
+              type="bar"
+              categories={["revenue"]}
+              index="name"
+              colors={["#3b82f6", "#10b981", "#f59e0b", "#ef4444"]}
+              height={300}
+              valueFormatter={(value: number) => `$${value.toFixed(2)}`}
+            />
           </CardContent>
         </Card>
 
@@ -180,7 +179,7 @@ const Dashboard = () => {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <Tabs defaultvalue="appointments" className="w-full">
+            <Tabs defaultValue="appointments" className="w-full">
               <TabsList>
                 <TabsTrigger value="appointments">Appointments</TabsTrigger>
                 <TabsTrigger value="invoices">Invoices</TabsTrigger>
@@ -190,9 +189,9 @@ const Dashboard = () => {
                   <div>Loading appointments...</div>
                 ) : appointmentsError ? (
                   <div>Error loading appointments.</div>
-                ) : appointments && appointments.length > 0 ? (
+                ) : appointments && Array.isArray(appointments) && appointments.length > 0 ? (
                   <ul className="list-none space-y-2">
-                    {appointments.slice(0, 5).map((appointment) => (
+                    {appointments.slice(0, 5).map((appointment: Appointment) => (
                       <li key={appointment.id} className="border rounded-md p-2">
                         <div className="font-bold">{appointment.title}</div>
                         <div className="text-sm">
@@ -211,9 +210,9 @@ const Dashboard = () => {
                   <div>Loading invoices...</div>
                 ) : invoicesError ? (
                   <div>Error loading invoices.</div>
-                ) : invoices && invoices.length > 0 ? (
+                ) : invoices && Array.isArray(invoices) && invoices.length > 0 ? (
                   <ul className="list-none space-y-2">
-                    {invoices.slice(0, 5).map((invoice) => (
+                    {invoices.slice(0, 5).map((invoice: Invoice) => (
                       <li key={invoice.id} className="border rounded-md p-2">
                         <div className="font-bold">Invoice #{invoice.reference_number}</div>
                         <div className="text-sm">

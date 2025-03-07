@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Save, Calendar, User, Check } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { appointmentService, staffService, customerService } from "@/services";
+import { appointmentService, customerService, staffService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
 
@@ -49,7 +50,7 @@ const AddAppointment = () => {
   // Fetch staff members
   const {
     data: staffData,
-    isLoading: isStaffLoading,
+    isLoading: isLoadingStaff,
     error: staffError,
   } = useQuery({
     queryKey: ["staff"],
@@ -131,9 +132,9 @@ const AddAppointment = () => {
     }));
   };
   
-  const handleCustomerChange = (customerId: string) => {
-    const customer = customersData?.find((c) => c.id === customerId);
+  const handleCustomerChange = (customer: Customer) => {
     setSelectedCustomer(customer);
+    setIsCustomerSelectorOpen(false);
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -176,7 +177,9 @@ const AddAppointment = () => {
       if (Object.keys(staffNotes).length > 0) {
         const staffNotesText = Object.entries(staffNotes)
           .map(([staffId, note]) => {
-            const staffMember = staffData.find((staff: Staff) => staff.id === staffId);
+            const staffMember = staffData && Array.isArray(staffData) ? 
+              staffData.find((staff: Staff) => staff.id === staffId) : 
+              undefined;
             return `${staffMember?.name || 'Staff'}: ${note}`;
           })
           .join('\n\n');
@@ -323,7 +326,7 @@ const AddAppointment = () => {
                 <div className="text-center py-4">Loading staff members...</div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {staffData && staffData.map((staff: Staff) => (
+                  {staffData && Array.isArray(staffData) && staffData.map((staff: Staff) => (
                     <div key={staff.id} className="border rounded-md p-4">
                       <div className="flex items-center space-x-2">
                         <input
@@ -411,12 +414,14 @@ const AddAppointment = () => {
         </form>
       )}
       
-      <CustomerSelector
-        customers={customersData || []}
-        selectedCustomer={selectedCustomer}
-        onSelectCustomer={handleCustomerChange}
-        isLoading={isCustomersLoading}
-      />
+      {isCustomerSelectorOpen && (
+        <CustomerSelector
+          customers={customersData && Array.isArray(customersData) ? customersData : []}
+          selectedCustomer={selectedCustomer}
+          onSelectCustomer={handleCustomerChange}
+          isLoading={isCustomersLoading}
+        />
+      )}
     </div>
   );
 };

@@ -1,9 +1,33 @@
+// Import necessary modules and components
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { ArrowLeft, Save } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { staffService } from "@/services";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -11,414 +35,427 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { getStaffMember, updateStaffMember } from "@/services/staffService";
-import type { Staff } from "@/types/database";
+import { Textarea } from "@/components/ui/textarea";
+import { Staff } from "@/types/database";
+
+// Define the form schema using Zod
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  position: z.string().optional(),
+  email: z.string().email({
+    message: "Invalid email address.",
+  }).optional(),
+  phone: z.string().optional(),
+  status: z.enum(["Active", "Inactive"]),
+  join_date: z.string().optional(),
+  department: z.string().optional(),
+  employment_type: z.string().optional(),
+  gender: z.string().optional(),
+  passport: z.string().optional(),
+  username: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postal_code: z.string().optional(),
+  emergency_contact_name: z.string().optional(),
+  emergency_contact_relationship: z.string().optional(),
+  emergency_contact_phone: z.string().optional(),
+  emergency_contact_email: z.string().optional(),
+});
 
 const EditStaffMember = () => {
+  // Get the staff ID from the URL params
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const [staff, setStaff] = useState<Staff>({
-    id: "",
-    name: "",
-    position: "",
-    email: "",
-    phone: "",
-    status: "active",
-    join_date: new Date().toISOString().split("T")[0],
-    created_at: "",
-    updated_at: "",
-    username: "",
-    passport: "",
-    gender: "male",
-    department: "",
-    employment_type: "full-time",
-    address: "",
-    city: "",
-    state: "",
-    postal_code: "",
-    emergency_contact_name: "",
-    emergency_contact_relationship: "",
-    emergency_contact_phone: "",
-    emergency_contact_email: "",
-  });
-
-  const { isLoading, error } = useQuery({
-    queryKey: ["staff", id],
-    queryFn: () => getStaffMember(id as string),
-    onSuccess: (data) => {
-      if (data) {
-        setStaff(data);
-      }
+  // Initialize the form using react-hook-form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      position: "",
+      email: "",
+      phone: "",
+      status: "Active",
+      join_date: "",
+      department: "",
+      employment_type: "",
+      gender: "",
+      passport: "",
+      username: "",
+      address: "",
+      city: "",
+      state: "",
+      postal_code: "",
+      emergency_contact_name: "",
+      emergency_contact_relationship: "",
+      emergency_contact_phone: "",
+      emergency_contact_email: "",
     },
   });
 
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch staff member",
-        variant: "destructive",
-      });
+  // Use the modified query without onSuccess
+  const { data: staffData, isLoading } = useQuery({
+    queryKey: ["staff", id],
+    queryFn: () => staffService.getById(id),
+    meta: {
+      onSettled: (data, error) => {
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to load staff data. Please try again.",
+            variant: "destructive",
+          });
+          navigate("/staff");
+        } else if (data) {
+          const formValues = {
+            name: data.name || "",
+            position: data.position || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            status: data.status || "Active",
+            join_date: data.join_date || "",
+            department: data.department || "",
+            employment_type: data.employment_type || "",
+            gender: data.gender || "",
+            passport: data.passport || "",
+            username: data.username || "",
+            address: data.address || "",
+            city: data.city || "",
+            state: data.state || "",
+            postal_code: data.postal_code || "",
+            emergency_contact_name: data.emergency_contact_name || "",
+            emergency_contact_relationship: data.emergency_contact_relationship || "",
+            emergency_contact_phone: data.emergency_contact_phone || "",
+            emergency_contact_email: data.emergency_contact_email || "",
+          };
+          form.reset(formValues);
+        }
+      }
     }
-  }, [error, toast]);
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setStaff((prevStaff) => ({
-      ...prevStaff,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (id) {
-        await updateStaffMember(id, staff);
+  // Mutation to update staff data
+  const updateStaffMutation = useMutation(
+    (data: Partial<Staff>) => staffService.update(id, data),
+    {
+      onSuccess: () => {
         toast({
           title: "Success",
-          description: "Staff member updated successfully",
+          description: "Staff member updated successfully.",
         });
         navigate("/staff");
-      } else {
+      },
+      onError: (error) => {
         toast({
           title: "Error",
-          description: "Staff ID is missing",
+          description: "Failed to update staff member. Please try again.",
           variant: "destructive",
         });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update staff member",
-        variant: "destructive",
-      });
+      },
     }
-  };
+  );
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  // Handle form submission
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    updateStaffMutation.mutate(values);
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <PageHeader
+        title="Edit Staff Member"
+        description="Update an existing staff member's details."
+        actions={
+          <Button variant="outline" onClick={() => navigate("/staff")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Staff
+          </Button>
+        }
+      />
       <Card>
         <CardHeader>
-          <CardTitle>Edit Staff Member</CardTitle>
+          <CardTitle>Staff Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
-                  Name
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="name"
-                    id="name"
-                    value={staff.name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="position" className="block text-sm font-medium leading-6 text-gray-900">
-                  Position
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="position"
-                    id="position"
-                    value={staff.position || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                  Email
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="email"
-                    name="email"
-                    id="email"
-                    value={staff.email || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium leading-6 text-gray-900">
-                  Phone
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="tel"
-                    name="phone"
-                    id="phone"
-                    value={staff.phone || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium leading-6 text-gray-900">
-                  Status
-                </label>
-                <div className="mt-2">
-                  <Select value={staff.status} onValueChange={(value) => setStaff((prevStaff) => ({ ...prevStaff, status: value }))}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="join_date" className="block text-sm font-medium leading-6 text-gray-900">
-                  Join Date
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="date"
-                    name="join_date"
-                    id="join_date"
-                    value={staff.join_date}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
-                  Username
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="username"
-                    id="username"
-                    value={staff.username || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="passport" className="block text-sm font-medium leading-6 text-gray-900">
-                  Passport
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="passport"
-                    id="passport"
-                    value={staff.passport || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="gender" className="block text-sm font-medium leading-6 text-gray-900">
-                  Gender
-                </label>
-                <div className="mt-2">
-                  <Select value={staff.gender || "male"} onValueChange={(value) => setStaff((prevStaff) => ({ ...prevStaff, gender: value }))}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="department" className="block text-sm font-medium leading-6 text-gray-900">
-                  Department
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="department"
-                    id="department"
-                    value={staff.department || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="employment_type" className="block text-sm font-medium leading-6 text-gray-900">
-                  Employment Type
-                </label>
-                <div className="mt-2">
-                  <Select value={staff.employment_type || "full-time"} onValueChange={(value) => setStaff((prevStaff) => ({ ...prevStaff, employment_type: value }))}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select employment type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="full-time">Full-time</SelectItem>
-                      <SelectItem value="part-time">Part-time</SelectItem>
-                      <SelectItem value="contract">Contract</SelectItem>
-                      <SelectItem value="temporary">Temporary</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium leading-6 text-gray-900">
-                  Address
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="address"
-                    id="address"
-                    value={staff.address || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium leading-6 text-gray-900">
-                  City
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="city"
-                    id="city"
-                    value={staff.city || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="state" className="block text-sm font-medium leading-6 text-gray-900">
-                  State
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="state"
-                    id="state"
-                    value={staff.state || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="postal_code" className="block text-sm font-medium leading-6 text-gray-900">
-                  Postal Code
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="postal_code"
-                    id="postal_code"
-                    value={staff.postal_code || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="emergency_contact_name" className="block text-sm font-medium leading-6 text-gray-900">
-                  Emergency Contact Name
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="emergency_contact_name"
-                    id="emergency_contact_name"
-                    value={staff.emergency_contact_name || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="emergency_contact_relationship" className="block text-sm font-medium leading-6 text-gray-900">
-                  Emergency Contact Relationship
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="text"
-                    name="emergency_contact_relationship"
-                    id="emergency_contact_relationship"
-                    value={staff.emergency_contact_relationship || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="emergency_contact_phone" className="block text-sm font-medium leading-6 text-gray-900">
-                  Emergency Contact Phone
-                </label>
-                <div className="mt-2">
-                  <Input
-                    type="tel"
-                    name="emergency_contact_phone"
-                    id="emergency_contact_phone"
-                    value={staff.emergency_contact_phone || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="emergency_contact_email" className="block text-sm font-medium leading-6 text-gray-900">
-                Emergency Contact Email
-              </label>
-              <div className="mt-2">
-                <Input
-                  type="email"
-                  name="emergency_contact_email"
-                  id="emergency_contact_email"
-                  value={staff.emergency_contact_email || ""}
-                  onChange={handleInputChange}
+          ) : (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Staff Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-
-            <Button type="submit">Update Staff Member</Button>
-          </form>
+                <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Position</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Position" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="email@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Phone number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="join_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Join Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          placeholder="Join Date"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Department</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Department" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="employment_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Employment Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Employment Type" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Gender" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="passport"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Passport</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Passport" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Username" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input placeholder="State" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="postal_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Postal Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Postal Code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergency_contact_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Contact Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergency_contact_relationship"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact Relationship</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Contact Relationship" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergency_contact_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Contact Phone" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergency_contact_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Emergency Contact Email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={updateStaffMutation.isLoading}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {updateStaffMutation.isLoading ? "Updating..." : "Update Staff"}
+                </Button>
+              </form>
+            </Form>
+          )}
         </CardContent>
       </Card>
     </div>
