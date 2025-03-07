@@ -261,7 +261,7 @@ export default function EditQuotation() {
         </div>}
 
       {/* Convert to Invoice button - shown for "Accepted" status */}
-      {status === "Accepted" && <div className="bg-muted/50 rounded-md p-4 mt-4">
+      {status === "Accepted" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <div>
               <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
