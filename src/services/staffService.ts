@@ -38,9 +38,10 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
+    // Fix the insert operation - make sure staff is passed as object, not array
     const { data, error } = await supabase
       .from("staff")
-      .insert([staff])
+      .insert(staff)
       .select()
       .single();
 

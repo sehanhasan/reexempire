@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -89,7 +90,7 @@ export default function Dashboard() {
           .sort((a, b) => {
             // Sort by date, then by start time
             if (a.appointment_date !== b.appointment_date) {
-              return new Date(a.appointment_date) - new Date(b.appointment_date);
+              return new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime();
             }
             return a.start_time.localeCompare(b.start_time);
           })
@@ -108,8 +109,10 @@ export default function Dashboard() {
         setUpcomingAppointments(enhancedAppointments);
 
         // Get recent quotations and invoices
-        setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
-        setRecentInvoices(invoices.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
+        setRecentQuotations(quotations.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
+        setRecentInvoices(invoices.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);

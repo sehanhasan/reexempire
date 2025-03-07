@@ -10,12 +10,12 @@ export interface Category {
 }
 
 export interface Subcategory {
-  id: string;
-  category_id: string;
+  id?: string;
+  category_id?: string;
   name: string;
   description: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
   price_options?: PricingOption[]; // Add this property for pricing options
   price?: number; // Add this for direct price access
   tempId?: number | string; // Used in forms - can be number or string
@@ -63,7 +63,7 @@ export interface Staff {
   email: string | null;
   phone: string | null;
   status: string;
-  join_date: string;
+  join_date?: string;
   created_at: string;
   updated_at: string;
   

@@ -21,7 +21,7 @@ export const categoryService = {
   async getById(id: string): Promise<Category | null> {
     const { data, error } = await supabase
       .from("categories")
-      .select("*")
+      .select("*, subcategories(*)")
       .eq("id", id)
       .single();
 
@@ -105,35 +105,94 @@ export const categoryService = {
     return data || [];
   },
 
-  async create(category: Omit<Category, "id" | "created_at" | "updated_at">): Promise<Category> {
-    const { data, error } = await supabase
+  async create(category: { name: string; description: string; subcategories?: Partial<Subcategory>[] }): Promise<Category> {
+    // First create the category
+    const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
-      .insert([category])
+      .insert([{ name: category.name, description: category.description }])
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating category:", error);
-      throw error;
+    if (categoryError) {
+      console.error("Error creating category:", categoryError);
+      throw categoryError;
     }
 
-    return data;
+    // If there are subcategories, create them
+    if (category.subcategories && category.subcategories.length > 0) {
+      const subcategoriesToCreate = category.subcategories.map(sub => ({
+        category_id: categoryData.id,
+        name: sub.name || sub.description, // Fallback to description if name not provided
+        description: sub.description,
+        price: sub.price || 0
+      }));
+
+      const { error: subcatError } = await supabase
+        .from("subcategories")
+        .insert(subcategoriesToCreate);
+
+      if (subcatError) {
+        console.error("Error creating subcategories:", subcatError);
+        throw subcatError;
+      }
+    }
+
+    return categoryData;
   },
 
-  async update(id: string, category: Partial<Omit<Category, "id" | "created_at" | "updated_at">>): Promise<Category> {
-    const { data, error } = await supabase
+  async update(id: string, category: { name: string; description: string; subcategories?: Partial<Subcategory>[] }): Promise<Category> {
+    // Update the category
+    const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
-      .update(category)
+      .update({ name: category.name, description: category.description })
       .eq("id", id)
       .select()
       .single();
 
-    if (error) {
-      console.error(`Error updating category with id ${id}:`, error);
-      throw error;
+    if (categoryError) {
+      console.error(`Error updating category with id ${id}:`, categoryError);
+      throw categoryError;
     }
 
-    return data;
+    // Handle subcategories - this is a simplified approach
+    // For a real app, we might want more sophisticated logic to update/delete existing ones
+    if (category.subcategories && category.subcategories.length > 0) {
+      for (const sub of category.subcategories) {
+        if (sub.id) {
+          // Update existing subcategory
+          const { error: updateError } = await supabase
+            .from("subcategories")
+            .update({
+              name: sub.name || sub.description,
+              description: sub.description,
+              price: sub.price || 0
+            })
+            .eq("id", sub.id);
+
+          if (updateError) {
+            console.error(`Error updating subcategory with id ${sub.id}:`, updateError);
+            throw updateError;
+          }
+        } else {
+          // Create new subcategory
+          const { error: createError } = await supabase
+            .from("subcategories")
+            .insert([{
+              category_id: id,
+              name: sub.name || sub.description,
+              description: sub.description,
+              price: sub.price || 0
+            }]);
+
+          if (createError) {
+            console.error("Error creating new subcategory:", createError);
+            throw createError;
+          }
+        }
+      }
+    }
+
+    return categoryData;
   },
 
   async delete(id: string): Promise<void> {

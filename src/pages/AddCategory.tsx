@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
+import { Subcategory } from "@/types/database";
 
 // Define a local interface for subcategory in forms
 interface SubcategoryForm {
