@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -61,6 +62,7 @@ export default function Customers() {
   const fetchCustomers = async () => {
     try {
       const data = await customerService.getAll();
+      // Sort by most recent first (created_at in descending order)
       data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setCustomers(data);
       setIsLoading(false);
@@ -80,7 +82,9 @@ export default function Customers() {
   }, []);
 
   const handleView = (customer: Customer) => {
+    // First clear the previous customer to avoid state issues
     setSelectedCustomer(null);
+    // Use setTimeout to ensure the state is updated before showing dialog
     setTimeout(() => {
       setSelectedCustomer(customer);
       setShowDetails(true);
@@ -231,6 +235,8 @@ export default function Customers() {
     <div className="page-container">
       <PageHeader 
         title="Customers" 
+        description="Manage your customer database."
+        // Removed "Add Customer" button from header as requested
       />
       
       <div className="mt-8">

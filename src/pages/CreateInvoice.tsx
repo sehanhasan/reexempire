@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -210,13 +211,16 @@ export default function CreateInvoice() {
 
   return (
     <div className="page-container">
-      <PageHeader 
-        title="Create Invoice" 
+      <PageHeader
+        title="Create Invoice"
+        description="Create a new invoice for a customer."
         actions={
-          <Button variant="outline" onClick={() => navigate("/invoices")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Invoices
-          </Button>
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+            <Button variant="outline" onClick={() => navigate("/invoices")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Invoices
+            </Button>
+          </div>
         }
       />
 

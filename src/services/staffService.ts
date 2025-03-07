@@ -14,13 +14,7 @@ export const staffService = {
       throw error;
     }
 
-    // Ensure notes property is always present
-    const staffWithNotes = data?.map(staff => ({
-      ...staff,
-      notes: staff.notes || null
-    })) || [];
-
-    return staffWithNotes;
+    return data || [];
   },
 
   async getById(id: string): Promise<Staff | null> {
@@ -35,8 +29,7 @@ export const staffService = {
       throw error;
     }
 
-    // Ensure notes property is present
-    return data ? { ...data, notes: data.notes || null } : null;
+    return data;
   },
 
   async create(staff: Partial<Staff>): Promise<Staff> {
@@ -71,10 +64,7 @@ export const staffService = {
       emergency_contact_name: staff.emergency_contact_name || null,
       emergency_contact_relationship: staff.emergency_contact_relationship || null,
       emergency_contact_phone: staff.emergency_contact_phone || null,
-      emergency_contact_email: staff.emergency_contact_email || null,
-      notes: staff.notes || null,
-      date_of_birth: staff.date_of_birth || null,
-      employee_id: staff.employee_id || null
+      emergency_contact_email: staff.emergency_contact_email || null
     };
 
     const { data, error } = await supabase
@@ -96,15 +86,9 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
-    // Ensure notes is set
-    const updatedStaff = {
-      ...staff,
-      notes: staff.notes !== undefined ? staff.notes : null
-    };
-
     const { data, error } = await supabase
       .from("staff")
-      .update(updatedStaff)
+      .update(staff)
       .eq("id", id)
       .select()
       .single();

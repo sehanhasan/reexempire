@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -62,6 +63,7 @@ export default function Invoices() {
           customerService.getAll()
         ]);
         
+        // Create a map of customers for easy lookup
         const customersMap = {};
         customersData.forEach(customer => {
           customersMap[customer.id] = customer;
@@ -86,6 +88,7 @@ export default function Invoices() {
   }, []);
 
   useEffect(() => {
+    // Filter data when search term or status filter changes
     let filtered = [...invoices];
     
     if (searchTerm) {
@@ -106,6 +109,7 @@ export default function Invoices() {
     try {
       await invoiceService.update(invoice.id, { payment_status: newStatus });
       
+      // Update local state
       setInvoices(prevInvoices => 
         prevInvoices.map(inv => 
           inv.id === invoice.id ? { ...inv, payment_status: newStatus } : inv
@@ -135,6 +139,7 @@ export default function Invoices() {
 
   const exportInvoices = () => {
     try {
+      // Prepare data for export - transform to more readable format
       const exportData = filteredData.map(invoice => {
         const customer = customers[invoice.customer_id] || {};
         return {
@@ -150,6 +155,7 @@ export default function Invoices() {
         };
       });
       
+      // Export to CSV
       exportService.downloadCSV(exportData, 'invoices');
       
       toast({
@@ -170,13 +176,16 @@ export default function Invoices() {
     <div className="page-container">
       <PageHeader 
         title="Invoices" 
+        description="Manage your invoice records"
         actions={
-          <div className="flex gap-2">
-            <Button onClick={() => navigate("/invoices/create")}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Invoice
-            </Button>
-          </div>
+          <Button 
+            variant="default" 
+            className="flex items-center bg-blue-600 hover:bg-blue-700" 
+            onClick={exportInvoices}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export to CSV
+          </Button>
         }
       />
       
@@ -265,7 +274,7 @@ export default function Invoices() {
                             <Badge className={
                               invoice.payment_status === "Paid" ? "bg-green-100 text-green-800" :
                               invoice.payment_status === "Partially Paid" ? "bg-amber-100 text-amber-800" :
-                              "bg-amber-100 text-amber-800"
+                              "bg-amber-100 text-amber-800" // Changed to amber for Unpaid
                             }>
                               {invoice.payment_status}
                             </Badge>

@@ -10,7 +10,6 @@ import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface SubcategoryForm {
   id?: string;
@@ -153,60 +152,25 @@ export default function AddCategory() {
     try {
       setIsSaving(true);
       
-      // Only include category name and description for the API call
-      const categoryData = {
+      const formattedData = {
         name: category.name,
-        description: category.description
+        description: category.description,
+        subcategories: subcategories.map(sub => ({
+          ...(sub.id ? { id: sub.id } : {}),
+          description: sub.description,
+          price: sub.price ? parseFloat(sub.price) : 0,
+          name: sub.description
+        }))
       };
       
       if (edit && categoryId) {
-        await categoryService.update(categoryId, categoryData);
-        
-        // Handle subcategories separately
-        for (const sub of subcategories) {
-          if (sub.id) {
-            // Update existing subcategory
-            await supabase
-              .from("subcategories")
-              .update({
-                name: sub.description,
-                description: sub.description,
-                price: sub.price ? parseFloat(sub.price) : 0
-              })
-              .eq("id", sub.id);
-          } else {
-            // Create new subcategory
-            await supabase
-              .from("subcategories")
-              .insert({
-                name: sub.description,
-                description: sub.description,
-                price: sub.price ? parseFloat(sub.price) : 0,
-                category_id: categoryId
-              });
-          }
-        }
-        
+        await categoryService.update(categoryId, formattedData);
         toast({
           title: "Success",
           description: "Category updated successfully"
         });
       } else {
-        // Create new category
-        const newCategory = await categoryService.create(categoryData);
-        
-        // Create subcategories
-        for (const sub of subcategories) {
-          await supabase
-            .from("subcategories")
-            .insert({
-              name: sub.description,
-              description: sub.description,
-              price: sub.price ? parseFloat(sub.price) : 0,
-              category_id: newCategory.id
-            });
-        }
-        
+        await categoryService.create(formattedData);
         toast({
           title: "Success",
           description: "New category created successfully"

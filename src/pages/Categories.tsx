@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "@/services/categoryService";
-import { supabase } from "@/integrations/supabase/client";
 
 import {
   DropdownMenu,
@@ -45,8 +44,20 @@ export default function Categories() {
   const { data: categories = [], refetch } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      // Fetch all categories with their subcategories
-      return await categoryService.getAll();
+      const categories = await categoryService.getAll();
+      
+      // Fetch subcategories for each category
+      const categoriesWithSubcategories = await Promise.all(
+        categories.map(async (category) => {
+          const subcategories = await categoryService.getSubcategoriesByCategoryId(category.id);
+          return {
+            ...category,
+            subcategories: subcategories || []
+          };
+        })
+      );
+      
+      return categoriesWithSubcategories;
     }
   });
 
@@ -88,6 +99,7 @@ export default function Categories() {
   };
 
   const columns = [
+    // ID and Description columns are now hidden as per requirements
     {
       header: "Name",
       accessorKey: "name" as keyof Category,
@@ -162,6 +174,8 @@ export default function Categories() {
     <div className="page-container">
       <PageHeader 
         title="Service Categories" 
+        description="Manage your service categories and subcategories."
+        // Removed "Add Category" button from header as requested
       />
       
       <div className="mt-8">

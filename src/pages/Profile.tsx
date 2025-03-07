@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -179,7 +180,10 @@ export default function Profile() {
 
   return (
     <div className="page-container max-w-5xl mx-auto">
-      <PageHeader title="My Profile" />
+      <PageHeader 
+        title="Profile" 
+        description="View and update your profile information."
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
         <div className="md:col-span-1">

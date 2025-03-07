@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -167,6 +166,7 @@ export default function CreateQuotation() {
     <div className="page-container">
       <PageHeader
         title="Create Quotation"
+        description="Create a new quotation for a customer."
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>

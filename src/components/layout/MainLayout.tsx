@@ -4,9 +4,6 @@ import { AppSidebar } from "./AppSidebar";
 import { MobileHeader } from "./MobileHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -16,9 +13,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
-  const { isAdmin, isStaff, logout } = useAuth();
-  const navigate = useNavigate();
   
+  // Get page title based on route
   const getPageTitle = () => {
     const path = location.pathname;
     
@@ -45,20 +41,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     return "Reex Empire";
   };
   
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/auth");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-  
+  // Close sidebar when route changes
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       setSidebarOpen(false);
@@ -68,13 +51,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="flex min-h-screen bg-background">
       <div className="sticky top-0 h-screen flex-shrink-0">
-        <AppSidebar 
-          open={sidebarOpen} 
-          setOpen={setSidebarOpen} 
-          isAdmin={isAdmin}
-          isStaff={isStaff}
-          onLogout={handleLogout} 
-        />
+        <AppSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       </div>
       
       <div className="flex-1 overflow-auto">

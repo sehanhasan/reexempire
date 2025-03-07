@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -6,10 +7,28 @@ export const appointmentService = {
     const { data, error } = await supabase
       .from("appointments")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("appointment_date", { ascending: true })
+      .order("start_time", { ascending: true });
 
     if (error) {
       console.error("Error fetching appointments:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getByDateRange(startDate: string, endDate: string): Promise<Appointment[]> {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .gte("appointment_date", startDate)
+      .lte("appointment_date", endDate)
+      .order("appointment_date", { ascending: true })
+      .order("start_time", { ascending: true });
+
+    if (error) {
+      console.error(`Error fetching appointments from ${startDate} to ${endDate}:`, error);
       throw error;
     }
 
@@ -29,6 +48,36 @@ export const appointmentService = {
     }
 
     return data;
+  },
+
+  async getByCustomerId(customerId: string): Promise<Appointment[]> {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("customer_id", customerId)
+      .order("appointment_date", { ascending: false });
+
+    if (error) {
+      console.error(`Error fetching appointments for customer ${customerId}:`, error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getByStaffId(staffId: string): Promise<Appointment[]> {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("staff_id", staffId)
+      .order("appointment_date", { ascending: false });
+
+    if (error) {
+      console.error(`Error fetching appointments for staff ${staffId}:`, error);
+      throw error;
+    }
+
+    return data || [];
   },
 
   async create(appointment: Omit<Appointment, "id" | "created_at" | "updated_at">): Promise<Appointment> {
@@ -72,20 +121,5 @@ export const appointmentService = {
       console.error(`Error deleting appointment with id ${id}:`, error);
       throw error;
     }
-  },
-
-  async getAppointmentsByStaffId(staffId: string): Promise<Appointment[]> {
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*")
-      .eq("staff_id", staffId)
-      .order("appointment_date", { ascending: true });
-
-    if (error) {
-      console.error(`Error fetching appointments for staff ${staffId}:`, error);
-      throw error;
-    }
-
-    return data || [];
-  },
+  }
 };

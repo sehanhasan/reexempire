@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -194,7 +195,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
-      <PageHeader title="Dashboard" />
+      <PageHeader title="Dashboard" description="Overview of your business performance" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <StatCard 
