@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, addMonths, subMonths } from 'date-fns';
-
-import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/ui/page-header';
-import { AppointmentDetailsDialog } from '@/components/appointments/AppointmentDetailsDialog';
-import { FloatingActionButton } from '@/components/common/FloatingActionButton';
-import { appointmentService, staffService } from '@/services';
-import { Appointment, Staff } from '@/types/database';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { format, parseISO, isToday, startOfMonth, endOfMonth, eachDayOfInterval, addDays, isSameDay } from "date-fns";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/common/PageHeader";
+import { toast } from "@/components/ui/use-toast";
+import { CustomerSelector } from "@/components/appointments/CustomerSelector";
+import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
+import { appointmentService, customerService, staffService } from "@/services";
+import type { Appointment, Customer } from "@/types/database";
 
 export default function Schedule() {
   const navigate = useNavigate();

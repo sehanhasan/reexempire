@@ -43,3 +43,11 @@ export const deleteStaffMember = async (id: string): Promise<void> => {
   const { error } = await supabase.from("staff").delete().eq("id", id);
   if (error) throw error;
 };
+
+export const staffService = {
+  getAll: getStaffList,
+  getById: getStaffMember,
+  create: createStaffMember,
+  update: updateStaffMember,
+  delete: deleteStaffMember
+};

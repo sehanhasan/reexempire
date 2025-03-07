@@ -7,9 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Chart } from "@/components/dashboard/Chart";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useQuery } from "@tanstack/react-query";
-import { getAppointmentList } from "@/services";
-import { getInvoiceList } from "@/services/invoiceService";
-import { getCustomerList } from "@/services";
+import { appointmentService, customerService, invoiceService } from "@/services";
 import { format } from "date-fns";
 import { Invoice, Appointment, Customer } from "@/types/database";
 
@@ -29,7 +27,7 @@ const Dashboard = () => {
     error: appointmentsError,
   } = useQuery({
     queryKey: ["appointments"],
-    queryFn: getAppointmentList,
+    queryFn: appointmentService.getAll,
   });
 
   // Fetch invoices
@@ -39,7 +37,7 @@ const Dashboard = () => {
     error: invoicesError,
   } = useQuery({
     queryKey: ["invoices"],
-    queryFn: getInvoiceList,
+    queryFn: invoiceService.getAll,
   });
 
   // Fetch customers
@@ -49,7 +47,7 @@ const Dashboard = () => {
     error: customersError,
   } = useQuery({
     queryKey: ["customers"],
-    queryFn: getCustomerList,
+    queryFn: customerService.getAll,
   });
 
   // Calculate statistics based on data

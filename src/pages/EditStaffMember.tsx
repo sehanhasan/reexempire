@@ -1,5 +1,4 @@
-// Import necessary modules and components
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -8,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { staffService } from "@/services";
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -38,7 +37,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Staff } from "@/types/database";
 
-// Define the form schema using Zod
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
@@ -46,32 +44,33 @@ const formSchema = z.object({
   position: z.string().optional(),
   email: z.string().email({
     message: "Invalid email address.",
-  }).optional(),
-  phone: z.string().optional(),
+  }).optional().nullable(),
+  phone: z.string().optional().nullable(),
   status: z.enum(["Active", "Inactive"]),
   join_date: z.string().optional(),
-  department: z.string().optional(),
-  employment_type: z.string().optional(),
-  gender: z.string().optional(),
-  passport: z.string().optional(),
-  username: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  postal_code: z.string().optional(),
-  emergency_contact_name: z.string().optional(),
-  emergency_contact_relationship: z.string().optional(),
-  emergency_contact_phone: z.string().optional(),
-  emergency_contact_email: z.string().optional(),
+  department: z.string().optional().nullable(),
+  employment_type: z.string().optional().nullable(),
+  gender: z.string().optional().nullable(),
+  passport: z.string().optional().nullable(),
+  username: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  state: z.string().optional().nullable(),
+  postal_code: z.string().optional().nullable(),
+  emergency_contact_name: z.string().optional().nullable(),
+  emergency_contact_relationship: z.string().optional().nullable(),
+  emergency_contact_phone: z.string().optional().nullable(),
+  emergency_contact_email: z.string().optional().nullable(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const EditStaffMember = () => {
-  // Get the staff ID from the URL params
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize the form using react-hook-form
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -96,12 +95,11 @@ const EditStaffMember = () => {
     },
   });
 
-  // Use the modified query without onSuccess
   const { data: staffData, isLoading } = useQuery({
     queryKey: ["staff", id],
-    queryFn: () => staffService.getById(id),
+    queryFn: () => id ? staffService.getById(id) : null,
     meta: {
-      onSettled: (data, error) => {
+      onSettled: (data: Staff | null, error: Error | null) => {
         if (error) {
           toast({
             title: "Error",
@@ -137,29 +135,29 @@ const EditStaffMember = () => {
     }
   });
 
-  // Mutation to update staff data
-  const updateStaffMutation = useMutation(
-    (data: Partial<Staff>) => staffService.update(id, data),
-    {
-      onSuccess: () => {
-        toast({
-          title: "Success",
-          description: "Staff member updated successfully.",
-        });
-        navigate("/staff");
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: "Failed to update staff member. Please try again.",
-          variant: "destructive",
-        });
-      },
-    }
-  );
+  const updateStaffMutation = useMutation({
+    mutationFn: (data: FormValues) => {
+      if (!id) throw new Error("Staff ID is required");
+      return staffService.update(id, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Staff member updated successfully.",
+      });
+      navigate("/staff");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update staff member. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
-  // Handle form submission
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: FormValues) => {
+    setIsSubmitting(true);
     updateStaffMutation.mutate(values);
   };
 
@@ -449,9 +447,9 @@ const EditStaffMember = () => {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={updateStaffMutation.isLoading}>
+                <Button type="submit" disabled={isSubmitting || updateStaffMutation.isPending}>
                   <Save className="mr-2 h-4 w-4" />
-                  {updateStaffMutation.isLoading ? "Updating..." : "Update Staff"}
+                  {isSubmitting || updateStaffMutation.isPending ? "Updating..." : "Update Staff"}
                 </Button>
               </form>
             </Form>

@@ -13,7 +13,7 @@ import { invoiceService } from "./invoiceService";
 import { appointmentService } from "./appointmentService";
 import { staffService } from "./staffService";
 
-export { 
+export {
   customerService,
   invoiceService,
   appointmentService,

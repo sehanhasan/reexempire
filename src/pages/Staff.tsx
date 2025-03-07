@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 
-import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
@@ -11,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 
 import { staffService } from "@/services";
-import { Staff } from "@/types/database";
+import type { Staff as StaffType } from "@/types/database";
 
 const Staff = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const Staff = () => {
     {
       header: "Status",
       accessorKey: "status",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: StaffType } }) => (
         <Badge variant={row.original.status === "Active" ? "default" : "destructive"}>
           {row.original.status}
         </Badge>
@@ -58,11 +59,11 @@ const Staff = () => {
     {
       header: "Actions",
       accessorKey: "actions",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: StaffType } }) => (
         <div className="flex justify-end gap-2">
           <Button
             size="sm"
-            onClick={() => navigate(`/staff/${row.original.id}`)}
+            onClick={() => navigate(`/staff/edit/${row.original.id}`)}
           >
             Edit
           </Button>
@@ -77,7 +78,7 @@ const Staff = () => {
         title="Staff"
         description="Manage your staff members"
         actions={
-          <Button onClick={() => navigate("/staff/new")}>
+          <Button onClick={() => navigate("/staff/add")}>
             <Plus className="mr-2 h-4 w-4" />
             Add Staff
           </Button>

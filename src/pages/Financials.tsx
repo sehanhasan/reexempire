@@ -1,12 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { DateRange } from "react-day-picker";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTable } from "@/components/ui/data-table";
 import { columns } from "@/components/financials/columns";
@@ -15,17 +9,18 @@ import { DatePickerWithRange } from "@/components/common/DateRangePicker";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getInvoiceList } from "@/services/invoiceService";
-import { Invoice } from "@/types/database";
 import { CSVLink } from "react-csv";
+import { Invoice } from "@/types/database";
 
 const Financials = () => {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+  const [dateRange, setDateRange] = useState({
     from: new Date(),
     to: new Date()
   });
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvData, setCsvData] = useState<Partial<Invoice>[]>([]);
+
   const { isLoading, error, data } = useQuery({
     queryKey: ["invoices"],
     queryFn: getInvoiceList,
@@ -33,7 +28,7 @@ const Financials = () => {
 
   useEffect(() => {
     if (data) {
-      setInvoices(data as Invoice[]);
+      setInvoices(data);
     }
   }, [data]);
 
@@ -47,24 +42,17 @@ const Financials = () => {
     }
   }, [error, toast]);
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
+  const handleDateRangeChange = (range: { from: Date; to?: Date } | undefined) => {
     if (range?.from) {
       setDateRange({
         from: range.from,
-        to: range.to || range.from
+        to: range.to || range.from,
       });
     }
   };
 
   const prepareCSVData = () => {
-    const csvColumns = columns.map((column) => {
-      const key = typeof column.accessorKey === 'string' ? column.accessorKey : '';
-      return {
-        label: column.header as string,
-        key: key,
-      };
-    }).filter(col => col.key);
-
+    // Instead of depending on accessorKey, map to known invoice properties
     const dataToExport = invoices.map((invoice) => ({
       reference_number: invoice.reference_number,
       customer_id: invoice.customer_id,
@@ -77,7 +65,6 @@ const Financials = () => {
       total: invoice.total,
       payment_status: invoice.payment_status,
     }));
-
     setCsvData(dataToExport);
   };
 
@@ -91,7 +78,6 @@ const Financials = () => {
         title="Financials"
         description="View and analyze your financial data"
       />
-      
       <div className="grid gap-4">
         <Card>
           <CardHeader>
@@ -110,7 +96,7 @@ const Financials = () => {
               {csvData.length > 0 && (
                 <CSVLink
                   data={csvData}
-                  filename={"financial_report.csv"}
+                  filename="financial_report.csv"
                   className="hidden"
                   target="_blank"
                 >
@@ -118,7 +104,6 @@ const Financials = () => {
                 </CSVLink>
               )}
             </div>
-            
             <DataTable
               columns={columns}
               data={invoices}
