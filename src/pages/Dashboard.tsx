@@ -28,7 +28,6 @@ export default function Dashboard() {
   const [customersMap, setCustomersMap] = useState({});
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
-  const [revenueData, setRevenueData] = useState([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -49,16 +48,21 @@ export default function Dashboard() {
 
         // Calculate total revenue from invoices - ensure we're working with numbers
         const totalRevenue = invoices.reduce((acc, invoice) => {
-          // Convert both the accumulator and invoice.total to numbers
+          // Explicitly convert the accumulator to a number to avoid type errors
           const numAcc = typeof acc === 'number' ? acc : 0;
-          const numTotal = typeof invoice.total === 'number' 
-            ? invoice.total 
-            : (invoice.total !== null && invoice.total !== undefined 
-              ? Number(invoice.total) 
-              : 0);
           
-          // Handle NaN values
-          return numAcc + (isNaN(numTotal) ? 0 : numTotal);
+          // Handle invoice.total - ensuring it's a valid number
+          let invoiceTotal = 0;
+          if (typeof invoice.total === 'number') {
+            invoiceTotal = invoice.total;
+          } else if (invoice.total !== null && invoice.total !== undefined) {
+            // Convert the value to a number
+            const parsed = Number(invoice.total);
+            invoiceTotal = isNaN(parsed) ? 0 : parsed;
+          }
+          
+          // Return the sum as a number
+          return numAcc + invoiceTotal;
         }, 0);
 
         // Set stats
@@ -68,10 +72,6 @@ export default function Dashboard() {
           invoices: invoices.length,
           revenue: totalRevenue
         });
-
-        // Generate monthly revenue data from actual invoices
-        const monthlyRevenue = generateMonthlyRevenueData(invoices);
-        setRevenueData(monthlyRevenue);
 
         // Get upcoming appointments/jobs
         const now = new Date();
@@ -113,43 +113,6 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
   
-  // Generate monthly revenue data from invoices
-  const generateMonthlyRevenueData = (invoices) => {
-    // Create a map of month to revenue
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthlyData = {};
-    
-    // Initialize all months with zero revenue
-    months.forEach(month => {
-      monthlyData[month] = 0;
-    });
-    
-    // Sum up revenue for each month
-    invoices.forEach(invoice => {
-      if (invoice.payment_status === 'Paid' && invoice.issue_date) {
-        const date = new Date(invoice.issue_date);
-        const month = months[date.getMonth()];
-        
-        // Convert invoice.total to a number safely
-        const total = typeof invoice.total === 'number' 
-          ? invoice.total 
-          : (invoice.total !== null && invoice.total !== undefined 
-            ? Number(invoice.total) 
-            : 0);
-            
-        if (!isNaN(total)) {
-          monthlyData[month] += total;
-        }
-      }
-    });
-    
-    // Convert to array format for chart
-    return months.map(month => ({
-      month,
-      revenue: monthlyData[month]
-    }));
-  };
-  
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -180,6 +143,41 @@ export default function Dashboard() {
   const navigateToEditAppointment = id => {
     navigate(`/schedule/edit/${id}`);
   };
+
+  // Sample data for the revenue chart
+  const revenueData = [{
+    month: "Jan",
+    revenue: 12000
+  }, {
+    month: "Feb",
+    revenue: 15000
+  }, {
+    month: "Mar",
+    revenue: 18000
+  }, {
+    month: "Apr",
+    revenue: 16000
+  }, {
+    month: "May",
+    revenue: 21000
+  }, {
+    month: "Jun",
+    revenue: 19000
+  }];
+  
+  const salesByCategory = [{
+    name: "Bathroom",
+    value: 35
+  }, {
+    name: "Kitchen",
+    value: 30
+  }, {
+    name: "Flooring",
+    value: 20
+  }, {
+    name: "Electrical",
+    value: 15
+  }];
   
   return <div className="page-container">
       <PageHeader title="Dashboard" description="Overview of your business performance" />

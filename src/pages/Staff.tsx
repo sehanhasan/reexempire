@@ -37,9 +37,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 import { staffService } from "@/services";
@@ -88,7 +88,7 @@ export default function StaffPage() {
   };
 
   const handleEdit = (staff: Staff) => {
-    navigate(`/staff/edit/${staff.id}`);
+    navigate(`/staff/add?id=${staff.id}`);
   };
 
   const handleDelete = (staff: Staff) => {
@@ -160,15 +160,6 @@ export default function StaffPage() {
     {
       header: "Position",
       accessorKey: "position" as keyof Staff,
-    },
-    {
-      header: "Username",
-      accessorKey: "username" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => (
-        <div className="text-slate-600">
-          {row.original.username || "Not Set"}
-        </div>
-      ),
     },
     {
       header: "Phone",
@@ -314,16 +305,6 @@ export default function StaffPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Position</p>
                 <p>{selectedStaff.position}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Username</p>
-                <p>{selectedStaff.username || "Not set"}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Passport #</p>
-                <p>{selectedStaff.passport || "Not provided"}</p>
               </div>
               
               <div>
