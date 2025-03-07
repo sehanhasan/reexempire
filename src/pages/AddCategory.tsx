@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -9,6 +10,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SubcategoryForm {
   id?: string;
@@ -188,8 +190,7 @@ export default function AddCategory() {
   
   return <div className="page-container">
       <PageHeader 
-        title={edit ? "Edit Category" : "Add Category"} 
-        description={edit ? "Update existing category and subcategories" : "Create a new category with subcategories"} 
+        title={edit ? "Edit Category" : "Add Category"}
         actions={
           <Button variant="outline" onClick={() => navigate("/categories")}>
             <ArrowLeft className="mr-2 h-4 w-4" />

@@ -3,7 +3,9 @@ import { ReactNode, useState, useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileHeader } from "./MobileHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { LoadingSpinner } from "@/components/auth/LoadingSpinner";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -13,6 +15,23 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAdmin, isStaff, isLoading, signOut } = useAuth();
+  
+  // If user is not authenticated, redirect to login
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/auth/login');
+    }
+
+    // If user is a staff member, they can only access the schedule page
+    if (!isLoading && user && isStaff && !isAdmin) {
+      const path = location.pathname;
+      if (!path.includes('/schedule') && path !== '/') {
+        navigate('/schedule');
+      }
+    }
+  }, [user, isLoading, location.pathname, navigate, isStaff, isAdmin]);
   
   // Get page title based on route
   const getPageTitle = () => {
@@ -40,18 +59,37 @@ export function MainLayout({ children }: MainLayoutProps) {
     
     return "Reex Empire";
   };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth/login');
+  };
   
   // Close sidebar when route changes
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       setSidebarOpen(false);
     }
-  }, [location, isMobile]);
+  }, [location, isMobile, sidebarOpen]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
   
   return (
     <div className="flex min-h-screen bg-background">
       <div className="sticky top-0 h-screen flex-shrink-0">
-        <AppSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+        <AppSidebar 
+          open={sidebarOpen} 
+          setOpen={setSidebarOpen} 
+          isAdmin={isAdmin}
+          isStaff={isStaff}
+          onLogout={handleLogout}
+        />
       </div>
       
       <div className="flex-1 overflow-auto">

@@ -14,7 +14,13 @@ export const staffService = {
       throw error;
     }
 
-    return data || [];
+    // Ensure all staff members have the required properties
+    const staffWithNotes = data?.map(staff => ({
+      ...staff,
+      notes: staff.notes || null // Ensure notes property exists
+    })) || [];
+
+    return staffWithNotes;
   },
 
   async getById(id: string): Promise<Staff | null> {
@@ -29,7 +35,11 @@ export const staffService = {
       throw error;
     }
 
-    return data;
+    // Ensure the staff member has the notes property
+    return data ? {
+      ...data,
+      notes: data.notes || null
+    } : null;
   },
 
   async create(staff: Partial<Staff>): Promise<Staff> {
@@ -62,21 +72,27 @@ export const staffService = {
       emergency_contact_name: staff.emergency_contact_name,
       emergency_contact_relationship: staff.emergency_contact_relationship,
       emergency_contact_phone: staff.emergency_contact_phone,
-      emergency_contact_email: staff.emergency_contact_email
+      emergency_contact_email: staff.emergency_contact_email,
+      notes: staff.notes || null  // Ensure notes property is included
     };
 
-    const { data, error } = await supabase
-      .from("staff")
-      .insert(staffData)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("staff")
+        .insert(staffData)
+        .select()
+        .single();
 
-    if (error) {
-      console.error("Error creating staff member:", error);
+      if (error) {
+        console.error("Error creating staff member:", error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Failed to create staff member:", error);
       throw error;
     }
-
-    return data;
   },
 
   async update(id: string, staff: Partial<Staff>): Promise<Staff> {
@@ -84,29 +100,45 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
-    const { data, error } = await supabase
-      .from("staff")
-      .update(staff)
-      .eq("id", id)
-      .select()
-      .single();
+    // Ensure the notes field is included
+    const updatedStaff = {
+      ...staff,
+      notes: staff.notes !== undefined ? staff.notes : null
+    };
 
-    if (error) {
-      console.error(`Error updating staff member with id ${id}:`, error);
+    try {
+      const { data, error } = await supabase
+        .from("staff")
+        .update(updatedStaff)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error updating staff member with id ${id}:`, error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error(`Failed to update staff member with id ${id}:`, error);
       throw error;
     }
-
-    return data;
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("staff")
-      .delete()
-      .eq("id", id);
+    try {
+      const { error } = await supabase
+        .from("staff")
+        .delete()
+        .eq("id", id);
 
-    if (error) {
-      console.error(`Error deleting staff member with id ${id}:`, error);
+      if (error) {
+        console.error(`Error deleting staff member with id ${id}:`, error);
+        throw error;
+      }
+    } catch (error) {
+      console.error(`Failed to delete staff member with id ${id}:`, error);
       throw error;
     }
   }
