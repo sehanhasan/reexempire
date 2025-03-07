@@ -36,10 +36,10 @@ export function QuotationItemsCard({
   
   // If we're on the edit page, show the items table by default
   useEffect(() => {
-    if (isEditPage) {
+    if (isEditPage && items.length > 0) {
       setShowItemsTable(true);
     }
-  }, [isEditPage]);
+  }, [isEditPage, items.length]);
 
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
@@ -152,7 +152,7 @@ export function QuotationItemsCard({
             </Button>
           </div>
 
-          {showItemsTable && <>
+          {showItemsTable && items.length > 0 && <>
               <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
               
               <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
@@ -168,7 +168,8 @@ export function QuotationItemsCard({
                       <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={checked => setDepositInfo({
                     ...depositInfo,
                     requiresDeposit: !!checked,
-                    depositPercentage: 50  // Set default to 50%
+                    depositPercentage: "",
+                    depositAmount: 0
                   })} />
                       <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
                         <Wallet className="h-3.5 w-3.5 mr-1" />
@@ -181,7 +182,7 @@ export function QuotationItemsCard({
                           <div className="space-y-1">
                             <Label htmlFor="depositPercentage" className="text-xs">Percentage</Label>
                             <div className="relative">
-                              <Input id="depositPercentage" type="number" min="0" max="100" value={depositInfo.depositPercentage.toFixed(0)} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value))} className="pr-7 h-10 text-sm" />
+                              <Input id="depositPercentage" type="number" min="0" max="100" value={depositInfo.depositPercentage} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value))} className="pr-7 h-10 text-sm" />
                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
                             </div>
                           </div>

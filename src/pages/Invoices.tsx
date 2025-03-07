@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Eye, 
@@ -13,9 +13,20 @@ import {
   CreditCard, 
   CalendarClock, 
   Download,
-  Plus
+  Plus,
+  Search,
+  Check,
+  Send
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +34,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { invoiceService, customerService, exportService } from "@/services";
 import { format } from "date-fns";
 
@@ -31,6 +50,8 @@ export default function Invoices() {
   const [invoices, setInvoices] = useState([]);
   const [customers, setCustomers] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [filteredData, setFilteredData] = useState([]);
 
   useEffect(() => {
@@ -65,6 +86,24 @@ export default function Invoices() {
     
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Filter data when search term or status filter changes
+    let filtered = [...invoices];
+    
+    if (searchTerm) {
+      filtered = filtered.filter(invoice => 
+        invoice.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (customers[invoice.customer_id]?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(invoice => invoice.payment_status === statusFilter);
+    }
+    
+    setFilteredData(filtered);
+  }, [searchTerm, statusFilter, invoices, customers]);
   
   const handlePaymentStatusChange = async (invoice, newStatus) => {
     try {
@@ -96,10 +135,6 @@ export default function Invoices() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
-  };
-
-  const handleSearch = (searchTerm, data) => {
-    setFilteredData(data);
   };
 
   const exportInvoices = () => {
@@ -136,141 +171,6 @@ export default function Invoices() {
       });
     }
   };
-  
-  const columns = [
-    {
-      header: "Invoice #",
-      accessorKey: "reference_number",
-      cell: ({ row }) => (
-        <div 
-          className="font-medium cursor-pointer text-blue-600"
-          onClick={() => navigate(`/invoices/edit/${row.original.id}`)}
-        >
-          {row.original.reference_number}
-        </div>
-      ),
-    },
-    {
-      header: "Customer",
-      accessorKey: "customer_id",
-      cell: ({ row }) => {
-        const customer = customers[row.original.customer_id];
-        return customer ? customer.name : "Unknown";
-      },
-    },
-    {
-      header: "Issue Date",
-      accessorKey: "issue_date",
-      cell: ({ row }) => format(new Date(row.original.issue_date), "MMM dd, yyyy"),
-    },
-    {
-      header: "Due Date",
-      accessorKey: "due_date",
-      cell: ({ row }) => {
-        const dueDate = new Date(row.original.due_date);
-        const today = new Date();
-        const isPastDue = dueDate < today && row.original.payment_status !== "Paid";
-        
-        return (
-          <div className="flex items-center">
-            <span className={isPastDue ? "text-red-600 font-medium" : ""}>
-              {format(dueDate, "MMM dd, yyyy")}
-            </span>
-            {isPastDue && (
-              <Badge variant="outline" className="ml-2 bg-red-50 text-red-600 border-red-200">
-                Overdue
-              </Badge>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: "Amount",
-      accessorKey: "total",
-      cell: ({ row }) => (
-        <div className="font-medium">
-          {formatMoney(row.original.total)}
-        </div>
-      ),
-    },
-    {
-      header: "Status",
-      accessorKey: "payment_status",
-      cell: ({ row }) => {
-        const status = row.original.payment_status;
-        return (
-          <Badge className={
-            status === "Paid" ? "bg-green-100 text-green-800" :
-            status === "Partially Paid" ? "bg-amber-100 text-amber-800" :
-            "bg-red-100 text-red-800"
-          }>
-            {status}
-          </Badge>
-        );
-      },
-    },
-    {
-      header: "Actions",
-      id: "actions",
-      cell: ({ row }) => {
-        const invoice = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => navigate(`/invoices/edit/${invoice.id}?mode=edit`)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {invoice.payment_status !== "Paid" && (
-                <DropdownMenuItem 
-                  className="cursor-pointer text-green-600"
-                  onClick={() => handlePaymentStatusChange(invoice, "Paid")}
-                >
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Mark as Paid
-                </DropdownMenuItem>
-              )}
-              {invoice.payment_status !== "Partially Paid" && (
-                <DropdownMenuItem 
-                  className="cursor-pointer text-amber-600"
-                  onClick={() => handlePaymentStatusChange(invoice, "Partially Paid")}
-                >
-                  <CalendarClock className="mr-2 h-4 w-4" />
-                  Mark as Partially Paid
-                </DropdownMenuItem>
-              )}
-              {invoice.payment_status !== "Unpaid" && (
-                <DropdownMenuItem 
-                  className="cursor-pointer text-red-600"
-                  onClick={() => handlePaymentStatusChange(invoice, "Unpaid")}
-                >
-                  <CalendarClock className="mr-2 h-4 w-4" />
-                  Mark as Unpaid
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
 
   return (
     <div className="page-container">
@@ -279,8 +179,8 @@ export default function Invoices() {
         description="Manage your invoice records"
         actions={
           <Button 
-            variant="outline" 
-            className="flex items-center" 
+            variant="default" 
+            className="flex items-center bg-blue-600 hover:bg-blue-700" 
             onClick={exportInvoices}
           >
             <Download className="mr-2 h-4 w-4" />
@@ -290,13 +190,169 @@ export default function Invoices() {
       />
       
       <div className="mt-6">
-        <DataTable 
-          columns={columns} 
-          data={invoices} 
-          searchKey="reference_number"
-          isLoading={isLoading}
-          onSearch={handleSearch}
-        />
+        <Card>
+          <CardContent className="p-0">
+            <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search invoices..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="w-full sm:w-48">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Paid">Paid</SelectItem>
+                    <SelectItem value="Partially Paid">Partially Paid</SelectItem>
+                    <SelectItem value="Unpaid">Unpaid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground">Loading invoices...</p>
+              </div>
+            ) : filteredData.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground">No invoices found matching your criteria</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead className="w-[100px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredData.map(invoice => {
+                      const customer = customers[invoice.customer_id];
+                      const dueDate = new Date(invoice.due_date);
+                      const today = new Date();
+                      const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
+                      
+                      return (
+                        <TableRow key={invoice.id}>
+                          <TableCell>
+                            <div 
+                              className="font-medium cursor-pointer text-blue-600"
+                              onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
+                            >
+                              {invoice.reference_number}
+                            </div>
+                          </TableCell>
+                          <TableCell>{customer ? customer.name : "Unknown"}</TableCell>
+                          <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <span className={isPastDue ? "text-red-600 font-medium" : ""}>
+                                {format(dueDate, "MMM dd, yyyy")}
+                              </span>
+                              {isPastDue && (
+                                <Badge variant="outline" className="ml-2 bg-red-50 text-red-600 border-red-200">
+                                  Overdue
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={
+                              invoice.payment_status === "Paid" ? "bg-green-100 text-green-800" :
+                              invoice.payment_status === "Partially Paid" ? "bg-amber-100 text-amber-800" :
+                              "bg-amber-100 text-amber-800" // Changed to amber for Unpaid
+                            }>
+                              {invoice.payment_status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {formatMoney(invoice.total)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => navigate(`/invoices/edit/${invoice.id}?mode=edit`)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-[160px]">
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer"
+                                    onClick={() => console.log("Send invoice")}
+                                  >
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Send Invoice
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  {invoice.payment_status !== "Paid" && (
+                                    <DropdownMenuItem 
+                                      className="cursor-pointer text-green-600"
+                                      onClick={() => handlePaymentStatusChange(invoice, "Paid")}
+                                    >
+                                      <Check className="mr-2 h-4 w-4" />
+                                      Mark as Paid
+                                    </DropdownMenuItem>
+                                  )}
+                                  {invoice.payment_status !== "Partially Paid" && (
+                                    <DropdownMenuItem 
+                                      className="cursor-pointer text-amber-600"
+                                      onClick={() => handlePaymentStatusChange(invoice, "Partially Paid")}
+                                    >
+                                      <CalendarClock className="mr-2 h-4 w-4" />
+                                      Mark as Partially Paid
+                                    </DropdownMenuItem>
+                                  )}
+                                  {invoice.payment_status !== "Unpaid" && (
+                                    <DropdownMenuItem 
+                                      className="cursor-pointer text-amber-600"
+                                      onClick={() => handlePaymentStatusChange(invoice, "Unpaid")}
+                                    >
+                                      <CalendarClock className="mr-2 h-4 w-4" />
+                                      Mark as Unpaid
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
       
       <FloatingActionButton 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -114,8 +115,7 @@ export default function AddCategory() {
         });
         return false;
       }
-      const price = parseFloat(sub.price);
-      if (isNaN(price) || price < 0) {
+      if (sub.price && isNaN(parseFloat(sub.price))) {
         toast({
           title: "Validation Error",
           description: `Invalid price for subcategory ${i + 1}`,
@@ -140,7 +140,7 @@ export default function AddCategory() {
             id: sub.id,
             // Only for existing subcategories
             description: sub.description,
-            price: parseFloat(sub.price) || 0
+            price: sub.price ? parseFloat(sub.price) : 0
           }))
         });
         toast({
@@ -154,7 +154,7 @@ export default function AddCategory() {
           description: category.description,
           subcategories: subcategories.map(sub => ({
             description: sub.description,
-            price: parseFloat(sub.price) || 0
+            price: sub.price ? parseFloat(sub.price) : 0
           }))
         });
         toast({

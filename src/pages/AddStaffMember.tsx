@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,30 +22,159 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Save, Upload, UserCog } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { staffService } from "@/services";
 
 export default function AddStaffMember() {
   const navigate = useNavigate();
-  const [joinDate, setJoinDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [searchParams] = useSearchParams();
+  const staffId = searchParams.get("id");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+
+  const [staffData, setStaffData] = useState({
+    first_name: "",
+    last_name: "",
+    passport: "",
+    gender: "male",
+    date_of_birth: "",
+    username: "",
+    position: "",
+    department: "",
+    join_date: new Date().toISOString().split("T")[0],
+    employment_type: "full_time",
+    employee_id: "EMP-001",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "Selangor",
+    postal_code: "",
+    emergency_name: "",
+    emergency_relationship: "",
+    emergency_phone: "",
+    emergency_email: ""
+  });
+
+  useEffect(() => {
+    if (staffId) {
+      setIsEdit(true);
+      fetchStaffMember(staffId);
+    }
+  }, [staffId]);
+
+  const fetchStaffMember = async (id) => {
+    try {
+      setIsLoading(true);
+      const data = await staffService.getById(id);
+      if (data) {
+        setStaffData({
+          first_name: data.first_name || "",
+          last_name: data.last_name || "",
+          passport: data.passport || "",
+          gender: data.gender || "male",
+          date_of_birth: data.date_of_birth || "",
+          username: data.username || "",
+          position: data.position || "",
+          department: data.department || "",
+          join_date: data.join_date || new Date().toISOString().split("T")[0],
+          employment_type: data.employment_type || "full_time",
+          employee_id: data.employee_id || "EMP-001",
+          email: data.email || "",
+          phone: data.phone || "",
+          address: data.address || "",
+          city: data.city || "",
+          state: data.state || "Selangor",
+          postal_code: data.postal_code || "",
+          emergency_name: data.emergency_contact_name || "",
+          emergency_relationship: data.emergency_contact_relationship || "",
+          emergency_phone: data.emergency_contact_phone || "",
+          emergency_email: data.emergency_contact_email || ""
+        });
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching staff member:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load staff member details",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setStaffData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // In a real app, this would save to the database
-    toast({
-      title: "Staff Member Added",
-      description: "The staff member has been added successfully."
-    });
-    
-    navigate("/staff");
+    try {
+      setIsLoading(true);
+      
+      // Format the data for the API
+      const formattedData = {
+        name: `${staffData.first_name} ${staffData.last_name}`,
+        first_name: staffData.first_name,
+        last_name: staffData.last_name,
+        passport: staffData.passport,
+        gender: staffData.gender,
+        date_of_birth: staffData.date_of_birth,
+        username: staffData.username,
+        position: staffData.position,
+        department: staffData.department,
+        join_date: staffData.join_date,
+        employment_type: staffData.employment_type,
+        employee_id: staffData.employee_id,
+        email: staffData.email,
+        phone: staffData.phone,
+        address: staffData.address,
+        city: staffData.city,
+        state: staffData.state,
+        postal_code: staffData.postal_code,
+        emergency_contact_name: staffData.emergency_name,
+        emergency_contact_relationship: staffData.emergency_relationship,
+        emergency_contact_phone: staffData.emergency_phone,
+        emergency_contact_email: staffData.emergency_email,
+        status: "Active" // Default status
+      };
+      
+      if (isEdit) {
+        await staffService.update(staffId, formattedData);
+        toast({
+          title: "Staff Updated",
+          description: "The staff member has been updated successfully."
+        });
+      } else {
+        await staffService.create(formattedData);
+        toast({
+          title: "Staff Added",
+          description: "The staff member has been added successfully."
+        });
+      }
+      
+      setIsLoading(false);
+      navigate("/staff");
+    } catch (error) {
+      console.error("Error saving staff member:", error);
+      toast({
+        title: "Error",
+        description: `Failed to ${isEdit ? "update" : "add"} staff member. Please try again.`,
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
   };
   
   return (
     <div className="page-container">
       <PageHeader
-        title="Add Staff Member"
-        description="Add a new staff member to the team."
+        title={isEdit ? "Edit Staff Member" : "Add Staff Member"}
+        description={isEdit ? "Update staff member details" : "Add a new staff member to the team."}
         actions={
           <Button variant="outline" onClick={() => navigate("/staff")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -82,23 +211,40 @@ export default function AddStaffMember() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" required />
+                    <Input 
+                      id="firstName" 
+                      value={staffData.first_name}
+                      onChange={(e) => handleChange("first_name", e.target.value)}
+                      required 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" required />
+                    <Input 
+                      id="lastName" 
+                      value={staffData.last_name}
+                      onChange={(e) => handleChange("last_name", e.target.value)}
+                      required 
+                    />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="ic">IC Number</Label>
-                    <Input id="ic" placeholder="e.g. 880101-14-1234" required />
-                    <p className="text-xs text-muted-foreground">Malaysian IC format: YYMMDD-PB-XXXX</p>
+                    <Label htmlFor="passport">Passport #</Label>
+                    <Input 
+                      id="passport" 
+                      placeholder="e.g. A12345678" 
+                      value={staffData.passport}
+                      onChange={(e) => handleChange("passport", e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="gender">Gender</Label>
-                    <Select defaultValue="male">
+                    <Select 
+                      value={staffData.gender}
+                      onValueChange={(value) => handleChange("gender", value)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -114,19 +260,22 @@ export default function AddStaffMember() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                    <Input id="dateOfBirth" type="date" />
+                    <Input 
+                      id="dateOfBirth" 
+                      type="date" 
+                      value={staffData.date_of_birth}
+                      onChange={(e) => handleChange("date_of_birth", e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="nationality">Nationality</Label>
-                    <Select defaultValue="malaysian">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="malaysian">Malaysian</SelectItem>
-                        <SelectItem value="non-malaysian">Non-Malaysian</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="username">Username</Label>
+                    <Input 
+                      id="username" 
+                      placeholder="Enter username for login"
+                      value={staffData.username}
+                      onChange={(e) => handleChange("username", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">This will be used for staff login</p>
                   </div>
                 </div>
               </CardContent>
@@ -142,7 +291,11 @@ export default function AddStaffMember() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="position">Position</Label>
-                <Select required>
+                <Select 
+                  value={staffData.position}
+                  onValueChange={(value) => handleChange("position", value)}
+                  required
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
@@ -158,7 +311,11 @@ export default function AddStaffMember() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                <Select required>
+                <Select 
+                  value={staffData.department}
+                  onValueChange={(value) => handleChange("department", value)}
+                  required
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
@@ -175,8 +332,8 @@ export default function AddStaffMember() {
                 <Input
                   id="joinDate"
                   type="date"
-                  value={joinDate}
-                  onChange={(e) => setJoinDate(e.target.value)}
+                  value={staffData.join_date}
+                  onChange={(e) => handleChange("join_date", e.target.value)}
                   required
                 />
               </div>
@@ -185,7 +342,10 @@ export default function AddStaffMember() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="employmentType">Employment Type</Label>
-                <Select defaultValue="full_time">
+                <Select 
+                  value={staffData.employment_type}
+                  onValueChange={(value) => handleChange("employment_type", value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -198,7 +358,12 @@ export default function AddStaffMember() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="employeeId">Employee ID</Label>
-                <Input id="employeeId" defaultValue="EMP-001" disabled />
+                <Input 
+                  id="employeeId" 
+                  value={staffData.employee_id}
+                  onChange={(e) => handleChange("employee_id", e.target.value)}
+                  disabled={isEdit} 
+                />
               </div>
             </div>
           </CardContent>
@@ -212,13 +377,21 @@ export default function AddStaffMember() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" required />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={staffData.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input 
                   id="phone" 
                   placeholder="e.g. 012-3456789"
+                  value={staffData.phone}
+                  onChange={(e) => handleChange("phone", e.target.value)}
                   required
                 />
                 <p className="text-xs text-muted-foreground">Malaysian phone format: 01X-XXXXXXX</p>
@@ -229,7 +402,9 @@ export default function AddStaffMember() {
               <Label htmlFor="address">Address</Label>
               <Textarea 
                 id="address" 
-                rows={3} 
+                rows={3}
+                value={staffData.address}
+                onChange={(e) => handleChange("address", e.target.value)}
                 required
               />
             </div>
@@ -237,11 +412,19 @@ export default function AddStaffMember() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" required />
+                <Input 
+                  id="city"
+                  value={staffData.city}
+                  onChange={(e) => handleChange("city", e.target.value)}
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="state">State</Label>
-                <Select defaultValue="Selangor">
+                <Select 
+                  value={staffData.state}
+                  onValueChange={(value) => handleChange("state", value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -267,7 +450,12 @@ export default function AddStaffMember() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="postalCode">Postal Code</Label>
-                <Input id="postalCode" required />
+                <Input 
+                  id="postalCode"
+                  value={staffData.postal_code}
+                  onChange={(e) => handleChange("postal_code", e.target.value)}
+                  required 
+                />
               </div>
             </div>
           </CardContent>
@@ -281,11 +469,21 @@ export default function AddStaffMember() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="emergencyName">Contact Name</Label>
-                <Input id="emergencyName" required />
+                <Input 
+                  id="emergencyName"
+                  value={staffData.emergency_name}
+                  onChange={(e) => handleChange("emergency_name", e.target.value)}
+                  required 
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="emergencyRelationship">Relationship</Label>
-                <Input id="emergencyRelationship" required />
+                <Input 
+                  id="emergencyRelationship"
+                  value={staffData.emergency_relationship}
+                  onChange={(e) => handleChange("emergency_relationship", e.target.value)}
+                  required 
+                />
               </div>
             </div>
             
@@ -295,12 +493,19 @@ export default function AddStaffMember() {
                 <Input 
                   id="emergencyPhone" 
                   placeholder="e.g. 012-3456789"
+                  value={staffData.emergency_phone}
+                  onChange={(e) => handleChange("emergency_phone", e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="emergencyEmail">Email Address</Label>
-                <Input id="emergencyEmail" type="email" />
+                <Input 
+                  id="emergencyEmail" 
+                  type="email"
+                  value={staffData.emergency_email}
+                  onChange={(e) => handleChange("emergency_email", e.target.value)}
+                />
               </div>
             </div>
           </CardContent>
@@ -308,9 +513,9 @@ export default function AddStaffMember() {
             <Button variant="outline" type="button" onClick={() => navigate("/staff")}>
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isLoading}>
               <Save className="mr-2 h-4 w-4" />
-              Save Staff Member
+              {isLoading ? 'Saving...' : isEdit ? 'Update Staff Member' : 'Save Staff Member'}
             </Button>
           </CardFooter>
         </Card>
