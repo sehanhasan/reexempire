@@ -164,12 +164,14 @@ export default function CreateInvoice() {
         tax_amount: 0,
         total: total,
         notes: notes || null,
+        subject: subject || null, // Added subject field
         terms: null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
         deposit_percentage: isDepositInvoice ? depositPercentage : 0,
         payment_status: "Unpaid"
       };
+      
       
       const createdInvoice = await invoiceService.create(invoice);
       
