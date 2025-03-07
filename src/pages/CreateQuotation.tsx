@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -105,6 +104,11 @@ export default function CreateQuotation() {
     try {
       setIsSubmitting(true);
       
+      // Convert deposit percentage to number if it's a string
+      const depositPercentage = typeof depositInfo.depositPercentage === 'string' 
+        ? parseFloat(depositInfo.depositPercentage) 
+        : depositInfo.depositPercentage;
+      
       // Create quotation in database
       const quotation = {
         customer_id: customerId,
@@ -118,7 +122,7 @@ export default function CreateQuotation() {
         terms: null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
+        deposit_percentage: depositInfo.requiresDeposit ? depositPercentage : 0
       };
       
       const createdQuotation = await quotationService.create(quotation);

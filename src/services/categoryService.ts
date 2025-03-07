@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Category, Subcategory, PricingOption, CategoryItem } from "@/types/database";
 
@@ -105,7 +104,7 @@ export const categoryService = {
     return data || [];
   },
 
-  async create(category: { name: string; description: string; subcategories?: Partial<Subcategory>[] }): Promise<Category> {
+  async create(category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
     // First create the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
@@ -122,25 +121,27 @@ export const categoryService = {
     if (category.subcategories && category.subcategories.length > 0) {
       const subcategoriesToCreate = category.subcategories.map(sub => ({
         category_id: categoryData.id,
-        name: sub.name || sub.description, // Fallback to description if name not provided
+        name: sub.name,
         description: sub.description,
-        price: sub.price || 0
       }));
 
-      const { error: subcatError } = await supabase
-        .from("subcategories")
-        .insert(subcategoriesToCreate);
+      // Insert each subcategory individually
+      for (const sub of subcategoriesToCreate) {
+        const { error: subcatError } = await supabase
+          .from("subcategories")
+          .insert(sub);
 
-      if (subcatError) {
-        console.error("Error creating subcategories:", subcatError);
-        throw subcatError;
+        if (subcatError) {
+          console.error("Error creating subcategory:", subcatError);
+          throw subcatError;
+        }
       }
     }
 
     return categoryData;
   },
 
-  async update(id: string, category: { name: string; description: string; subcategories?: Partial<Subcategory>[] }): Promise<Category> {
+  async update(id: string, category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
     // Update the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
@@ -163,9 +164,8 @@ export const categoryService = {
           const { error: updateError } = await supabase
             .from("subcategories")
             .update({
-              name: sub.name || sub.description,
-              description: sub.description,
-              price: sub.price || 0
+              name: sub.name,
+              description: sub.description
             })
             .eq("id", sub.id);
 
@@ -179,9 +179,8 @@ export const categoryService = {
             .from("subcategories")
             .insert([{
               category_id: id,
-              name: sub.name || sub.description,
-              description: sub.description,
-              price: sub.price || 0
+              name: sub.name,
+              description: sub.description
             }]);
 
           if (createError) {
@@ -325,3 +324,4 @@ export const categoryService = {
     }
   }
 };
+

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -10,12 +9,10 @@ import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
-import { Subcategory } from "@/types/database";
 
-// Define a local interface for subcategory in forms
 interface SubcategoryForm {
   id?: string;
-  tempId: number;
+  tempId: number | string;
   price: string;
   description: string;
 }
@@ -100,7 +97,6 @@ export default function AddCategory() {
   
   const removeSubcategory = (index: number) => {
     if (subcategories.length === 1) {
-      // Don't remove the last one, just clear it
       setSubcategories([{
         tempId: Date.now(),
         price: "",
@@ -152,27 +148,24 @@ export default function AddCategory() {
     try {
       setLoading(true);
       
-      // Format subcategories with the proper structure for the API
       const formattedData = {
         name: category.name,
         description: category.description,
         subcategories: subcategories.map(sub => ({
-          ...(sub.id ? { id: sub.id } : {}), // Only include id for existing subcategories
+          ...(sub.id ? { id: sub.id } : {}),
           description: sub.description,
           price: sub.price ? parseFloat(sub.price) : 0,
-          name: sub.description, // Use description as name since we removed the name field
+          name: sub.description
         }))
       };
       
       if (edit && categoryId) {
-        // Update existing category
         await categoryService.update(categoryId, formattedData);
         toast({
           title: "Success",
           description: "Category updated successfully"
         });
       } else {
-        // Create new category
         await categoryService.create(formattedData);
         toast({
           title: "Success",
@@ -238,7 +231,7 @@ export default function AddCategory() {
             </CardHeader>
             <CardContent className="space-y-6">
               {subcategories.map((subcategory, index) => (
-                <div key={subcategory.tempId} className="space-y-4 pb-4 border-b last:border-b-0">
+                <div key={typeof subcategory.tempId === 'string' ? subcategory.tempId : subcategory.tempId.toString()} className="space-y-4 pb-4 border-b last:border-b-0">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Subcategory {index + 1}</h3>
                     <Button 

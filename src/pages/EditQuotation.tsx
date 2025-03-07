@@ -14,11 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function EditQuotation() {
   const navigate = useNavigate();
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<QuotationItem[]>([{
@@ -233,12 +229,18 @@ export default function EditQuotation() {
   }
 
   return <div className="page-container">
-      <PageHeader title="Edit Quotation" description="Update an existing quotation." actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+      <PageHeader 
+        title="Edit Quotation" 
+        description="Update an existing quotation." 
+        actions={
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
-          </div>} />
+          </div>
+        } 
+      />
 
       {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
@@ -275,11 +277,37 @@ export default function EditQuotation() {
         </div>}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <CustomerInfoCard customerId={customerId} setCustomer={setCustomerId} documentType="quotation" documentNumber={documentNumber} setDocumentNumber={setDocumentNumber} documentDate={quotationDate} setDocumentDate={setQuotationDate} expiryDate={validUntil} setExpiryDate={setValidUntil} subject={subject} setSubject={setSubject} />
+        <CustomerInfoCard 
+          customerId={customerId} 
+          setCustomer={setCustomerId} 
+          documentType="quotation" 
+          documentNumber={documentNumber} 
+          setDocumentNumber={setDocumentNumber} 
+          documentDate={quotationDate} 
+          setDocumentDate={setQuotationDate} 
+          expiryDate={validUntil} 
+          setExpiryDate={setValidUntil} 
+          subject={subject} 
+          setSubject={setSubject} 
+        />
         
-        <QuotationItemsCard items={items} setItems={setItems} depositInfo={depositInfo} setDepositInfo={setDepositInfo} calculateItemAmount={calculateItemAmount} />
+        <QuotationItemsCard 
+          items={items} 
+          setItems={setItems} 
+          depositInfo={depositInfo} 
+          setDepositInfo={setDepositInfo} 
+          calculateItemAmount={calculateItemAmount} 
+        />
         
-        <AdditionalInfoCard notes={notes} setNotes={setNotes} onSubmit={handleSubmit} onCancel={() => navigate("/quotations")} documentType="quotation" isSubmitting={isSubmitting} saveButtonText="Update Quotation" />
+        <AdditionalInfoCard 
+          notes={notes} 
+          setNotes={setNotes} 
+          onSubmit={handleSubmit} 
+          onCancel={() => navigate("/quotations")} 
+          documentType="quotation" 
+          isSubmitting={isSubmitting} 
+          saveButtonText="Update Quotation" 
+        />
       </form>
     </div>;
 }

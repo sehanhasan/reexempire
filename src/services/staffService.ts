@@ -38,7 +38,12 @@ export const staffService = {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
 
-    // Fix the insert operation - make sure staff is passed as object, not array
+    // Make sure join_date is present if not provided
+    if (!staff.join_date) {
+      staff.join_date = new Date().toISOString().split('T')[0];
+    }
+
+    // Fix the insert operation - make sure staff is passed correctly
     const { data, error } = await supabase
       .from("staff")
       .insert(staff)
