@@ -1,17 +1,17 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Chart } from "@/components/dashboard/Chart";
-import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt } from "lucide-react";
+import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt, Plus } from "lucide-react";
 import { quotationService, invoiceService, customerService, appointmentService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/utils/formatters";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [customersMap, setCustomersMap] = useState({});
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
+  const [revenueData, setRevenueData] = useState([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -46,8 +47,9 @@ export default function Dashboard() {
         });
         setCustomersMap(customersMapData);
 
-        // Calculate total revenue from invoices - ensure we're working with numbers
-        const totalRevenue = invoices.reduce((acc, invoice) => {
+        // Calculate total revenue from paid invoices only
+        const paidInvoices = invoices.filter(invoice => invoice.payment_status === 'Paid');
+        const totalRevenue = paidInvoices.reduce((acc, invoice) => {
           // Explicitly convert the accumulator to a number to avoid type errors
           const numAcc = typeof acc === 'number' ? acc : 0;
           
@@ -73,7 +75,11 @@ export default function Dashboard() {
           revenue: totalRevenue
         });
 
-        // Get upcoming appointments/jobs
+        // Generate revenue data for the past 6 months
+        const revenueByMonth = generateRevenueByMonth(paidInvoices);
+        setRevenueData(revenueByMonth);
+
+        // Get upcoming appointments/jobs - only future appointments
         const now = new Date();
         const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
         
@@ -113,6 +119,33 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
   
+  // Generate revenue data for the past 6 months based on paid invoices
+  const generateRevenueByMonth = (paidInvoices) => {
+    const data = [];
+    
+    // Generate data for the last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const monthStart = startOfMonth(subMonths(new Date(), i));
+      const monthEnd = endOfMonth(subMonths(new Date(), i));
+      const monthName = format(monthStart, 'MMM');
+      
+      // Calculate revenue for the month
+      const monthlyRevenue = paidInvoices
+        .filter(invoice => {
+          const invoiceDate = new Date(invoice.issue_date);
+          return invoiceDate >= monthStart && invoiceDate <= monthEnd;
+        })
+        .reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
+      
+      data.push({
+        month: monthName,
+        revenue: monthlyRevenue
+      });
+    }
+    
+    return data;
+  };
+  
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -143,27 +176,6 @@ export default function Dashboard() {
   const navigateToEditAppointment = id => {
     navigate(`/schedule/edit/${id}`);
   };
-
-  // Sample data for the revenue chart
-  const revenueData = [{
-    month: "Jan",
-    revenue: 12000
-  }, {
-    month: "Feb",
-    revenue: 15000
-  }, {
-    month: "Mar",
-    revenue: 18000
-  }, {
-    month: "Apr",
-    revenue: 16000
-  }, {
-    month: "May",
-    revenue: 21000
-  }, {
-    month: "Jun",
-    revenue: 19000
-  }];
   
   const salesByCategory = [{
     name: "Bathroom",
@@ -179,39 +191,74 @@ export default function Dashboard() {
     value: 15
   }];
   
-  return <div className="page-container">
+  return (
+    <div className="page-container">
       <PageHeader title="Dashboard" description="Overview of your business performance" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <StatCard title="Total Customers" value={stats.customers} trend={{
-        value: 12,
-        isPositive: true
-      }} description="vs last month" icon={<Users className="h-4 w-4" />} onClick={() => navigate("/customers")} />
+        <StatCard 
+          title="Total Customers" 
+          value={stats.customers} 
+          trend={{
+            value: 12,
+            isPositive: true
+          }} 
+          description="vs last month" 
+          icon={<Users className="h-4 w-4" />} 
+          onClick={() => navigate("/customers")} 
+        />
         
-        <StatCard title="Active Quotations" value={stats.quotations} trend={{
-        value: 4,
-        isPositive: true
-      }} description="vs last month" icon={<ReceiptText className="h-4 w-4" />} onClick={() => navigate("/quotations")} />
+        <StatCard 
+          title="Active Quotations" 
+          value={stats.quotations} 
+          trend={{
+            value: 4,
+            isPositive: true
+          }} 
+          description="vs last month" 
+          icon={<ReceiptText className="h-4 w-4" />} 
+          onClick={() => navigate("/quotations")} 
+        />
         
-        <StatCard title="Invoices Issued" value={stats.invoices} trend={{
-        value: 2,
-        isPositive: true
-      }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
+        <StatCard 
+          title="Invoices Issued" 
+          value={stats.invoices} 
+          trend={{
+            value: 2,
+            isPositive: true
+          }} 
+          description="vs last month" 
+          icon={<Receipt className="h-4 w-4" />} 
+          onClick={() => navigate("/invoices")} 
+        />
         
-        <StatCard title="Total Revenue" value={formatMoney(stats.revenue)} trend={{
-        value: 8,
-        isPositive: true
-      }} description="vs last month" icon={<CreditCard className="h-4 w-4" />} />
+        <StatCard 
+          title="Total Revenue" 
+          value={formatMoney(stats.revenue)} 
+          trend={{
+            value: 8,
+            isPositive: true
+          }} 
+          description="vs last month" 
+          icon={<CreditCard className="h-4 w-4" />} 
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         <Card>
           <CardHeader>
             <CardTitle>Revenue</CardTitle>
-            
           </CardHeader>
           <CardContent>
-            <Chart type="bar" data={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={300} />
+            <Chart 
+              type="bar" 
+              data={revenueData} 
+              categories={["revenue"]} 
+              index="month" 
+              colors={["#3b82f6"]} 
+              valueFormatter={value => `RM ${value.toLocaleString()}`} 
+              height={300} 
+            />
           </CardContent>
         </Card>
 
@@ -346,5 +393,6 @@ export default function Dashboard() {
         customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
         assignedStaff={null}
       />
-    </div>;
+    </div>
+  );
 }

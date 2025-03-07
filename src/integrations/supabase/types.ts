@@ -412,37 +412,76 @@ export type Database = {
       }
       staff: {
         Row: {
+          address: string | null
+          city: string | null
           created_at: string
+          department: string | null
           email: string | null
+          emergency_contact_email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
+          employment_type: string | null
+          gender: string | null
           id: string
           join_date: string
           name: string
+          passport: string | null
           phone: string | null
           position: string | null
+          postal_code: string | null
+          state: string | null
           status: string
           updated_at: string
+          username: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           created_at?: string
+          department?: string | null
           email?: string | null
+          emergency_contact_email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          employment_type?: string | null
+          gender?: string | null
           id?: string
           join_date: string
           name: string
+          passport?: string | null
           phone?: string | null
           position?: string | null
+          postal_code?: string | null
+          state?: string | null
           status?: string
           updated_at?: string
+          username?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
           created_at?: string
+          department?: string | null
           email?: string | null
+          emergency_contact_email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
+          employment_type?: string | null
+          gender?: string | null
           id?: string
           join_date?: string
           name?: string
+          passport?: string | null
           phone?: string | null
           position?: string | null
+          postal_code?: string | null
+          state?: string | null
           status?: string
           updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }

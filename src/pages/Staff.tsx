@@ -13,7 +13,8 @@ import {
   Trash,
   Eye,
   Phone,
-  UserPlus
+  UserPlus,
+  Plus
 } from "lucide-react";
 
 import {
@@ -44,7 +45,7 @@ import {
 
 import { staffService } from "@/services";
 import { format } from "date-fns";
-import { Staff } from "@/types/database";
+import type { Staff } from "@/types/database";
 
 export default function StaffPage() {
   const navigate = useNavigate();
@@ -323,6 +324,20 @@ export default function StaffPage() {
                 <p>{selectedStaff.join_date ? format(new Date(selectedStaff.join_date), "MMMM dd, yyyy") : "N/A"}</p>
               </div>
               
+              {selectedStaff.username && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Username</p>
+                  <p>{selectedStaff.username}</p>
+                </div>
+              )}
+              
+              {selectedStaff.passport && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Passport #</p>
+                  <p>{selectedStaff.passport}</p>
+                </div>
+              )}
+              
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
                 {selectedStaff.phone && (
@@ -388,7 +403,10 @@ export default function StaffPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <FloatingActionButton onClick={() => navigate("/staff/add")} />
+      <FloatingActionButton 
+        onClick={() => navigate("/staff/add")} 
+        icon={<Plus className="h-5 w-5" />}
+      />
     </div>
   );
 }
