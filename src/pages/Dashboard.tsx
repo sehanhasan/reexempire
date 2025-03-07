@@ -43,23 +43,9 @@ export default function Dashboard() {
         setCustomersMap(customersMapData);
 
         // Calculate total revenue from invoices - ensure we're working with numbers
-        const totalRevenue = invoices.reduce((sum, invoice) => {
-          let invoiceTotal = 0;
-          
-          if (invoice.total !== undefined && invoice.total !== null) {
-            if (typeof invoice.total === 'string') {
-              const parsed = parseFloat(invoice.total);
-              if (!isNaN(parsed)) {
-                invoiceTotal = parsed;
-              }
-            } else if (typeof invoice.total === 'number') {
-              invoiceTotal = invoice.total;
-            }
-          }
-          
-          // Make sure both sum and invoiceTotal are numeric before addition
-          const numericSum = typeof sum === 'number' ? sum : 0;
-          return numericSum + invoiceTotal;
+        const totalRevenue = invoices.reduce((sum: number, invoice) => {
+          const invoiceTotal = Number(invoice.total) || 0; // Converts to number, uses 0 if invalid
+          return sum + invoiceTotal;
         }, 0);
 
         // Set stats
