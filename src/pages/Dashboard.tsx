@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -57,8 +58,11 @@ export default function Dashboard() {
             }
           }
           
-          // Convert both values to number type using Number() constructor
-          return Number(sum) + Number(invoiceTotal);
+          // Convert sum to number if it's not already
+          const numericSum = typeof sum === 'number' ? sum : 0;
+          
+          // Return the sum as a number to avoid type issues
+          return numericSum + invoiceTotal;
         }, 0);
 
         // Set stats
