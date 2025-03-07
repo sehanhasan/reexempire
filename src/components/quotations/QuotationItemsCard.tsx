@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "react-router-dom";
+
 interface QuotationItemsCardProps {
   items: QuotationItem[];
   setItems: React.Dispatch<React.SetStateAction<QuotationItem[]>>;
@@ -18,6 +20,7 @@ interface QuotationItemsCardProps {
   setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
 }
+
 export function QuotationItemsCard({
   items,
   setItems,
@@ -26,10 +29,18 @@ export function QuotationItemsCard({
   calculateItemAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [showItemsTable, setShowItemsTable] = useState(true);
+  const [showItemsTable, setShowItemsTable] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   const isEditPage = location.pathname.includes('edit');
+  
+  // If we're on the edit page, show the items table by default
+  useEffect(() => {
+    if (isEditPage) {
+      setShowItemsTable(true);
+    }
+  }, [isEditPage]);
+
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -43,7 +54,13 @@ export function QuotationItemsCard({
       return item;
     }));
   };
+
   const addItem = () => {
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
+    
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     setItems([...items, {
       id: newId,
@@ -55,14 +72,17 @@ export function QuotationItemsCard({
       amount: 0
     }]);
   };
+
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
+
   const calculateTotal = () => {
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
+
   const handleDepositPercentageChange = (value: number) => {
     setDepositInfo({
       ...depositInfo,
@@ -70,6 +90,7 @@ export function QuotationItemsCard({
       depositAmount: calculateTotal() * (value / 100)
     });
   };
+
   const handleDepositAmountChange = (value: number) => {
     const total = calculateTotal();
     setDepositInfo({
@@ -78,7 +99,13 @@ export function QuotationItemsCard({
       depositPercentage: total > 0 ? value / total * 100 : depositInfo.depositPercentage
     });
   };
+
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
+    
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
       description: selectedItem.description,
@@ -88,17 +115,29 @@ export function QuotationItemsCard({
       unitPrice: selectedItem.price,
       amount: selectedItem.quantity * selectedItem.price
     }));
+    
     setItems([...items, ...newItems]);
+    
     toast({
       title: "Items Added",
       description: `${newItems.length} item(s) have been added to the quotation.`
     });
   };
+
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Quotation Items</CardTitle>
-          {items.length > 0}
+          {items.length > 0 && !showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(true)}>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          )}
+          {items.length > 0 && showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(false)}>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
@@ -128,7 +167,8 @@ export function QuotationItemsCard({
                     <div className="flex items-center space-x-2 mb-2">
                       <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={checked => setDepositInfo({
                     ...depositInfo,
-                    requiresDeposit: !!checked
+                    requiresDeposit: !!checked,
+                    depositPercentage: 50  // Set default to 50%
                   })} />
                       <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
                         <Wallet className="h-3.5 w-3.5 mr-1" />

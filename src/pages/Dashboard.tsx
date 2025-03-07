@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/utils/formatters";
+import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -24,6 +26,8 @@ export default function Dashboard() {
   const [recentInvoices, setRecentInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [customersMap, setCustomersMap] = useState({});
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -111,15 +115,20 @@ export default function Dashboard() {
   };
   
   const navigateToQuotation = id => {
-    navigate(`/quotations/${id}`);
+    navigate(`/quotations/edit/${id}`);
   };
   
   const navigateToInvoice = id => {
-    navigate(`/invoices/${id}`);
+    navigate(`/invoices/edit/${id}`);
   };
   
-  const navigateToAppointment = id => {
-    navigate(`/schedule`);
+  const showAppointmentDetails = appointment => {
+    setSelectedAppointment(appointment);
+    setIsAppointmentDetailOpen(true);
+  };
+  
+  const navigateToEditAppointment = id => {
+    navigate(`/schedule/edit/${id}`);
   };
 
   // Sample data for the revenue chart
@@ -214,7 +223,7 @@ export default function Dashboard() {
                   <div 
                     key={appointment.id} 
                     className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2"
-                    onClick={() => navigateToAppointment(appointment.id)}
+                    onClick={() => showAppointmentDetails(appointment)}
                   >
                     <div>
                       <div className="flex items-center gap-2">
@@ -233,7 +242,10 @@ export default function Dashboard() {
                       </p>
                       <p className="text-sm">{appointment.customer_name}</p>
                     </div>
-                    <Button variant="outline" size="sm" className="flex-shrink-0">
+                    <Button variant="outline" size="sm" className="flex-shrink-0" onClick={(e) => {
+                      e.stopPropagation();
+                      showAppointmentDetails(appointment);
+                    }}>
                       <Calendar className="h-4 w-4 mr-1" />
                       Details
                     </Button>
@@ -312,5 +324,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Appointment Details Dialog */}
+      <AppointmentDetailsDialog
+        open={isAppointmentDetailOpen}
+        onOpenChange={setIsAppointmentDetailOpen}
+        appointment={selectedAppointment}
+        customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
+        onEdit={navigateToEditAppointment}
+      />
     </div>;
 }

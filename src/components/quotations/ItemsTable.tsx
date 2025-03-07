@@ -20,6 +20,11 @@ export function ItemsTable({
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
   
+  // Format currency
+  const formatRM = (amount: number) => {
+    return `RM ${amount.toFixed(2)}`;
+  };
+  
   return (
     <div className="w-full overflow-auto">
       {isMobile ? (
@@ -91,14 +96,8 @@ export function ItemsTable({
                 
                 <div className="space-y-1">
                   <label className="block text-xs mb-1 text-slate-600 font-medium">Amount</label>
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                    <Input
-                      type="number"
-                      className="pl-8 h-10 text-right bg-gray-50"
-                      value={item.amount.toFixed(2)}
-                      disabled
-                    />
+                  <div className="p-2 h-10 border rounded-md bg-gray-50 text-right">
+                    {formatRM(item.amount)}
                   </div>
                 </div>
               </div>
@@ -161,16 +160,8 @@ export function ItemsTable({
                     />
                   </div>
                 </td>
-                <td className="py-3 px-2">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                    <Input
-                      type="number"
-                      className="pl-10 text-right h-10"
-                      value={item.amount.toFixed(2)}
-                      disabled
-                    />
-                  </div>
+                <td className="py-3 px-2 text-right">
+                  {formatRM(item.amount)}
                 </td>
                 <td className="py-3 px-1">
                   <Button

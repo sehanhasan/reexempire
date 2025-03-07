@@ -1,16 +1,17 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FolderOpen, Wallet } from "lucide-react";
+import { Plus, FolderOpen, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation } from "react-router-dom";
 
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
@@ -36,8 +37,17 @@ export function InvoiceItemsCard({
   calculateItemAmount
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [showItemsTable, setShowItemsTable] = useState(true);
+  const [showItemsTable, setShowItemsTable] = useState(false);
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const isEditPage = location.pathname.includes('edit');
+  
+  // If we're on the edit page, show the items table by default
+  useEffect(() => {
+    if (isEditPage) {
+      setShowItemsTable(true);
+    }
+  }, [isEditPage]);
   
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
@@ -54,6 +64,11 @@ export function InvoiceItemsCard({
   };
   
   const addItem = () => {
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
+    
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     setItems([...items, {
       id: newId,
@@ -95,8 +110,23 @@ export function InvoiceItemsCard({
       setDepositPercentage(value / subtotal * 100);
     }
   };
+
+  // Handle deposit invoice checkbox change
+  const handleDepositInvoiceChange = (checked: boolean) => {
+    setIsDepositInvoice(checked);
+    if (checked && depositPercentage === 30) {
+      // Set default to 50% if not set already
+      setDepositPercentage(50);
+      setDepositAmount(calculateSubtotal() * 0.5);
+    }
+  };
   
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
+    // If items table is not shown, show it first
+    if (!showItemsTable) {
+      setShowItemsTable(true);
+    }
+    
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
       description: selectedItem.description,
@@ -125,7 +155,7 @@ export function InvoiceItemsCard({
               <Checkbox 
                 id="isDepositInvoice" 
                 checked={isDepositInvoice} 
-                onCheckedChange={checked => setIsDepositInvoice(!!checked)} 
+                onCheckedChange={handleDepositInvoiceChange} 
               />
               <label 
                 htmlFor="isDepositInvoice" 
@@ -136,6 +166,17 @@ export function InvoiceItemsCard({
               </label>
             </div>
           </div>
+          
+          {items.length > 0 && !showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(true)}>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          )}
+          {items.length > 0 && showItemsTable && (
+            <Button variant="ghost" size="sm" onClick={() => setShowItemsTable(false)}>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+          )}
         </CardHeader>
         
         <CardContent className="py-3 px-4">
