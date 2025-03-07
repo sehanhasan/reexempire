@@ -38,21 +38,17 @@ export default function AddStaffMember() {
     gender: "male",
     date_of_birth: "",
     username: "",
+    email: "",
+    phone: "",
     position: "",
     department: "",
     join_date: new Date().toISOString().split("T")[0],
     employment_type: "full_time",
     employee_id: "EMP-001",
-    email: "",
-    phone: "",
     address: "",
     city: "",
     state: "Selangor",
     postal_code: "",
-    emergency_name: "",
-    emergency_relationship: "",
-    emergency_phone: "",
-    emergency_email: ""
   });
 
   useEffect(() => {
@@ -85,10 +81,6 @@ export default function AddStaffMember() {
           city: data.city || "",
           state: data.state || "Selangor",
           postal_code: data.postal_code || "",
-          emergency_name: data.emergency_contact_name || "",
-          emergency_relationship: data.emergency_contact_relationship || "",
-          emergency_phone: data.emergency_contact_phone || "",
-          emergency_email: data.emergency_contact_email || ""
         });
       }
       setIsLoading(false);
@@ -136,10 +128,6 @@ export default function AddStaffMember() {
         city: staffData.city,
         state: staffData.state,
         postal_code: staffData.postal_code,
-        emergency_contact_name: staffData.emergency_name,
-        emergency_contact_relationship: staffData.emergency_relationship,
-        emergency_contact_phone: staffData.emergency_phone,
-        emergency_contact_email: staffData.emergency_email,
         status: "Active" // Default status
       };
       
@@ -174,7 +162,6 @@ export default function AddStaffMember() {
     <div className="page-container">
       <PageHeader
         title={isEdit ? "Edit Staff Member" : "Add Staff Member"}
-        description={isEdit ? "Update staff member details" : "Add a new staff member to the team."}
         actions={
           <Button variant="outline" onClick={() => navigate("/staff")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -278,6 +265,28 @@ export default function AddStaffMember() {
                     <p className="text-xs text-muted-foreground">This will be used for staff login</p>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      value={staffData.email}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input 
+                      id="phone" 
+                      placeholder="e.g. 012-3456789"
+                      value={staffData.phone}
+                      onChange={(e) => handleChange("phone", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Malaysian phone format: 01X-XXXXXXX</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -366,37 +375,6 @@ export default function AddStaffMember() {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  value={staffData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  placeholder="e.g. 012-3456789"
-                  value={staffData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">Malaysian phone format: 01X-XXXXXXX</p>
-              </div>
-            </div>
             
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
@@ -405,7 +383,6 @@ export default function AddStaffMember() {
                 rows={3}
                 value={staffData.address}
                 onChange={(e) => handleChange("address", e.target.value)}
-                required
               />
             </div>
             
@@ -416,7 +393,6 @@ export default function AddStaffMember() {
                   id="city"
                   value={staffData.city}
                   onChange={(e) => handleChange("city", e.target.value)}
-                  required 
                 />
               </div>
               <div className="space-y-2">
@@ -454,57 +430,6 @@ export default function AddStaffMember() {
                   id="postalCode"
                   value={staffData.postal_code}
                   onChange={(e) => handleChange("postal_code", e.target.value)}
-                  required 
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Emergency Contact</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="emergencyName">Contact Name</Label>
-                <Input 
-                  id="emergencyName"
-                  value={staffData.emergency_name}
-                  onChange={(e) => handleChange("emergency_name", e.target.value)}
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emergencyRelationship">Relationship</Label>
-                <Input 
-                  id="emergencyRelationship"
-                  value={staffData.emergency_relationship}
-                  onChange={(e) => handleChange("emergency_relationship", e.target.value)}
-                  required 
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="emergencyPhone">Phone Number</Label>
-                <Input 
-                  id="emergencyPhone" 
-                  placeholder="e.g. 012-3456789"
-                  value={staffData.emergency_phone}
-                  onChange={(e) => handleChange("emergency_phone", e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emergencyEmail">Email Address</Label>
-                <Input 
-                  id="emergencyEmail" 
-                  type="email"
-                  value={staffData.emergency_email}
-                  onChange={(e) => handleChange("emergency_email", e.target.value)}
                 />
               </div>
             </div>

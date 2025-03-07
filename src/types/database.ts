@@ -137,6 +137,7 @@ export interface Invoice {
   payment_status: string;
   created_at: string;
   updated_at: string;
+  subject?: string; // Add subject field
 }
 
 export interface InvoiceItem {
