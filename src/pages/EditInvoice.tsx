@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -43,7 +42,6 @@ export default function EditInvoice() {
   const [documentNumber, setDocumentNumber] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch invoice details when the component mounts
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!id) {
@@ -61,6 +59,7 @@ export default function EditInvoice() {
           setInvoiceDate(invoice.issue_date);
           setDueDate(invoice.due_date);
           setNotes(invoice.notes || "");
+          setSubject(invoice.subject || "");
           setIsDepositInvoice(invoice.is_deposit_invoice || false);
           setDepositAmount(invoice.deposit_amount || 0);
           setDepositPercentage(invoice.deposit_percentage || 30);
@@ -68,7 +67,6 @@ export default function EditInvoice() {
           if (invoice.quotation_id) {
             setQuotationId(invoice.quotation_id);
             
-            // Try to fetch quotation reference
             try {
               const quotation = await invoiceService.getById(invoice.quotation_id);
               if (quotation) {
@@ -79,7 +77,6 @@ export default function EditInvoice() {
             }
           }
           
-          // Fetch invoice items
           const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
           if (invoiceItems && invoiceItems.length > 0) {
             setItems(invoiceItems.map((item, index) => ({
@@ -115,7 +112,6 @@ export default function EditInvoice() {
     fetchInvoiceData();
   }, [id, navigate]);
 
-  // Fetch customer details when customer ID changes
   useEffect(() => {
     if (customerId) {
       const fetchCustomer = async () => {
@@ -148,7 +144,6 @@ export default function EditInvoice() {
       return;
     }
     
-    // Validate that there is at least one item with a value
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
@@ -159,7 +154,6 @@ export default function EditInvoice() {
       return;
     }
     
-    // Calculate totals
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + (qty * item.unitPrice);
@@ -169,7 +163,6 @@ export default function EditInvoice() {
     try {
       setIsSubmitting(true);
       
-      // Update invoice in database
       await invoiceService.update(id!, {
         customer_id: customerId,
         quotation_id: quotationId,
@@ -177,20 +170,18 @@ export default function EditInvoice() {
         issue_date: invoiceDate,
         due_date: dueDate,
         subtotal: subtotal,
-        tax_rate: 0, // No SST as requested
+        tax_rate: 0,
         tax_amount: 0,
         total: total,
         notes: notes || null,
-        terms: null,
+        subject: subject || null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
         deposit_percentage: isDepositInvoice ? depositPercentage : 0
       });
       
-      // Delete existing items and add new ones
       await invoiceService.deleteAllItems(id!);
       
-      // Add invoice items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -210,7 +201,6 @@ export default function EditInvoice() {
         description: `Invoice for ${customer?.name} has been updated successfully.`,
       });
       
-      // Navigate back to the invoices list
       navigate("/invoices");
     } catch (error) {
       console.error("Error updating invoice:", error);
@@ -235,7 +225,6 @@ export default function EditInvoice() {
     }
 
     try {
-      // Format phone number (remove any non-digit characters)
       let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
       
       if (!phoneNumber) {
@@ -247,17 +236,14 @@ export default function EditInvoice() {
         return;
       }
       
-      // Make sure phone number starts with country code
       if (phoneNumber.startsWith('0')) {
-        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
+        phoneNumber = '6' + phoneNumber;
       } else if (!phoneNumber.startsWith('6')) {
         phoneNumber = '60' + phoneNumber;
       }
       
-      // WhatsApp message text
       const message = `Dear ${customer.name},\n\nPlease find attached Invoice ${documentNumber}.\n\nThank you.`;
       
-      // Open WhatsApp web with the prepared message
       window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
       
       toast({
@@ -332,7 +318,6 @@ export default function EditInvoice() {
     <div className="page-container">
       <PageHeader
         title="Edit Invoice"
-        description="Update invoice details for this customer."
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/invoices")}>
@@ -362,8 +347,6 @@ export default function EditInvoice() {
           setDocumentDate={setInvoiceDate}
           expiryDate={dueDate}
           setExpiryDate={setDueDate}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
           quotationReference={quotationReference}
           subject={subject}
           setSubject={setSubject}
