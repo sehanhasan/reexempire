@@ -28,7 +28,7 @@ export function AdditionalInfoCard({
   const isMobile = useIsMobile();
   return <Card className="shadow-sm">
       <CardHeader className="py-3 px-4">
-        <CardTitle className="">Additional Information</CardTitle>
+        <CardTitle className="text-lg">Additional Information</CardTitle>
       </CardHeader>
       <CardContent className="py-3 px-4">
         <div className="space-y-2">

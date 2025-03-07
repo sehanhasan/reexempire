@@ -90,9 +90,9 @@ export function CustomerInfoCard({
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">
-          <CardTitle className="">Customer Information</CardTitle>
+          <CardTitle className="text-lg">Customer Information</CardTitle>
         </CardHeader>
-        <CardContent className="py-3 px-4">
+        <CardContent className="py-4 px-4">
           <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-3"} gap-4`}>
             <div className="space-y-2">
               <Label htmlFor="customer">Customer</Label>

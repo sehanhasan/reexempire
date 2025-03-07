@@ -97,7 +97,7 @@ export function QuotationItemsCard({
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
-          <CardTitle className="">Quotation Items</CardTitle>
+          <CardTitle className="text-lg">Quotation Items</CardTitle>
           {items.length > 0}
         </CardHeader>
         <CardContent className="py-3 px-4">
