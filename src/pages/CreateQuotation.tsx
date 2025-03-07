@@ -119,6 +119,7 @@ export default function CreateQuotation() {
         subtotal: subtotal,
         total: subtotal, // No tax for quotations
         notes: notes || null,
+        subject: subject || null, // Added subject field
         terms: null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
