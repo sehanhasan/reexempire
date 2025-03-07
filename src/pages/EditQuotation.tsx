@@ -142,7 +142,7 @@ export default function EditQuotation() {
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
-        subject: subject,
+        subject: subject || null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
