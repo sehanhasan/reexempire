@@ -98,6 +98,7 @@ export interface Quotation {
   total: number;
   notes: string | null;
   terms: string | null;
+  subject: string | null; // Add this field
   requires_deposit: boolean;
   deposit_amount: number;
   deposit_percentage: number;

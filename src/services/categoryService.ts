@@ -227,9 +227,15 @@ export const categoryService = {
   },
 
   async createSubcategory(subcategory: Omit<Subcategory, "id" | "created_at" | "updated_at">): Promise<Subcategory> {
+    // Ensure price is set to a default value if not provided
+    const subcategoryData = {
+      ...subcategory,
+      price: subcategory.price || 0 // Ensure price always has a value
+    };
+
     const { data, error } = await supabase
       .from("subcategories")
-      .insert([subcategory])
+      .insert([subcategoryData])
       .select()
       .single();
 
