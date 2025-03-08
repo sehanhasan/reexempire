@@ -158,8 +158,8 @@ export const staffService = {
           // Try to find existing users by email (fixes the TypeScript error)
           const { data: usersList, error: listError } = await supabase.auth.admin.listUsers();
           
-          // Find the user with matching email
-          const matchingUser = usersList?.users?.find(user => user.email === data.email);
+          // Find the user with matching email - explicitly type the user object
+          const matchingUser = usersList?.users?.find((user: any) => user.email === data.email);
           
           if (listError) {
             console.error("Error finding auth user:", listError);
@@ -235,8 +235,8 @@ export const staffService = {
           // Try to get all users and find the matching one
           const { data: usersList, error: listError } = await supabase.auth.admin.listUsers();
           
-          // Find the user with matching email
-          const matchingUser = usersList?.users?.find(user => user.email === staffMember.email);
+          // Find the user with matching email - explicitly type the user object
+          const matchingUser = usersList?.users?.find((user: any) => user.email === staffMember.email);
           
           if (!listError && matchingUser) {
             // Delete auth user if found
