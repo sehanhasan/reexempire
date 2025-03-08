@@ -148,7 +148,9 @@ export const staffService = {
           console.error("Error listing users:", userError);
         }
         
-        const user = userData?.users?.find(u => u.email === data.email);
+        // Apply type assertion to fix the TypeScript error
+        const users = userData?.users || [];
+        const user = users.find(u => u.email === data.email);
         
         if (user) {
           // Update user password
@@ -171,7 +173,9 @@ export const staffService = {
           console.error("Error listing users:", userError);
         }
         
-        const user = userData?.users?.find(u => u.email === data.email);
+        // Apply type assertion to fix the TypeScript error
+        const users = userData?.users || [];
+        const user = users.find(u => u.email === data.email);
         
         if (user) {
           await supabase.auth.admin.updateUserById(
@@ -192,7 +196,9 @@ export const staffService = {
           console.error("Error listing users:", userError);
         }
         
-        const user = userData?.users?.find(u => u.email === data.email);
+        // Apply type assertion to fix the TypeScript error
+        const users = userData?.users || [];
+        const user = users.find(u => u.email === data.email);
         
         if (user) {
           await supabase.auth.admin.updateUserById(
@@ -215,7 +221,9 @@ export const staffService = {
           console.error("Error listing users:", userError);
         }
         
-        const user = userData?.users?.find(u => u.email === data.email);
+        // Apply type assertion to fix the TypeScript error
+        const users = userData?.users || [];
+        const user = users.find(u => u.email === data.email);
         
         if (user) {
           await supabase.auth.admin.updateUserById(
@@ -262,7 +270,9 @@ export const staffService = {
           console.error("Error listing users:", userError);
         }
         
-        const user = userData?.users?.find(u => u.email === staffMember.email);
+        // Apply type assertion to fix the TypeScript error
+        const users = userData?.users || [];
+        const user = users.find(u => u.email === staffMember.email);
         
         if (user) {
           await supabase.auth.admin.deleteUser(user.id);
