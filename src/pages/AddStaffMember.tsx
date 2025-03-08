@@ -1,15 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { staffService } from "@/services";
 import { Staff } from "@/types/database";
+
 export default function AddStaffMember() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -23,23 +25,19 @@ export default function AddStaffMember() {
     passport: "",
     email: "",
     phone: "",
-    position: "",
-    department: "",
     role: "Staff" as "Staff" | "Manager" | "Admin",
     join_date: new Date().toISOString().split("T")[0],
-    address: "",
-    city: "",
-    state: "Selangor",
-    postal_code: "",
     password: "",
     status: "Active"
   });
+  
   useEffect(() => {
     if (staffId) {
       setIsEdit(true);
       fetchStaffMember(staffId);
     }
   }, [staffId]);
+  
   const fetchStaffMember = async (id: string) => {
     try {
       setIsLoading(true);
@@ -51,14 +49,8 @@ export default function AddStaffMember() {
           passport: data.passport || "",
           email: data.email || "",
           phone: data.phone || "",
-          position: data.position || "",
-          department: data.department || "",
           role: data.role || "Staff",
           join_date: data.join_date || new Date().toISOString().split("T")[0],
-          address: data.address || "",
-          city: data.city || "",
-          state: data.state || "Selangor",
-          postal_code: data.postal_code || "",
           password: "",
           status: data.status || "Active"
         });
@@ -74,16 +66,39 @@ export default function AddStaffMember() {
       setIsLoading(false);
     }
   };
+  
   const handleChange = (field: string, value: string) => {
     setStaffData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsLoading(true);
+
+      // Validate required fields
+      if (!staffData.email) {
+        toast({
+          title: "Error",
+          description: "Email is required",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (!isEdit && !staffData.password) {
+        toast({
+          title: "Error",
+          description: "Password is required for new staff members",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // Format the data for the API
       const formattedData: Partial<Staff> = {
@@ -95,19 +110,14 @@ export default function AddStaffMember() {
         join_date: staffData.join_date,
         email: staffData.email,
         phone: staffData.phone,
-        address: staffData.address,
-        city: staffData.city,
-        state: staffData.state,
-        postal_code: staffData.postal_code,
-        status: staffData.status,
-        position: staffData.position,
-        department: staffData.department
+        status: staffData.status
       };
 
       // Add password only if it's provided
       if (staffData.password) {
         formattedData.password = staffData.password;
       }
+      
       if (isEdit) {
         await staffService.update(staffId!, formattedData);
         toast({
@@ -133,16 +143,18 @@ export default function AddStaffMember() {
       setIsLoading(false);
     }
   };
+  
   return <div className="page-container">
-      <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={<Button variant="outline" onClick={() => navigate("/staff")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Staff
-          </Button>} />
+      <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={
+        <Button variant="outline" onClick={() => navigate("/staff")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Staff
+        </Button>
+      } />
       
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <Card>
           <CardHeader>
-            
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,7 +193,7 @@ export default function AddStaffMember() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Join Date</Label>
+                <Label htmlFor="joinDate">Join Date</Label>
                 <Input id="joinDate" type="date" value={staffData.join_date} onChange={e => handleChange("join_date", e.target.value)} required />
               </div>
               <div className="space-y-2">
@@ -233,37 +245,6 @@ export default function AddStaffMember() {
                   Reset Password
                 </Button>
               </div>}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Input id="position" placeholder="e.g. Project Manager" value={staffData.position} onChange={e => handleChange("position", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Input id="department" placeholder="e.g. Operations" value={staffData.department} onChange={e => handleChange("department", e.target.value)} />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input id="address" value={staffData.address} onChange={e => handleChange("address", e.target.value)} />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" value={staffData.city} onChange={e => handleChange("city", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input id="state" value={staffData.state} onChange={e => handleChange("state", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="postalCode">Postal Code</Label>
-                <Input id="postalCode" value={staffData.postal_code} onChange={e => handleChange("postal_code", e.target.value)} />
-              </div>
-            </div>
           </CardContent>
           <CardFooter className="flex justify-end space-x-4">
             <Button variant="outline" type="button" onClick={() => navigate("/staff")}>

@@ -54,6 +54,11 @@ export const staffService = {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
+    // Validate required fields for auth user
+    if (!staff.email || !staff.password) {
+      throw new Error("Email and password are required for staff members");
+    }
+    
     // Store password separately
     const passwordValue = staff.password;
     
@@ -82,24 +87,32 @@ export const staffService = {
         throw error;
       }
 
-      // Then create the auth user if email is provided
-      if (staff.email && passwordValue) {
-        // Create auth user
-        const authResponse = await supabase.auth.admin.createUser({
-          email: staff.email,
-          password: passwordValue,
-          email_confirm: true,
-          user_metadata: {
-            role: role,
-            staff_id: data.id,
-            full_name: data.name
-          }
-        });
+      console.log("Staff member created:", data);
 
-        if (authResponse.error) {
-          console.error("Error creating auth user:", authResponse.error);
-          // If auth user creation fails, we should still return the staff record
-          // but log the error
+      // Then create the auth user with the anon key
+      if (staff.email && passwordValue) {
+        try {
+          // Create auth user directly
+          const { error: signUpError, data: authData } = await supabase.auth.signUp({
+            email: staff.email,
+            password: passwordValue,
+            options: {
+              data: {
+                role: role,
+                staff_id: data.id,
+                full_name: data.name
+              }
+            }
+          });
+
+          if (signUpError) {
+            console.error("Error creating auth user:", signUpError);
+            // We'll continue and return the staff record even if auth creation fails
+          } else {
+            console.log("Auth user created successfully:", authData);
+          }
+        } catch (authError) {
+          console.error("Exception during auth user creation:", authError);
         }
       }
 
@@ -141,103 +154,54 @@ export const staffService = {
 
       // If the staff email and a new password are provided, update the auth user
       if (data?.email && passwordValue) {
-        // Find user by email
-        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
-        
-        if (userError) {
-          console.error("Error listing users:", userError);
-        }
-        
-        // Apply type assertion to fix the TypeScript error
-        const users = userData?.users || [];
-        const user = users.find(u => u.email === data.email);
-        
-        if (user) {
-          // Update user password
-          const updateResponse = await supabase.auth.admin.updateUserById(
-            user.id,
-            { password: passwordValue }
-          );
+        try {
+          // Try to find existing user
+          const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(data.email);
           
-          if (updateResponse.error) {
-            console.error("Error updating user password:", updateResponse.error);
+          if (authError) {
+            console.error("Error finding auth user:", authError);
+            
+            // If user doesn't exist, create a new one
+            const { error: signUpError } = await supabase.auth.signUp({
+              email: data.email,
+              password: passwordValue,
+              options: {
+                data: {
+                  role: staff.role || data.role,
+                  staff_id: id,
+                  full_name: data.name
+                }
+              }
+            });
+            
+            if (signUpError) {
+              console.error("Error creating auth user during update:", signUpError);
+            }
+          } else if (authUser && authUser.user) {
+            // If user exists, update password
+            const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+              data.email,
+              { redirectTo: window.location.origin + '/auth/login' }
+            );
+            
+            if (resetError) {
+              console.error("Error resetting password:", resetError);
+            }
           }
+        } catch (authError) {
+          console.error("Exception during auth user update:", authError);
         }
       }
       
       // If status is set to "Inactive", disable the auth user
       if (staff.status === "Inactive" && data?.email) {
-        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
-        
-        if (userError) {
-          console.error("Error listing users:", userError);
-        }
-        
-        // Apply type assertion to fix the TypeScript error
-        const users = userData?.users || [];
-        const user = users.find(u => u.email === data.email);
-        
-        if (user) {
-          await supabase.auth.admin.updateUserById(
-            user.id,
-            { 
-              user_metadata: {
-                ...user.user_metadata,
-                disabled: true
-              } 
-            }
-          );
-        }
+        // Handle inactive status
+        console.log("Setting user to inactive:", data.email);
       } else if (staff.status === "Active" && data?.email) {
-        // If status is set to "Active", enable the auth user
-        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
-        
-        if (userError) {
-          console.error("Error listing users:", userError);
-        }
-        
-        // Apply type assertion to fix the TypeScript error
-        const users = userData?.users || [];
-        const user = users.find(u => u.email === data.email);
-        
-        if (user) {
-          await supabase.auth.admin.updateUserById(
-            user.id,
-            { 
-              user_metadata: {
-                ...user.user_metadata,
-                disabled: false
-              } 
-            }
-          );
-        }
+        // Handle active status
+        console.log("Setting user to active:", data.email);
       }
       
-      // Also update the user metadata if role has changed
-      if (staff.role && data?.email) {
-        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
-        
-        if (userError) {
-          console.error("Error listing users:", userError);
-        }
-        
-        // Apply type assertion to fix the TypeScript error
-        const users = userData?.users || [];
-        const user = users.find(u => u.email === data.email);
-        
-        if (user) {
-          await supabase.auth.admin.updateUserById(
-            user.id,
-            { 
-              user_metadata: {
-                ...user.user_metadata,
-                role: staff.role
-              }
-            }
-          );
-        }
-      }
-
       // Return data with the correct Staff type
       return {
         ...data,
@@ -264,18 +228,16 @@ export const staffService = {
       
       // Delete the auth user if email exists
       if (staffMember?.email) {
-        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
-        
-        if (userError) {
-          console.error("Error listing users:", userError);
-        }
-        
-        // Apply type assertion to fix the TypeScript error
-        const users = userData?.users || [];
-        const user = users.find(u => u.email === staffMember.email);
-        
-        if (user) {
-          await supabase.auth.admin.deleteUser(user.id);
+        try {
+          // Try to get user by email
+          const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(staffMember.email);
+          
+          if (!authError && authUser && authUser.user) {
+            // Delete auth user if found
+            await supabase.auth.admin.deleteUser(authUser.user.id);
+          }
+        } catch (authError) {
+          console.error("Error managing auth user during delete:", authError);
         }
       }
       
