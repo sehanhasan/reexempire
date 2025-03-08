@@ -1,4 +1,3 @@
-
 // Database Types
 export interface Category {
   id: string;
@@ -73,6 +72,9 @@ export interface Staff {
   // Add password for handling in services but make it optional
   password?: string;
   
+  // Add notes field which was missing
+  notes?: string | null;
+  
   // Keep existing properties
   first_name?: string;
   last_name?: string;
@@ -91,7 +93,6 @@ export interface Staff {
   emergency_contact_phone?: string;
   emergency_contact_email?: string;
   username?: string;
-  notes?: string | null;
 }
 
 export interface Quotation {

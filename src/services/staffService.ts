@@ -61,7 +61,7 @@ export const staffService = {
     const role = staff.role || "Staff";
     
     // Remove password from the object to be inserted
-    const { password, ...staffDataForInsert } = staff;
+    const { password, ...staffDataForInsert } = staff as any;
     
     // Create a data object that includes the role property
     const staffDataWithRole = {
@@ -123,7 +123,7 @@ export const staffService = {
     const passwordValue = staff.password;
     
     // Create a new object without password for database update
-    const { password, ...staffDataForUpdate } = staff;
+    const { password, ...staffDataForUpdate } = staff as any;
 
     try {
       // Update staff record in database
