@@ -14,11 +14,11 @@ export const staffService = {
       throw error;
     }
 
-    // Convert the data to Staff type with notes and role property
+    // Convert the data to Staff type with role property
     const staffMembers = data?.map(staff => ({
       ...staff,
-      notes: staff.notes || null, // Add notes property with null default
-      role: (staff.role as "Staff" | "Manager" | "Admin") || "Staff" // Ensure role property exists
+      // Ensure role property exists with the correct type
+      role: (staff.role as "Staff" | "Manager" | "Admin") || "Staff"
     })) || [];
 
     return staffMembers;
@@ -36,11 +36,11 @@ export const staffService = {
       throw error;
     }
 
-    // Add notes property to staff data and ensure role exists
+    // Return data with the correct Staff type
     return data ? {
       ...data,
-      notes: data.notes || null, // Add notes property with null default
-      role: (data.role as "Staff" | "Manager" | "Admin") || "Staff" // Ensure role property exists
+      // Ensure role property exists with the correct type
+      role: (data.role as "Staff" | "Manager" | "Admin") || "Staff"
     } : null;
   },
 
@@ -54,18 +54,16 @@ export const staffService = {
       staff.join_date = new Date().toISOString().split('T')[0];
     }
 
-    // Store notes separately as it's not in the database schema
-    const notesValue = staff.notes;
-    
     // Store password separately
     const passwordValue = staff.password;
     
     // Ensure role is of the correct type
-    const role = (staff.role as "Staff" | "Manager" | "Admin") || "Staff";
+    const role = staff.role || "Staff";
     
-    // Remove notes and password from the object to be inserted
-    const { notes, password, ...staffDataForInsert } = staff;
+    // Remove password from the object to be inserted
+    const { password, ...staffDataForInsert } = staff;
     
+    // Create a data object that includes the role property
     const staffDataWithRole = {
       ...staffDataForInsert,
       role // Add role field explicitly
@@ -105,11 +103,10 @@ export const staffService = {
         }
       }
 
-      // Add notes property to returned data
+      // Return data with the correct Staff type
       return {
         ...data,
-        role: (data.role as "Staff" | "Manager" | "Admin") || "Staff",
-        notes: notesValue
+        role: (data.role as "Staff" | "Manager" | "Admin") || "Staff"
       };
     } catch (error) {
       console.error("Failed to create staff member:", error);
@@ -121,15 +118,12 @@ export const staffService = {
     if (staff.first_name && staff.last_name) {
       staff.name = `${staff.first_name} ${staff.last_name}`;
     }
-
-    // Store notes separately as it's not in the database schema
-    const notesValue = staff.notes;
     
     // Store password separately
     const passwordValue = staff.password;
     
-    // Create a new object without notes and password for database update
-    const { notes, password, ...staffDataForUpdate } = staff;
+    // Create a new object without password for database update
+    const { password, ...staffDataForUpdate } = staff;
 
     try {
       // Update staff record in database
@@ -148,7 +142,12 @@ export const staffService = {
       // If the staff email and a new password are provided, update the auth user
       if (data?.email && passwordValue) {
         // Find user by email
-        const { data: userData } = await supabase.auth.admin.listUsers();
+        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+        
+        if (userError) {
+          console.error("Error listing users:", userError);
+        }
+        
         const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
@@ -166,7 +165,12 @@ export const staffService = {
       
       // If status is set to "Inactive", disable the auth user
       if (staff.status === "Inactive" && data?.email) {
-        const { data: userData } = await supabase.auth.admin.listUsers();
+        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+        
+        if (userError) {
+          console.error("Error listing users:", userError);
+        }
+        
         const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
@@ -182,7 +186,12 @@ export const staffService = {
         }
       } else if (staff.status === "Active" && data?.email) {
         // If status is set to "Active", enable the auth user
-        const { data: userData } = await supabase.auth.admin.listUsers();
+        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+        
+        if (userError) {
+          console.error("Error listing users:", userError);
+        }
+        
         const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
@@ -200,7 +209,12 @@ export const staffService = {
       
       // Also update the user metadata if role has changed
       if (staff.role && data?.email) {
-        const { data: userData } = await supabase.auth.admin.listUsers();
+        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+        
+        if (userError) {
+          console.error("Error listing users:", userError);
+        }
+        
         const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
@@ -216,11 +230,10 @@ export const staffService = {
         }
       }
 
-      // Add notes property to returned data
+      // Return data with the correct Staff type
       return {
         ...data,
-        role: (data.role as "Staff" | "Manager" | "Admin") || "Staff",
-        notes: notesValue
+        role: (data.role as "Staff" | "Manager" | "Admin") || "Staff"
       };
     } catch (error) {
       console.error(`Failed to update staff member with id ${id}:`, error);
@@ -231,15 +244,24 @@ export const staffService = {
   async delete(id: string): Promise<void> {
     try {
       // First get the staff member to get their email
-      const { data: staffMember } = await supabase
+      const { data: staffMember, error: staffError } = await supabase
         .from("staff")
         .select("email")
         .eq("id", id)
         .single();
       
+      if (staffError) {
+        console.error(`Error fetching staff member with id ${id}:`, staffError);
+      }
+      
       // Delete the auth user if email exists
       if (staffMember?.email) {
-        const { data: userData } = await supabase.auth.admin.listUsers();
+        const { data: userData, error: userError } = await supabase.auth.admin.listUsers();
+        
+        if (userError) {
+          console.error("Error listing users:", userError);
+        }
+        
         const user = userData?.users?.find(u => u.email === staffMember.email);
         
         if (user) {

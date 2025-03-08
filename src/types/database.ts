@@ -67,10 +67,10 @@ export interface Staff {
   created_at: string;
   updated_at: string;
   
-  // Add role property and make it a specific type
+  // Make role a required field with specific types
   role: "Staff" | "Manager" | "Admin";
   
-  // Add password for handling in services
+  // Add password for handling in services but make it optional
   password?: string;
   
   // Keep existing properties
@@ -90,6 +90,7 @@ export interface Staff {
   emergency_contact_relationship?: string;
   emergency_contact_phone?: string;
   emergency_contact_email?: string;
+  username?: string;
   notes?: string | null;
 }
 
