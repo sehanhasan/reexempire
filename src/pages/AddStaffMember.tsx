@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -11,7 +10,6 @@ import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { staffService } from "@/services";
 import { Staff } from "@/types/database";
-
 export default function AddStaffMember() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -36,14 +34,12 @@ export default function AddStaffMember() {
     password: "",
     status: "Active"
   });
-
   useEffect(() => {
     if (staffId) {
       setIsEdit(true);
       fetchStaffMember(staffId);
     }
   }, [staffId]);
-
   const fetchStaffMember = async (id: string) => {
     try {
       setIsLoading(true);
@@ -78,14 +74,12 @@ export default function AddStaffMember() {
       setIsLoading(false);
     }
   };
-
   const handleChange = (field: string, value: string) => {
     setStaffData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -114,7 +108,6 @@ export default function AddStaffMember() {
       if (staffData.password) {
         formattedData.password = staffData.password;
       }
-
       if (isEdit) {
         await staffService.update(staffId!, formattedData);
         toast({
@@ -140,7 +133,6 @@ export default function AddStaffMember() {
       setIsLoading(false);
     }
   };
-
   return <div className="page-container">
       <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={<Button variant="outline" onClick={() => navigate("/staff")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -150,7 +142,7 @@ export default function AddStaffMember() {
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+            
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -171,10 +163,7 @@ export default function AddStaffMember() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select 
-                  value={staffData.role} 
-                  onValueChange={(value: "Staff" | "Manager" | "Admin") => handleChange("role", value)}
-                >
+                <Select value={staffData.role} onValueChange={(value: "Staff" | "Manager" | "Admin") => handleChange("role", value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -224,38 +213,26 @@ export default function AddStaffMember() {
               </div>
             </div>
             
-            {(showPassword || !isEdit) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(showPassword || !isEdit) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input 
-                    id="password" 
-                    type="password" 
-                    value={staffData.password} 
-                    onChange={e => handleChange("password", e.target.value)} 
-                    required={!isEdit}
-                  />
+                  <Input id="password" type="password" value={staffData.password} onChange={e => handleChange("password", e.target.value)} required={!isEdit} />
                   <p className="text-xs text-muted-foreground">
                     {isEdit ? "Leave empty to keep current password" : "Must be at least 6 characters"}
                   </p>
                 </div>
-                {isEdit && (
-                  <div className="flex items-end">
+                {isEdit && <div className="flex items-end">
                     <Button type="button" variant="outline" className="mb-2" onClick={() => setShowPassword(false)}>
                       Cancel Password Change
                     </Button>
-                  </div>
-                )}
-              </div>
-            )}
+                  </div>}
+              </div>}
             
-            {isEdit && !showPassword && (
-              <div>
+            {isEdit && !showPassword && <div>
                 <Button type="button" variant="outline" onClick={() => setShowPassword(true)}>
                   Reset Password
                 </Button>
-              </div>
-            )}
+              </div>}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
