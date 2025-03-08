@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { staffService } from "@/services";
+import { Staff } from "@/types/database";
 
 export default function AddStaffMember() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function AddStaffMember() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [showPassword, setShowPassword] = useState(!staffId); // Show password field for new staff
-  const [staffData, setStaffData] = useState({
+  const [staffData, setStaffData] = useState<Partial<Staff>>({
     first_name: "",
     last_name: "",
     passport: "",
@@ -26,7 +27,7 @@ export default function AddStaffMember() {
     phone: "",
     position: "",
     department: "",
-    role: "Staff",
+    role: "Staff" as "Staff" | "Manager" | "Admin",
     join_date: new Date().toISOString().split("T")[0],
     address: "",
     city: "",
@@ -43,7 +44,7 @@ export default function AddStaffMember() {
     }
   }, [staffId]);
 
-  const fetchStaffMember = async (id) => {
+  const fetchStaffMember = async (id: string) => {
     try {
       setIsLoading(true);
       const data = await staffService.getById(id);
@@ -78,25 +79,25 @@ export default function AddStaffMember() {
     }
   };
 
-  const handleChange = (field, value) => {
+  const handleChange = (field: string, value: string) => {
     setStaffData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsLoading(true);
 
       // Format the data for the API
-      const formattedData = {
+      const formattedData: Partial<Staff> = {
         name: `${staffData.first_name} ${staffData.last_name}`,
         first_name: staffData.first_name,
         last_name: staffData.last_name,
         passport: staffData.passport,
-        role: staffData.role,
+        role: staffData.role as "Staff" | "Manager" | "Admin",
         join_date: staffData.join_date,
         email: staffData.email,
         phone: staffData.phone,
@@ -115,7 +116,7 @@ export default function AddStaffMember() {
       }
 
       if (isEdit) {
-        await staffService.update(staffId, formattedData);
+        await staffService.update(staffId!, formattedData);
         toast({
           title: "Staff Updated",
           description: "The staff member has been updated successfully."

@@ -69,6 +69,9 @@ export interface Staff {
   // Add role property
   role: "Staff" | "Manager" | "Admin";
   
+  // Add password for handling in services
+  password?: string;
+  
   // Keep existing properties
   first_name?: string;
   last_name?: string;

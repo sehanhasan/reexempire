@@ -14,13 +14,14 @@ export const staffService = {
       throw error;
     }
 
-    // Convert the data to Staff type
-    const staffWithNotes = data?.map(staff => ({
+    // Convert the data to Staff type with notes and role property
+    const staffMembers = data?.map(staff => ({
       ...staff,
-      notes: null // Add notes property with null default
+      notes: null, // Add notes property with null default
+      role: (staff.role as "Staff" | "Manager" | "Admin") || "Staff" // Ensure role property exists
     })) || [];
 
-    return staffWithNotes;
+    return staffMembers;
   },
 
   async getById(id: string): Promise<Staff | null> {
@@ -35,10 +36,11 @@ export const staffService = {
       throw error;
     }
 
-    // Add notes property to staff data
+    // Add notes property to staff data and ensure role exists
     return data ? {
       ...data,
-      notes: null // Add notes property with null default
+      notes: null, // Add notes property with null default
+      role: (data.role as "Staff" | "Manager" | "Admin") || "Staff" // Ensure role property exists
     } : null;
   },
 
@@ -55,39 +57,25 @@ export const staffService = {
     // Store notes separately as it's not in the database schema
     const notesValue = staff.notes;
     
-    // Default role to Staff if not specified
-    const role = staff.role || "Staff";
+    // Store password separately
+    const passwordValue = staff.password;
     
-    // Remove notes from the object to be inserted
-    const staffDataForInsert = {
-      name: staff.name || "",
-      join_date: staff.join_date,
-      position: staff.position || null,
-      email: staff.email || null,
-      phone: staff.phone || null,
-      status: staff.status || "Active",
-      department: staff.department || null,
-      employment_type: staff.employment_type || null,
-      gender: staff.gender || null,
-      address: staff.address || null,
-      city: staff.city || null,
-      state: staff.state || null,
-      postal_code: staff.postal_code || null,
-      passport: staff.passport || null,
-      emergency_contact_name: staff.emergency_contact_name || null,
-      emergency_contact_relationship: staff.emergency_contact_relationship || null,
-      emergency_contact_phone: staff.emergency_contact_phone || null,
-      emergency_contact_email: staff.emergency_contact_email || null,
-      first_name: staff.first_name || "",
-      last_name: staff.last_name || "",
-      role: role
+    // Ensure role is of the correct type
+    const role = (staff.role as "Staff" | "Manager" | "Admin") || "Staff";
+    
+    // Remove notes and password from the object to be inserted
+    const { notes, password, ...staffDataForInsert } = staff;
+    
+    const staffDataWithRole = {
+      ...staffDataForInsert,
+      role // Add role field explicitly
     };
 
     try {
       // First create the staff member in the database
       const { data, error } = await supabase
         .from("staff")
-        .insert(staffDataForInsert)
+        .insert(staffDataWithRole)
         .select()
         .single();
 
@@ -97,11 +85,11 @@ export const staffService = {
       }
 
       // Then create the auth user if email is provided
-      if (staff.email && staff.password) {
+      if (staff.email && passwordValue) {
         // Create auth user
         const authResponse = await supabase.auth.admin.createUser({
           email: staff.email,
-          password: staff.password,
+          password: passwordValue,
           email_confirm: true,
           user_metadata: {
             role: role,
@@ -120,6 +108,7 @@ export const staffService = {
       // Add notes property to returned data
       return {
         ...data,
+        role: (data.role as "Staff" | "Manager" | "Admin") || "Staff",
         notes: notesValue
       };
     } catch (error) {
@@ -135,10 +124,12 @@ export const staffService = {
 
     // Store notes separately as it's not in the database schema
     const notesValue = staff.notes;
-    const password = staff.password;
+    
+    // Store password separately
+    const passwordValue = staff.password;
     
     // Create a new object without notes and password for database update
-    const { notes, password: _, ...staffDataForUpdate } = staff;
+    const { notes, password, ...staffDataForUpdate } = staff;
 
     try {
       // Update staff record in database
@@ -155,16 +146,16 @@ export const staffService = {
       }
 
       // If the staff email and a new password are provided, update the auth user
-      if (data.email && password) {
+      if (data?.email && passwordValue) {
         // Find user by email
         const { data: userData } = await supabase.auth.admin.listUsers();
-        const user = userData.users.find(u => u.email === data.email);
+        const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
           // Update user password
           const updateResponse = await supabase.auth.admin.updateUserById(
             user.id,
-            { password }
+            { password: passwordValue }
           );
           
           if (updateResponse.error) {
@@ -174,33 +165,43 @@ export const staffService = {
       }
       
       // If status is set to "Inactive", disable the auth user
-      if (staff.status === "Inactive" && data.email) {
+      if (staff.status === "Inactive" && data?.email) {
         const { data: userData } = await supabase.auth.admin.listUsers();
-        const user = userData.users.find(u => u.email === data.email);
+        const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
           await supabase.auth.admin.updateUserById(
             user.id,
-            { banned: true }
+            { 
+              user_metadata: {
+                ...user.user_metadata,
+                disabled: true
+              } 
+            }
           );
         }
-      } else if (staff.status === "Active" && data.email) {
+      } else if (staff.status === "Active" && data?.email) {
         // If status is set to "Active", enable the auth user
         const { data: userData } = await supabase.auth.admin.listUsers();
-        const user = userData.users.find(u => u.email === data.email);
+        const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
           await supabase.auth.admin.updateUserById(
             user.id,
-            { banned: false }
+            { 
+              user_metadata: {
+                ...user.user_metadata,
+                disabled: false
+              } 
+            }
           );
         }
       }
       
       // Also update the user metadata if role has changed
-      if (staff.role && data.email) {
+      if (staff.role && data?.email) {
         const { data: userData } = await supabase.auth.admin.listUsers();
-        const user = userData.users.find(u => u.email === data.email);
+        const user = userData?.users?.find(u => u.email === data.email);
         
         if (user) {
           await supabase.auth.admin.updateUserById(
@@ -218,6 +219,7 @@ export const staffService = {
       // Add notes property to returned data
       return {
         ...data,
+        role: (data.role as "Staff" | "Manager" | "Admin") || "Staff",
         notes: notesValue
       };
     } catch (error) {
@@ -238,7 +240,7 @@ export const staffService = {
       // Delete the auth user if email exists
       if (staffMember?.email) {
         const { data: userData } = await supabase.auth.admin.listUsers();
-        const user = userData.users.find(u => u.email === staffMember.email);
+        const user = userData?.users?.find(u => u.email === staffMember.email);
         
         if (user) {
           await supabase.auth.admin.deleteUser(user.id);
