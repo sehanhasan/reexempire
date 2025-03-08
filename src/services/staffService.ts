@@ -155,11 +155,15 @@ export const staffService = {
       // If the staff email and a new password are provided, update the auth user
       if (data?.email && passwordValue) {
         try {
-          // Try to find existing user
-          const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(data.email);
+          // Try to find existing user by email
+          const { data: users, error: listError } = await supabase.auth.admin.listUsers({
+            filter: {
+              email: data.email
+            }
+          });
           
-          if (authError) {
-            console.error("Error finding auth user:", authError);
+          if (listError) {
+            console.error("Error finding auth user:", listError);
             
             // If user doesn't exist, create a new one
             const { error: signUpError } = await supabase.auth.signUp({
@@ -177,7 +181,7 @@ export const staffService = {
             if (signUpError) {
               console.error("Error creating auth user during update:", signUpError);
             }
-          } else if (authUser && authUser.user) {
+          } else if (users && users.users && users.users.length > 0) {
             // If user exists, update password
             const { error: resetError } = await supabase.auth.resetPasswordForEmail(
               data.email,
@@ -230,11 +234,15 @@ export const staffService = {
       if (staffMember?.email) {
         try {
           // Try to get user by email
-          const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(staffMember.email);
+          const { data: users, error: listError } = await supabase.auth.admin.listUsers({
+            filter: {
+              email: staffMember.email
+            }
+          });
           
-          if (!authError && authUser && authUser.user) {
+          if (!listError && users && users.users && users.users.length > 0) {
             // Delete auth user if found
-            await supabase.auth.admin.deleteUser(authUser.user.id);
+            await supabase.auth.admin.deleteUser(users.users[0].id);
           }
         } catch (authError) {
           console.error("Error managing auth user during delete:", authError);
