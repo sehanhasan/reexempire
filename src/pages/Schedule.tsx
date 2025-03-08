@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -16,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function Schedule() {
   const navigate = useNavigate();
-  const { user, isAdmin, isManager } = useAuth();
+  const { user, isAdmin, isManager, isStaff } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("week");
   const [customersMap, setCustomersMap] = useState<Record<string, Customer>>({});
@@ -29,18 +28,18 @@ export default function Schedule() {
     if (isAdmin || isManager) {
       // Admins and managers see all appointments
       return await appointmentService.getAll();
-    } else {
+    } else if (isStaff) {
       // Regular staff see only their own appointments
       const staffId = user?.user_metadata?.staff_id;
       if (staffId) {
         return await appointmentService.getByStaffId(staffId);
       }
-      return [];
     }
+    return [];
   };
 
   const { data: appointments = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['appointments', user?.id, isAdmin, isManager],
+    queryKey: ['appointments', user?.id, isAdmin, isManager, isStaff],
     queryFn: fetchAppointments,
   });
 

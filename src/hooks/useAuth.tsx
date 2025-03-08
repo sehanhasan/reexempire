@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Get the user's metadata to determine role
           const userData = data.session.user.user_metadata;
           setUserRole(userData?.role || 'Staff');
+          console.log('User role:', userData?.role);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -62,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Get the user's metadata to determine role
           const userData = session.user.user_metadata;
           setUserRole(userData?.role || 'Staff');
+          console.log('Auth state changed - User role:', userData?.role);
         } else {
           setUserRole(null);
         }
@@ -83,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Determine role-based permissions
   const isAdmin = userRole === 'Admin';
   const isManager = userRole === 'Manager';
   const isStaff = userRole === 'Staff';

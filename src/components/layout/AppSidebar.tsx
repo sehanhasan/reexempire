@@ -61,7 +61,7 @@ export function AppSidebar({
     title: "Staff",
     icon: <UserCircle className="h-5 w-5" />,
     href: "/staff",
-    adminOnly: true,
+    adminOnly: false,  // Changed to allow managers to access
     managerAccess: true
   }, {
     title: "Categories",
@@ -120,10 +120,8 @@ export function AppSidebar({
         <div className="border-t border-gray-200 p-2">
           <div className="mt-2 p-2">
             <Button variant="ghost" className="w-full justify-start text-gray-600 h-10" onClick={() => {
-              if (isAdmin) {
-                navigate("/profile");
-              }
-            }} disabled={!isAdmin}>
+              navigate("/profile");
+            }}>
               <Settings className="h-5 w-5" />
               <span className="ml-3">Settings</span>
             </Button>

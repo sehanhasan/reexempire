@@ -24,7 +24,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       navigate('/auth/login');
     }
 
-    // If user is a staff member, they can only access the schedule page
+    // Apply route access restrictions based on user role
     if (!isLoading && user) {
       const path = location.pathname;
       
@@ -42,7 +42,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         }
       }
       
-      // Redirect from dashboard if staff
+      // Redirect from dashboard if staff or manager (not admin)
       if ((isStaff || isManager) && !isAdmin && (path === '/' || path === '/dashboard')) {
         navigate('/schedule');
       }
