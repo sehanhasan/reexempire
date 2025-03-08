@@ -144,6 +144,7 @@ export type Database = {
       invoice_items: {
         Row: {
           amount: number
+          category: string | null
           created_at: string
           description: string
           id: string
@@ -155,6 +156,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          category?: string | null
           created_at?: string
           description: string
           id?: string
@@ -166,6 +168,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          category?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -482,6 +485,7 @@ export type Database = {
           phone: string | null
           position: string | null
           postal_code: string | null
+          role: string
           state: string | null
           status: string
           updated_at: string
@@ -508,6 +512,7 @@ export type Database = {
           phone?: string | null
           position?: string | null
           postal_code?: string | null
+          role?: string
           state?: string | null
           status?: string
           updated_at?: string
@@ -534,6 +539,7 @@ export type Database = {
           phone?: string | null
           position?: string | null
           postal_code?: string | null
+          role?: string
           state?: string | null
           status?: string
           updated_at?: string

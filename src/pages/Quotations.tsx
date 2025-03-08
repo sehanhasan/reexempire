@@ -2,11 +2,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -14,9 +13,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "@/components/ui/use-toast";
 import { quotationService, customerService } from "@/services";
 import { formatDate } from "@/utils/formatters";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Quotation, Customer } from "@/types/database";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 // Extended type for quotations with customer name
 interface QuotationWithCustomer extends Quotation {
@@ -26,7 +33,6 @@ interface QuotationWithCustomer extends Quotation {
 
 export default function Quotations() {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const [quotations, setQuotations] = useState<QuotationWithCustomer[]>([]);
   const [filteredQuotations, setFilteredQuotations] = useState<QuotationWithCustomer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -233,127 +239,12 @@ export default function Quotations() {
     }
   };
   
-  const columns = [
-    {
-      header: "Quotation #",
-      accessorKey: "reference_number",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
-        <Button 
-          variant="link" 
-          className="p-0 h-auto font-medium text-blue-600 hover:text-blue-800"
-          onClick={() => navigate(`/quotations/edit/${row.original.id}`)}
-        >
-          {row.original.reference_number}
-        </Button>
-      )
-    },
-    {
-      header: "Unit #",
-      accessorKey: "unit_number",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
-        <div>{row.original.unit_number || "-"}</div>
-      )
-    },
-    {
-      header: "Amount",
-      accessorKey: "total",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
-        <div className="text-right font-medium">
-          RM {Number(row.original.total).toFixed(2)}
-        </div>
-      )
-    },
-    {
-      header: "Status",
-      accessorKey: "status",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => {
-        const status = row.original.status;
-        let statusColor = "bg-gray-100 text-gray-800";
-        
-        if (status === "Draft") {
-          statusColor = "bg-gray-100 text-gray-800";
-        } else if (status === "Sent") {
-          statusColor = "bg-blue-100 text-blue-800";
-        } else if (status === "Accepted") {
-          statusColor = "bg-green-100 text-green-800";
-        } else if (status === "Rejected") {
-          statusColor = "bg-red-100 text-red-800";
-        } else if (status === "Expired") {
-          statusColor = "bg-amber-100 text-amber-800";
-        }
-        
-        return (
-          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
-            {status}
-          </div>
-        );
-      }
-    },
-    {
-      header: "Actions",
-      accessorKey: "actions",
-      cell: ({ row }: { row: { original: QuotationWithCustomer } }) => (
-        <div className="flex justify-end space-x-1">
-          {row.original.status === "Accepted" && (
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="h-8 w-8 text-blue-600" 
-              title="Convert to Invoice"
-              onClick={() => handleConvertToInvoice(row.original)}
-            >
-              <FileText className="h-4 w-4" />
-            </Button>
-          )}
-          
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="h-8 w-8" 
-            title="Send on WhatsApp"
-            onClick={() => handleSendWhatsapp(row.original)}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="h-8 w-8" 
-            title="Download PDF"
-            onClick={() => handleDownloadPDF(row.original)}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate(`/quotations/edit/${row.original.id}`)}>
-                <FileEdit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="text-red-600" 
-                onClick={() => {
-                  setQuotationToDelete(row.original);
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )
-    }
-  ];
-  
+  const formatMoney = (amount: number) => {
+    return `RM ${parseFloat(amount.toString()).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
 
   return (
     <div className="page-container">
@@ -370,23 +261,20 @@ export default function Quotations() {
       />
 
       <Card className="mt-6">
-        <CardHeader className="pb-2">
-          
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-3 mb-6">
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+        <CardContent className="p-0">
+          <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 type="search" 
                 placeholder="Search quotations..." 
-                className="pl-8 h-10" 
+                className="pl-10 h-10" 
                 value={searchTerm} 
                 onChange={e => setSearchTerm(e.target.value)} 
               />
             </div>
             
-            <div className="w-full md:w-60">
+            <div className="w-full sm:w-60">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Filter by status" />
@@ -403,12 +291,140 @@ export default function Quotations() {
             </div>
           </div>
 
-          <DataTable 
-            columns={columns} 
-            data={filteredQuotations} 
-            isLoading={loading} 
-            emptyMessage="No quotations found. Create your first quotation to get started." 
-          />
+          {loading ? (
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground">Loading quotations...</p>
+            </div>
+          ) : filteredQuotations.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground">No quotations found matching your criteria</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quotation #</TableHead>
+                    <TableHead>Unit #</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Expiry Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredQuotations.map(quotation => {
+                    const status = quotation.status;
+                    let statusClass = "";
+                    
+                    switch (status) {
+                      case "Draft":
+                        statusClass = "bg-gray-100 text-gray-800";
+                        break;
+                      case "Sent":
+                        statusClass = "bg-blue-100 text-blue-800";
+                        break;
+                      case "Accepted":
+                        statusClass = "bg-green-100 text-green-800";
+                        break;
+                      case "Rejected":
+                        statusClass = "bg-red-100 text-red-800";
+                        break;
+                      case "Expired":
+                        statusClass = "bg-amber-100 text-amber-800";
+                        break;
+                      default:
+                        statusClass = "bg-gray-100 text-gray-800";
+                    }
+                    
+                    return (
+                      <TableRow key={quotation.id}>
+                        <TableCell>
+                          <div 
+                            className="font-medium cursor-pointer text-blue-600"
+                            onClick={() => navigate(`/quotations/edit/${quotation.id}`)}
+                          >
+                            {quotation.reference_number}
+                          </div>
+                        </TableCell>
+                        <TableCell>{quotation.unit_number || "-"}</TableCell>
+                        <TableCell>{formatDate(quotation.issue_date)}</TableCell>
+                        <TableCell>{formatDate(quotation.expiry_date)}</TableCell>
+                        <TableCell>
+                          <Badge className={statusClass}>
+                            {status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatMoney(quotation.total)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1 justify-end">
+                            {quotation.status === "Accepted" && (
+                              <Button 
+                                variant="outline" 
+                                size="icon"
+                                className="h-8 w-8 text-blue-600" 
+                                title="Convert to Invoice"
+                                onClick={() => handleConvertToInvoice(quotation)}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            )}
+                            
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              className="h-8 w-8" 
+                              title="Send on WhatsApp"
+                              onClick={() => handleSendWhatsapp(quotation)}
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              className="h-8 w-8" 
+                              title="Download PDF"
+                              onClick={() => handleDownloadPDF(quotation)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                                  <FileEdit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-red-600" 
+                                  onClick={() => {
+                                    setQuotationToDelete(quotation);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

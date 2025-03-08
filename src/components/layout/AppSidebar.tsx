@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, Settings, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppSidebarProps {
@@ -115,14 +115,6 @@ export function AppSidebar({
         
         <div className="border-t border-gray-200 p-2">
           <div className="mt-2 p-2">
-            <Button variant="ghost" className="w-full justify-start text-gray-600 h-10" onClick={() => {
-              if (isAdmin) {
-                navigate("/profile");
-              }
-            }} disabled={!isAdmin}>
-              <Settings className="h-5 w-5" />
-              <span className="ml-3">Settings</span>
-            </Button>
             <Button variant="ghost" className="w-full justify-start text-gray-600 h-10" onClick={onLogout}>
               <LogOut className="h-5 w-5" />
               <span className="ml-3">Logout</span>

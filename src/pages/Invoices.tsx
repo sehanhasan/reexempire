@@ -16,7 +16,8 @@ import {
   Plus,
   Search,
   Check,
-  Send
+  Send,
+  AlertTriangle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -94,6 +95,7 @@ export default function Invoices() {
     if (searchTerm) {
       filtered = filtered.filter(invoice => 
         invoice.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (customers[invoice.customer_id]?.unit_number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (customers[invoice.customer_id]?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -144,6 +146,7 @@ export default function Invoices() {
         const customer = customers[invoice.customer_id] || {};
         return {
           'Invoice #': invoice.reference_number,
+          'Unit #': customer.unit_number || '',
           'Customer': customer.name || 'Unknown',
           'Issue Date': format(new Date(invoice.issue_date), 'yyyy-MM-dd'),
           'Due Date': format(new Date(invoice.due_date), 'yyyy-MM-dd'),
@@ -231,7 +234,7 @@ export default function Invoices() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Invoice #</TableHead>
-                      <TableHead>Customer</TableHead>
+                      <TableHead>Unit #</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Status</TableHead>
@@ -256,7 +259,7 @@ export default function Invoices() {
                               {invoice.reference_number}
                             </div>
                           </TableCell>
-                          <TableCell>{customer ? customer.name : "Unknown"}</TableCell>
+                          <TableCell>{customer ? customer.unit_number || "-" : "-"}</TableCell>
                           <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
                           <TableCell>
                             <div className="flex items-center">
@@ -264,7 +267,8 @@ export default function Invoices() {
                                 {format(dueDate, "MMM dd, yyyy")}
                               </span>
                               {isPastDue && (
-                                <Badge variant="outline" className="ml-2 bg-red-50 text-red-600 border-red-200">
+                                <Badge className="ml-2 bg-red-100 text-red-600 border-red-200 hover:bg-red-100">
+                                  <AlertTriangle className="mr-1 h-3 w-3" />
                                   Overdue
                                 </Badge>
                               )}
@@ -272,9 +276,9 @@ export default function Invoices() {
                           </TableCell>
                           <TableCell>
                             <Badge className={
-                              invoice.payment_status === "Paid" ? "bg-green-100 text-green-800" :
-                              invoice.payment_status === "Partially Paid" ? "bg-amber-100 text-amber-800" :
-                              "bg-amber-100 text-amber-800" // Changed to amber for Unpaid
+                              invoice.payment_status === "Paid" ? "bg-green-100 text-green-800 hover:bg-green-100" :
+                              invoice.payment_status === "Partially Paid" ? "bg-amber-100 text-amber-800 hover:bg-amber-100" :
+                              "bg-amber-100 text-amber-800 hover:bg-amber-100" // Changed to amber for Unpaid
                             }>
                               {invoice.payment_status}
                             </Badge>
