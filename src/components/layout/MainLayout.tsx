@@ -16,7 +16,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, isStaff, isManager, isLoading, signOut } = useAuth();
+  const { user, isAdmin, isStaff, isLoading, signOut } = useAuth();
   
   // If user is not authenticated, redirect to login
   useEffect(() => {
@@ -24,30 +24,14 @@ export function MainLayout({ children }: MainLayoutProps) {
       navigate('/auth/login');
     }
 
-    // Apply route access restrictions based on user role
-    if (!isLoading && user) {
+    // If user is a staff member, they can only access the schedule page
+    if (!isLoading && user && isStaff && !isAdmin) {
       const path = location.pathname;
-      
-      // Staff restriction - only access to schedule
-      if (isStaff && !isAdmin && !isManager) {
-        if (!path.includes('/schedule') && path !== '/') {
-          navigate('/schedule');
-        }
-      }
-      
-      // Manager restriction - only access to schedule and staff
-      if (isManager && !isAdmin) {
-        if (!path.includes('/schedule') && !path.includes('/staff') && path !== '/') {
-          navigate('/schedule');
-        }
-      }
-      
-      // Redirect from dashboard if staff or manager (not admin)
-      if ((isStaff || isManager) && !isAdmin && (path === '/' || path === '/dashboard')) {
+      if (!path.includes('/schedule') && path !== '/') {
         navigate('/schedule');
       }
     }
-  }, [user, isLoading, location.pathname, navigate, isStaff, isAdmin, isManager]);
+  }, [user, isLoading, location.pathname, navigate, isStaff, isAdmin]);
   
   // Get page title based on route
   const getPageTitle = () => {
@@ -71,6 +55,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       if (path.includes("/add")) return "Add Appointment";
       return "Schedule";
     }
+    if (path.includes("/profile")) return "Profile";
     
     return "Reex Empire";
   };
@@ -103,7 +88,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           setOpen={setSidebarOpen} 
           isAdmin={isAdmin}
           isStaff={isStaff}
-          isManager={isManager}
           onLogout={handleLogout}
         />
       </div>

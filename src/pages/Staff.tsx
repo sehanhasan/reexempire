@@ -13,6 +13,7 @@ import {
   Trash,
   Eye,
   Phone,
+  UserPlus,
   Plus
 } from "lucide-react";
 
@@ -117,7 +118,6 @@ export default function StaffPage() {
         description: "Failed to delete staff member. Please try again.",
         variant: "destructive",
       });
-      setShowDeleteConfirm(false); // Close dialog on error to prevent UI freeze
     }
   };
 
@@ -159,19 +159,8 @@ export default function StaffPage() {
       ),
     },
     {
-      header: "Role",
-      accessorKey: "role" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <Badge className={
-            row.original.role === "Admin" ? "bg-purple-100 text-purple-800 hover:bg-purple-200" :
-            row.original.role === "Manager" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-200"
-          }>
-            {row.original.role}
-          </Badge>
-        );
-      },
+      header: "Position",
+      accessorKey: "position" as keyof Staff,
     },
     {
       header: "Phone",
@@ -184,6 +173,13 @@ export default function StaffPage() {
           </a>
         </div>
       ),
+    },
+    {
+      header: "Join Date",
+      accessorKey: "join_date" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => {
+        return row.original.join_date ? format(new Date(row.original.join_date), "MMM dd, yyyy") : "N/A";
+      },
     },
     {
       header: "Status",
@@ -271,6 +267,12 @@ export default function StaffPage() {
       <PageHeader 
         title="Staff" 
         description="Manage your team members."
+        actions={
+          <Button className="flex items-center" onClick={() => navigate("/staff/add")}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Staff Member
+          </Button>
+        }
       />
       
       <div className="mt-8">
@@ -302,14 +304,8 @@ export default function StaffPage() {
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Role</p>
-                <Badge className={
-                  selectedStaff.role === "Admin" ? "bg-purple-100 text-purple-800" :
-                  selectedStaff.role === "Manager" ? "bg-blue-100 text-blue-800" :
-                  "bg-gray-100 text-gray-800"
-                }>
-                  {selectedStaff.role || "Staff"}
-                </Badge>
+                <p className="text-sm font-medium text-muted-foreground">Position</p>
+                <p>{selectedStaff.position}</p>
               </div>
               
               <div>
@@ -328,10 +324,10 @@ export default function StaffPage() {
                 <p>{selectedStaff.join_date ? format(new Date(selectedStaff.join_date), "MMMM dd, yyyy") : "N/A"}</p>
               </div>
               
-              {selectedStaff.position && (
+              {selectedStaff.username && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Position</p>
-                  <p>{selectedStaff.position}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Username</p>
+                  <p>{selectedStaff.username}</p>
                 </div>
               )}
               

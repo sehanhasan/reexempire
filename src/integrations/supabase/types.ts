@@ -482,7 +482,6 @@ export type Database = {
           phone: string | null
           position: string | null
           postal_code: string | null
-          role: string
           state: string | null
           status: string
           updated_at: string
@@ -509,7 +508,6 @@ export type Database = {
           phone?: string | null
           position?: string | null
           postal_code?: string | null
-          role?: string
           state?: string | null
           status?: string
           updated_at?: string
@@ -536,7 +534,6 @@ export type Database = {
           phone?: string | null
           position?: string | null
           postal_code?: string | null
-          role?: string
           state?: string | null
           status?: string
           updated_at?: string

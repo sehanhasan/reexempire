@@ -8,7 +8,6 @@ interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
   isStaff: boolean;
-  isManager: boolean;
   isLoading: boolean;
   signOut: () => Promise<void>;
 }
@@ -18,7 +17,6 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isAdmin: false,
   isStaff: false,
-  isManager: false,
   isLoading: true,
   signOut: async () => {},
 });
@@ -41,8 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.session?.user) {
           // Get the user's metadata to determine role
           const userData = data.session.user.user_metadata;
-          setUserRole(userData?.role || 'Staff');
-          console.log('User role:', userData?.role);
+          setUserRole(userData?.role || 'staff');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -62,8 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           // Get the user's metadata to determine role
           const userData = session.user.user_metadata;
-          setUserRole(userData?.role || 'Staff');
-          console.log('Auth state changed - User role:', userData?.role);
+          setUserRole(userData?.role || 'staff');
         } else {
           setUserRole(null);
         }
@@ -85,10 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Determine role-based permissions
-  const isAdmin = userRole === 'Admin';
-  const isManager = userRole === 'Manager';
-  const isStaff = userRole === 'Staff';
+  const isAdmin = userRole === 'admin';
+  const isStaff = userRole === 'staff';
 
   return (
     <AuthContext.Provider
@@ -97,7 +91,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         isAdmin,
         isStaff,
-        isManager,
         isLoading,
         signOut,
       }}

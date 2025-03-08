@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, Users, FileText, Receipt, Calendar, FolderTree, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, Settings, LogOut, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppSidebarProps {
@@ -12,7 +12,6 @@ interface AppSidebarProps {
   setOpen?: (open: boolean) => void;
   isAdmin: boolean;
   isStaff: boolean;
-  isManager: boolean;
   onLogout: () => Promise<void>;
 }
 
@@ -21,7 +20,6 @@ export function AppSidebar({
   setOpen,
   isAdmin,
   isStaff,
-  isManager,
   onLogout
 }: AppSidebarProps) {
   const navigate = useNavigate();
@@ -31,12 +29,12 @@ export function AppSidebar({
   // Logo image
   const logoUrl = "https://i.ibb.co/Ltyts5K/reex-empire-logo.png";
 
-  // Navigation items
+  // Navigation items - rearranged order
   const navItems = [{
     title: "Dashboard",
     icon: <LayoutDashboard className="h-5 w-5" />,
     href: "/",
-    adminOnly: true
+    adminOnly: false
   }, {
     title: "Customers",
     icon: <Users className="h-5 w-5" />,
@@ -59,10 +57,9 @@ export function AppSidebar({
     adminOnly: false
   }, {
     title: "Staff",
-    icon: <Users className="h-5 w-5" />,
+    icon: <UserCircle className="h-5 w-5" />,
     href: "/staff",
-    adminOnly: false,
-    managerAccess: true
+    adminOnly: true
   }, {
     title: "Categories",
     icon: <FolderTree className="h-5 w-5" />,
@@ -73,7 +70,6 @@ export function AppSidebar({
   // Filter navigation items based on user role
   const filteredNavItems = navItems.filter(item => {
     if (isAdmin) return true;
-    if (isManager && (item.managerAccess || !item.adminOnly)) return true;
     if (isStaff && !item.adminOnly) return true;
     return false;
   });
@@ -96,6 +92,7 @@ export function AppSidebar({
         <div className="h-14 flex items-center px-4 border-b justify-between">
           <div className="flex items-center gap-2">
             <img src={logoUrl} alt="Reex Empire Logo" className="h-8" />
+            
           </div>
           {isMobile && <Button variant="ghost" size="icon" onClick={() => setOpen && setOpen(false)} className="h-8 w-8">
               <X className="h-4 w-4" />
@@ -104,28 +101,28 @@ export function AppSidebar({
         
         <ScrollArea className="flex-1 py-2">
           <nav className="space-y-1 px-2">
-            {filteredNavItems.map(item => (
-              <Button 
-                key={item.href} 
-                variant="ghost" 
-                className={cn("w-full justify-start text-gray-600 h-10", 
-                  isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium")} 
-                onClick={() => {
-                  navigate(item.href);
-                  if (isMobile) {
-                    setOpen && setOpen(false);
-                  }
-                }}
-              >
+            {filteredNavItems.map(item => <Button key={item.href} variant="ghost" className={cn("w-full justify-start text-gray-600 h-10", isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium")} onClick={() => {
+            navigate(item.href);
+            if (isMobile) {
+              setOpen && setOpen(false);
+            }
+          }}>
                 {item.icon}
                 <span className="ml-3">{item.title}</span>
-              </Button>
-            ))}
+              </Button>)}
           </nav>
         </ScrollArea>
         
         <div className="border-t border-gray-200 p-2">
           <div className="mt-2 p-2">
+            <Button variant="ghost" className="w-full justify-start text-gray-600 h-10" onClick={() => {
+              if (isAdmin) {
+                navigate("/profile");
+              }
+            }} disabled={!isAdmin}>
+              <Settings className="h-5 w-5" />
+              <span className="ml-3">Settings</span>
+            </Button>
             <Button variant="ghost" className="w-full justify-start text-gray-600 h-10" onClick={onLogout}>
               <LogOut className="h-5 w-5" />
               <span className="ml-3">Logout</span>

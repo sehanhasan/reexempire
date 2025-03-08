@@ -11,11 +11,9 @@ import { appointmentService, customerService, staffService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { Appointment, Customer, Staff } from "@/types/database";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function Schedule() {
   const navigate = useNavigate();
-  const { user, isAdmin, isManager, isStaff } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("week");
   const [customersMap, setCustomersMap] = useState<Record<string, Customer>>({});
@@ -23,24 +21,9 @@ export default function Schedule() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
 
-  // Get all appointments or just the current user's appointments
-  const fetchAppointments = async () => {
-    if (isAdmin || isManager) {
-      // Admins and managers see all appointments
-      return await appointmentService.getAll();
-    } else if (isStaff) {
-      // Regular staff see only their own appointments
-      const staffId = user?.user_metadata?.staff_id;
-      if (staffId) {
-        return await appointmentService.getByStaffId(staffId);
-      }
-    }
-    return [];
-  };
-
   const { data: appointments = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['appointments', user?.id, isAdmin, isManager, isStaff],
-    queryFn: fetchAppointments,
+    queryKey: ['appointments'],
+    queryFn: appointmentService.getAll,
   });
 
   const getWeekDates = () => {
@@ -253,21 +236,15 @@ export default function Schedule() {
     );
   };
 
-  // Only admin and manager can add appointments
-  const canAddAppointment = isAdmin || isManager;
-
   return (
     <div className="page-container">
       <PageHeader 
         title="Schedule" 
-        description="View and manage appointments"
         actions={
-          canAddAppointment ? (
-            <Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
-              <CalendarPlus className="mr-2 h-4 w-4" />
-              Add Appointment
-            </Button>
-          ) : undefined
+          <Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Add Appointment
+          </Button>
         }
       />
       
@@ -341,9 +318,7 @@ export default function Schedule() {
         )}
       </div>
 
-      {canAddAppointment && (
-        <FloatingActionButton onClick={() => navigate("/schedule/add")} />
-      )}
+      <FloatingActionButton onClick={() => navigate("/schedule/add")} />
 
       <AppointmentDetailsDialog
         open={isAppointmentDetailsOpen}

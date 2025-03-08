@@ -19,10 +19,12 @@ import Customers from "./pages/Customers";
 import AddCustomer from "./pages/AddCustomer";
 import Staff from "./pages/Staff";
 import AddStaffMember from "./pages/AddStaffMember";
+import EditStaffMember from "./pages/EditStaffMember";
 import Schedule from "./pages/Schedule";
 import AddAppointment from "./pages/AddAppointment";
 import Categories from "./pages/Categories";
 import AddCategory from "./pages/AddCategory";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -57,6 +59,7 @@ const App = () => (
             
             <Route path="/staff" element={<MainLayout><Staff /></MainLayout>} />
             <Route path="/staff/add" element={<MainLayout><AddStaffMember /></MainLayout>} />
+            <Route path="/staff/edit/:id" element={<MainLayout><EditStaffMember /></MainLayout>} />
             
             <Route path="/schedule" element={<MainLayout><Schedule /></MainLayout>} />
             <Route path="/schedule/add" element={<MainLayout><AddAppointment /></MainLayout>} />
@@ -64,6 +67,8 @@ const App = () => (
             
             <Route path="/categories" element={<MainLayout><Categories /></MainLayout>} />
             <Route path="/categories/add" element={<MainLayout><AddCategory /></MainLayout>} />
+            
+            <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
             
             {/* Catch all route */}
             <Route path="*" element={<NotFound />} />

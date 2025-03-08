@@ -66,21 +66,13 @@ export interface Staff {
   created_at: string;
   updated_at: string;
   
-  // Make role a required field with specific types
-  role: "Staff" | "Manager" | "Admin";
-  
-  // Add password for handling in services but make it optional
-  password?: string;
-  
-  // Add notes field which was missing
-  notes?: string | null;
-  
-  // Keep existing properties
+  // Add missing properties that are used in Staff pages
   first_name?: string;
   last_name?: string;
   passport?: string;
   gender?: string;
   date_of_birth?: string;
+  username?: string;
   department?: string;
   employment_type?: string;
   employee_id?: string;
@@ -92,7 +84,7 @@ export interface Staff {
   emergency_contact_relationship?: string;
   emergency_contact_phone?: string;
   emergency_contact_email?: string;
-  username?: string;
+  notes?: string | null; // Make sure notes is properly defined
 }
 
 export interface Quotation {
