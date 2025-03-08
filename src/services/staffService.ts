@@ -17,7 +17,7 @@ export const staffService = {
     // Convert the data to Staff type with notes and role property
     const staffMembers = data?.map(staff => ({
       ...staff,
-      notes: null, // Add notes property with null default
+      notes: staff.notes || null, // Add notes property with null default
       role: (staff.role as "Staff" | "Manager" | "Admin") || "Staff" // Ensure role property exists
     })) || [];
 
@@ -39,7 +39,7 @@ export const staffService = {
     // Add notes property to staff data and ensure role exists
     return data ? {
       ...data,
-      notes: null, // Add notes property with null default
+      notes: data.notes || null, // Add notes property with null default
       role: (data.role as "Staff" | "Manager" | "Admin") || "Staff" // Ensure role property exists
     } : null;
   },

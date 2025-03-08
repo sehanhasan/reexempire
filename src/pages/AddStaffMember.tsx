@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -171,7 +170,10 @@ export default function AddStaffMember() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={staffData.role} onValueChange={value => handleChange("role", value)}>
+                <Select 
+                  value={staffData.role} 
+                  onValueChange={(value: "Staff" | "Manager" | "Admin") => handleChange("role", value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

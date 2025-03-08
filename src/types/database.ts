@@ -1,3 +1,4 @@
+
 // Database Types
 export interface Category {
   id: string;
@@ -66,7 +67,7 @@ export interface Staff {
   created_at: string;
   updated_at: string;
   
-  // Add role property
+  // Add role property and make it a specific type
   role: "Staff" | "Manager" | "Admin";
   
   // Add password for handling in services
