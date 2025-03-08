@@ -16,7 +16,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin, isStaff, isLoading, signOut } = useAuth();
+  const { user, isAdmin, isStaff, isManager, isLoading, signOut } = useAuth();
   
   // If user is not authenticated, redirect to login
   useEffect(() => {
@@ -25,13 +25,29 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
 
     // If user is a staff member, they can only access the schedule page
-    if (!isLoading && user && isStaff && !isAdmin) {
+    if (!isLoading && user) {
       const path = location.pathname;
-      if (!path.includes('/schedule') && path !== '/') {
+      
+      // Staff restriction - only access to schedule
+      if (isStaff && !isAdmin && !isManager) {
+        if (!path.includes('/schedule') && path !== '/') {
+          navigate('/schedule');
+        }
+      }
+      
+      // Manager restriction - only access to schedule and staff
+      if (isManager && !isAdmin) {
+        if (!path.includes('/schedule') && !path.includes('/staff') && path !== '/') {
+          navigate('/schedule');
+        }
+      }
+      
+      // Redirect from dashboard if staff
+      if ((isStaff || isManager) && !isAdmin && (path === '/' || path === '/dashboard')) {
         navigate('/schedule');
       }
     }
-  }, [user, isLoading, location.pathname, navigate, isStaff, isAdmin]);
+  }, [user, isLoading, location.pathname, navigate, isStaff, isAdmin, isManager]);
   
   // Get page title based on route
   const getPageTitle = () => {
@@ -88,6 +104,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           setOpen={setSidebarOpen} 
           isAdmin={isAdmin}
           isStaff={isStaff}
+          isManager={isManager}
           onLogout={handleLogout}
         />
       </div>

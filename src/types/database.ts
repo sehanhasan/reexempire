@@ -66,13 +66,15 @@ export interface Staff {
   created_at: string;
   updated_at: string;
   
-  // Add missing properties that are used in Staff pages
+  // Add role property
+  role: "Staff" | "Manager" | "Admin";
+  
+  // Keep existing properties
   first_name?: string;
   last_name?: string;
   passport?: string;
   gender?: string;
   date_of_birth?: string;
-  username?: string;
   department?: string;
   employment_type?: string;
   employee_id?: string;
@@ -84,7 +86,7 @@ export interface Staff {
   emergency_contact_relationship?: string;
   emergency_contact_phone?: string;
   emergency_contact_email?: string;
-  notes?: string | null; // Make sure notes is properly defined
+  notes?: string | null;
 }
 
 export interface Quotation {

@@ -12,6 +12,7 @@ interface AppSidebarProps {
   setOpen?: (open: boolean) => void;
   isAdmin: boolean;
   isStaff: boolean;
+  isManager: boolean;
   onLogout: () => Promise<void>;
 }
 
@@ -20,6 +21,7 @@ export function AppSidebar({
   setOpen,
   isAdmin,
   isStaff,
+  isManager,
   onLogout
 }: AppSidebarProps) {
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ export function AppSidebar({
     title: "Dashboard",
     icon: <LayoutDashboard className="h-5 w-5" />,
     href: "/",
-    adminOnly: false
+    adminOnly: true
   }, {
     title: "Customers",
     icon: <Users className="h-5 w-5" />,
@@ -59,7 +61,8 @@ export function AppSidebar({
     title: "Staff",
     icon: <UserCircle className="h-5 w-5" />,
     href: "/staff",
-    adminOnly: true
+    adminOnly: true,
+    managerAccess: true
   }, {
     title: "Categories",
     icon: <FolderTree className="h-5 w-5" />,
@@ -70,6 +73,7 @@ export function AppSidebar({
   // Filter navigation items based on user role
   const filteredNavItems = navItems.filter(item => {
     if (isAdmin) return true;
+    if (isManager && (item.managerAccess || !item.adminOnly)) return true;
     if (isStaff && !item.adminOnly) return true;
     return false;
   });
