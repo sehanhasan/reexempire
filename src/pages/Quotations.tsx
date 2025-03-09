@@ -14,24 +14,18 @@ import { quotationService, customerService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { Quotation, Customer } from "@/types/database";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number?: string;
 }
-
-const StatusBadge = ({ status }: { status: string }) => {
+const StatusBadge = ({
+  status
+}: {
+  status: string;
+}) => {
   let bgColor, textColor;
-  
   switch (status) {
     case 'Draft':
       bgColor = 'bg-gray-100';
@@ -57,14 +51,10 @@ const StatusBadge = ({ status }: { status: string }) => {
       bgColor = 'bg-gray-100';
       textColor = 'text-gray-700';
   }
-  
-  return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${bgColor} ${textColor}`}>
+  return <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${bgColor} ${textColor}`}>
       {status}
-    </span>
-  );
+    </span>;
 };
-
 export default function Quotations() {
   const navigate = useNavigate();
   const [quotations, setQuotations] = useState<QuotationWithCustomer[]>([]);
@@ -75,27 +65,20 @@ export default function Quotations() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
-  
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [quotationData, customerData] = await Promise.all([
-        quotationService.getAll(),
-        customerService.getAll()
-      ]);
-      
+      const [quotationData, customerData] = await Promise.all([quotationService.getAll(), customerService.getAll()]);
       const customerMap: Record<string, Customer> = {};
       customerData.forEach(customer => {
         customerMap[customer.id] = customer;
       });
       setCustomers(customerMap);
-      
       const enhancedQuotations: QuotationWithCustomer[] = quotationData.map(quotation => ({
         ...quotation,
         customer_name: customerMap[quotation.customer_id]?.name || "Unknown Customer",
         unit_number: customerMap[quotation.customer_id]?.unit_number
       }));
-      
       setQuotations(enhancedQuotations);
       setLoading(false);
     } catch (error) {
@@ -108,31 +91,20 @@ export default function Quotations() {
       });
     }
   };
-  
   useEffect(() => {
     fetchData();
   }, []);
-
   useEffect(() => {
     let filtered = [...quotations];
-    
     if (statusFilter !== "all") {
       filtered = filtered.filter(quotation => quotation.status.toLowerCase() === statusFilter.toLowerCase());
     }
-    
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(quotation => 
-        quotation.reference_number.toLowerCase().includes(search) || 
-        quotation.customer_name.toLowerCase().includes(search) || 
-        formatDate(quotation.issue_date).toLowerCase().includes(search) ||
-        (quotation.unit_number && quotation.unit_number.toLowerCase().includes(search))
-      );
+      filtered = filtered.filter(quotation => quotation.reference_number.toLowerCase().includes(search) || quotation.customer_name.toLowerCase().includes(search) || formatDate(quotation.issue_date).toLowerCase().includes(search) || quotation.unit_number && quotation.unit_number.toLowerCase().includes(search));
     }
-    
     setFilteredQuotations(filtered);
   }, [quotations, searchTerm, statusFilter]);
-  
   const handleDelete = async () => {
     if (!quotationToDelete) return;
     try {
@@ -153,84 +125,78 @@ export default function Quotations() {
       });
     }
   };
-  
   const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
-    navigate("/invoices/create", { state: { quotationId: quotation.id } });
+    navigate("/invoices/create", {
+      state: {
+        quotationId: quotation.id
+      }
+    });
   };
-  
   const handleSendWhatsapp = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
-    
     if (!customer) {
       toast({
         title: "Missing Information",
         description: "Customer information not found.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     try {
       let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
-      
       if (!phoneNumber) {
         toast({
           title: "Missing Phone Number",
           description: "Customer doesn't have a phone number for WhatsApp.",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-      
       if (phoneNumber.startsWith('0')) {
         phoneNumber = '6' + phoneNumber;
       } else if (!phoneNumber.startsWith('6')) {
         phoneNumber = '60' + phoneNumber;
       }
-      
       const message = `Dear ${customer.name},\n\nPlease find attached Quotation ${quotation.reference_number} valid until ${formatDate(quotation.expiry_date)}.\n\nThank you.\nStar Residences Management`;
-      
       window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-      
       if (quotation.status === "Draft") {
-        quotationService.update(quotation.id, { status: "Sent" }).then(updatedQuotation => {
-          setQuotations(quotations.map(q => 
-            q.id === quotation.id ? {...updatedQuotation, customer_name: q.customer_name, unit_number: q.unit_number} : q
-          ));
-          
+        quotationService.update(quotation.id, {
+          status: "Sent"
+        }).then(updatedQuotation => {
+          setQuotations(quotations.map(q => q.id === quotation.id ? {
+            ...updatedQuotation,
+            customer_name: q.customer_name,
+            unit_number: q.unit_number
+          } : q));
           toast({
             title: "Status Updated",
-            description: "Quotation status has been updated to Sent",
+            description: "Quotation status has been updated to Sent"
           });
         });
       }
-      
       toast({
         title: "WhatsApp Opened",
-        description: "WhatsApp has been opened with the quotation message. The document PDF will need to be attached manually.",
+        description: "WhatsApp has been opened with the quotation message. The document PDF will need to be attached manually."
       });
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
         title: "Error",
         description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-  
   const handleDownloadPDF = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
-    
     if (!customer) {
       toast({
         title: "Missing Information",
         description: "Customer information not found.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     try {
       const pdf = generateQuotationPDF({
         documentNumber: quotation.reference_number,
@@ -247,56 +213,37 @@ export default function Quotations() {
           depositPercentage: quotation.deposit_percentage || 0
         }
       });
-      
       downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-      
       toast({
         title: "PDF Generated",
-        description: "Quotation PDF has been downloaded successfully.",
+        description: "Quotation PDF has been downloaded successfully."
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         title: "PDF Generation Failed",
         description: "There was an error generating the PDF. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-  
   const formatMoney = (amount: number) => {
     return `RM ${parseFloat(amount.toString()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
-
-  return (
-    <div className="page-container">
-      <PageHeader 
-        title="Quotations" 
-        actions={
-          <div className="hidden md:block">
-            <Button onClick={() => navigate("/quotations/create")}>
-              <FilePlus className="mr-2 h-4 w-4" />
-              Create Quotation
-            </Button>
-          </div>
-        }
-      />
+  return <div className="page-container">
+      <PageHeader title="Quotations" actions={<div className="hidden md:block">
+            
+          </div>} />
 
       <Card className="mt-6">
         <CardContent className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="search" 
-                placeholder="Search quotations..." 
-                className="pl-10 h-10" 
-                value={searchTerm} 
-                onChange={e => setSearchTerm(e.target.value)} 
-              />
+              <Input type="search" placeholder="Search quotations..." className="pl-10 h-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
             
             <div className="w-full sm:w-60">
@@ -316,16 +263,11 @@ export default function Quotations() {
             </div>
           </div>
 
-          {loading ? (
-            <div className="py-8 text-center">
+          {loading ? <div className="py-8 text-center">
               <p className="text-muted-foreground">Loading quotations...</p>
-            </div>
-          ) : filteredQuotations.length === 0 ? (
-            <div className="py-8 text-center">
+            </div> : filteredQuotations.length === 0 ? <div className="py-8 text-center">
               <p className="text-muted-foreground">No quotations found matching your criteria</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
+            </div> : <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -340,14 +282,10 @@ export default function Quotations() {
                 </TableHeader>
                 <TableBody>
                   {filteredQuotations.map(quotation => {
-                    const status = quotation.status;
-                    return (
-                      <TableRow key={quotation.id}>
+                const status = quotation.status;
+                return <TableRow key={quotation.id}>
                         <TableCell>
-                          <div 
-                            className="font-medium cursor-pointer text-blue-600"
-                            onClick={() => navigate(`/quotations/edit/${quotation.id}`)}
-                          >
+                          <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                             {quotation.reference_number}
                           </div>
                         </TableCell>
@@ -362,35 +300,15 @@ export default function Quotations() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-1 justify-end">
-                            {quotation.status === "Accepted" && (
-                              <Button 
-                                variant="outline" 
-                                size="icon"
-                                className="h-8 w-8 text-blue-600" 
-                                title="Convert to Invoice"
-                                onClick={() => handleConvertToInvoice(quotation)}
-                              >
+                            {quotation.status === "Accepted" && <Button variant="outline" size="icon" className="h-8 w-8 text-blue-600" title="Convert to Invoice" onClick={() => handleConvertToInvoice(quotation)}>
                                 <FileText className="h-4 w-4" />
-                              </Button>
-                            )}
+                              </Button>}
                             
-                            <Button 
-                              variant="outline" 
-                              size="icon"
-                              className="h-8 w-8" 
-                              title="Send on WhatsApp"
-                              onClick={() => handleSendWhatsapp(quotation)}
-                            >
+                            <Button variant="outline" size="icon" className="h-8 w-8" title="Send on WhatsApp" onClick={() => handleSendWhatsapp(quotation)}>
                               <Send className="h-4 w-4" />
                             </Button>
                             
-                            <Button 
-                              variant="outline" 
-                              size="icon"
-                              className="h-8 w-8" 
-                              title="Download PDF"
-                              onClick={() => handleDownloadPDF(quotation)}
-                            >
+                            <Button variant="outline" size="icon" className="h-8 w-8" title="Download PDF" onClick={() => handleDownloadPDF(quotation)}>
                               <Download className="h-4 w-4" />
                             </Button>
                             
@@ -405,13 +323,10 @@ export default function Quotations() {
                                   <FileEdit className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-red-600" 
-                                  onClick={() => {
-                                    setQuotationToDelete(quotation);
-                                    setDeleteDialogOpen(true);
-                                  }}
-                                >
+                                <DropdownMenuItem className="text-red-600" onClick={() => {
+                            setQuotationToDelete(quotation);
+                            setDeleteDialogOpen(true);
+                          }}>
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
@@ -419,20 +334,15 @@ export default function Quotations() {
                             </DropdownMenu>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                      </TableRow>;
+              })}
                 </TableBody>
               </Table>
-            </div>
-          )}
+            </div>}
         </CardContent>
       </Card>
 
-      <FloatingActionButton 
-        icon={<FilePlus className="h-5 w-5" />} 
-        onClick={() => navigate("/quotations/create")} 
-      />
+      <FloatingActionButton icon={<FilePlus className="h-5 w-5" />} onClick={() => navigate("/quotations/create")} />
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
@@ -457,6 +367,5 @@ export default function Quotations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
