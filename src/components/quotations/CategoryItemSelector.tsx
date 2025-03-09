@@ -160,8 +160,6 @@ export function CategoryItemSelector({
                   // Display the subcategory even if it has no pricing options
                   return <div key={subcategory.id} className="mb-4">
                               
-                              {subcategory.description}
-                              
                               <div className="space-y-2">
                                 {subcategoryOptions.length === 0 ?
                       // If no pricing options, display the subcategory itself as selectable
