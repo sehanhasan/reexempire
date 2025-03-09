@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -54,6 +55,7 @@ export default function EditQuotation() {
           setQuotationDate(quotation.issue_date);
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
+          setSubject(quotation.subject || ""); // Ensure subject is properly loaded from the database
           setStatus(quotation.status);
 
           setDepositInfo({
@@ -72,7 +74,7 @@ export default function EditQuotation() {
             setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
-              category: "",
+              category: item.category || "", // Ensure category is properly loaded
               quantity: item.quantity,
               unit: item.unit,
               unitPrice: item.unit_price,
@@ -142,7 +144,7 @@ export default function EditQuotation() {
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
-        subject: subject || null,
+        subject: subject || null, // Ensure subject is properly updated
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
@@ -161,7 +163,8 @@ export default function EditQuotation() {
             quantity: qty,
             unit: item.unit,
             unit_price: item.unitPrice,
-            amount: qty * item.unitPrice
+            amount: qty * item.unitPrice,
+            category: item.category || null // Ensure category is properly saved
           });
         }
       }

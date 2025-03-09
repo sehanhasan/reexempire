@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -119,7 +120,7 @@ export default function CreateQuotation() {
         subtotal: subtotal,
         total: subtotal, // No tax for quotations
         notes: notes || null,
-        subject: subject || null, // Added subject field
+        subject: subject || null, // Ensure subject is passed to the database
         terms: null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
@@ -138,7 +139,8 @@ export default function CreateQuotation() {
             quantity: qty,
             unit: item.unit,
             unit_price: item.unitPrice,
-            amount: qty * item.unitPrice
+            amount: qty * item.unitPrice,
+            category: item.category || null // Ensure category is passed to the database
           });
         }
       }

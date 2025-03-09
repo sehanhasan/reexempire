@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { categoryService } from "@/services";
 import { Category, Subcategory, PricingOption } from "@/types/database";
 
@@ -71,7 +72,27 @@ export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: Cate
     }
   }, [open]);
   
-  const toggleItemSelection = (pricingOption: PricingOption, subcategoryName: string) => {
+  // Function to toggle subcategory selection when there's no pricing options
+  const toggleSubcategorySelection = (subcategory: Subcategory, categoryName: string) => {
+    setSelectedItems(prevItems => {
+      const existingItem = prevItems.find(item => item.id === subcategory.id);
+      
+      if (existingItem) {
+        return prevItems.filter(item => item.id !== subcategory.id);
+      } else {
+        return [...prevItems, {
+          id: subcategory.id,
+          description: subcategory.name,
+          category: categoryName,
+          quantity: 1,
+          unit: "Unit",
+          price: subcategory.price || 0
+        }];
+      }
+    });
+  };
+  
+  const togglePricingOptionSelection = (pricingOption: PricingOption, subcategoryName: string) => {
     setSelectedItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === pricingOption.id);
       
@@ -186,8 +207,7 @@ export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: Cate
                         categorySubcategories.map(subcategory => {
                           const subcategoryOptions = getPricingOptionsForSubcategory(subcategory.id);
                           
-                          if (subcategoryOptions.length === 0) return null;
-                          
+                          // Display the subcategory even if it has no pricing options
                           return (
                             <div key={subcategory.id} className="mb-4">
                               <h4 className="font-medium text-sm mb-2">{subcategory.name}</h4>
@@ -196,65 +216,127 @@ export function CategoryItemSelector({ open, onOpenChange, onSelectItems }: Cate
                               )}
                               
                               <div className="space-y-2">
-                                {subcategoryOptions.map(option => {
-                                  const isSelected = isItemSelected(option.id);
-                                  const selectedItem = selectedItems.find(item => item.id === option.id);
-                                  
-                                  return (
-                                    <div 
-                                      key={option.id} 
-                                      className={`flex items-center justify-between p-2 rounded-md transition-colors ${
-                                        isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
-                                      }`}
-                                    >
-                                      <div className="flex items-center">
-                                        <Checkbox
-                                          id={option.id}
-                                          checked={isSelected}
-                                          onCheckedChange={() => toggleItemSelection(option, subcategory.name)}
-                                          className="mr-2"
-                                        />
-                                        <label
-                                          htmlFor={option.id}
-                                          className="text-sm cursor-pointer flex-1"
-                                        >
-                                          {option.name}
-                                        </label>
-                                      </div>
-                                      
-                                      <div className="flex items-center space-x-3">
-                                        {isSelected && (
-                                          <div className="flex items-center space-x-2">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="icon"
-                                              className="h-7 w-7 rounded-full"
-                                              onClick={() => updateItemQuantity(option.id, Math.max(1, (selectedItem?.quantity || 1) - 1))}
-                                            >
-                                              <span>-</span>
-                                            </Button>
-                                            <span className="text-sm font-medium w-6 text-center">
-                                              {selectedItem?.quantity || 1}
-                                            </span>
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="icon"
-                                              className="h-7 w-7 rounded-full"
-                                              onClick={() => updateItemQuantity(option.id, (selectedItem?.quantity || 1) + 1)}
-                                            >
-                                              <span>+</span>
-                                            </Button>
-                                          </div>
-                                        )}
-                                        <span className="text-sm font-medium whitespace-nowrap">
-                                          RM {option.price.toFixed(2)} / {option.unit}
-                                        </span>
-                                      </div>
+                                {subcategoryOptions.length === 0 ? (
+                                  // If no pricing options, display the subcategory itself as selectable
+                                  <div 
+                                    className={`flex items-center justify-between p-2 rounded-md transition-colors ${
+                                      isItemSelected(subcategory.id) ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                    }`}
+                                  >
+                                    <div className="flex items-center">
+                                      <Checkbox
+                                        id={subcategory.id}
+                                        checked={isItemSelected(subcategory.id)}
+                                        onCheckedChange={() => toggleSubcategorySelection(subcategory, category.name)}
+                                        className="mr-2"
+                                      />
+                                      <label
+                                        htmlFor={subcategory.id}
+                                        className="text-sm cursor-pointer flex-1"
+                                      >
+                                        {subcategory.name}
+                                      </label>
                                     </div>
-                                  );
-                                })}
+                                    
+                                    <div className="flex items-center space-x-3">
+                                      {isItemSelected(subcategory.id) && (
+                                        <div className="flex items-center space-x-2">
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-7 w-7 rounded-full"
+                                            onClick={() => {
+                                              const selectedItem = selectedItems.find(item => item.id === subcategory.id);
+                                              updateItemQuantity(subcategory.id, Math.max(1, (selectedItem?.quantity || 1) - 1));
+                                            }}
+                                          >
+                                            <span>-</span>
+                                          </Button>
+                                          <span className="text-sm font-medium w-6 text-center">
+                                            {selectedItems.find(item => item.id === subcategory.id)?.quantity || 1}
+                                          </span>
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-7 w-7 rounded-full"
+                                            onClick={() => {
+                                              const selectedItem = selectedItems.find(item => item.id === subcategory.id);
+                                              updateItemQuantity(subcategory.id, (selectedItem?.quantity || 1) + 1);
+                                            }}
+                                          >
+                                            <span>+</span>
+                                          </Button>
+                                        </div>
+                                      )}
+                                      <span className="text-sm font-medium whitespace-nowrap">
+                                        RM {(subcategory.price || 0).toFixed(2)} / Unit
+                                      </span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  // If there are pricing options, display them as usual
+                                  subcategoryOptions.map(option => {
+                                    const isSelected = isItemSelected(option.id);
+                                    const selectedItem = selectedItems.find(item => item.id === option.id);
+                                    
+                                    return (
+                                      <div 
+                                        key={option.id} 
+                                        className={`flex items-center justify-between p-2 rounded-md transition-colors ${
+                                          isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                        }`}
+                                      >
+                                        <div className="flex items-center">
+                                          <Checkbox
+                                            id={option.id}
+                                            checked={isSelected}
+                                            onCheckedChange={() => togglePricingOptionSelection(option, subcategory.name)}
+                                            className="mr-2"
+                                          />
+                                          <label
+                                            htmlFor={option.id}
+                                            className="text-sm cursor-pointer flex-1"
+                                          >
+                                            {option.name}
+                                          </label>
+                                        </div>
+                                        
+                                        <div className="flex items-center space-x-3">
+                                          {isSelected && (
+                                            <div className="flex items-center space-x-2">
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7 rounded-full"
+                                                onClick={() => updateItemQuantity(option.id, Math.max(1, (selectedItem?.quantity || 1) - 1))}
+                                              >
+                                                <span>-</span>
+                                              </Button>
+                                              <span className="text-sm font-medium w-6 text-center">
+                                                {selectedItem?.quantity || 1}
+                                              </span>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7 rounded-full"
+                                                onClick={() => updateItemQuantity(option.id, (selectedItem?.quantity || 1) + 1)}
+                                              >
+                                                <span>+</span>
+                                              </Button>
+                                            </div>
+                                          )}
+                                          <span className="text-sm font-medium whitespace-nowrap">
+                                            RM {option.price.toFixed(2)} / {option.unit}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
                               </div>
                             </div>
                           );

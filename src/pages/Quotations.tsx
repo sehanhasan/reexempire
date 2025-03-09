@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -25,11 +24,46 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-// Extended type for quotations with customer name
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number?: string;
 }
+
+const StatusBadge = ({ status }: { status: string }) => {
+  let bgColor, textColor;
+  
+  switch (status) {
+    case 'Draft':
+      bgColor = 'bg-gray-100';
+      textColor = 'text-gray-700';
+      break;
+    case 'Sent':
+      bgColor = 'bg-blue-100';
+      textColor = 'text-blue-700';
+      break;
+    case 'Accepted':
+      bgColor = 'bg-green-100';
+      textColor = 'text-green-700';
+      break;
+    case 'Rejected':
+      bgColor = 'bg-red-100';
+      textColor = 'text-red-700';
+      break;
+    case 'Expired':
+      bgColor = 'bg-amber-100';
+      textColor = 'text-amber-700';
+      break;
+    default:
+      bgColor = 'bg-gray-100';
+      textColor = 'text-gray-700';
+  }
+  
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${bgColor} ${textColor}`}>
+      {status}
+    </span>
+  );
+};
 
 export default function Quotations() {
   const navigate = useNavigate();
@@ -50,14 +84,12 @@ export default function Quotations() {
         customerService.getAll()
       ]);
       
-      // Create a lookup map for customers
       const customerMap: Record<string, Customer> = {};
       customerData.forEach(customer => {
         customerMap[customer.id] = customer;
       });
       setCustomers(customerMap);
       
-      // Combine quotation data with customer names
       const enhancedQuotations: QuotationWithCustomer[] = quotationData.map(quotation => ({
         ...quotation,
         customer_name: customerMap[quotation.customer_id]?.name || "Unknown Customer",
@@ -84,12 +116,10 @@ export default function Quotations() {
   useEffect(() => {
     let filtered = [...quotations];
     
-    // Apply status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter(quotation => quotation.status.toLowerCase() === statusFilter.toLowerCase());
     }
     
-    // Apply search filter
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(quotation => 
@@ -141,7 +171,6 @@ export default function Quotations() {
     }
 
     try {
-      // Format phone number (remove any non-digit characters)
       let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
       
       if (!phoneNumber) {
@@ -153,20 +182,16 @@ export default function Quotations() {
         return;
       }
       
-      // Make sure phone number starts with country code
       if (phoneNumber.startsWith('0')) {
-        phoneNumber = '6' + phoneNumber; // Adding Malaysia country code
+        phoneNumber = '6' + phoneNumber;
       } else if (!phoneNumber.startsWith('6')) {
         phoneNumber = '60' + phoneNumber;
       }
       
-      // WhatsApp message text
       const message = `Dear ${customer.name},\n\nPlease find attached Quotation ${quotation.reference_number} valid until ${formatDate(quotation.expiry_date)}.\n\nThank you.\nStar Residences Management`;
       
-      // Open WhatsApp web with the prepared message
       window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
       
-      // Update quotation status to "Sent" when sending via WhatsApp
       if (quotation.status === "Draft") {
         quotationService.update(quotation.id, { status: "Sent" }).then(updatedQuotation => {
           setQuotations(quotations.map(q => 
@@ -215,7 +240,7 @@ export default function Quotations() {
         expiryDate: quotation.expiry_date,
         validUntil: quotation.expiry_date,
         notes: quotation.notes || "",
-        items: [], // We would need to fetch the items for this quotation
+        items: [],
         depositInfo: {
           requiresDeposit: quotation.requires_deposit || false,
           depositAmount: quotation.deposit_amount || 0,
@@ -316,28 +341,6 @@ export default function Quotations() {
                 <TableBody>
                   {filteredQuotations.map(quotation => {
                     const status = quotation.status;
-                    let statusClass = "";
-                    
-                    switch (status) {
-                      case "Draft":
-                        statusClass = "bg-gray-100 text-gray-800";
-                        break;
-                      case "Sent":
-                        statusClass = "bg-blue-100 text-blue-800";
-                        break;
-                      case "Accepted":
-                        statusClass = "bg-green-100 text-green-800";
-                        break;
-                      case "Rejected":
-                        statusClass = "bg-red-100 text-red-800";
-                        break;
-                      case "Expired":
-                        statusClass = "bg-amber-100 text-amber-800";
-                        break;
-                      default:
-                        statusClass = "bg-gray-100 text-gray-800";
-                    }
-                    
                     return (
                       <TableRow key={quotation.id}>
                         <TableCell>
@@ -352,9 +355,7 @@ export default function Quotations() {
                         <TableCell>{formatDate(quotation.issue_date)}</TableCell>
                         <TableCell>{formatDate(quotation.expiry_date)}</TableCell>
                         <TableCell>
-                          <Badge className={statusClass}>
-                            {status}
-                          </Badge>
+                          <StatusBadge status={status} />
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatMoney(quotation.total)}
