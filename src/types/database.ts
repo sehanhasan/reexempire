@@ -1,3 +1,4 @@
+
 // Database Types
 export interface Category {
   id: string;
@@ -5,19 +6,19 @@ export interface Category {
   description: string | null;
   created_at: string;
   updated_at: string;
-  subcategories?: Subcategory[]; // Add this property to fix the TypeScript error
+  subcategories?: Subcategory[];
 }
 
 export interface Subcategory {
   id?: string;
-  category_id: string; // Make this required as per Supabase schema
+  category_id: string;
   name: string;
   description: string | null;
   created_at?: string;
   updated_at?: string;
-  price_options?: PricingOption[]; // Add this property for pricing options
-  price?: number; // Add this for direct price access
-  tempId?: number | string; // Used in forms - can be number or string
+  price_options?: PricingOption[];
+  price?: number;
+  tempId?: number | string;
 }
 
 export interface PricingOption {
@@ -30,7 +31,6 @@ export interface PricingOption {
   updated_at: string;
 }
 
-// Adding CategoryItem type for the CategoryItemSelector component
 export interface CategoryItem {
   id: string;
   name: string;
@@ -62,7 +62,7 @@ export interface Staff {
   email: string | null;
   phone: string | null;
   status: string;
-  join_date: string; // This is required as per Supabase schema
+  join_date: string;
   created_at: string;
   updated_at: string;
   
@@ -84,7 +84,11 @@ export interface Staff {
   emergency_contact_relationship?: string;
   emergency_contact_phone?: string;
   emergency_contact_email?: string;
-  notes?: string | null; // Make sure notes is properly defined
+  notes?: string | null;
+  
+  // Add the missing properties that are causing errors
+  role?: string; // Adding role property
+  password?: string; // Adding password property
 }
 
 export interface Quotation {
