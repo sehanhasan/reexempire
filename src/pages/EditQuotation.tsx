@@ -44,6 +44,7 @@ export default function EditQuotation() {
     depositAmount: 0,
     depositPercentage: 30
   });
+  const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
 
   useEffect(() => {
     if (!id) return;
@@ -75,6 +76,12 @@ export default function EditQuotation() {
 
           const quotationItems = await quotationService.getItemsByQuotationId(id);
           if (quotationItems && quotationItems.length > 0) {
+            const orderMap: {[key: number]: number} = {};
+            quotationItems.forEach((item, index) => {
+              orderMap[index + 1] = index;
+            });
+            setOriginalItemOrder(orderMap);
+            
             setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
@@ -158,7 +165,16 @@ export default function EditQuotation() {
 
       await quotationService.deleteAllItems(id);
 
-      for (const item of items) {
+      const sortedItems = [...items].sort((a, b) => {
+        if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
+          return originalItemOrder[a.id] - originalItemOrder[b.id];
+        }
+        if (originalItemOrder[a.id] !== undefined) return -1;
+        if (originalItemOrder[b.id] !== undefined) return 1;
+        return a.id - b.id;
+      });
+
+      for (const item of sortedItems) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await quotationService.createItem({
@@ -229,7 +245,7 @@ export default function EditQuotation() {
 
   if (isLoading) {
     return <div className="page-container">
-        <PageHeader title="Edit Quotation" description="Loading quotation data..." />
+        <PageHeader title="Edit Quotation" />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
         </div>
@@ -238,8 +254,7 @@ export default function EditQuotation() {
 
   return <div className="page-container">
       <PageHeader 
-        title="Edit Quotation" 
-        description="Update an existing quotation." 
+        title="Edit Quotation"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>

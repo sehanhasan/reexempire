@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface QuotationItemsCardProps {
   items: QuotationItem[];
   setItems: React.Dispatch<React.SetStateAction<QuotationItem[]>>;
@@ -17,6 +19,7 @@ interface QuotationItemsCardProps {
   setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
 }
+
 export function QuotationItemsCard({
   items,
   setItems,
@@ -26,6 +29,7 @@ export function QuotationItemsCard({
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
+  
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -39,6 +43,7 @@ export function QuotationItemsCard({
       return item;
     }));
   };
+  
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     setItems([...items, {
@@ -51,14 +56,17 @@ export function QuotationItemsCard({
       amount: 0
     }]);
   };
+  
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
+  
   const calculateTotal = () => {
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
+  
   const handleDepositPercentageChange = (value: number) => {
     setDepositInfo({
       ...depositInfo,
@@ -66,6 +74,7 @@ export function QuotationItemsCard({
       depositAmount: calculateTotal() * (value / 100)
     });
   };
+  
   const handleDepositAmountChange = (value: number) => {
     const total = calculateTotal();
     setDepositInfo({
@@ -74,6 +83,7 @@ export function QuotationItemsCard({
       depositPercentage: total > 0 ? value / total * 100 : 0
     });
   };
+  
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
@@ -90,6 +100,7 @@ export function QuotationItemsCard({
       description: `${newItems.length} item(s) have been added to the quotation.`
     });
   };
+  
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">

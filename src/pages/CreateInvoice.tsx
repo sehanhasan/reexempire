@@ -78,7 +78,7 @@ export default function CreateInvoice() {
             setQuotationId(quotation.id);
             setQuotationReference(quotation.reference_number);
             setCustomerId(quotation.customer_id);
-            setSubject(quotation.notes || "");
+            setSubject(quotation.subject || "");
             
             // Set deposit info
             setIsDepositInvoice(quotation.requires_deposit || false);
@@ -91,7 +91,7 @@ export default function CreateInvoice() {
               setItems(quotationItems.map((item, index) => ({
                 id: index + 1,
                 description: item.description,
-                category: "",
+                category: item.category || "",
                 quantity: item.quantity,
                 unit: item.unit,
                 unitPrice: item.unit_price,
@@ -175,7 +175,7 @@ export default function CreateInvoice() {
       
       const createdInvoice = await invoiceService.create(invoice);
       
-      // Add invoice items
+      // Add invoice items (preserving order)
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -185,7 +185,8 @@ export default function CreateInvoice() {
             quantity: qty,
             unit: item.unit,
             unit_price: item.unitPrice,
-            amount: qty * item.unitPrice
+            amount: qty * item.unitPrice,
+            category: item.category // Include category field
           });
         }
       }
@@ -213,7 +214,6 @@ export default function CreateInvoice() {
     <div className="page-container">
       <PageHeader
         title="Create Invoice"
-        description="Create a new invoice for a customer."
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/invoices")}>

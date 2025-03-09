@@ -15,6 +15,8 @@ export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
         size="icon"
         onClick={onMenuClick}
         className="lg:hidden"
+        aria-label="Toggle menu"
+        type="button"
       >
         <Menu className="h-5 w-5" />
       </Button>
