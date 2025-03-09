@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -31,6 +30,7 @@ export default function EditInvoice() {
   const [dueDate, setDueDate] = useState(
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
@@ -42,7 +42,6 @@ export default function EditInvoice() {
   const [documentNumber, setDocumentNumber] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
-  const [originalItems, setOriginalItems] = useState<InvoiceItem[]>([]);
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
@@ -81,25 +80,21 @@ export default function EditInvoice() {
           
           const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
           if (invoiceItems && invoiceItems.length > 0) {
-            // Save the original order and items to preserve ordering
             const orderMap: {[key: number]: number} = {};
-            const formattedItems = invoiceItems.map((item, index) => {
-              const id = index + 1;
-              orderMap[id] = index;
-              return {
-                id,
-                description: item.description,
-                category: item.category || "",
-                quantity: item.quantity,
-                unit: item.unit,
-                unitPrice: item.unit_price,
-                amount: item.amount
-              };
+            invoiceItems.forEach((item, index) => {
+              orderMap[index + 1] = index;
             });
-            
             setOriginalItemOrder(orderMap);
-            setOriginalItems(formattedItems);
-            setItems(formattedItems);
+            
+            setItems(invoiceItems.map((item, index) => ({
+              id: index + 1,
+              description: item.description,
+              category: item.category || "",
+              quantity: item.quantity,
+              unit: item.unit,
+              unitPrice: item.unit_price,
+              amount: item.amount
+            })));
           }
         } else {
           toast({
@@ -195,29 +190,13 @@ export default function EditInvoice() {
       
       await invoiceService.deleteAllItems(id!);
       
-      // Map current items to their original position for ordering
-      const currentToOriginalMap = new Map();
-      
-      // Find original items still present in the current items
-      for (const item of items) {
-        const originalItem = originalItems.find(oi => oi.id === item.id);
-        if (originalItem) {
-          const originalPosition = originalItemOrder[originalItem.id];
-          currentToOriginalMap.set(item.id, originalPosition);
-        }
-      }
-      
-      // Sort items to maintain original order as much as possible
       const sortedItems = [...items].sort((a, b) => {
-        const posA = currentToOriginalMap.has(a.id) ? currentToOriginalMap.get(a.id) : 9999;
-        const posB = currentToOriginalMap.has(b.id) ? currentToOriginalMap.get(b.id) : 9999;
-        
-        if (posA === 9999 && posB === 9999) {
-          // Both items are new, sort by ID
-          return a.id - b.id;
+        if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
+          return originalItemOrder[a.id] - originalItemOrder[b.id];
         }
-        
-        return posA - posB;
+        if (originalItemOrder[a.id] !== undefined) return -1;
+        if (originalItemOrder[b.id] !== undefined) return 1;
+        return a.id - b.id;
       });
       
       for (const item of sortedItems) {
@@ -317,7 +296,7 @@ export default function EditInvoice() {
         unitNumber: customer.unit_number || "",
         expiryDate: dueDate,
         dueDate: dueDate,
-        paymentMethod: "",
+        paymentMethod: paymentMethod,
         notes: notes,
         items: items,
         subject: subject,
@@ -359,7 +338,7 @@ export default function EditInvoice() {
         title="Edit Invoice"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/invoices")} className={isMobile ? "mobile-hide-back" : ""}>
+            <Button variant="outline" onClick={() => navigate("/invoices")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Invoices
             </Button>
@@ -386,6 +365,8 @@ export default function EditInvoice() {
           setDocumentDate={setInvoiceDate}
           expiryDate={dueDate}
           setExpiryDate={setDueDate}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
           quotationReference={quotationReference}
           subject={subject}
           setSubject={setSubject}

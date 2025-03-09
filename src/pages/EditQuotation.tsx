@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -15,7 +14,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
-  payment_method?: string | null;
 }
 
 export default function EditQuotation() {
@@ -41,14 +39,12 @@ export default function EditQuotation() {
   const [documentNumber, setDocumentNumber] = useState("");
   const [status, setStatus] = useState("Draft");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
     depositAmount: 0,
     depositPercentage: 30
   });
-  // Store the original database IDs of the items to maintain order
-  const [originalItems, setOriginalItems] = useState<{id: number, dbId: string, displayOrder: number}[]>([]);
+  const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
 
   useEffect(() => {
     if (!id) return;
@@ -64,8 +60,7 @@ export default function EditQuotation() {
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
           
-          setSubject((quotation as ExtendedQuotation).subject || "");
-          setPaymentMethod((quotation as ExtendedQuotation).payment_method || "bank_transfer");
+          setSubject((quotation as ExtendedQuotation).subject || ""); 
           setStatus(quotation.status);
 
           setDepositInfo({
@@ -81,23 +76,13 @@ export default function EditQuotation() {
 
           const quotationItems = await quotationService.getItemsByQuotationId(id);
           if (quotationItems && quotationItems.length > 0) {
-            // Sort by display_order if available, otherwise by original DB order
-            const sortedItems = [...quotationItems].sort((a, b) => {
-              if (a.display_order !== undefined && b.display_order !== undefined) {
-                return a.display_order - b.display_order;
-              }
-              return 0; // Keep original DB order if display_order not available
+            const orderMap: {[key: number]: number} = {};
+            quotationItems.forEach((item, index) => {
+              orderMap[index + 1] = index;
             });
+            setOriginalItemOrder(orderMap);
             
-            // Store original items with DB IDs for order preservation
-            const origItems = sortedItems.map((item, index) => ({
-              id: index + 1,
-              dbId: item.id,
-              displayOrder: item.display_order !== undefined ? item.display_order : index
-            }));
-            setOriginalItems(origItems);
-            
-            setItems(sortedItems.map((item, index) => ({
+            setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
               category: item.category || "",
@@ -171,7 +156,6 @@ export default function EditQuotation() {
         total: subtotal,
         notes: notes || null,
         subject: subject || null,
-        payment_method: paymentMethod,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
@@ -181,20 +165,16 @@ export default function EditQuotation() {
 
       await quotationService.deleteAllItems(id);
 
-      // Create a mapping of current items to their original positions
-      const getItemOrder = (itemId: number) => {
-        // Check if it's an existing item and get its original position
-        const existingItem = originalItems.find(oi => oi.id === itemId);
-        if (existingItem) {
-          return existingItem.displayOrder;
+      const sortedItems = [...items].sort((a, b) => {
+        if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
+          return originalItemOrder[a.id] - originalItemOrder[b.id];
         }
-        // For new items, put them at the end
-        return 1000 + itemId;
-      };
+        if (originalItemOrder[a.id] !== undefined) return -1;
+        if (originalItemOrder[b.id] !== undefined) return 1;
+        return a.id - b.id;
+      });
 
-      // Create items in the right order
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
+      for (const item of sortedItems) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await quotationService.createItem({
@@ -204,8 +184,7 @@ export default function EditQuotation() {
             unit: item.unit,
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
-            category: item.category,
-            display_order: i // Use array index as display order to maintain current order
+            category: item.category
           });
         }
       }
@@ -278,7 +257,7 @@ export default function EditQuotation() {
         title="Edit Quotation"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/quotations")} className={isMobile ? "mobile-hide-back" : ""}>
+            <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
@@ -332,9 +311,7 @@ export default function EditQuotation() {
           expiryDate={validUntil} 
           setExpiryDate={setValidUntil} 
           subject={subject} 
-          setSubject={setSubject}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
+          setSubject={setSubject} 
         />
         
         <QuotationItemsCard 
