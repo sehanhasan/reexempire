@@ -1,6 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
+
+interface QuotationItemInput extends Omit<QuotationItem, "id" | "created_at" | "updated_at"> {
+  category?: string;
+}
 
 export const quotationService = {
   async getAll(): Promise<Quotation[]> {
@@ -75,7 +78,6 @@ export const quotationService = {
     }
   },
 
-  // Quotation Items
   async getItemsByQuotationId(quotationId: string): Promise<QuotationItem[]> {
     const { data, error } = await supabase
       .from("quotation_items")
@@ -91,7 +93,7 @@ export const quotationService = {
     return data || [];
   },
 
-  async createItem(item: Omit<QuotationItem, "id" | "created_at" | "updated_at">): Promise<QuotationItem> {
+  async createItem(item: QuotationItemInput): Promise<QuotationItem> {
     const { data, error } = await supabase
       .from("quotation_items")
       .insert([item])
@@ -106,7 +108,7 @@ export const quotationService = {
     return data;
   },
 
-  async updateItem(id: string, item: Partial<Omit<QuotationItem, "id" | "created_at" | "updated_at">>): Promise<QuotationItem> {
+  async updateItem(id: string, item: Partial<QuotationItemInput>): Promise<QuotationItem> {
     const { data, error } = await supabase
       .from("quotation_items")
       .update(item)
