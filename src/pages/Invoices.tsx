@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -10,7 +9,6 @@ import {
   Eye, 
   Edit, 
   MoreHorizontal, 
-  CreditCard, 
   CalendarClock, 
   Download,
   Plus,
@@ -63,13 +61,13 @@ export default function Invoices() {
           invoiceService.getAll(),
           customerService.getAll()
         ]);
-        
+
         // Create a map of customers for easy lookup
         const customersMap = {};
         customersData.forEach(customer => {
           customersMap[customer.id] = customer;
         });
-        
+
         setCustomers(customersMap);
         setInvoices(invoicesData);
         setFilteredData(invoicesData);
@@ -84,40 +82,49 @@ export default function Invoices() {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
   useEffect(() => {
     // Filter data when search term or status filter changes
     let filtered = [...invoices];
-    
+
+    // Filter by search
     if (searchTerm) {
-      filtered = filtered.filter(invoice => 
+      filtered = filtered.filter(invoice =>
         invoice.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (customers[invoice.customer_id]?.unit_number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (customers[invoice.customer_id]?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
+    // Filter by status or overdue
     if (statusFilter !== "all") {
-      filtered = filtered.filter(invoice => invoice.payment_status === statusFilter);
+      if (statusFilter === "Overdue") {
+        filtered = filtered.filter(invoice => {
+          const dueDate = new Date(invoice.due_date);
+          const today = new Date();
+          const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
+          return isPastDue && invoice.payment_status === "Unpaid";
+        });
+      } else {
+        filtered = filtered.filter(invoice => invoice.payment_status === statusFilter);
+      }
     }
-    
+
     setFilteredData(filtered);
   }, [searchTerm, statusFilter, invoices, customers]);
-  
+
   const handlePaymentStatusChange = async (invoice, newStatus) => {
     try {
       await invoiceService.update(invoice.id, { payment_status: newStatus });
-      
       // Update local state
-      setInvoices(prevInvoices => 
-        prevInvoices.map(inv => 
+      setInvoices(prevInvoices =>
+        prevInvoices.map(inv =>
           inv.id === invoice.id ? { ...inv, payment_status: newStatus } : inv
         )
       );
-      
       toast({
         title: "Status Updated",
         description: `Invoice #${invoice.reference_number} marked as ${newStatus}`
@@ -131,7 +138,7 @@ export default function Invoices() {
       });
     }
   };
-  
+
   const formatMoney = amount => {
     return `RM ${parseFloat(amount).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -157,10 +164,8 @@ export default function Invoices() {
           'Payment Status': invoice.payment_status
         };
       });
-      
       // Export to CSV
       exportService.downloadCSV(exportData, 'invoices');
-      
       toast({
         title: "Export Complete",
         description: `${exportData.length} invoices exported to CSV file`,
@@ -215,6 +220,8 @@ export default function Invoices() {
                     <SelectItem value="Paid">Paid</SelectItem>
                     <SelectItem value="Partially Paid">Partially Paid</SelectItem>
                     <SelectItem value="Unpaid">Unpaid</SelectItem>
+                    {/* New Overdue option */}
+                    <SelectItem value="Overdue">Overdue</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -249,6 +256,11 @@ export default function Invoices() {
                       const today = new Date();
                       const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
                       
+                      // If invoice is "Unpaid" and past due, display "Overdue"
+                      const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid"
+                        ? "Overdue"
+                        : invoice.payment_status;
+
                       return (
                         <TableRow key={invoice.id}>
                           <TableCell>
@@ -259,28 +271,33 @@ export default function Invoices() {
                               {invoice.reference_number}
                             </div>
                           </TableCell>
-                          <TableCell>{customer ? customer.unit_number || "-" : "-"}</TableCell>
-                          <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
+                          <TableCell>
+                            {customer ? customer.unit_number || "-" : "-"}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(invoice.issue_date), "MMM dd, yyyy")}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center">
                               <span className={isPastDue ? "text-red-600 font-medium" : ""}>
                                 {format(dueDate, "MMM dd, yyyy")}
                               </span>
-                              {isPastDue && (
-                                <Badge className="ml-2 bg-red-100 text-red-600 border-red-200 hover:bg-red-100">
-                                  <AlertTriangle className="mr-1 h-3 w-3" />
-                                  Overdue
-                                </Badge>
-                              )}
+                              {/* Overdue badge removed here */}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge className={
-                              invoice.payment_status === "Paid" ? "bg-green-100 text-green-800 hover:bg-green-100" :
-                              invoice.payment_status === "Partially Paid" ? "bg-amber-100 text-amber-800 hover:bg-amber-100" :
-                              "bg-amber-100 text-amber-800 hover:bg-amber-100" // Changed to amber for Unpaid
-                            }>
-                              {invoice.payment_status}
+                            <Badge
+                              className={
+                                displayPaymentStatus === "Paid"
+                                  ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                  : displayPaymentStatus === "Partially Paid"
+                                  ? "bg-amber-100 text-amber-800 hover:bg-amber-100"
+                                  : displayPaymentStatus === "Overdue"
+                                  ? "bg-red-100 text-red-600 hover:bg-red-100"
+                                  : "bg-amber-100 text-amber-800 hover:bg-amber-100"
+                              }
+                            >
+                              {displayPaymentStatus}
                             </Badge>
                           </TableCell>
                           <TableCell className="font-medium">
