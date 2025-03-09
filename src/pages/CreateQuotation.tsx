@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -21,7 +20,6 @@ export default function CreateQuotation() {
     { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
-  // Check if customerId is passed via location state (from customer details)
   const initialCustomerId = location.state?.customerId || "";
   const [customerId, setCustomerId] = useState(initialCustomerId);
   
@@ -42,7 +40,6 @@ export default function CreateQuotation() {
     depositPercentage: 30
   });
 
-  // Generate reference number with year - QT-2025-00001 format
   const generateReferenceNumber = () => {
     const currentYear = new Date().getFullYear();
     const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -51,7 +48,6 @@ export default function CreateQuotation() {
 
   const [documentNumber, setDocumentNumber] = useState(generateReferenceNumber());
 
-  // Fetch customer details when customer ID changes
   useEffect(() => {
     if (customerId) {
       const fetchCustomer = async () => {
@@ -68,7 +64,6 @@ export default function CreateQuotation() {
   }, [customerId]);
 
   const calculateItemAmount = (item: QuotationItem) => {
-    // Handle quantity as number or string
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
@@ -85,7 +80,6 @@ export default function CreateQuotation() {
       return;
     }
     
-    // Validate that there are at least one item with a value
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
@@ -96,7 +90,6 @@ export default function CreateQuotation() {
       return;
     }
     
-    // Calculate totals
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + (qty * item.unitPrice);
@@ -105,12 +98,10 @@ export default function CreateQuotation() {
     try {
       setIsSubmitting(true);
       
-      // Convert deposit percentage to number if it's a string
       const depositPercentage = typeof depositInfo.depositPercentage === 'string' 
         ? parseFloat(depositInfo.depositPercentage) 
         : depositInfo.depositPercentage;
       
-      // Create quotation in database
       const quotation = {
         customer_id: customerId,
         reference_number: documentNumber,
@@ -118,9 +109,9 @@ export default function CreateQuotation() {
         expiry_date: validUntil,
         status: "Draft",
         subtotal: subtotal,
-        total: subtotal, // No tax for quotations
+        total: subtotal,
         notes: notes || null,
-        subject: subject || null, // Ensure subject is passed to the database
+        subject: subject || null,
         terms: null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
@@ -129,7 +120,6 @@ export default function CreateQuotation() {
       
       const createdQuotation = await quotationService.create(quotation);
       
-      // Add quotation items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -140,7 +130,7 @@ export default function CreateQuotation() {
             unit: item.unit,
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
-            category: item.category || null
+            category: item.category
           });
         }
       }
@@ -150,7 +140,6 @@ export default function CreateQuotation() {
         description: `Quotation for ${customer?.name} has been created successfully.`,
       });
       
-      // Navigate back to the quotations list
       navigate("/quotations");
     } catch (error) {
       console.error("Error creating quotation:", error);

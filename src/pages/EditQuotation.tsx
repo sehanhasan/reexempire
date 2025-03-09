@@ -168,7 +168,7 @@ export default function EditQuotation() {
             unit: item.unit,
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
-            category: item.category || null
+            category: item.category
           });
         }
       }
