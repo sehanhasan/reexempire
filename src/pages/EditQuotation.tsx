@@ -9,10 +9,10 @@ import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { quotationService, customerService } from "@/services";
-import { Customer } from "@/types/database";
+import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ExtendedQuotation {
+interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
 
@@ -59,7 +59,7 @@ export default function EditQuotation() {
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
           
-          setSubject((quotation as unknown as ExtendedQuotation).subject || ""); 
+          setSubject((quotation as ExtendedQuotation).subject || ""); 
           setStatus(quotation.status);
 
           setDepositInfo({
@@ -78,7 +78,7 @@ export default function EditQuotation() {
             setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
-              category: (item as any).category || "",
+              category: item.category || "",
               quantity: item.quantity,
               unit: item.unit,
               unitPrice: item.unit_price,

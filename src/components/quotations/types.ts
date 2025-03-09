@@ -1,4 +1,6 @@
 
+import { Invoice as DatabaseInvoice } from "@/types/database";
+
 export interface ItemBase {
   id: number;
   description: string;
@@ -19,6 +21,6 @@ export interface DepositInfo {
 }
 
 // Add interface to extend Invoice type with the isOverdue property
-export interface InvoiceWithStatus extends Invoice {
+export interface InvoiceWithStatus extends DatabaseInvoice {
   isOverdue: boolean;
 }
