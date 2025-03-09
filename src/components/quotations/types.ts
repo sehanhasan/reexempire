@@ -4,7 +4,7 @@ import { Invoice as DatabaseInvoice } from "@/types/database";
 export interface ItemBase {
   id: number;
   description: string;
-  category?: string;
+  category: string;
   quantity: number | string;
   unit: string;
   unitPrice: number;
