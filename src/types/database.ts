@@ -119,6 +119,7 @@ export interface QuotationItem {
   amount: number;
   created_at: string;
   updated_at: string;
+  category?: string | null; // Added category field to match how it's used in the code
 }
 
 export interface Invoice {
