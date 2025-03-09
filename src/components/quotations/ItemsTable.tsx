@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
@@ -132,7 +133,7 @@ export function ItemsTable({
             </tr>
           </thead>
           <tbody>
-            {orderedCategories.map((category, categoryIndex) => (
+            {orderedCategories.map((category) => (
               <React.Fragment key={category}>
                 <tr className="bg-gray-50">
                   <td colSpan={6} className="py-2 px-2 font-medium text-blue-600 border-t">

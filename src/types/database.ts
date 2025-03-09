@@ -107,6 +107,7 @@ export interface Quotation {
   deposit_percentage: number;
   created_at: string;
   updated_at: string;
+  subject?: string | null; // Added subject field to fix errors
 }
 
 export interface QuotationItem {
@@ -142,6 +143,7 @@ export interface Invoice {
   payment_status: string;
   created_at: string;
   updated_at: string;
+  subject?: string | null; // Added subject field to fix errors
 }
 
 export interface InvoiceItem {
@@ -154,6 +156,7 @@ export interface InvoiceItem {
   amount: number;
   created_at: string;
   updated_at: string;
+  category?: string | null; // Added category field to fix errors
 }
 
 export interface Appointment {
