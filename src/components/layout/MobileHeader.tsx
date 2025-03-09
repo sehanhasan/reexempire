@@ -16,7 +16,6 @@ export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
         onClick={onMenuClick}
         className="lg:hidden text-white hover:bg-blue-700 hover:text-white"
         aria-label="Toggle menu"
-        type="button"
       >
         <Menu className="h-5 w-5" />
       </Button>

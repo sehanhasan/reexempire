@@ -34,6 +34,7 @@ export default function CreateQuotation() {
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
@@ -114,6 +115,7 @@ export default function CreateQuotation() {
         notes: notes || null,
         subject: subject || null,
         terms: null,
+        payment_method: paymentMethod,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentage : 0
@@ -121,8 +123,9 @@ export default function CreateQuotation() {
       
       const createdQuotation = await quotationService.create(quotation);
       
-      // Preserve the original order of items
-      for (const item of items) {
+      // Preserve the original order of items by creating with index order
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await quotationService.createItem({
@@ -132,7 +135,8 @@ export default function CreateQuotation() {
             unit: item.unit,
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
-            category: item.category
+            category: item.category,
+            display_order: i // Add display order to preserve item order
           });
         }
       }
@@ -161,7 +165,7 @@ export default function CreateQuotation() {
         title="Create Quotation"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/quotations")}>
+            <Button variant="outline" onClick={() => navigate("/quotations")} className={isMobile ? "mobile-hide-back" : ""}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
@@ -182,6 +186,8 @@ export default function CreateQuotation() {
           setExpiryDate={setValidUntil}
           subject={subject}
           setSubject={setSubject}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
         />
         
         <QuotationItemsCard 

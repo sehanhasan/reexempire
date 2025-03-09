@@ -183,7 +183,7 @@ export function CustomerInfoCard({
                 </Popover>
               </div>
               
-              {documentType === "quotation" && paymentMethod && setPaymentMethod ? (
+              {documentType === "quotation" && setPaymentMethod ? (
                 <div className="space-y-1">
                   <Label htmlFor="paymentMethod">Payment Method</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
