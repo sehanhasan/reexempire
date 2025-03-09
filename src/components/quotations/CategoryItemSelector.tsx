@@ -190,7 +190,7 @@ export function CategoryItemSelector({
                                           </Button>
                                         </div>}
                                       <span className="text-sm font-medium whitespace-nowrap">
-                                        RM {(subcategory.price || 0).toFixed(2)} / Unit
+                                        RM {(subcategory.price || 0).toFixed(2)}
                                       </span>
                                     </div>
                                   </div> :
