@@ -140,7 +140,7 @@ export default function CreateQuotation() {
             unit: item.unit,
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
-            category: item.category || null // Ensure category is passed to the database
+            category: item.category || null
           });
         }
       }

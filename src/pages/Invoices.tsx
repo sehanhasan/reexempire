@@ -17,6 +17,7 @@ import { ArrowLeft, Edit, Plus, FileText, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { invoiceService } from "@/services";
 import { Invoice } from "@/types/database";
+import { InvoiceWithStatus } from "@/components/quotations/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
@@ -31,8 +32,8 @@ import { Badge } from "@/components/ui/badge"
 export default function Invoices() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceWithStatus[]>([]);
+  const [filteredInvoices, setFilteredInvoices] = useState<InvoiceWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("overview");
@@ -89,7 +90,6 @@ export default function Invoices() {
         setIsLoading(true);
         const data = await invoiceService.getAll();
         
-        // Check for overdue invoices
         const now = new Date();
         const enhancedData = data.map(invoice => {
           const dueDate = new Date(invoice.due_date);
@@ -97,7 +97,7 @@ export default function Invoices() {
           return {
             ...invoice,
             isOverdue
-          };
+          } as InvoiceWithStatus;
         });
         
         setInvoices(enhancedData);
@@ -139,13 +139,11 @@ export default function Invoices() {
     if (status === "all") {
       setFilteredInvoices(invoices);
     } else if (status === "overview") {
-      // For overview, show a mix of recent invoices from different statuses
       const recentDraft = invoices.filter(invoice => invoice.status === "Draft").slice(0, 2);
       const recentSent = invoices.filter(invoice => invoice.status === "Sent").slice(0, 2);
       const recentPaid = invoices.filter(invoice => invoice.payment_status === "Paid").slice(0, 2);
       const overdue = invoices.filter(invoice => invoice.isOverdue).slice(0, 3);
       
-      // Combine and remove duplicates
       const combined = [...recentDraft, ...recentSent, ...recentPaid, ...overdue];
       const uniqueIds = new Set();
       const overview = combined.filter(invoice => {

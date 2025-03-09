@@ -17,3 +17,8 @@ export interface DepositInfo {
   depositAmount: number;
   depositPercentage: number | string;
 }
+
+// Add interface to extend Invoice type with the isOverdue property
+export interface InvoiceWithStatus extends Invoice {
+  isOverdue: boolean;
+}

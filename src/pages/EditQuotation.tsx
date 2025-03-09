@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -12,6 +11,10 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+interface ExtendedQuotation {
+  subject?: string | null;
+}
 
 export default function EditQuotation() {
   const navigate = useNavigate();
@@ -55,7 +58,8 @@ export default function EditQuotation() {
           setQuotationDate(quotation.issue_date);
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
-          setSubject(quotation.subject || ""); // Ensure subject is properly loaded from the database
+          
+          setSubject((quotation as unknown as ExtendedQuotation).subject || ""); 
           setStatus(quotation.status);
 
           setDepositInfo({
@@ -74,7 +78,7 @@ export default function EditQuotation() {
             setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
-              category: item.category || "", // Ensure category is properly loaded
+              category: (item as any).category || "",
               quantity: item.quantity,
               unit: item.unit,
               unitPrice: item.unit_price,
@@ -144,7 +148,7 @@ export default function EditQuotation() {
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
-        subject: subject || null, // Ensure subject is properly updated
+        subject: subject || null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
@@ -164,7 +168,7 @@ export default function EditQuotation() {
             unit: item.unit,
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
-            category: item.category || null // Ensure category is properly saved
+            category: item.category || null
           });
         }
       }
