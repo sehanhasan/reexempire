@@ -52,6 +52,7 @@
 @media (max-width: 767px) {
   .page-container {
     padding: 0.25rem !important;
+    margin-top: 0 !important;
   }
   
   .card {
@@ -63,17 +64,22 @@
   }
   
   .space-y-6 {
-    margin-top: 0.5rem !important;
+    margin-top: 0 !important;
   }
   
   /* Mobile header spacing */
   .mobile-header-spacing {
-    margin-top: 1rem;
+    margin-top: 0;
   }
   
   /* Remove margins on mobile for the main content area */
   .mt-8 {
-    margin-top: 0.5rem !important;
+    margin-top: 0 !important;
+  }
+
+  /* Back buttons on mobile */
+  .mobile-hide-back {
+    display: none !important;
   }
 }
 
