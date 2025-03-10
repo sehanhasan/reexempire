@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -6,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface AppSidebarProps {
   open?: boolean;
   setOpen?: (open: boolean) => void;
@@ -14,7 +12,6 @@ interface AppSidebarProps {
   isStaff: boolean;
   onLogout: () => Promise<void>;
 }
-
 export function AppSidebar({
   open,
   setOpen,
@@ -84,14 +81,13 @@ export function AppSidebar({
 
   // Mobile overlay for sidebar
   const mobileOverlay = isMobile && <div className={cn("fixed inset-0 bg-black/50 z-40 transition-opacity", open ? "opacity-100" : "opacity-0 pointer-events-none")} onClick={() => setOpen && setOpen(false)} />;
-  
   return <>
       {mobileOverlay}
       
       <aside className={cn("bg-white border-r border-gray-200 h-screen flex flex-col z-50", isMobile ? "fixed transition-transform transform w-72" : "relative w-64", isMobile && !open && "-translate-x-full")}>
         <div className="h-14 flex items-center px-4 border-b justify-between">
           <div className="flex items-center gap-2">
-            <img src={logoUrl} alt="Reex Empire Logo" className="h-8" />
+            <img src={logoUrl} alt="Reex Empire Logo" className="h-10" />
             
           </div>
           {isMobile && <Button variant="ghost" size="icon" onClick={() => setOpen && setOpen(false)} className="h-8 w-8">
