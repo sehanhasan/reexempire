@@ -13,6 +13,17 @@ import { invoiceService, customerService, quotationService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+interface ExtendedQuotation {
+  id: string;
+  customer_id: string;
+  reference_number: string;
+  requires_deposit?: boolean;
+  deposit_amount?: number;
+  deposit_percentage?: number;
+  subject?: string | null;
+  [key: string]: any;
+}
+
 export default function CreateInvoice() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +40,6 @@ export default function CreateInvoice() {
   const [dueDate, setDueDate] = useState(
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
@@ -73,7 +83,7 @@ export default function CreateInvoice() {
       if (fromQuotationId) {
         try {
           // Fetch quotation details
-          const quotation = await quotationService.getById(fromQuotationId);
+          const quotation = await quotationService.getById(fromQuotationId) as ExtendedQuotation;
           if (quotation) {
             setQuotationId(quotation.id);
             setQuotationReference(quotation.reference_number);
@@ -235,8 +245,6 @@ export default function CreateInvoice() {
           setDocumentDate={setInvoiceDate}
           expiryDate={dueDate}
           setExpiryDate={setDueDate}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
           quotationReference={quotationReference}
           subject={subject}
           setSubject={setSubject}
