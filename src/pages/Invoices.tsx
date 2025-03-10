@@ -377,7 +377,7 @@ export default function Invoices() {
       </div>
       
       <FloatingActionButton 
-        onClick={() => navigate("/invoices/create")} />}
+        onClick={() => navigate("/invoices/create")} />
       />
     </div>
   );
