@@ -377,8 +377,7 @@ export default function Invoices() {
       </div>
       
       <FloatingActionButton 
-        onClick={() => navigate("/invoices/create")} 
-        icon={<Plus className="h-5 w-5" />}
+        onClick={() => navigate("/invoices/create")} />}
       />
     </div>
   );
