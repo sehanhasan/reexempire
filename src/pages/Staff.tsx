@@ -407,8 +407,7 @@ export default function StaffPage() {
       </AlertDialog>
 
       <FloatingActionButton 
-        onClick={() => navigate("/staff/add")} 
-        icon={<Plus className="h-5 w-5" />}
+        onClick={() => navigate("/staff/add")} />}
       />
     </div>
   );
