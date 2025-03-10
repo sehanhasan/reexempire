@@ -30,7 +30,6 @@ export default function EditInvoice() {
   const [dueDate, setDueDate] = useState(
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
@@ -296,7 +295,7 @@ export default function EditInvoice() {
         unitNumber: customer.unit_number || "",
         expiryDate: dueDate,
         dueDate: dueDate,
-        paymentMethod: paymentMethod,
+        paymentMethod: "",
         notes: notes,
         items: items,
         subject: subject,
@@ -365,8 +364,6 @@ export default function EditInvoice() {
           setDocumentDate={setInvoiceDate}
           expiryDate={dueDate}
           setExpiryDate={setDueDate}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
           quotationReference={quotationReference}
           subject={subject}
           setSubject={setSubject}
