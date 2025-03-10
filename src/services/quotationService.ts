@@ -1,10 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
 
 interface QuotationItemInput extends Omit<QuotationItem, "id" | "created_at" | "updated_at"> {
   category?: string;
-  display_order?: number;
 }
 
 export const quotationService = {
@@ -85,7 +83,6 @@ export const quotationService = {
       .from("quotation_items")
       .select("*")
       .eq("quotation_id", quotationId)
-      .order("display_order", { ascending: true, nullsFirst: false })
       .order("id");
 
     if (error) {
@@ -147,18 +144,6 @@ export const quotationService = {
 
     if (error) {
       console.error(`Error deleting all items for quotation ${quotationId}:`, error);
-      throw error;
-    }
-  },
-  
-  async storePDF(quotationId: string, pdfUrl: string): Promise<void> {
-    const { error } = await supabase
-      .from("quotations")
-      .update({ pdf_url: pdfUrl })
-      .eq("id", quotationId);
-    
-    if (error) {
-      console.error(`Error storing PDF for quotation ${quotationId}:`, error);
       throw error;
     }
   }

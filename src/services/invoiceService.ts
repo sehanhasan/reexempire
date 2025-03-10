@@ -2,11 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceItem } from "@/types/database";
 
-interface InvoiceItemInput extends Omit<InvoiceItem, "id" | "created_at" | "updated_at"> {
-  category?: string;
-  display_order?: number;
-}
-
 export const invoiceService = {
   async getAll(): Promise<Invoice[]> {
     const { data, error } = await supabase
@@ -86,7 +81,6 @@ export const invoiceService = {
       .from("invoice_items")
       .select("*")
       .eq("invoice_id", invoiceId)
-      .order("display_order", { ascending: true, nullsFirst: false })
       .order("id");
 
     if (error) {
@@ -97,7 +91,7 @@ export const invoiceService = {
     return data || [];
   },
 
-  async createItem(item: InvoiceItemInput): Promise<InvoiceItem> {
+  async createItem(item: Omit<InvoiceItem, "id" | "created_at" | "updated_at">): Promise<InvoiceItem> {
     const { data, error } = await supabase
       .from("invoice_items")
       .insert([item])
@@ -112,7 +106,7 @@ export const invoiceService = {
     return data;
   },
 
-  async updateItem(id: string, item: Partial<InvoiceItemInput>): Promise<InvoiceItem> {
+  async updateItem(id: string, item: Partial<Omit<InvoiceItem, "id" | "created_at" | "updated_at">>): Promise<InvoiceItem> {
     const { data, error } = await supabase
       .from("invoice_items")
       .update(item)
@@ -148,18 +142,6 @@ export const invoiceService = {
 
     if (error) {
       console.error(`Error deleting all items for invoice ${invoiceId}:`, error);
-      throw error;
-    }
-  },
-  
-  async storePDF(invoiceId: string, pdfUrl: string): Promise<void> {
-    const { error } = await supabase
-      .from("invoices")
-      .update({ pdf_url: pdfUrl })
-      .eq("id", invoiceId);
-    
-    if (error) {
-      console.error(`Error storing PDF for invoice ${invoiceId}:`, error);
       throw error;
     }
   }
