@@ -147,6 +147,7 @@ export type Database = {
           category: string | null
           created_at: string
           description: string
+          display_order: number | null
           id: string
           invoice_id: string
           quantity: number
@@ -159,6 +160,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description: string
+          display_order?: number | null
           id?: string
           invoice_id: string
           quantity?: number
@@ -171,6 +173,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string
+          display_order?: number | null
           id?: string
           invoice_id?: string
           quantity?: number
@@ -200,6 +203,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           payment_status: string
+          pdf_url: string | null
           quotation_id: string | null
           reference_number: string
           status: string
@@ -222,6 +226,7 @@ export type Database = {
           issue_date: string
           notes?: string | null
           payment_status?: string
+          pdf_url?: string | null
           quotation_id?: string | null
           reference_number: string
           status?: string
@@ -244,6 +249,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           payment_status?: string
+          pdf_url?: string | null
           quotation_id?: string | null
           reference_number?: string
           status?: string
@@ -357,6 +363,7 @@ export type Database = {
           category: string | null
           created_at: string
           description: string
+          display_order: number | null
           id: string
           quantity: number
           quotation_id: string
@@ -369,6 +376,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description: string
+          display_order?: number | null
           id?: string
           quantity?: number
           quotation_id: string
@@ -381,6 +389,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string
+          display_order?: number | null
           id?: string
           quantity?: number
           quotation_id?: string
@@ -408,6 +417,7 @@ export type Database = {
           id: string
           issue_date: string
           notes: string | null
+          pdf_url: string | null
           reference_number: string
           requires_deposit: boolean | null
           status: string
@@ -426,6 +436,7 @@ export type Database = {
           id?: string
           issue_date: string
           notes?: string | null
+          pdf_url?: string | null
           reference_number: string
           requires_deposit?: boolean | null
           status?: string
@@ -444,6 +455,7 @@ export type Database = {
           id?: string
           issue_date?: string
           notes?: string | null
+          pdf_url?: string | null
           reference_number?: string
           requires_deposit?: boolean | null
           status?: string
