@@ -1,15 +1,18 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { Trash, Pencil } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { QuotationItem } from "./types";
+
 interface ItemsTableProps {
   items: QuotationItem[];
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
   showDescription?: boolean;
 }
+
 export function ItemsTable({
   items,
   handleItemChange,
@@ -17,6 +20,7 @@ export function ItemsTable({
   showDescription = true
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
+  const [editingCategory, setEditingCategory] = React.useState<number | null>(null);
 
   // Format currency
   const formatRM = (amount: number) => {
@@ -29,29 +33,91 @@ export function ItemsTable({
       [key: string]: QuotationItem[];
     } = {};
     const orderedCategories: string[] = [];
-    items.forEach(item => {
-      const category = item.category || 'Uncategorized';
+    
+    // Sort items by display_order if available
+    const sortedItems = [...items].sort((a, b) => {
+      // First sort by display_order if available
+      if (a.display_order !== undefined && b.display_order !== undefined) {
+        return a.display_order - b.display_order;
+      }
+      // Then fall back to id
+      return a.id - b.id;
+    });
+    
+    sortedItems.forEach(item => {
+      const category = item.category || '';
       if (!groupedItems[category]) {
         groupedItems[category] = [];
         orderedCategories.push(category);
       }
       groupedItems[category].push(item);
     });
+    
     return {
       groupedItems,
       orderedCategories
     };
   };
+  
   const {
     groupedItems,
     orderedCategories
   } = groupItemsByCategory();
+  
+  // Handle category edit
+  const handleCategoryEdit = (categoryName: string, itemId: number) => {
+    setEditingCategory(itemId);
+  };
+  
+  // Handle category save
+  const handleCategorySave = (itemId: number, newCategory: string) => {
+    // Update all items with the same category
+    const category = items.find(item => item.id === itemId)?.category || '';
+    
+    items.forEach(item => {
+      if (item.category === category) {
+        handleItemChange(item.id, 'category', newCategory);
+      }
+    });
+    
+    setEditingCategory(null);
+  };
+
   return <div className="w-full overflow-auto">
       {isMobile ?
     // Mobile view - improved layout grouped by category
     <div className="space-y-6">
-          {orderedCategories.map(category => <div key={category} className="space-y-4">
-              <div className="font-medium text-base text-blue-600">{category}</div>
+          {orderedCategories.map(category => (
+            <div key={category} className="space-y-4">
+              <div className="font-medium text-base text-blue-600 flex items-center">
+                {editingCategory && items.find(item => item.id === editingCategory)?.category === category ? (
+                  <Input 
+                    autoFocus
+                    value={category}
+                    onChange={(e) => handleCategorySave(editingCategory, e.target.value)}
+                    onBlur={() => setEditingCategory(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCategorySave(editingCategory, (e.target as HTMLInputElement).value);
+                      }
+                    }}
+                    className="py-0 h-8"
+                  />
+                ) : (
+                  <>
+                    {category || '(No Category)'}
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 ml-2 text-blue-600" 
+                      onClick={() => handleCategoryEdit(category, items.find(i => i.category === category)?.id || 0)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </>
+                )}
+              </div>
               {groupedItems[category].map((item, index) => <div key={item.id} className="border rounded-md p-3 space-y-2 relative bg-white">
                   <div className="absolute top-2 right-2">
                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
@@ -90,7 +156,8 @@ export function ItemsTable({
                     </div>
                   </div>
                 </div>)}
-            </div>)}
+            </div>
+          ))}
         </div> :
     // Desktop view - grouped by category
     <table className="w-full">
@@ -105,10 +172,37 @@ export function ItemsTable({
             </tr>
           </thead>
           <tbody>
-            {orderedCategories.map(category => <React.Fragment key={category}>
+            {orderedCategories.map(category => (
+              <React.Fragment key={category}>
                 <tr className="bg-gray-50">
-                  <td colSpan={6} className="py-2 px-2 font-small text-blue-600 border-t">
-                    {category}
+                  <td colSpan={6} className="py-2 px-2 font-small text-blue-600 border-t flex items-center">
+                    {editingCategory && items.find(item => item.id === editingCategory)?.category === category ? (
+                      <Input 
+                        autoFocus
+                        value={category}
+                        onChange={(e) => handleCategorySave(editingCategory, e.target.value)}
+                        onBlur={() => setEditingCategory(null)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleCategorySave(editingCategory, (e.target as HTMLInputElement).value);
+                          }
+                        }}
+                        className="py-0 h-8 max-w-xs"
+                      />
+                    ) : (
+                      <>
+                        {category || '(No Category)'}
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 ml-2 text-blue-600" 
+                          onClick={() => handleCategoryEdit(category, items.find(i => i.category === category)?.id || 0)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
                   </td>
                 </tr>
                 {groupedItems[category].map((item, index) => <tr key={item.id} className="border-b last:border-b-0">
@@ -136,7 +230,8 @@ export function ItemsTable({
                       </Button>
                     </td>
                   </tr>)}
-              </React.Fragment>)}
+              </React.Fragment>
+            ))}
           </tbody>
         </table>}
     </div>;

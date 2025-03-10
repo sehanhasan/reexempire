@@ -9,6 +9,7 @@ export interface ItemBase {
   unit: string;
   unitPrice: number;
   amount: number;
+  display_order?: number;
 }
 
 export type QuotationItem = ItemBase;
