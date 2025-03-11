@@ -24,7 +24,7 @@ export function PageHeader({
     // If actions is a single element
     if (React.isValidElement(actionNodes)) {
       // Check if it's a back button (contains ArrowLeft icon)
-      if (actionNodes.props && 'children' in actionNodes.props) {
+      if (actionNodes.props && typeof actionNodes.props === 'object' && 'children' in actionNodes.props) {
         const children = actionNodes.props.children;
         if (Array.isArray(children) && 
             children.some(child => 
@@ -45,7 +45,7 @@ export function PageHeader({
         if (!React.isValidElement(action)) return true;
         
         // Check for ArrowLeft icon in children
-        if (action.props && 'children' in action.props) {
+        if (action.props && typeof action.props === 'object' && 'children' in action.props) {
           const children = action.props.children;
           if (Array.isArray(children)) {
             return !children.some(child => 
