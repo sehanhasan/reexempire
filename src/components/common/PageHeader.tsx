@@ -24,11 +24,17 @@ export function PageHeader({
     // If actions is a single element
     if (React.isValidElement(actionNodes)) {
       // Check if it's a back button (contains ArrowLeft icon)
-      if (actionNodes.props.children && 
-          Array.isArray(actionNodes.props.children) && 
-          actionNodes.props.children.some(child => 
-            React.isValidElement(child) && child.type === ArrowLeft)) {
-        return null;
+      if (actionNodes.props && 'children' in actionNodes.props) {
+        const children = actionNodes.props.children;
+        if (Array.isArray(children) && 
+            children.some(child => 
+              React.isValidElement(child) && child.type === ArrowLeft)) {
+          return null;
+        }
+        // If children is a single element, check if it's an ArrowLeft
+        if (React.isValidElement(children) && children.type === ArrowLeft) {
+          return null;
+        }
       }
       return actionNodes;
     }
@@ -39,14 +45,15 @@ export function PageHeader({
         if (!React.isValidElement(action)) return true;
         
         // Check for ArrowLeft icon in children
-        if (action.props.children) {
-          if (Array.isArray(action.props.children)) {
-            return !action.props.children.some(child => 
+        if (action.props && 'children' in action.props) {
+          const children = action.props.children;
+          if (Array.isArray(children)) {
+            return !children.some(child => 
               React.isValidElement(child) && child.type === ArrowLeft);
           }
           // If children is a single element, check if it's an ArrowLeft
-          if (React.isValidElement(action.props.children)) {
-            return action.props.children.type !== ArrowLeft;
+          if (React.isValidElement(children)) {
+            return children.type !== ArrowLeft;
           }
         }
         return true;
