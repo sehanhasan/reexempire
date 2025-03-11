@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
@@ -9,6 +10,18 @@ const AlertDialog = AlertDialogPrimitive.Root
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal
+
+// Helper function to safely close alert dialogs
+export const closeAlertDialog = () => {
+  // Find all open alert dialogs and close them
+  const dialogs = document.querySelectorAll('[data-state="open"][role="alertdialog"]');
+  dialogs.forEach(dialog => {
+    const closeButton = dialog.querySelector('[data-state="open"] button[data-radix-collection-item]');
+    if (closeButton && closeButton instanceof HTMLElement) {
+      closeButton.click();
+    }
+  });
+}
 
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
@@ -37,6 +50,30 @@ const AlertDialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className
       )}
+      onEscapeKeyDown={(e) => {
+        // Properly handle escape key
+        if (props.onEscapeKeyDown) {
+          props.onEscapeKeyDown(e);
+        }
+      }}
+      onPointerDownOutside={(e) => {
+        // Prevent unintended closes
+        e.preventDefault();
+      }}
+      onOpenAutoFocus={(e) => {
+        // Prevent focus issues
+        e.preventDefault();
+        if (props.onOpenAutoFocus) {
+          props.onOpenAutoFocus(e);
+        }
+      }}
+      onCloseAutoFocus={(e) => {
+        // Prevent focus issues causing UI freeze
+        e.preventDefault();
+        if (props.onCloseAutoFocus) {
+          props.onCloseAutoFocus(e);
+        }
+      }}
       {...props}
     />
   </AlertDialogPortal>

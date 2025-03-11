@@ -65,16 +65,9 @@ export function MainLayout({ children }: MainLayoutProps) {
     navigate('/auth/login');
   };
   
-  // Close sidebar when route changes on mobile
-  useEffect(() => {
-    if (isMobile && sidebarOpen) {
-      setSidebarOpen(false);
-    }
-  }, [location, isMobile, sidebarOpen]);
-
-  // Toggle sidebar function
+  // Toggle sidebar function - simplified
   const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+    setSidebarOpen(prevState => !prevState);
   };
 
   if (isLoading) {

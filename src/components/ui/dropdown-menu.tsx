@@ -17,6 +17,30 @@ const DropdownMenuSub = DropdownMenuPrimitive.Sub
 
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 
+// This function helps close all open dropdown menus programmatically
+export function closeDropdown() {
+  // Find all open dropdown menus and close them
+  const openDropdowns = document.querySelectorAll('[data-state="open"][role="menu"]');
+  openDropdowns.forEach(menu => {
+    // Find the parent element that has the dropdown controller
+    let parent = menu.parentElement;
+    while (parent && !parent.hasAttribute('data-radix-dropdown-menu-content-wrapper')) {
+      parent = parent.parentElement;
+    }
+
+    // If we found it, get the trigger button and click it to close
+    if (parent && parent.previousElementSibling) {
+      const trigger = parent.previousElementSibling;
+      if (trigger instanceof HTMLElement) {
+        setTimeout(() => {
+          // Use timeout to avoid immediate re-open
+          trigger.click();
+        }, 10);
+      }
+    }
+  });
+}
+
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
@@ -64,17 +88,15 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-white p-1 text-popover-foreground shadow-md",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",
-        "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        "radix-dropdown-open",
+        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         className
       )}
-      onCloseAutoFocus={(e) => {
-        e.preventDefault();
+      onCloseAutoFocus={(event) => {
+        // Prevent focus issues causing UI freeze
+        event.preventDefault();
+        if (props.onCloseAutoFocus) {
+          props.onCloseAutoFocus(event);
+        }
       }}
       {...props}
     />
@@ -82,50 +104,19 @@ const DropdownMenuContent = React.forwardRef<
 ))
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
-// Helper function to programmatically close dropdown
-const closeDropdown = () => {
-  // Create and dispatch Escape key event to close any open dropdowns
-  const event = new KeyboardEvent('keydown', {
-    key: 'Escape',
-    code: 'Escape',
-    keyCode: 27,
-    which: 27,
-    bubbles: true,
-    cancelable: true
-  });
-  document.dispatchEvent(event);
-};
-
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean
   }
->(({ className, inset, onClick, ...props }, ref) => (
+>(({ className, inset, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-      "focus:bg-accent focus:text-accent-foreground",
-      "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}
-    onClick={(e) => {
-      if (onClick) {
-        // Call the original click handler
-        onClick(e);
-        
-        // Close the dropdown after a small delay to ensure any modals/dialogs can open first
-        setTimeout(() => {
-          closeDropdown();
-        }, 10);
-      }
-    }}
-    onSelect={(e) => {
-      // Prevent default selection behavior which can cause issues
-      e.preventDefault();
-    }}
     {...props}
   />
 ))
@@ -142,7 +133,6 @@ const DropdownMenuCheckboxItem = React.forwardRef<
       className
     )}
     checked={checked}
-    onSelect={(e) => e.preventDefault()}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -166,7 +156,6 @@ const DropdownMenuRadioItem = React.forwardRef<
       "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
-    onSelect={(e) => e.preventDefault()}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -238,5 +227,4 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
-  closeDropdown,
 }

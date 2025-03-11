@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, closeDialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User, MapPin, Edit } from "lucide-react";
@@ -35,13 +35,16 @@ export function AppointmentDetailsDialog({
 
   // Handle dialog close safely
   const handleClose = () => {
-    // Ensure dropdown is closed first
+    // Close dropdown first if open
     closeDropdown();
+    
+    // Use the new closeDialog helper
+    closeDialog();
     
     // Set a small timeout to prevent UI freeze
     setTimeout(() => {
       onClose();
-    }, 10);
+    }, 50);
   };
 
   // Handle edit navigation safely
@@ -51,15 +54,22 @@ export function AppointmentDetailsDialog({
     // Set a small timeout before navigation
     setTimeout(() => {
       navigate(`/schedule/edit/${appointment.id}`);
-    }, 50);
+    }, 100);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
-        e.preventDefault();
-        handleClose();
-      }}>
+      <DialogContent 
+        className="sm:max-w-md" 
+        onInteractOutside={(e) => {
+          e.preventDefault();
+          handleClose();
+        }}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          handleClose();
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl">{appointment.title}</DialogTitle>
         </DialogHeader>
