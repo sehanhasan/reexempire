@@ -44,6 +44,10 @@ export function PageHeader({
             return !action.props.children.some(child => 
               React.isValidElement(child) && child.type === ArrowLeft);
           }
+          // If children is a single element, check if it's an ArrowLeft
+          if (React.isValidElement(action.props.children)) {
+            return action.props.children.type !== ArrowLeft;
+          }
         }
         return true;
       });
