@@ -82,7 +82,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="sticky top-0 h-screen flex-shrink-0">
+      <div className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)} />
+      
+      <div className={`fixed top-0 left-0 z-50 lg:static lg:z-auto ${isMobile ? 'w-[280px]' : ''}`}>
         <AppSidebar 
           open={sidebarOpen} 
           setOpen={setSidebarOpen} 
@@ -100,7 +102,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           />
         )}
         
-        <main className={`p-6 md:px-8 lg:px-10 ${isMobile ? 'mt-14 px-3' : ''}`}>
+        <main className={`${isMobile ? 'px-0 pt-2 pb-16' : 'p-6 md:px-8 lg:px-10'}`}>
           {children}
         </main>
       </div>
