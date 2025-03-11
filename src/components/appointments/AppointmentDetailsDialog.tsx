@@ -35,32 +35,43 @@ export function AppointmentDetailsDialog({
 
   // Handle dialog close safely
   const handleClose = () => {
-    // Close dropdown first if open
-    closeDropdown();
-    
-    // Use the new closeDialog helper
+    // Use the closeDialog helper to properly close the dialog
     closeDialog();
     
-    // Set a small timeout to prevent UI freeze
+    // Set a larger timeout to prevent UI freeze
     setTimeout(() => {
+      // After dialog is safely closed, close dropdown if open
+      closeDropdown();
+      
+      // Finally call the onClose handler
       onClose();
-    }, 50);
+    }, 100);
   };
 
   // Handle edit navigation safely
   const handleEdit = () => {
-    handleClose();
+    // Close dialog first
+    closeDialog();
     
-    // Set a small timeout before navigation
+    // Then close dropdown
+    closeDropdown();
+    
+    // Wait until UI is updated before navigation
     setTimeout(() => {
+      onClose();
       navigate(`/schedule/edit/${appointment.id}`);
-    }, 100);
+    }, 150);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!open) {
+        handleClose();
+      }
+    }}>
       <DialogContent 
-        className="sm:max-w-md" 
+        className="sm:max-w-md"
+        // These handlers need to be completely replaced
         onInteractOutside={(e) => {
           e.preventDefault();
           handleClose();

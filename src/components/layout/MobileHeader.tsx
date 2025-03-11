@@ -8,12 +8,18 @@ interface MobileHeaderProps {
 }
 
 export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onMenuClick();
+  };
+
   return (
     <header className="sticky top-0 z-50 flex h-12 items-center justify-between px-4 bg-blue-600 w-full">
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onMenuClick()}
+        onClick={handleMenuClick}
         className="lg:hidden text-white hover:bg-blue-700 hover:text-white"
         aria-label="Toggle menu"
         type="button"

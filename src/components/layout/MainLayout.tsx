@@ -65,7 +65,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     navigate('/auth/login');
   };
   
-  // Toggle sidebar function - simplified
+  // Toggle sidebar function - simplified but reliable
   const toggleSidebar = () => {
     setSidebarOpen(prevState => !prevState);
   };
@@ -79,21 +79,24 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
   
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background overflow-hidden">
       <div 
         className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
         onClick={() => setSidebarOpen(false)} 
       />
       
-      <AppSidebar 
-        open={sidebarOpen} 
-        setOpen={setSidebarOpen} 
-        isAdmin={isAdmin}
-        isStaff={isStaff}
-        onLogout={handleLogout}
-      />
+      {/* Fixed sidebar wrapper to prevent scrolling */}
+      <div className="h-screen overflow-hidden z-50 flex-shrink-0">
+        <AppSidebar 
+          open={sidebarOpen} 
+          setOpen={setSidebarOpen} 
+          isAdmin={isAdmin}
+          isStaff={isStaff}
+          onLogout={handleLogout}
+        />
+      </div>
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex flex-col overflow-auto relative">
         {isMobile && (
           <MobileHeader 
             title={getPageTitle()} 
@@ -101,7 +104,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           />
         )}
         
-        <main className={`${isMobile ? 'px-0 pt-2 pb-16' : 'p-6 md:px-8 lg:px-10'}`}>
+        <main className={`${isMobile ? 'px-0 pt-2 pb-16' : 'p-6 md:px-8 lg:px-10'} flex-1`}>
           {children}
         </main>
       </div>

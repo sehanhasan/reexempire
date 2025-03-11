@@ -50,29 +50,17 @@ const AlertDialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className
       )}
+      // Remove the problematic handlers and use the standard ones
+      // Fixed TS error by removing onPointerDownOutside
       onEscapeKeyDown={(e) => {
-        // Properly handle escape key
+        e.preventDefault();
         if (props.onEscapeKeyDown) {
           props.onEscapeKeyDown(e);
         }
       }}
-      onPointerDownOutside={(e) => {
+      onInteractOutside={(e) => {
         // Prevent unintended closes
         e.preventDefault();
-      }}
-      onOpenAutoFocus={(e) => {
-        // Prevent focus issues
-        e.preventDefault();
-        if (props.onOpenAutoFocus) {
-          props.onOpenAutoFocus(e);
-        }
-      }}
-      onCloseAutoFocus={(e) => {
-        // Prevent focus issues causing UI freeze
-        e.preventDefault();
-        if (props.onCloseAutoFocus) {
-          props.onCloseAutoFocus(e);
-        }
       }}
       {...props}
     />
@@ -140,6 +128,21 @@ const AlertDialogAction = React.forwardRef<
   <AlertDialogPrimitive.Action
     ref={ref}
     className={cn(buttonVariants(), className)}
+    onClick={(e) => {
+      // Add a small delay before executing onClick to avoid UI freeze
+      const originalOnClick = props.onClick;
+      e.preventDefault();
+      
+      // Close the dialog programmatically first
+      closeAlertDialog();
+      
+      // Small delay to prevent UI freeze
+      setTimeout(() => {
+        if (originalOnClick) {
+          originalOnClick(e as React.MouseEvent<HTMLButtonElement>);
+        }
+      }, 50);
+    }}
     {...props}
   />
 ))
@@ -156,6 +159,21 @@ const AlertDialogCancel = React.forwardRef<
       "mt-2 sm:mt-0",
       className
     )}
+    onClick={(e) => {
+      // Add a small delay before executing onClick to avoid UI freeze
+      const originalOnClick = props.onClick;
+      e.preventDefault();
+      
+      // Close the dialog programmatically first
+      closeAlertDialog();
+      
+      // Small delay to prevent UI freeze
+      setTimeout(() => {
+        if (originalOnClick) {
+          originalOnClick(e as React.MouseEvent<HTMLButtonElement>);
+        }
+      }, 50);
+    }}
     {...props}
   />
 ))
