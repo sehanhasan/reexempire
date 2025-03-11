@@ -82,6 +82,20 @@ const DropdownMenuContent = React.forwardRef<
 ))
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
+// Helper function to programmatically close dropdown
+const closeDropdown = () => {
+  // Create and dispatch Escape key event to close any open dropdowns
+  const event = new KeyboardEvent('keydown', {
+    key: 'Escape',
+    code: 'Escape',
+    keyCode: 27,
+    which: 27,
+    bubbles: true,
+    cancelable: true
+  });
+  document.dispatchEvent(event);
+};
+
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
@@ -99,14 +113,18 @@ const DropdownMenuItem = React.forwardRef<
     )}
     onClick={(e) => {
       if (onClick) {
+        // Call the original click handler
         onClick(e);
-        // Close the dropdown programmatically after a delay
+        
+        // Close the dropdown after a small delay to ensure any modals/dialogs can open first
         setTimeout(() => {
-          const event = new Event('keydown');
-          Object.defineProperty(event, 'keyCode', { value: 27 });
-          document.dispatchEvent(event);
-        }, 100);
+          closeDropdown();
+        }, 10);
       }
+    }}
+    onSelect={(e) => {
+      // Prevent default selection behavior which can cause issues
+      e.preventDefault();
     }}
     {...props}
   />
@@ -124,6 +142,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
       className
     )}
     checked={checked}
+    onSelect={(e) => e.preventDefault()}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -147,6 +166,7 @@ const DropdownMenuRadioItem = React.forwardRef<
       "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
+    onSelect={(e) => e.preventDefault()}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -218,4 +238,5 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
+  closeDropdown,
 }

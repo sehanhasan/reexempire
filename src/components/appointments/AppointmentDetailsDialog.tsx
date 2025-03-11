@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User, MapPin, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
+import { closeDropdown } from "@/components/ui/dropdown-menu";
 
 interface AppointmentDetailsDialogProps {
   open: boolean;
@@ -32,9 +33,33 @@ export function AppointmentDetailsDialog({
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
+  // Handle dialog close safely
+  const handleClose = () => {
+    // Ensure dropdown is closed first
+    closeDropdown();
+    
+    // Set a small timeout to prevent UI freeze
+    setTimeout(() => {
+      onClose();
+    }, 10);
+  };
+
+  // Handle edit navigation safely
+  const handleEdit = () => {
+    handleClose();
+    
+    // Set a small timeout before navigation
+    setTimeout(() => {
+      navigate(`/schedule/edit/${appointment.id}`);
+    }, 50);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => {
+        e.preventDefault();
+        handleClose();
+      }}>
         <DialogHeader>
           <DialogTitle className="text-xl">{appointment.title}</DialogTitle>
         </DialogHeader>
@@ -119,13 +144,10 @@ export function AppointmentDetailsDialog({
         </div>
 
         <DialogFooter className="flex justify-between sm:justify-between">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={handleClose}>
             Close
           </Button>
-          <Button onClick={() => {
-            onClose();
-            navigate(`/schedule/edit/${appointment.id}`);
-          }} className="gap-2">
+          <Button onClick={handleEdit} className="gap-2">
             <Edit className="h-4 w-4" />
             Edit Appointment
           </Button>

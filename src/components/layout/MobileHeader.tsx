@@ -13,7 +13,11 @@ export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
       <Button
         variant="ghost"
         size="icon"
-        onClick={onMenuClick}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onMenuClick();
+        }}
         className="lg:hidden text-white hover:bg-blue-700 hover:text-white"
         aria-label="Toggle menu"
         type="button"

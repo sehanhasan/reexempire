@@ -65,12 +65,17 @@ export function MainLayout({ children }: MainLayoutProps) {
     navigate('/auth/login');
   };
   
-  // Close sidebar when route changes
+  // Close sidebar when route changes on mobile
   useEffect(() => {
     if (isMobile && sidebarOpen) {
       setSidebarOpen(false);
     }
   }, [location, isMobile, sidebarOpen]);
+
+  // Toggle sidebar function
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   if (isLoading) {
     return (
@@ -82,7 +87,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   
   return (
     <div className="flex min-h-screen bg-background">
-      <div className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)} />
+      <div 
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        onClick={() => setSidebarOpen(false)} 
+      />
       
       <AppSidebar 
         open={sidebarOpen} 
@@ -96,7 +104,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         {isMobile && (
           <MobileHeader 
             title={getPageTitle()} 
-            onMenuClick={() => setSidebarOpen(true)} 
+            onMenuClick={toggleSidebar} 
           />
         )}
         

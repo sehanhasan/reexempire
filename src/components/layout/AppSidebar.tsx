@@ -82,6 +82,13 @@ export function AppSidebar({
     return location.pathname.startsWith(href) && href !== "/" ? true : false;
   };
 
+  const handleNavItemClick = (href: string) => {
+    navigate(href);
+    if (isMobile && setOpen) {
+      setOpen(false);
+    }
+  };
+
   return (
     <aside 
       className={cn(
@@ -99,7 +106,11 @@ export function AppSidebar({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => setOpen && setOpen(false)} 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen && setOpen(false);
+            }} 
             className="h-8 w-8"
           >
             <X className="h-4 w-4" />
@@ -117,12 +128,7 @@ export function AppSidebar({
                 "w-full justify-start text-gray-600 h-10", 
                 isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
               )} 
-              onClick={() => {
-                navigate(item.href);
-                if (isMobile) {
-                  setOpen && setOpen(false);
-                }
-              }}
+              onClick={() => handleNavItemClick(item.href)}
             >
               {item.icon}
               <span className="ml-3">{item.title}</span>
