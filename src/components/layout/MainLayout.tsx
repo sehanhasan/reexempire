@@ -84,15 +84,13 @@ export function MainLayout({ children }: MainLayoutProps) {
     <div className="flex min-h-screen bg-background">
       <div className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)} />
       
-      <div className={`fixed top-0 left-0 z-50 lg:static lg:z-auto ${isMobile ? 'w-[280px]' : ''}`}>
-        <AppSidebar 
-          open={sidebarOpen} 
-          setOpen={setSidebarOpen} 
-          isAdmin={isAdmin}
-          isStaff={isStaff}
-          onLogout={handleLogout}
-        />
-      </div>
+      <AppSidebar 
+        open={sidebarOpen} 
+        setOpen={setSidebarOpen} 
+        isAdmin={isAdmin}
+        isStaff={isStaff}
+        onLogout={handleLogout}
+      />
       
       <div className="flex-1 overflow-auto">
         {isMobile && (
