@@ -51,7 +51,7 @@
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .page-container {
-    padding: 0.25rem !important;
+    padding: 0 !important;
   }
   
   .card {
@@ -68,7 +68,7 @@
   
   /* Mobile header spacing */
   .mobile-header-spacing {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
   }
   
   /* Remove margins on mobile for the main content area */

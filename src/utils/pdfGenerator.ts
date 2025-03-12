@@ -13,7 +13,6 @@ interface DocumentDetails {
   notes: string;
   items: QuotationItem[] | InvoiceItem[];
   subject?: string;
-  paymentMethod?: string;
 }
 
 // Specific interfaces
@@ -94,8 +93,7 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
     `Quotation #: ${details.documentNumber}`,
     `Date: ${details.documentDate}`,
     `Valid Until: ${details.validUntil}`,
-    details.paymentMethod ? `Payment Method: ${details.paymentMethod}` : ''
-  ].filter(Boolean), 15, 85);
+  ], 15, 85);
   
   // Add customer details
   pdf.setFont('helvetica', 'bold');
@@ -105,7 +103,7 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   pdf.text([
     `Customer: ${details.customerName}`,
     details.unitNumber ? `Unit #: ${details.unitNumber}` : '',
-  ].filter(Boolean), 120, 85);
+  ], 120, 85);
 
   // Add subject if available
   if (details.subject) {
@@ -193,7 +191,7 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
     `Invoice #: ${details.documentNumber}`,
     `Date: ${details.documentDate}`,
     `Due Date: ${details.dueDate}`,
-    `Payment Method: ${details.paymentMethod}`
+    `Payment Method: ${details.paymentMethod.replace('_', ' ').toUpperCase()}`
   ];
   
   if (details.quotationReference) {
@@ -214,7 +212,7 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
   pdf.text([
     `Customer: ${details.customerName}`,
     details.unitNumber ? `Unit #: ${details.unitNumber}` : '',
-  ].filter(Boolean), 120, 85);
+  ], 120, 85);
 
   // Add subject if available
   if (details.subject) {
@@ -286,16 +284,6 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
 
 // Helper function to add items table
 const addItemsTable = (pdf: jsPDF, items: QuotationItem[] | InvoiceItem[], startY: number): void => {
-  // Sort the items by category to group them
-  const categorizedItems = items.sort((a, b) => {
-    const catA = a.category || 'Uncategorized';
-    const catB = b.category || 'Uncategorized';
-    if (catA === catB) {
-      return 0;
-    }
-    return catA < catB ? -1 : 1;
-  });
-  
   const tableHeaders = [
     { header: 'Description', dataKey: 'description' },
     { header: 'Quantity', dataKey: 'quantity' },
@@ -304,8 +292,7 @@ const addItemsTable = (pdf: jsPDF, items: QuotationItem[] | InvoiceItem[], start
     { header: 'Amount (RM)', dataKey: 'amount' }
   ];
   
-  const tableData = categorizedItems.map(item => ({
-    category: item.category || 'Uncategorized',
+  const tableData = items.map(item => ({
     description: item.description,
     quantity: item.quantity,
     unit: item.unit,
@@ -313,28 +300,16 @@ const addItemsTable = (pdf: jsPDF, items: QuotationItem[] | InvoiceItem[], start
     amount: item.amount.toFixed(2)
   }));
   
-  // Create an array of category headers and items for the table
-  const tableBody: any[] = [];
-  let currentCategory = '';
-  
-  tableData.forEach(item => {
-    if (item.category !== currentCategory) {
-      currentCategory = item.category;
-      tableBody.push([{ content: currentCategory, colSpan: 5, styles: { fontStyle: 'bold', fillColor: [240, 240, 240], textColor: [0, 95, 175] } }]);
-    }
-    tableBody.push([
+  autoTable(pdf, {
+    startY: startY,
+    head: [tableHeaders.map(h => h.header)],
+    body: tableData.map(item => [
       item.description,
       item.quantity,
       item.unit,
       item.unitPrice,
       item.amount
-    ]);
-  });
-  
-  autoTable(pdf, {
-    startY: startY,
-    head: [tableHeaders.map(h => h.header)],
-    body: tableBody,
+    ]),
     theme: 'grid',
     headStyles: {
       fillColor: [82, 117, 180],
@@ -360,17 +335,4 @@ const addItemsTable = (pdf: jsPDF, items: QuotationItem[] | InvoiceItem[], start
 // Function to download the PDF
 export const downloadPDF = (pdf: jsPDF, filename: string): void => {
   pdf.save(filename);
-};
-
-// Function to get the PDF as a blob
-export const getPDFBlob = (pdf: jsPDF): Promise<Blob> => {
-  return new Promise((resolve) => {
-    const blob = pdf.output('blob');
-    resolve(blob);
-  });
-};
-
-// Function to get the PDF as a data URL for embedding
-export const getPDFDataUrl = (pdf: jsPDF): string => {
-  return pdf.output('datauristring');
 };

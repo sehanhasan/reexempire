@@ -1,10 +1,15 @@
+
 import { ReactNode } from 'react';
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ArrowLeft } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+
 interface PageHeaderProps {
   title: string;
   actions?: ReactNode;
   description?: string;
 }
+
 export function PageHeader({
   title,
   actions,
@@ -12,14 +17,53 @@ export function PageHeader({
 }: PageHeaderProps) {
   const isMobile = useIsMobile();
 
-  // On mobile, don't show the header at all as per requirement
+  // Filter out back buttons on mobile
+  const filterBackButtons = (actionNodes: ReactNode): ReactNode => {
+    if (!actionNodes || !isMobile) return actionNodes;
+    
+    // If actions is a single element
+    if (React.isValidElement(actionNodes)) {
+      // Check if it's a back button (contains ArrowLeft icon)
+      if (actionNodes.props.children && 
+          Array.isArray(actionNodes.props.children) && 
+          actionNodes.props.children.some(child => 
+            React.isValidElement(child) && child.type === ArrowLeft)) {
+        return null;
+      }
+      return actionNodes;
+    }
+    
+    // If actions is an array or fragment
+    if (Array.isArray(actionNodes)) {
+      return actionNodes.filter(action => {
+        if (!React.isValidElement(action)) return true;
+        
+        // Check for ArrowLeft icon in children
+        if (action.props.children) {
+          if (Array.isArray(action.props.children)) {
+            return !action.props.children.some(child => 
+              React.isValidElement(child) && child.type === ArrowLeft);
+          }
+        }
+        return true;
+      });
+    }
+    
+    return actionNodes;
+  };
+
+  const filteredActions = filterBackButtons(actions);
+
+  // On mobile, show minimal header
   if (isMobile) {
-    return actions ? <div className="flex justify-end mb-2">{actions}</div> : null;
+    return filteredActions ? 
+      <div className="flex justify-end mb-2">{filteredActions}</div> : null;
   }
+
   return <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-blue-700">{title}</h1>
-        {/* Description removed as per requirement */}
+        {description && <p className="text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>;

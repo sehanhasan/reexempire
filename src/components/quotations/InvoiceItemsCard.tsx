@@ -54,17 +54,14 @@ export function InvoiceItemsCard({
   
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    const maxOrder = items.length > 0 ? Math.max(...items.map(item => item.display_order || 0)) + 1 : 0;
-    
     setItems([...items, {
       id: newId,
       description: "",
-      category: "", // Remove default "Uncategorized" category
+      category: "",
       quantity: 1,
       unit: "Unit",
       unitPrice: 0,
-      amount: 0,
-      display_order: maxOrder
+      amount: 0
     }]);
   };
   
