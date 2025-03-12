@@ -51,7 +51,6 @@
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .page-container {
-    padding: 0 !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
 
