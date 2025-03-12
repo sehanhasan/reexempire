@@ -86,7 +86,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       />
       
       {/* Fixed sidebar wrapper to prevent scrolling */}
-      <div className="h-screen overflow-hidden z-50 flex-shrink-0">
+      <div className="h-screen sticky top-0 z-50 flex-shrink-0">
         <AppSidebar 
           open={sidebarOpen} 
           setOpen={setSidebarOpen} 
@@ -98,10 +98,12 @@ export function MainLayout({ children }: MainLayoutProps) {
       
       <div className="flex-1 flex flex-col overflow-auto relative">
         {isMobile && (
-          <MobileHeader 
-            title={getPageTitle()} 
-            onMenuClick={toggleSidebar} 
-          />
+          <div className="sticky top-0 z-40 w-full">
+            <MobileHeader 
+              title={getPageTitle()} 
+              onMenuClick={toggleSidebar} 
+            />
+          </div>
         )}
         
         <main className={`${isMobile ? 'px-0 pt-2 pb-16' : 'p-6 md:px-8 lg:px-10'} flex-1`}>

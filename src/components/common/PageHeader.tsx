@@ -65,7 +65,7 @@ export function PageHeader({
 
   const filteredActions = filterBackButtons(actions);
 
-  // On mobile, show minimal header
+  // On mobile, only show actions without the title/description
   if (isMobile) {
     return filteredActions ? 
       <div className="flex justify-end mb-2">{filteredActions}</div> : null;
