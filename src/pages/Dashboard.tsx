@@ -194,7 +194,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg text-cyan-600">Revenue</CardTitle>
+            <CardTitle className="text-lg text-cyan-600">Revenues</CardTitle>
           </CardHeader>
           <CardContent>
             <Chart type="bar" data={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={300} />
