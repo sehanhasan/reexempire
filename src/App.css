@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -50,10 +51,7 @@
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .page-container {
-    /* Override existing padding to add left & right padding */
     padding: 0 !important;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
   }
   
   .card {
