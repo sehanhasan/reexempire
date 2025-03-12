@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
@@ -15,7 +14,7 @@ export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-12 items-center justify-between px-4 bg-blue-600 w-full">
+    <header className="fixed top-0 left-0 z-50 flex h-12 w-full items-center justify-between px-4 bg-blue-600">
       <Button
         variant="ghost"
         size="icon"
