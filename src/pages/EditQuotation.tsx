@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save, CheckCircle, XCircle, FileText } from "lucide-react";
+import { ArrowLeft, Save, Send, CheckCircle, XCircle, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -113,7 +114,7 @@ export default function EditQuotation() {
     return qty * item.unitPrice;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
     e.preventDefault();
     if (!customerId || !id) {
       toast({
@@ -151,7 +152,7 @@ export default function EditQuotation() {
         reference_number: documentNumber,
         issue_date: quotationDate,
         expiry_date: validUntil,
-        status: status,
+        status: newStatus || status,
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
@@ -190,8 +191,8 @@ export default function EditQuotation() {
       }
 
       toast({
-        title: "Quotation Updated",
-        description: `Quotation for ${customer?.name} has been updated successfully.`
+        title: newStatus === "Sent" ? "Quotation Sent" : "Quotation Updated",
+        description: `Quotation for ${customer?.name} has been ${newStatus === "Sent" ? "sent" : "updated"} successfully.`
       });
 
       navigate("/quotations");
@@ -299,7 +300,7 @@ export default function EditQuotation() {
           </div>
         </div>}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      <form className="mt-8 space-y-6">
         <CustomerInfoCard 
           customerId={customerId} 
           setCustomer={setCustomerId} 
@@ -325,12 +326,35 @@ export default function EditQuotation() {
         <AdditionalInfoCard 
           notes={notes} 
           setNotes={setNotes} 
-          onSubmit={handleSubmit} 
+          onSubmit={(e) => handleSubmit(e)} 
           onCancel={() => navigate("/quotations")} 
           documentType="quotation" 
           isSubmitting={isSubmitting} 
           saveButtonText="Update Quotation" 
         />
+        
+        {/* Add footer with Save Draft and Send buttons */}
+        <div className="sticky bottom-0 left-0 right-0 bg-white border-t p-4 shadow-md flex justify-end gap-3 z-10">
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="gap-2"
+            onClick={(e) => handleSubmit(e, "Draft")}
+            disabled={isSubmitting}
+          >
+            <Save className="h-4 w-4" />
+            Save Draft
+          </Button>
+          <Button 
+            type="button"
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+            onClick={(e) => handleSubmit(e, "Sent")}
+            disabled={isSubmitting}
+          >
+            <Send className="h-4 w-4" />
+            {status === "Sent" ? "Send Update" : "Send Quotation"}
+          </Button>
+        </div>
       </form>
     </div>;
 }

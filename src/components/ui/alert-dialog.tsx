@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
@@ -9,6 +10,18 @@ const AlertDialog = AlertDialogPrimitive.Root
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal
+
+// Helper function to safely close alert dialogs
+export const closeAlertDialog = () => {
+  // Find all open alert dialogs and close them
+  const dialogs = document.querySelectorAll('[data-state="open"][role="alertdialog"]');
+  dialogs.forEach(dialog => {
+    const closeButton = dialog.querySelector('[data-state="open"] button[data-radix-collection-item]');
+    if (closeButton && closeButton instanceof HTMLElement) {
+      closeButton.click();
+    }
+  });
+}
 
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
@@ -37,6 +50,13 @@ const AlertDialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className
       )}
+      // Type-safe event handlers - removed onInteractOutside completely
+      onEscapeKeyDown={(e) => {
+        e.preventDefault();
+        if (props.onEscapeKeyDown) {
+          props.onEscapeKeyDown(e);
+        }
+      }}
       {...props}
     />
   </AlertDialogPortal>
@@ -103,6 +123,21 @@ const AlertDialogAction = React.forwardRef<
   <AlertDialogPrimitive.Action
     ref={ref}
     className={cn(buttonVariants(), className)}
+    onClick={(e) => {
+      // Add a small delay before executing onClick to avoid UI freeze
+      const originalOnClick = props.onClick;
+      e.preventDefault();
+      
+      // Close the dialog programmatically first
+      closeAlertDialog();
+      
+      // Small delay to prevent UI freeze
+      setTimeout(() => {
+        if (originalOnClick) {
+          originalOnClick(e as React.MouseEvent<HTMLButtonElement>);
+        }
+      }, 50);
+    }}
     {...props}
   />
 ))
@@ -119,6 +154,21 @@ const AlertDialogCancel = React.forwardRef<
       "mt-2 sm:mt-0",
       className
     )}
+    onClick={(e) => {
+      // Add a small delay before executing onClick to avoid UI freeze
+      const originalOnClick = props.onClick;
+      e.preventDefault();
+      
+      // Close the dialog programmatically first
+      closeAlertDialog();
+      
+      // Small delay to prevent UI freeze
+      setTimeout(() => {
+        if (originalOnClick) {
+          originalOnClick(e as React.MouseEvent<HTMLButtonElement>);
+        }
+      }, 50);
+    }}
     {...props}
   />
 ))

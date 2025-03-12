@@ -65,12 +65,10 @@ export function MainLayout({ children }: MainLayoutProps) {
     navigate('/auth/login');
   };
   
-  // Close sidebar when route changes
-  useEffect(() => {
-    if (isMobile && sidebarOpen) {
-      setSidebarOpen(false);
-    }
-  }, [location, isMobile, sidebarOpen]);
+  // Toggle sidebar function - simplified but reliable
+  const toggleSidebar = () => {
+    setSidebarOpen(prevState => !prevState);
+  };
 
   if (isLoading) {
     return (
@@ -81,10 +79,14 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
   
   return (
-    <div className="flex min-h-screen bg-background">
-      <div className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)} />
+    <div className="flex min-h-screen bg-background overflow-hidden">
+      <div 
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        onClick={() => setSidebarOpen(false)} 
+      />
       
-      <div className={`fixed top-0 left-0 z-50 lg:static lg:z-auto ${isMobile ? 'w-[280px]' : ''}`}>
+      {/* Fixed sidebar wrapper to prevent scrolling */}
+      <div className="h-screen sticky top-0 z-50 flex-shrink-0">
         <AppSidebar 
           open={sidebarOpen} 
           setOpen={setSidebarOpen} 
@@ -94,15 +96,17 @@ export function MainLayout({ children }: MainLayoutProps) {
         />
       </div>
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex flex-col overflow-auto relative">
         {isMobile && (
-          <MobileHeader 
-            title={getPageTitle()} 
-            onMenuClick={() => setSidebarOpen(true)} 
-          />
+          <div className="sticky top-0 z-40 w-full">
+            <MobileHeader 
+              title={getPageTitle()} 
+              onMenuClick={toggleSidebar} 
+            />
+          </div>
         )}
         
-        <main className={`${isMobile ? 'px-0 pt-2 pb-16' : 'p-6 md:px-8 lg:px-10'}`}>
+        <main className={`${isMobile ? 'px-0 pt-2 pb-16' : 'p-6 md:px-8 lg:px-10'} flex-1`}>
           {children}
         </main>
       </div>

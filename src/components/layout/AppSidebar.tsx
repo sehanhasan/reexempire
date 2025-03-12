@@ -29,7 +29,7 @@ export function AppSidebar({
   // Logo image
   const logoUrl = "https://i.ibb.co/Ltyts5K/reex-empire-logo.png";
 
-  // Navigation items - rearranged order
+  // Navigation items
   const navItems = [{
     title: "Dashboard",
     icon: <LayoutDashboard className="h-5 w-5" />,
@@ -82,10 +82,26 @@ export function AppSidebar({
     return location.pathname.startsWith(href) && href !== "/" ? true : false;
   };
 
+  const handleNavItemClick = (href: string) => {
+    navigate(href);
+    if (isMobile && setOpen) {
+      setOpen(false);
+    }
+  };
+
+  // Handle close button click with better event handling
+  const handleCloseClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (setOpen) {
+      setOpen(false);
+    }
+  };
+
   return (
     <aside 
       className={cn(
-        "h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out",
+        "h-full bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out overflow-hidden",
         isMobile 
           ? cn("fixed w-[280px]", open ? "translate-x-0" : "-translate-x-full") 
           : "w-64"
@@ -99,7 +115,7 @@ export function AppSidebar({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => setOpen && setOpen(false)} 
+            onClick={handleCloseClick}
             className="h-8 w-8"
           >
             <X className="h-4 w-4" />
@@ -117,12 +133,7 @@ export function AppSidebar({
                 "w-full justify-start text-gray-600 h-10", 
                 isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
               )} 
-              onClick={() => {
-                navigate(item.href);
-                if (isMobile) {
-                  setOpen && setOpen(false);
-                }
-              }}
+              onClick={() => handleNavItemClick(item.href)}
             >
               {item.icon}
               <span className="ml-3">{item.title}</span>
