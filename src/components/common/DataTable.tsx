@@ -47,8 +47,7 @@ export function DataTable<T extends Record<string, any>>({
 
   // Skip certain columns on mobile view
   const shouldShowColumnOnMobile = (column: Column<T>) => {
-    // Add "Actions" to the list of columns to skip on mobile
-    const skipHeaders = ["ID", "Email", "Service", "Projects", "Actions"];
+    const skipHeaders = ["ID", "Email", "Service", "Projects"];
     return !skipHeaders.includes(column.header);
   };
 
@@ -64,12 +63,6 @@ export function DataTable<T extends Record<string, any>>({
   const getCardKey = (row: T, rowIndex: number) => {
     return `card-${row.id || rowIndex}-${rowIndex}`;
   };
-
-  // Process columns for mobile view
-  const mobileColumns = columns.filter(column => shouldShowColumnOnMobile(column));
-  
-  // Get the actions column for potential use in card footer
-  const actionsColumn = columns.find(column => column.header === "Actions");
 
   return (
     <div className="space-y-4">
@@ -100,23 +93,32 @@ export function DataTable<T extends Record<string, any>>({
                 {filteredData.map((row, rowIndex) => (
                   <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500">
                     <CardContent className="p-0">
-                      {mobileColumns.map((column, colIndex) => (
-                        <div key={getCellKey(column, colIndex, rowIndex)} className="flex flex-col px-4 py-2 border-b last:border-b-0">
-                          <span className="text-xs font-medium text-muted-foreground">
-                            {getMobileLabel(column)}
-                          </span>
-                          <div className="mt-1">
-                            {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
+                      {columns.map((column, colIndex) => {
+                        // Skip rendering of certain columns that don't make sense on mobile
+                        if (!shouldShowColumnOnMobile(column)) {
+                          return null;
+                        }
+                        
+                        // Actions column should be displayed at the bottom
+                        if (column.header === "Actions") {
+                          return (
+                            <div key={getCellKey(column, colIndex, rowIndex)} className="border-t p-2 bg-muted/20 flex justify-end">
+                              {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div key={getCellKey(column, colIndex, rowIndex)} className="flex flex-col px-4 py-2 border-b last:border-b-0">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {getMobileLabel(column)}
+                            </span>
+                            <div className="mt-1">
+                              {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                      
-                      {/* Conditionally render actions at the bottom of the card if they exist */}
-                      {actionsColumn && actionsColumn.cell && (
-                        <div className="border-t p-2 bg-muted/20 flex justify-end">
-                          {actionsColumn.cell({ row: { original: row } })}
-                        </div>
-                      )}
+                        );
+                      })}
                     </CardContent>
                   </Card>
                 ))}

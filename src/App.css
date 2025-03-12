@@ -51,7 +51,7 @@
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .page-container {
-    padding: 0 0.75rem !important;
+    padding: 0.25rem !important;
   }
   
   .card {
@@ -68,7 +68,7 @@
   
   /* Mobile header spacing */
   .mobile-header-spacing {
-    margin-top: 0.5rem;
+    margin-top: 1rem;
   }
   
   /* Remove margins on mobile for the main content area */
@@ -166,63 +166,4 @@ button.h-10 {
     padding: 0.75rem;
     margin-bottom: 0.5rem;
   }
-}
-
-/* Calendar day view styles */
-.day-view-container {
-  display: grid;
-  grid-template-columns: 60px 1fr;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  overflow: hidden;
-}
-
-.day-view-hour {
-  padding: 0.5rem;
-  border-right: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  color: #6b7280;
-  background-color: #f9fafb;
-}
-
-.day-view-cell {
-  padding: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  min-height: 5rem;
-  position: relative;
-}
-
-.appointment-card {
-  border-radius: 0.25rem;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.appointment-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.appointment-title {
-  font-weight: 500;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
-}
-
-.appointment-time {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.appointment-customer {
-  font-size: 0.75rem;
-  color: #6b7280;
 }

@@ -1,10 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarPlus, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -12,22 +11,15 @@ import { appointmentService, customerService, staffService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { Appointment, Customer, Staff } from "@/types/database";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 
 export default function Schedule() {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"day" | "week">("day");
+  const [view, setView] = useState<"month" | "week">("week");
   const [customersMap, setCustomersMap] = useState<Record<string, Customer>>({});
   const [staffMap, setStaffMap] = useState<Record<string, Staff>>({});
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isAppointmentDetailsOpen, setIsAppointmentDetailsOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: appointments = [], isLoading, error, refetch } = useQuery({
     queryKey: ['appointments'],
@@ -110,15 +102,15 @@ export default function Schedule() {
     refetch();
   }, [currentDate, refetch]);
 
-  const prevDay = () => {
+  const prevMonth = () => {
     const date = new Date(currentDate);
-    date.setDate(date.getDate() - 1);
+    date.setMonth(date.getMonth() - 1);
     setCurrentDate(date);
   };
 
-  const nextDay = () => {
+  const nextMonth = () => {
     const date = new Date(currentDate);
-    date.setDate(date.getDate() + 1);
+    date.setMonth(date.getMonth() + 1);
     setCurrentDate(date);
   };
 
@@ -147,131 +139,6 @@ export default function Schedule() {
   const handleAppointmentClick = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setIsAppointmentDetailsOpen(true);
-  };
-
-  const handleMarkAsDone = async (appointment: Appointment) => {
-    try {
-      setIsUpdating(true);
-      await appointmentService.update(appointment.id, {
-        status: "Completed"
-      });
-      toast({
-        title: "Success",
-        description: "Appointment marked as completed",
-      });
-      refetch();
-    } catch (error) {
-      console.error("Error marking appointment as done:", error);
-      toast({
-        title: "Error",
-        description: "Could not update appointment status",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const renderDayView = () => {
-    const hours = Array.from({ length: 12 }, (_, i) => i + 7);
-    const dateKey = formatDateKey(currentDate);
-    const events = formatEventsForCalendar();
-    const dateEvents = events[dateKey] || [];
-    
-    return (
-      <div className="bg-white rounded-lg border shadow">
-        <div className="grid grid-cols-1 border-b">
-          <div className={`py-4 px-2 text-center ${
-            new Date().toDateString() === currentDate.toDateString() 
-              ? "bg-blue-50 font-semibold text-blue-600" 
-              : "font-semibold"
-          }`}>
-            <div>{currentDate.toLocaleDateString('en-US', { weekday: 'long' })}</div>
-            <div className="text-xl mt-1">{currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 divide-y">
-          {hours.map((hour) => (
-            <div key={hour} className="h-24 py-1 px-2 relative flex">
-              <div className="w-16 text-xs text-muted-foreground flex-shrink-0">
-                {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}
-              </div>
-              <div className="flex-1 relative min-w-0 border-l pl-2">
-                {dateEvents
-                  .filter(event => {
-                    const startHour = parseInt(event.start.split(':')[0], 10);
-                    return startHour === hour;
-                  })
-                  .map((event, eventIndex) => (
-                    <div
-                      key={eventIndex}
-                      className={`relative my-1 rounded-md p-2 overflow-hidden shadow border-l-4 w-full cursor-pointer hover:opacity-90 ${
-                        event.status === "Confirmed" ? "bg-blue-50 border-blue-500" :
-                        event.status === "Pending" ? "bg-amber-50 border-amber-500" :
-                        event.status === "Completed" ? "bg-green-50 border-green-500" :
-                        "bg-gray-50 border-gray-500"
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="text-sm font-semibold">
-                            {event.unitNumber ? `#${event.unitNumber} - ${event.title}` : event.title}
-                          </div>
-                          <div className="text-xs mt-1">{formatTime(event.start)} - {formatTime(event.end)}</div>
-                          <div className="text-xs mt-1 text-gray-600">{event.customer}</div>
-                          <Badge className="mt-1 text-xs" variant="outline">
-                            {event.status}
-                          </Badge>
-                        </div>
-                        <div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAppointmentClick(event.original);
-                                }}
-                              >
-                                View Details
-                              </DropdownMenuItem>
-                              {event.status !== "Completed" && (
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMarkAsDone(event.original);
-                                  }}
-                                >
-                                  <CheckCircle className="mr-2 h-4 w-4" />
-                                  Mark as Completed
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/schedule/edit/${event.id}`);
-                                }}
-                              >
-                                Edit
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
   };
 
   const renderWeekView = () => {
@@ -386,18 +253,18 @@ export default function Schedule() {
           <Button 
             variant="outline" 
             size="sm" 
-            className={view === "day" ? "bg-blue-50 text-blue-700" : ""}
-            onClick={() => setView("day")}
-          >
-            Day
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
             className={view === "week" ? "bg-blue-50 text-blue-700" : ""}
             onClick={() => setView("week")}
           >
             Week
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={view === "month" ? "bg-blue-50 text-blue-700" : ""}
+            onClick={() => setView("month")}
+          >
+            Month
           </Button>
         </div>
         
@@ -405,22 +272,22 @@ export default function Schedule() {
           <Button
             variant="outline"
             size="icon"
-            onClick={view === "day" ? prevDay : prevWeek}
+            onClick={view === "week" ? prevWeek : prevMonth}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
           <h3 className="text-md md:text-lg font-semibold whitespace-nowrap">
-            {view === "day" 
-              ? currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-              : `${getWeekDates()[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${getWeekDates()[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+            {view === "week" 
+              ? `${getWeekDates()[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${getWeekDates()[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+              : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
             }
           </h3>
           
           <Button
             variant="outline"
             size="icon"
-            onClick={view === "day" ? nextDay : nextWeek}
+            onClick={view === "week" ? nextWeek : nextMonth}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -444,7 +311,11 @@ export default function Schedule() {
           <div className="bg-white rounded-lg border shadow p-8 text-center text-red-500">
             Error loading appointments. Please try again.
           </div>
-        ) : view === "day" ? renderDayView() : renderWeekView()}
+        ) : view === "week" ? renderWeekView() : (
+          <div className="bg-white rounded-lg border shadow p-4">
+            <div className="text-center text-muted-foreground">Month view coming soon</div>
+          </div>
+        )}
       </div>
 
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />

@@ -65,10 +65,12 @@ export function MainLayout({ children }: MainLayoutProps) {
     navigate('/auth/login');
   };
   
-  // Toggle sidebar function - simplified but reliable
-  const toggleSidebar = () => {
-    setSidebarOpen(prevState => !prevState);
-  };
+  // Close sidebar when route changes
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  }, [location, isMobile, sidebarOpen]);
 
   if (isLoading) {
     return (
@@ -79,14 +81,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
   
   return (
-    <div className="flex min-h-screen bg-background overflow-hidden">
-      <div 
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
-        onClick={() => setSidebarOpen(false)} 
-      />
-      
-      {/* Fixed sidebar wrapper to prevent scrolling */}
-      <div className="h-screen sticky top-0 z-50 flex-shrink-0">
+    <div className="flex min-h-screen bg-background">
+      <div className="sticky top-0 h-screen flex-shrink-0">
         <AppSidebar 
           open={sidebarOpen} 
           setOpen={setSidebarOpen} 
@@ -96,17 +92,15 @@ export function MainLayout({ children }: MainLayoutProps) {
         />
       </div>
       
-      <div className="flex-1 flex flex-col overflow-auto relative">
+      <div className="flex-1 overflow-auto">
         {isMobile && (
-          <div className="sticky top-0 z-40 w-full">
-            <MobileHeader 
-              title={getPageTitle()} 
-              onMenuClick={toggleSidebar} 
-            />
-          </div>
+          <MobileHeader 
+            title={getPageTitle()} 
+            onMenuClick={() => setSidebarOpen(true)} 
+          />
         )}
         
-        <main className={`${isMobile ? 'px-0 pt-2 pb-16' : 'p-6 md:px-8 lg:px-10'} flex-1`}>
+        <main className={`p-6 md:px-8 lg:px-10 ${isMobile ? 'mt-14 px-3' : ''}`}>
           {children}
         </main>
       </div>

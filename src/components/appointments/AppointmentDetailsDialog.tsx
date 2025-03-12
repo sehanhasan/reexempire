@@ -1,11 +1,10 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, closeDialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, User, MapPin, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
-import { closeDropdown } from "@/components/ui/dropdown-menu";
 
 interface AppointmentDetailsDialogProps {
   open: boolean;
@@ -33,54 +32,9 @@ export function AppointmentDetailsDialog({
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  // Handle dialog close safely
-  const handleClose = () => {
-    // Use the closeDialog helper to properly close the dialog
-    closeDialog();
-    
-    // Set a larger timeout to prevent UI freeze
-    setTimeout(() => {
-      // After dialog is safely closed, close dropdown if open
-      closeDropdown();
-      
-      // Finally call the onClose handler
-      onClose();
-    }, 100);
-  };
-
-  // Handle edit navigation safely
-  const handleEdit = () => {
-    // Close dialog first
-    closeDialog();
-    
-    // Then close dropdown
-    closeDropdown();
-    
-    // Wait until UI is updated before navigation
-    setTimeout(() => {
-      onClose();
-      navigate(`/schedule/edit/${appointment.id}`);
-    }, 150);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={(open) => {
-      if (!open) {
-        handleClose();
-      }
-    }}>
-      <DialogContent 
-        className="sm:max-w-md"
-        // These handlers need to be completely replaced
-        onInteractOutside={(e) => {
-          e.preventDefault();
-          handleClose();
-        }}
-        onEscapeKeyDown={(e) => {
-          e.preventDefault();
-          handleClose();
-        }}
-      >
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl">{appointment.title}</DialogTitle>
         </DialogHeader>
@@ -165,10 +119,13 @@ export function AppointmentDetailsDialog({
         </div>
 
         <DialogFooter className="flex justify-between sm:justify-between">
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={handleEdit} className="gap-2">
+          <Button onClick={() => {
+            onClose();
+            navigate(`/schedule/edit/${appointment.id}`);
+          }} className="gap-2">
             <Edit className="h-4 w-4" />
             Edit Appointment
           </Button>

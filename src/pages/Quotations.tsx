@@ -277,7 +277,7 @@ export default function Quotations() {
                     <TableHead>Expiry Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Total</TableHead>
-                    
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -298,7 +298,42 @@ export default function Quotations() {
                         <TableCell className="text-right font-medium">
                           {formatMoney(quotation.total)}
                         </TableCell>
-                        
+                        <TableCell>
+                          <div className="flex space-x-1 justify-end">
+                            {quotation.status === "Accepted" && <Button variant="outline" size="icon" className="h-8 w-8 text-blue-600" title="Convert to Invoice" onClick={() => handleConvertToInvoice(quotation)}>
+                                <FileText className="h-4 w-4" />
+                              </Button>}
+                            
+                            <Button variant="outline" size="icon" className="h-8 w-8" title="Send on WhatsApp" onClick={() => handleSendWhatsapp(quotation)}>
+                              <Send className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button variant="outline" size="icon" className="h-8 w-8" title="Download PDF" onClick={() => handleDownloadPDF(quotation)}>
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                                  <FileEdit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600" onClick={() => {
+                            setQuotationToDelete(quotation);
+                            setDeleteDialogOpen(true);
+                          }}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
                       </TableRow>;
               })}
                 </TableBody>

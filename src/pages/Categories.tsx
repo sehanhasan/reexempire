@@ -20,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  closeDropdown
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -32,7 +31,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  closeAlertDialog
 } from "@/components/ui/alert-dialog";
 
 import { Category } from "@/types/database";
@@ -68,39 +66,27 @@ export default function Categories() {
   };
 
   const handleDeleteCategory = (category: Category) => {
-    // Close dropdown first to prevent UI freeze
-    closeDropdown();
-    
-    // Set a small timeout before showing alert dialog
-    setTimeout(() => {
-      setCategoryToDelete(category);
-      setShowConfirmDelete(true);
-    }, 50);
+    setCategoryToDelete(category);
+    setShowConfirmDelete(true);
   };
 
   const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
     
     try {
-      // Close dialog first
-      closeAlertDialog();
+      await categoryService.delete(categoryToDelete.id);
       
-      // Set a small timeout before performing the delete
-      setTimeout(async () => {
-        await categoryService.delete(categoryToDelete.id);
-        
-        toast({
-          title: "Category Deleted",
-          description: `${categoryToDelete.name} has been deleted.`,
-          variant: "destructive",
-        });
-        
-        setCategoryToDelete(null);
-        setShowConfirmDelete(false);
-        
-        // Refresh the categories data
-        refetch();
-      }, 100);
+      toast({
+        title: "Category Deleted",
+        description: `${categoryToDelete.name} has been deleted.`,
+        variant: "destructive",
+      });
+      
+      setCategoryToDelete(null);
+      setShowConfirmDelete(false);
+      
+      // Refresh the categories data
+      refetch();
       
     } catch (error) {
       console.error("Error deleting category:", error);
@@ -110,17 +96,6 @@ export default function Categories() {
         variant: "destructive"
       });
     }
-  };
-
-  const handleCancelDelete = () => {
-    // Close dialog
-    closeAlertDialog();
-    
-    // Set a small timeout before updating state
-    setTimeout(() => {
-      setShowConfirmDelete(false);
-      setCategoryToDelete(null);
-    }, 100);
   };
 
   const columns = [
@@ -200,6 +175,7 @@ export default function Categories() {
       <PageHeader 
         title="Service Categories" 
         description="Manage your service categories and subcategories."
+        // Removed "Add Category" button from header as requested
       />
       
       <div className="mt-8">
@@ -210,14 +186,7 @@ export default function Categories() {
         />
       </div>
 
-      <AlertDialog 
-        open={showConfirmDelete} 
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCancelDelete();
-          }
-        }}
-      >
+      <AlertDialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -228,9 +197,7 @@ export default function Categories() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelDelete}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDeleteCategory}
               className="bg-red-600 hover:bg-red-700"
