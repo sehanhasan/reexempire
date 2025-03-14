@@ -13,6 +13,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileActions, setMobileActions] = useState<ReactNode[]>([]);
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,6 +33,22 @@ export function MainLayout({ children }: MainLayoutProps) {
       }
     }
   }, [user, isLoading, location.pathname, navigate, isStaff, isAdmin]);
+  
+  // Get mobile header actions using custom event
+  useEffect(() => {
+    const handleGetMobileActions = (event: CustomEvent) => {
+      if (event.detail && Array.isArray(event.detail)) {
+        setMobileActions(event.detail);
+      }
+    };
+
+    // Type assertion for the event handler
+    window.addEventListener('get-mobile-actions', handleGetMobileActions as EventListener);
+    
+    return () => {
+      window.removeEventListener('get-mobile-actions', handleGetMobileActions as EventListener);
+    };
+  }, []);
   
   // Get page title based on route
   const getPageTitle = () => {
@@ -102,13 +119,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <MobileHeader 
               title={getPageTitle()} 
               onMenuClick={toggleSidebar} 
-              actions={
-                // Check if we're on edit pages to handle the actions appropriately
-                location.pathname.includes("/edit") ? 
-                  window.dispatchEvent(new CustomEvent('get-mobile-actions')) ||
-                  [] : 
-                  []
-              }
+              actions={mobileActions}
             />
           </div>
         )}
