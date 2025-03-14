@@ -15,7 +15,7 @@ export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-12 items-center justify-between px-4 bg-blue-600 w-full">
+    <header className="sticky top-0 z-50 flex h-12 items-center justify-between px-4 bg-blue-600 w-full shadow-md">
       <Button
         variant="ghost"
         size="icon"
@@ -26,7 +26,7 @@ export function MobileHeader({ title, onMenuClick }: MobileHeaderProps) {
       >
         <Menu className="h-5 w-5" />
       </Button>
-      <h1 className="font-semibold text-white">{title}</h1>
+      <h1 className="font-semibold text-white truncate">{title}</h1>
       <div className="w-9" />
     </header>
   );

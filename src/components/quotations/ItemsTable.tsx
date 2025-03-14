@@ -55,7 +55,7 @@ export function ItemsTable({
 
   return (
     <div className="w-full overflow-auto">
-      {isMobile ?
+      {isMobile ? (
         // Mobile view - improved layout grouped by category
         <div className="space-y-6">
           {orderedCategories.map(category => (
@@ -126,8 +126,8 @@ export function ItemsTable({
               ))}
             </div>
           ))}
-        </div> :
-        
+        </div>
+      ) : (
         // Desktop view - grouped by category
         <table className="w-full">
           <thead>
@@ -202,7 +202,7 @@ export function ItemsTable({
             ))}
           </tbody>
         </table>
-      }
+      )}
     </div>
   );
 }
