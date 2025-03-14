@@ -16,16 +16,6 @@ export function PageHeader({ title, description, actions, mobileHeaderActions }:
   if (isMobile) {
     return (
       <>
-        <MobileHeader 
-          title={title} 
-          onMenuClick={() => {
-            // Toggle sidebar - this is handled by the parent component
-            const event = new CustomEvent('toggle-sidebar');
-            window.dispatchEvent(event);
-          }}
-          actions={mobileHeaderActions || (actions ? [actions] : [])}
-        />
-        
         {description && (
           <div className="px-4 pt-3 pb-2">
             <p className="text-sm text-muted-foreground">{description}</p>

@@ -102,6 +102,13 @@ export function MainLayout({ children }: MainLayoutProps) {
             <MobileHeader 
               title={getPageTitle()} 
               onMenuClick={toggleSidebar} 
+              actions={
+                // Check if we're on edit pages to handle the actions appropriately
+                location.pathname.includes("/edit") ? 
+                  window.dispatchEvent(new CustomEvent('get-mobile-actions')) ||
+                  [] : 
+                  []
+              }
             />
           </div>
         )}
