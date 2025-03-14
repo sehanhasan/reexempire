@@ -1,113 +1,49 @@
 
-import React, { ReactNode } from 'react';
+import { ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { MobileHeader } from "@/components/layout/MobileHeader";
 
 interface PageHeaderProps {
   title: string;
-  actions?: ReactNode;
   description?: string;
+  actions?: ReactNode;
+  mobileHeaderActions?: ReactNode[];
 }
 
-export function PageHeader({
-  title,
-  actions,
-  description
-}: PageHeaderProps) {
+export function PageHeader({ title, description, actions, mobileHeaderActions }: PageHeaderProps) {
   const isMobile = useIsMobile();
 
-  // Filter out back buttons on mobile
-  const filterBackButtons = (actionNodes: ReactNode): ReactNode => {
-    if (!actionNodes || !isMobile) return actionNodes;
-
-    // If actions is a single element
-    if (React.isValidElement(actionNodes)) {
-      // Check if it's a back button (contains ArrowLeft icon)
-      if (actionNodes.props && typeof actionNodes.props === 'object' && 'children' in actionNodes.props) {
-        const children = actionNodes.props.children;
-        if (Array.isArray(children) && children.some(child => React.isValidElement(child) && child.type === ArrowLeft)) {
-          return null;
-        }
-        // If children is a single element, check if it's an ArrowLeft
-        if (React.isValidElement(children) && children.type === ArrowLeft) {
-          return null;
-        }
-      }
-      return actionNodes;
-    }
-
-    // If actions is an array or fragment
-    if (Array.isArray(actionNodes)) {
-      return actionNodes.filter(action => {
-        if (!React.isValidElement(action)) return true;
-
-        // Check for ArrowLeft icon in children
-        if (action.props && typeof action.props === 'object' && 'children' in action.props) {
-          const children = action.props.children;
-          if (Array.isArray(children)) {
-            return !children.some(child => React.isValidElement(child) && child.type === ArrowLeft);
-          }
-          // If children is a single element, check if it's an ArrowLeft
-          if (React.isValidElement(children)) {
-            return children.type !== ArrowLeft;
-          }
-        }
-        return true;
-      });
-    }
-    return actionNodes;
-  };
-  
-  // Get actions for the mobile header
-  const getMobileHeaderActions = (actionNodes: ReactNode): ReactNode[] => {
-    if (!actionNodes) return [];
-    
-    // Convert to array if it's a single element
-    const actionArray = React.isValidElement(actionNodes) ? [actionNodes] : 
-                         Array.isArray(actionNodes) ? actionNodes : [];
-    
-    return actionArray.filter(action => {
-      // We want all action buttons except those with ArrowLeft
-      if (!React.isValidElement(action)) return false;
-      
-      // Check if it has ArrowLeft
-      if (action.props && typeof action.props === 'object' && 'children' in action.props) {
-        const children = action.props.children;
-        if (Array.isArray(children)) {
-          return !children.some(child => React.isValidElement(child) && child.type === ArrowLeft);
-        }
-        if (React.isValidElement(children)) {
-          return children.type !== ArrowLeft;
-        }
-      }
-      return true;
-    });
-  };
-  
-  const filteredActions = filterBackButtons(actions);
-  const mobileHeaderActions = getMobileHeaderActions(actions);
-
-  // Expose mobile header actions through a global variable
-  // This is a bit hacky but avoids complex state management
-  if (isMobile && mobileHeaderActions.length > 0) {
-    // @ts-ignore
-    window.mobileHeaderActions = mobileHeaderActions;
-  } else {
-    // @ts-ignore
-    window.mobileHeaderActions = null;
-  }
-
-  // On mobile, show minimal header
   if (isMobile) {
-    return filteredActions && !window.mobileHeaderActions ? <div className="flex justify-end mb-2">{filteredActions}</div> : null;
+    return (
+      <>
+        <MobileHeader 
+          title={title} 
+          onMenuClick={() => {
+            // Toggle sidebar - this is handled by the parent component
+            const event = new CustomEvent('toggle-sidebar');
+            window.dispatchEvent(event);
+          }}
+          actions={mobileHeaderActions || (actions ? [actions] : [])}
+        />
+        
+        {description && (
+          <div className="px-4 pt-3 pb-2">
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        )}
+      </>
+    );
   }
-  
-  return <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+
+  return (
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-blue-700">{title}</h1>
-        {description && <p className="text-muted-foreground">{description}</p>}
+        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+        )}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
-    </div>;
+      {actions && <div>{actions}</div>}
+    </div>
+  );
 }
