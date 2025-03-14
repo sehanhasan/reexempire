@@ -57,9 +57,9 @@ export function ItemsTable({
     <div className="w-full overflow-auto">
       {isMobile ? (
         // Mobile view - improved layout grouped by category
-        <div className="space-y-6">
+        <div className="space-y-5">
           {orderedCategories.map(category => (
-            <div key={category} className="space-y-4">
+            <div key={category} className="space-y-3">
               <div className="font-medium text-base text-blue-600">{category}</div>
               {groupedItems[category].map((item, index) => (
                 <div key={item.id} className="border rounded-md p-3 space-y-2 relative bg-white">

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send } from "lucide-react";
+import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
@@ -16,10 +16,13 @@ import { Quotation, Customer } from "@/types/database";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number?: string;
 }
+
 const StatusBadge = ({
   status
 }: {
@@ -55,8 +58,27 @@ const StatusBadge = ({
       {status}
     </span>;
 };
+
+const StatusIcon = ({ status }: { status: string }) => {
+  switch (status) {
+    case 'Draft':
+      return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
+    case 'Sent':
+      return <Send className="h-3.5 w-3.5 mr-1 text-blue-600" />;
+    case 'Accepted':
+      return <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-600" />;
+    case 'Rejected':
+      return <XCircle className="h-3.5 w-3.5 mr-1 text-red-600" />;
+    case 'Expired':
+      return <TimerReset className="h-3.5 w-3.5 mr-1 text-amber-600" />;
+    default:
+      return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
+  }
+};
+
 export default function Quotations() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [quotations, setQuotations] = useState<QuotationWithCustomer[]>([]);
   const [filteredQuotations, setFilteredQuotations] = useState<QuotationWithCustomer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,6 +87,7 @@ export default function Quotations() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -91,9 +114,11 @@ export default function Quotations() {
       });
     }
   };
+
   useEffect(() => {
     fetchData();
   }, []);
+
   useEffect(() => {
     let filtered = [...quotations];
     if (statusFilter !== "all") {
@@ -105,6 +130,7 @@ export default function Quotations() {
     }
     setFilteredQuotations(filtered);
   }, [quotations, searchTerm, statusFilter]);
+
   const handleDelete = async () => {
     if (!quotationToDelete) return;
     try {
@@ -125,6 +151,7 @@ export default function Quotations() {
       });
     }
   };
+
   const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
     navigate("/invoices/create", {
       state: {
@@ -132,6 +159,7 @@ export default function Quotations() {
       }
     });
   };
+
   const handleSendWhatsapp = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
@@ -187,6 +215,7 @@ export default function Quotations() {
       });
     }
   };
+
   const handleDownloadPDF = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
@@ -227,16 +256,16 @@ export default function Quotations() {
       });
     }
   };
+
   const formatMoney = (amount: number) => {
     return `RM ${parseFloat(amount.toString()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
+
   return <div className="page-container">
-      <PageHeader title="Quotations" actions={<div className="hidden md:block">
-            
-          </div>} />
+      <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
 
       <Card className="mt-6">
         <CardContent className="p-0">
@@ -268,22 +297,96 @@ export default function Quotations() {
             </div> : filteredQuotations.length === 0 ? <div className="py-8 text-center">
               <p className="text-muted-foreground">No quotations found matching your criteria</p>
             </div> : <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quotation #</TableHead>
-                    <TableHead>Unit #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Expiry Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              {isMobile ? (
+                <div className="p-2 space-y-3">
                   {filteredQuotations.map(quotation => {
-                const status = quotation.status;
-                return <TableRow key={quotation.id}>
+                    const status = quotation.status;
+                    
+                    return (
+                      <div 
+                        key={quotation.id}
+                        className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm"
+                        onClick={() => navigate(`/quotations/edit/${quotation.id}`)}
+                      >
+                        <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
+                          <div>
+                            <div className="font-medium text-blue-700">
+                              {quotation.unit_number || "-"}
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center mt-0.5">
+                              <FileText className="h-3 w-3 mr-1" />
+                              {quotation.reference_number}
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <Badge className={`flex items-center ${status === 'Accepted' ? 'bg-green-100 text-green-700' : 
+                              status === 'Sent' ? 'bg-blue-100 text-blue-700' : 
+                              status === 'Rejected' ? 'bg-red-100 text-red-700' : 
+                              status === 'Expired' ? 'bg-amber-100 text-amber-700' : 
+                              'bg-gray-100 text-gray-700'}`}
+                            >
+                              <StatusIcon status={status} />
+                              {status}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="px-3 py-2 space-y-1.5">
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500 flex items-center">
+                              <Calendar className="h-3.5 w-3.5 mr-1.5" />Issue Date
+                            </span>
+                            <span>{formatDate(quotation.issue_date)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500 flex items-center">
+                              <Clock className="h-3.5 w-3.5 mr-1.5" />Expiry Date
+                            </span>
+                            <span>{formatDate(quotation.expiry_date)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-500 flex items-center">
+                              <Home className="h-3.5 w-3.5 mr-1.5" />Customer
+                            </span>
+                            <span className="font-medium truncate max-w-[150px]">
+                              {quotation.customer_name}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="border-t p-2 bg-gray-50 flex justify-between items-center">
+                          <span className="text-sm font-semibold text-blue-700">
+                            {formatMoney(quotation.total)}
+                          </span>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/quotations/edit/${quotation.id}`);
+                          }}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Quotation #</TableHead>
+                      <TableHead>Unit #</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Expiry Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredQuotations.map(quotation => {
+                      const status = quotation.status;
+                      return <TableRow key={quotation.id}>
                         <TableCell>
                           <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                             {quotation.reference_number}
@@ -298,11 +401,11 @@ export default function Quotations() {
                         <TableCell className="text-right font-medium">
                           {formatMoney(quotation.total)}
                         </TableCell>
-                        
                       </TableRow>;
-              })}
-                </TableBody>
-              </Table>
+                    })}
+                  </TableBody>
+                </Table>
+              )}
             </div>}
         </CardContent>
       </Card>

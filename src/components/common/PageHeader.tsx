@@ -59,11 +59,48 @@ export function PageHeader({
     return actionNodes;
   };
   
+  // Get actions for the mobile header
+  const getMobileHeaderActions = (actionNodes: ReactNode): ReactNode[] => {
+    if (!actionNodes) return [];
+    
+    // Convert to array if it's a single element
+    const actionArray = React.isValidElement(actionNodes) ? [actionNodes] : 
+                         Array.isArray(actionNodes) ? actionNodes : [];
+    
+    return actionArray.filter(action => {
+      // We want all action buttons except those with ArrowLeft
+      if (!React.isValidElement(action)) return false;
+      
+      // Check if it has ArrowLeft
+      if (action.props && typeof action.props === 'object' && 'children' in action.props) {
+        const children = action.props.children;
+        if (Array.isArray(children)) {
+          return !children.some(child => React.isValidElement(child) && child.type === ArrowLeft);
+        }
+        if (React.isValidElement(children)) {
+          return children.type !== ArrowLeft;
+        }
+      }
+      return true;
+    });
+  };
+  
   const filteredActions = filterBackButtons(actions);
+  const mobileHeaderActions = getMobileHeaderActions(actions);
+
+  // Expose mobile header actions through a global variable
+  // This is a bit hacky but avoids complex state management
+  if (isMobile && mobileHeaderActions.length > 0) {
+    // @ts-ignore
+    window.mobileHeaderActions = mobileHeaderActions;
+  } else {
+    // @ts-ignore
+    window.mobileHeaderActions = null;
+  }
 
   // On mobile, show minimal header
   if (isMobile) {
-    return filteredActions ? <div className="flex justify-end mb-2">{filteredActions}</div> : null;
+    return filteredActions && !window.mobileHeaderActions ? <div className="flex justify-end mb-2">{filteredActions}</div> : null;
   }
   
   return <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">

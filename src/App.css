@@ -51,7 +51,9 @@
 /* Mobile optimizations */
 @media (max-width: 767px) {
   .page-container {
-    padding: 0 0.75rem !important;
+    padding: 0 0.5rem !important;
+    padding-bottom: 4rem !important;
+    padding-top: 0.5rem !important;
   }
   
   .card {
@@ -175,6 +177,13 @@ button.h-10 {
     margin-bottom: 0.75rem;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background-color: white;
+    cursor: pointer;
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  .mobile-card:active {
+    transform: translateY(1px);
   }
   
   .mobile-card-header {
@@ -194,6 +203,16 @@ button.h-10 {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
+  }
+  
+  /* Compact mobile card styles */
+  .p-2.space-y-3 {
+    padding: 0.5rem !important;
+  }
+  
+  .mobile-card .badge {
+    font-size: 0.7rem !important;
+    padding: 0.15rem 0.5rem !important;
   }
 }
 
@@ -254,4 +273,16 @@ button.h-10 {
 .appointment-customer {
   font-size: 0.75rem;
   color: #6b7280;
+}
+
+/* Add extra spacing for mobile header */
+body {
+  padding-top: 0 !important;
+}
+
+/* Making mobile header sticky */
+@media (max-width: 767px) {
+  .page-container {
+    padding-top: calc(3rem + 0.5rem) !important;
+  }
 }
