@@ -29,7 +29,7 @@ export default function CreateInvoice() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+    { id: 1, description: "", category: "Other Items", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
   const [customerId, setCustomerId] = useState("");
@@ -101,7 +101,7 @@ export default function CreateInvoice() {
               setItems(quotationItems.map((item, index) => ({
                 id: index + 1,
                 description: item.description,
-                category: item.category || "",
+                category: item.category || "Other Items",
                 quantity: item.quantity,
                 unit: item.unit,
                 unitPrice: item.unit_price,

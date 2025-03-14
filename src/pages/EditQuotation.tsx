@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save, Send, CheckCircle, XCircle, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -86,7 +86,7 @@ export default function EditQuotation() {
             setItems(quotationItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
-              category: item.category || "",
+              category: item.category || "Other Items",
               quantity: item.quantity,
               unit: item.unit,
               unitPrice: item.unit_price,
@@ -326,35 +326,12 @@ export default function EditQuotation() {
         <AdditionalInfoCard 
           notes={notes} 
           setNotes={setNotes} 
-          onSubmit={(e) => handleSubmit(e)} 
+          onSubmit={(e) => handleSubmit(e, e.currentTarget === document.activeElement ? "Sent" : "Draft")} 
           onCancel={() => navigate("/quotations")} 
           documentType="quotation" 
           isSubmitting={isSubmitting} 
           saveButtonText="Update Quotation" 
         />
-        
-        {/* Add footer with Save Draft and Send buttons */}
-        <div className="sticky bottom-0 left-0 right-0 bg-white border-t p-4 shadow-md flex justify-end gap-3 z-10">
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="gap-2"
-            onClick={(e) => handleSubmit(e, "Draft")}
-            disabled={isSubmitting}
-          >
-            <Save className="h-4 w-4" />
-            Save Draft
-          </Button>
-          <Button 
-            type="button"
-            className="gap-2 bg-blue-600 hover:bg-blue-700"
-            onClick={(e) => handleSubmit(e, "Sent")}
-            disabled={isSubmitting}
-          >
-            <Send className="h-4 w-4" />
-            {status === "Sent" ? "Send Update" : "Send Quotation"}
-          </Button>
-        </div>
       </form>
     </div>;
 }

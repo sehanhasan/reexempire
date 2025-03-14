@@ -34,7 +34,7 @@ export function ItemsTable({
     const orderedCategories: string[] = [];
 
     items.forEach(item => {
-      const category = item.category || 'Uncategorized';
+      const category = item.category || 'Other Items';
       if (!groupedItems[category]) {
         groupedItems[category] = [];
         orderedCategories.push(category);

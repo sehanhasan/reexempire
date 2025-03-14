@@ -49,7 +49,7 @@ export function QuotationItemsCard({
     setItems([...items, {
       id: newId,
       description: "",
-      category: "",
+      category: "Other Items",
       quantity: 1,
       unit: "Unit",
       unitPrice: 0,
@@ -88,7 +88,7 @@ export function QuotationItemsCard({
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
       description: selectedItem.description,
-      category: selectedItem.category || "",
+      category: selectedItem.category || "Other Items",
       quantity: selectedItem.quantity,
       unit: selectedItem.unit,
       unitPrice: selectedItem.price,

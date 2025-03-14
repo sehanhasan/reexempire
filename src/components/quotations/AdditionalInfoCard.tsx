@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Send, Save, Ban } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Send, Save } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface AdditionalInfoCardProps {
   notes: string;
-  setNotes: (notes: string) => void;
+  setNotes: React.Dispatch<React.SetStateAction<string>>;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   documentType: "quotation" | "invoice";
@@ -15,6 +15,7 @@ interface AdditionalInfoCardProps {
   saveButtonText?: string;
   onSendWhatsapp?: () => void;
 }
+
 export function AdditionalInfoCard({
   notes,
   setNotes,
@@ -22,42 +23,100 @@ export function AdditionalInfoCard({
   onCancel,
   documentType,
   isSubmitting = false,
-  saveButtonText,
+  saveButtonText = "Save",
   onSendWhatsapp
 }: AdditionalInfoCardProps) {
   const isMobile = useIsMobile();
-  return <Card className="shadow-sm">
+  
+  return (
+    <Card className="shadow-sm">
       <CardHeader className="py-3 px-4">
         <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
       </CardHeader>
       <CardContent className="py-3 px-4">
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea id="notes" placeholder={`Add any additional notes to this ${documentType}...`} className="resize-none h-24" value={notes} onChange={e => setNotes(e.target.value)} />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="notes" className="text-sm font-medium">Notes</label>
+            <Textarea 
+              id="notes"
+              placeholder={`Enter any additional notes for this ${documentType}...`}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="min-h-20"
+            />
+          </div>
+          
+          <div className={`flex ${isMobile ? 'flex-col' : 'justify-end'} gap-3 mt-6`}>
+            {documentType === "quotation" && (
+              <>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className={`${isMobile ? 'w-full' : ''} gap-2`}
+                  onClick={(e) => {
+                    const formEvent = e as React.FormEvent;
+                    // Additional code to handle draft status
+                    onSubmit(formEvent);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <Save className="h-4 w-4" />
+                  Save Draft
+                </Button>
+                <Button 
+                  type="button"
+                  className={`${isMobile ? 'w-full' : ''} gap-2 bg-blue-600 hover:bg-blue-700`}
+                  onClick={(e) => {
+                    const formEvent = e as React.FormEvent;
+                    // Additional code to handle sent status
+                    onSubmit(formEvent);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <Send className="h-4 w-4" />
+                  {saveButtonText === "Save" ? "Send Quotation" : "Send Update"}
+                </Button>
+              </>
+            )}
+            
+            {documentType === "invoice" && (
+              <>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onCancel}
+                  className={`${isMobile ? 'w-full' : ''}`}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                
+                <Button 
+                  type="submit" 
+                  onClick={(e) => onSubmit(e)}
+                  className={`${isMobile ? 'w-full' : ''} bg-blue-600 hover:bg-blue-700`}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Saving...' : saveButtonText}
+                </Button>
+                
+                {onSendWhatsapp && (
+                  <Button 
+                    type="button" 
+                    variant="secondary"
+                    onClick={onSendWhatsapp}
+                    className={`${isMobile ? 'w-full' : ''} gap-2`}
+                    disabled={isSubmitting}
+                  >
+                    <Send className="h-4 w-4" />
+                    Send to WhatsApp
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </CardContent>
-      <CardFooter className={`pt-2 px-4 pb-4 ${isMobile ? "flex-col" : "justify-end"}`}>
-        <div className={`${isMobile ? "w-full flex flex-col gap-2" : "flex gap-2"}`}>
-          <Button type="button" variant="outline" className="h-10" onClick={onCancel} disabled={isSubmitting}>
-            <Ban className="mr-1.5 h-4 w-4" />
-            Cancel
-          </Button>
-          
-          {onSendWhatsapp && <Button type="button" variant="secondary" className="h-10" onClick={onSendWhatsapp} disabled={isSubmitting}>
-              <Send className="mr-1.5 h-4 w-4" />
-              Send to WhatsApp
-            </Button>}
-          
-          <Button type="submit" className="h-10" onClick={onSubmit} disabled={isSubmitting}>
-            {isSubmitting ? <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                Saving...
-              </> : <>
-                <Save className="mr-1.5 h-4 w-4" />
-                {saveButtonText || `Save ${documentType.charAt(0).toUpperCase() + documentType.slice(1)}`}
-              </>}
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>;
+    </Card>
+  );
 }
