@@ -1,6 +1,12 @@
 
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, MoreVertical } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { ReactNode } from "react";
 
 interface MobileHeaderProps {
@@ -31,11 +37,24 @@ export function MobileHeader({ title, onMenuClick, actions }: MobileHeaderProps)
       <h1 className="font-semibold text-white truncate">{title}</h1>
       
       {actions && actions.length > 0 ? (
-        <div className="flex items-center">
-          {actions.map((action, index) => (
-            <div key={index}>{action}</div>
-          ))}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:bg-blue-700"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {actions.map((action, index) => (
+              <DropdownMenuItem key={index} className="cursor-pointer">
+                {action}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : (
         <div className="w-9" />
       )}

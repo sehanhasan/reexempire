@@ -1,9 +1,10 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -11,6 +12,12 @@ import { appointmentService, customerService, staffService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { Appointment, Customer, Staff } from "@/types/database";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -137,6 +144,11 @@ export default function Schedule() {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   };
 
+  const handleAppointmentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsAppointmentDetailsOpen(true);
+  };
+
   const handleMarkAsDone = async (appointment: Appointment) => {
     try {
       setIsUpdating(true);
@@ -200,7 +212,6 @@ export default function Schedule() {
                         event.status === "Completed" ? "bg-green-50 border-green-500" :
                         "bg-gray-50 border-gray-500"
                       }`}
-                      onClick={() => handleAppointmentClick(event.original)}
                     >
                       <div className="flex justify-between items-start">
                         <div>
@@ -212,6 +223,45 @@ export default function Schedule() {
                           <Badge className="mt-1 text-xs" variant="outline">
                             {event.status}
                           </Badge>
+                        </div>
+                        <div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAppointmentClick(event.original);
+                                }}
+                              >
+                                View Details
+                              </DropdownMenuItem>
+                              {event.status !== "Completed" && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMarkAsDone(event.original);
+                                  }}
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Mark as Completed
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/schedule/edit/${event.id}`);
+                                }}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
@@ -319,11 +369,6 @@ export default function Schedule() {
     );
   };
 
-  const handleAppointmentClick = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
-    setIsAppointmentDetailsOpen(true);
-  };
-
   return (
     <div className="page-container">
       <PageHeader 
@@ -410,8 +455,6 @@ export default function Schedule() {
         appointment={selectedAppointment}
         customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null}
         assignedStaff={selectedAppointment?.staff_id ? staffMap[selectedAppointment.staff_id] : null}
-        onMarkComplete={handleMarkAsDone}
-        onEdit={(appointmentId) => navigate(`/schedule/edit/${appointmentId}`)}
       />
     </div>
   );
