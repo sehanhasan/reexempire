@@ -106,7 +106,7 @@
   /* Mobile optimizations for page container */
   @media (max-width: 767px) {
     .page-container {
-      @apply px-0 py-1 mx-0 max-w-full;
+      @apply px-4 py-2 mx-0 max-w-full;
     }
   }
 
@@ -139,7 +139,7 @@
   }
 
   .floating-action-button {
-    @apply fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:bottom-8 sm:right-8;
+    @apply fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:bottom-8 sm:right-8;
   }
   
   /* Mobile optimized form components */
@@ -161,13 +161,13 @@
 /* Fix duplicate header issue */
 @media (max-width: 767px) {
   .page-container {
-    padding-top: 0 !important;
+    padding-top: 0.5rem !important;
     margin-top: 0 !important;
   }
   
   /* Content padding under fixed header */
   main {
-    padding-top: 0.5rem !important;
+    padding-top: 0.75rem !important;
   }
   
   /* Set minimum height for content area */
@@ -184,11 +184,16 @@
   width: 100%;
 }
 
-/* Mobile action buttons in header */
-.mobile-header-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+/* Appointment cards styling */
+.appointment-card {
+  border-left-width: 4px;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+}
+
+.appointment-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Fix dropdown menu freezing - increase z-index */

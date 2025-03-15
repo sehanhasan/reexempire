@@ -2,8 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, closeDialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, MapPin, Edit } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Calendar, Clock, User, MapPin, Edit, CheckCircle } from "lucide-react";
 import { Customer, Staff, Appointment } from "@/types/database";
 import { closeDropdown } from "@/components/ui/dropdown-menu";
 
@@ -13,6 +12,8 @@ interface AppointmentDetailsDialogProps {
   appointment: Appointment | null;
   customer: Customer | null;
   assignedStaff: Staff | null;
+  onMarkComplete?: (appointment: Appointment) => void;
+  onEdit?: (appointmentId: string) => void;
 }
 
 export function AppointmentDetailsDialog({ 
@@ -20,10 +21,10 @@ export function AppointmentDetailsDialog({
   onClose, 
   appointment, 
   customer, 
-  assignedStaff 
+  assignedStaff, 
+  onMarkComplete,
+  onEdit
 }: AppointmentDetailsDialogProps) {
-  const navigate = useNavigate();
-
   if (!appointment) return null;
 
   // Format time from "HH:MM" format to "h:MM AM/PM"
@@ -59,8 +60,16 @@ export function AppointmentDetailsDialog({
     // Wait until UI is updated before navigation
     setTimeout(() => {
       onClose();
-      navigate(`/schedule/edit/${appointment.id}`);
+      if (onEdit) onEdit(appointment.id);
     }, 150);
+  };
+
+  // Handle mark as completed
+  const handleMarkComplete = () => {
+    if (onMarkComplete) {
+      onMarkComplete(appointment);
+      handleClose();
+    }
   };
 
   return (
@@ -71,7 +80,6 @@ export function AppointmentDetailsDialog({
     }}>
       <DialogContent 
         className="sm:max-w-md"
-        // These handlers need to be completely replaced
         onInteractOutside={(e) => {
           e.preventDefault();
           handleClose();
@@ -164,14 +172,26 @@ export function AppointmentDetailsDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex justify-between sm:justify-between">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between">
           <Button variant="outline" onClick={handleClose}>
             Close
           </Button>
-          <Button onClick={handleEdit} className="gap-2">
-            <Edit className="h-4 w-4" />
-            Edit Appointment
-          </Button>
+          
+          <div className="flex gap-2">
+            {appointment.status !== "Completed" && onMarkComplete && (
+              <Button onClick={handleMarkComplete} variant="secondary" className="gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Mark as Completed
+              </Button>
+            )}
+            
+            {onEdit && (
+              <Button onClick={handleEdit} className="gap-2">
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
