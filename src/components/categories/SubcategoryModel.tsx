@@ -12,7 +12,7 @@ interface Subcategory {
   id?: string;
   category_id: string;
   name: string;
-  description?: string;
+  description: string; // Changed from optional to required to match the API expectations
   price?: number;
 }
 
@@ -36,7 +36,7 @@ export function SubcategoryModel({
   const [formData, setFormData] = useState<Subcategory>({
     category_id: parentId,
     name: '',
-    description: '',
+    description: '', // Initialize with empty string since it's required
     price: 0,
   });
   const [submitting, setSubmitting] = useState(false);
@@ -51,7 +51,7 @@ export function SubcategoryModel({
       setFormData({
         category_id: parentId,
         name: '',
-        description: '',
+        description: '', // Initialize with empty string
         price: 0,
       });
     }
@@ -149,6 +149,7 @@ export function SubcategoryModel({
                 value={formData.description || ''}
                 onChange={handleChange}
                 rows={3}
+                required // Added required attribute to match type requirement
               />
             </div>
             
