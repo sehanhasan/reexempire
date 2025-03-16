@@ -283,7 +283,7 @@ export default function Quotations() {
             </div>
           </div>
 
-          {loading ? <div className="py-8 text-center">
+          {loading ? <div className="py-8 text-center bg-slate-100">
               <p className="text-muted-foreground">Loading quotations...</p>
             </div> : filteredQuotations.length === 0 ? <div className="py-8 text-center">
               <p className="text-muted-foreground">No quotations found matching your criteria</p>
@@ -336,7 +336,7 @@ export default function Quotations() {
                         </div>
                         
                         <div className="border-t p-2 bg-gray-50 flex justify-between items-center">
-                          <span className="text-sm font-semibold text-black">
+                          <span className="text-sm font-semibold text-blue-700">
                             {formatMoney(quotation.total)}
                           </span>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => {
