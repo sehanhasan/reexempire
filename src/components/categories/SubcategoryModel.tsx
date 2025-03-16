@@ -1,223 +1,186 @@
 
-import { useState, useEffect } from "react";
-import { 
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Plus, Trash } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/use-toast';
+import { categoryService } from '@/services';
 
-export interface PricingOption {
-  id: string;
+interface Subcategory {
+  id?: string;
+  parent_id: string;
   name: string;
-  price: number;
-  unit: string;
+  description?: string;
+  price?: number;
 }
 
-export interface Subcategory {
-  id: string;
-  name: string;
-  description: string;
-  pricingOptions: PricingOption[];
-}
-
-interface SubcategoryModalProps {
+interface SubcategoryModelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  category: {
-    id: string;
-    name: string;
-  };
-  subcategory?: Subcategory;
-  onSave: (subcategory: Subcategory) => void;
+  parentId: string;
+  categoryId?: string;
+  initialData?: Subcategory;
+  onSave: () => void;
 }
 
-export function SubcategoryModal({
+export function SubcategoryModel({
   open,
   onOpenChange,
-  category,
-  subcategory,
+  parentId,
+  categoryId,
+  initialData,
   onSave,
-}: SubcategoryModalProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([
-    { id: `po-${Date.now()}`, name: "", price: 0, unit: "Unit" }
-  ]);
+}: SubcategoryModelProps) {
+  const [formData, setFormData] = useState<Subcategory>({
+    parent_id: parentId,
+    name: '',
+    description: '',
+    price: 0,
+  });
+  const [submitting, setSubmitting] = useState(false);
 
-  // Reset form when modal opens with new data
   useEffect(() => {
-    if (open) {
-      setName(subcategory?.name || "");
-      setDescription(subcategory?.description || "");
-      setPricingOptions(
-        subcategory?.pricingOptions?.length 
-          ? [...subcategory.pricingOptions] 
-          : [{ id: `po-${Date.now()}`, name: "", price: 0, unit: "Unit" }]
-      );
-    }
-  }, [open, subcategory]);
-
-  const addPricingOption = () => {
-    setPricingOptions([
-      ...pricingOptions,
-      { id: `po-${Date.now()}`, name: "", price: 0, unit: "Unit" }
-    ]);
-  };
-
-  const removePricingOption = (id: string) => {
-    if (pricingOptions.length > 1) {
-      setPricingOptions(pricingOptions.filter(option => option.id !== id));
-    }
-  };
-
-  const updatePricingOption = (id: string, field: keyof PricingOption, value: any) => {
-    setPricingOptions(pricingOptions.map(option => 
-      option.id === id ? { ...option, [field]: value } : option
-    ));
-  };
-
-  const handleSave = () => {
-    if (!name.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Subcategory name is required",
-        variant: "destructive",
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        parent_id: parentId,
       });
-      return;
+    } else {
+      setFormData({
+        parent_id: parentId,
+        name: '',
+        description: '',
+        price: 0,
+      });
     }
+  }, [initialData, parentId, open]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     
-    const newSubcategory: Subcategory = {
-      id: subcategory?.id || `subcat-${Date.now()}`,
-      name,
-      description,
-      pricingOptions: pricingOptions.filter(option => option.name.trim() !== "")
-    };
+    if (name === 'price') {
+      // Only allow numbers and decimals for price
+      const numValue = parseFloat(value);
+      setFormData({
+        ...formData,
+        [name]: isNaN(numValue) ? 0 : numValue,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
     
-    onSave(newSubcategory);
-    onOpenChange(false);
+    try {
+      if (categoryId) {
+        // Update existing subcategory
+        await categoryService.updateSubcategory(categoryId, {
+          ...formData,
+          parent_id: parentId,
+        });
+        toast({
+          title: 'Subcategory Updated',
+          description: 'The subcategory has been updated successfully.',
+        });
+      } else {
+        // Create new subcategory
+        await categoryService.createSubcategory({
+          ...formData,
+          parent_id: parentId,
+        });
+        toast({
+          title: 'Subcategory Created',
+          description: 'The subcategory has been created successfully.',
+        });
+      }
+      
+      onSave();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving subcategory:', error);
+      toast({
+        title: 'Error',
+        description: 'There was a problem saving the subcategory.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[90vw] sm:max-w-[600px] overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle>
-            {subcategory ? "Edit Subcategory" : "Add Subcategory"}
-          </SheetTitle>
-          <SheetDescription>
-            Add a new subcategory to <span className="font-medium">{category?.name || ""}</span>
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Subcategory Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Sink Installation"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of this subcategory"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between items-center mb-2">
-              <Label>Pricing Options</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addPricingOption}>
-                <Plus className="h-4 w-4 mr-1" /> Add Option
-              </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{categoryId ? 'Edit Subcategory' : 'Add Subcategory'}</DialogTitle>
+          <DialogDescription>
+            {categoryId
+              ? 'Make changes to the subcategory details.'
+              : 'Create a new subcategory for this parent category.'}
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
             </div>
-
-            <div className="border rounded-md overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Price (RM)</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pricingOptions.map((option) => (
-                    <TableRow key={option.id}>
-                      <TableCell>
-                        <Input
-                          value={option.name}
-                          onChange={(e) => updatePricingOption(option.id, "name", e.target.value)}
-                          placeholder="Option name"
-                          className="w-full"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                          <Input
-                            type="number"
-                            value={option.price}
-                            onChange={(e) => updatePricingOption(option.id, "price", parseFloat(e.target.value) || 0)}
-                            className="pl-10"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={option.unit}
-                          onChange={(e) => updatePricingOption(option.id, "unit", e.target.value)}
-                          placeholder="Unit"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removePricingOption(option.id)}
-                          disabled={pricingOptions.length <= 1}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description || ''}
+                onChange={handleChange}
+                rows={3}
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="price">Price (RM)</Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.price || ''}
+                onChange={handleChange}
+              />
             </div>
           </div>
-        </div>
-
-        <SheetFooter className="mt-6">
-          <Button onClick={handleSave}>Save Subcategory</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Saving...' : categoryId ? 'Save Changes' : 'Add Subcategory'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

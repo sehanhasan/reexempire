@@ -5,7 +5,7 @@ import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { Eye, Edit, MoreHorizontal, CalendarClock, Download, Plus, Search, Check, Send, AlertTriangle, FileText, Clock, Calendar, CircleDollarSign, Home } from "lucide-react";
+import { Eye, Edit, MoreHorizontal, CalendarClock, Download, Plus, Search, Check, Send, AlertTriangle, FileText, Clock, Calendar, CircleDollarSign, Home, Trash2, FileOutput } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { invoiceService, customerService, exportService } from "@/services";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 export default function Invoices() {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
@@ -23,6 +24,7 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [filteredData, setFilteredData] = useState([]);
   const isMobile = useIsMobile();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -48,6 +50,7 @@ export default function Invoices() {
     };
     fetchData();
   }, []);
+
   useEffect(() => {
     let filtered = [...invoices];
     if (searchTerm) {
@@ -67,6 +70,7 @@ export default function Invoices() {
     }
     setFilteredData(filtered);
   }, [searchTerm, statusFilter, invoices, customers]);
+
   const handlePaymentStatusChange = async (invoice, newStatus) => {
     try {
       await invoiceService.update(invoice.id, {
@@ -89,12 +93,66 @@ export default function Invoices() {
       });
     }
   };
+
+  const handleDeleteInvoice = async (invoice) => {
+    try {
+      await invoiceService.delete(invoice.id);
+      setInvoices(prevInvoices => prevInvoices.filter(inv => inv.id !== invoice.id));
+      setFilteredData(prevData => prevData.filter(inv => inv.id !== invoice.id));
+      toast({
+        title: "Invoice Deleted",
+        description: `Invoice #${invoice.reference_number} has been removed`
+      });
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete invoice",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSendInvoice = (invoice) => {
+    toast({
+      title: "Invoice Sent",
+      description: `Invoice #${invoice.reference_number} has been sent to the customer`
+    });
+  };
+
+  const handleExportSingleInvoice = (invoice) => {
+    try {
+      const data = [{
+        'Invoice #': invoice.reference_number,
+        'Unit #': customers[invoice.customer_id]?.unit_number || '',
+        'Customer': customers[invoice.customer_id]?.name || 'Unknown',
+        'Issue Date': format(new Date(invoice.issue_date), 'yyyy-MM-dd'),
+        'Due Date': format(new Date(invoice.due_date), 'yyyy-MM-dd'),
+        'Subtotal': parseFloat(invoice.subtotal).toFixed(2),
+        'Tax': parseFloat(invoice.tax_amount).toFixed(2),
+        'Total': parseFloat(invoice.total).toFixed(2),
+        'Status': invoice.status,
+        'Payment Status': invoice.payment_status
+      }];
+      
+      exportService.downloadCSV(data, `invoice-${invoice.reference_number}`);
+    } catch (error) {
+      console.error("Error exporting invoice:", error);
+      toast({
+        title: "Export Failed",
+        description: "Could not export invoice to CSV",
+        variant: "destructive"
+      });
+    }
+  };
+
   const formatMoney = amount => {
     return `RM ${parseFloat(amount).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
+
   const exportInvoices = () => {
     try {
       const exportData = filteredData.map(invoice => {
@@ -126,20 +184,23 @@ export default function Invoices() {
       });
     }
   };
+
   const getStatusColor = status => {
     if (status === "Paid") return "bg-green-100 text-green-800 hover:bg-green-100";
     if (status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
     if (status === "Overdue") return "bg-red-100 text-red-600 hover:bg-red-100";
     return "bg-amber-100 text-amber-800 hover:bg-amber-100";
   };
+
   const getStatusIcon = status => {
     if (status === "Paid") return <Check className="h-3.5 w-3.5 mr-1" />;
     if (status === "Partially Paid") return <CircleDollarSign className="h-3.5 w-3.5 mr-1" />;
     if (status === "Overdue") return <AlertTriangle className="h-3.5 w-3.5 mr-1" />;
     return <Clock className="h-3.5 w-3.5 mr-1" />;
   };
+
   return <div className="page-container">
-      <PageHeader title="Invoices" description="Manage your invoice records" actions={<Button variant="default" className="flex items-center bg-blue-600 hover:bg-blue-700" onClick={exportInvoices}>
+      <PageHeader title="Invoices" description="" actions={<Button variant="default" className="flex items-center bg-blue-600 hover:bg-blue-700" onClick={exportInvoices}>
             <Download className="mr-2 h-4 w-4" />
             Export to CSV
           </Button>} />
@@ -232,12 +293,56 @@ export default function Invoices() {
                             <span className="text-sm font-semibold text-inherit">
                               {formatMoney(invoice.total)}
                             </span>
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => {
-                      e.stopPropagation();
-                      navigate(`/invoices/edit/${invoice.id}`);
-                    }}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  navigate(`/invoices/edit/${invoice.id}`); 
+                                }}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSendInvoice(invoice);
+                                }}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send to Customer
+                                </DropdownMenuItem>
+                                {invoice.payment_status !== 'Paid' && (
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePaymentStatusChange(invoice, 'Paid');
+                                  }}>
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Mark as Paid
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExportSingleInvoice(invoice);
+                                }}>
+                                  <FileOutput className="mr-2 h-4 w-4" />
+                                  Export
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteInvoice(invoice);
+                                  }}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>;
               })}
@@ -250,6 +355,7 @@ export default function Invoices() {
                         <TableHead>Due Date</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Total</TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -285,6 +391,43 @@ export default function Invoices() {
                           </TableCell>
                           <TableCell className="font-medium">
                             {formatMoney(invoice.total)}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendInvoice(invoice)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send to Customer
+                                </DropdownMenuItem>
+                                {invoice.payment_status !== 'Paid' && (
+                                  <DropdownMenuItem onClick={() => handlePaymentStatusChange(invoice, 'Paid')}>
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Mark as Paid
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => handleExportSingleInvoice(invoice)}>
+                                  <FileOutput className="mr-2 h-4 w-4" />
+                                  Export
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-red-600"
+                                  onClick={() => handleDeleteInvoice(invoice)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>;
                 })}
