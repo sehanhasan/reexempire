@@ -315,7 +315,7 @@ export default function Quotations() {
                             <span className="text-gray-500 flex items-center">
                               <Calendar className="h-3.5 w-3.5 mr-1.5" />Issue Date
                             </span>
-                            <span>{formatDate(quotation.issue_date)}</span>
+                            <span className="text-inherit">{formatDate(quotation.issue_date)}</span>
                           </div>
                           
                           <div className="flex justify-between items-center text-sm">
