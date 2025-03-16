@@ -14,7 +14,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { invoiceService, customerService, exportService } from "@/services";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 export default function Invoices() {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
@@ -24,13 +23,11 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [filteredData, setFilteredData] = useState([]);
   const isMobile = useIsMobile();
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const [invoicesData, customersData] = await Promise.all([invoiceService.getAll(), customerService.getAll()]);
-
         const customersMap = {};
         customersData.forEach(customer => {
           customersMap[customer.id] = customer;
@@ -51,14 +48,11 @@ export default function Invoices() {
     };
     fetchData();
   }, []);
-
   useEffect(() => {
     let filtered = [...invoices];
-
     if (searchTerm) {
       filtered = filtered.filter(invoice => invoice.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) || (customers[invoice.customer_id]?.unit_number || "").toLowerCase().includes(searchTerm.toLowerCase()) || (customers[invoice.customer_id]?.name || "").toLowerCase().includes(searchTerm.toLowerCase()));
     }
-
     if (statusFilter !== "all") {
       if (statusFilter === "Overdue") {
         filtered = filtered.filter(invoice => {
@@ -73,7 +67,6 @@ export default function Invoices() {
     }
     setFilteredData(filtered);
   }, [searchTerm, statusFilter, invoices, customers]);
-
   const handlePaymentStatusChange = async (invoice, newStatus) => {
     try {
       await invoiceService.update(invoice.id, {
@@ -96,14 +89,12 @@ export default function Invoices() {
       });
     }
   };
-
   const formatMoney = amount => {
     return `RM ${parseFloat(amount).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
-
   const exportInvoices = () => {
     try {
       const exportData = filteredData.map(invoice => {
@@ -135,21 +126,18 @@ export default function Invoices() {
       });
     }
   };
-
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     if (status === "Paid") return "bg-green-100 text-green-800 hover:bg-green-100";
     if (status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
     if (status === "Overdue") return "bg-red-100 text-red-600 hover:bg-red-100";
     return "bg-amber-100 text-amber-800 hover:bg-amber-100";
   };
-
-  const getStatusIcon = (status) => {
+  const getStatusIcon = status => {
     if (status === "Paid") return <Check className="h-3.5 w-3.5 mr-1" />;
     if (status === "Partially Paid") return <CircleDollarSign className="h-3.5 w-3.5 mr-1" />;
     if (status === "Overdue") return <AlertTriangle className="h-3.5 w-3.5 mr-1" />;
     return <Clock className="h-3.5 w-3.5 mr-1" />;
   };
-
   return <div className="page-container">
       <PageHeader title="Invoices" description="Manage your invoice records" actions={<Button variant="default" className="flex items-center bg-blue-600 hover:bg-blue-700" onClick={exportInvoices}>
             <Download className="mr-2 h-4 w-4" />
@@ -185,21 +173,14 @@ export default function Invoices() {
               </div> : filteredData.length === 0 ? <div className="py-8 text-center">
                 <p className="text-muted-foreground">No invoices found matching your criteria</p>
               </div> : <div className="overflow-x-auto">
-                {isMobile ? (
-                  <div className="p-2 space-y-3">
+                {isMobile ? <div className="p-2 space-y-3">
                     {filteredData.map(invoice => {
-                      const customer = customers[invoice.customer_id];
-                      const dueDate = new Date(invoice.due_date);
-                      const today = new Date();
-                      const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
-                      const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
-                      
-                      return (
-                        <div 
-                          key={invoice.id}
-                          className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm"
-                          onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
-                        >
+                const customer = customers[invoice.customer_id];
+                const dueDate = new Date(invoice.due_date);
+                const today = new Date();
+                const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
+                const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
+                return <div key={invoice.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
                           <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
                             <div>
                               <div className="font-medium text-blue-700">
@@ -248,22 +229,19 @@ export default function Invoices() {
                           </div>
                           
                           <div className="border-t p-2 bg-gray-50 flex justify-between items-center">
-                            <span className="text-sm font-semibold text-blue-700">
+                            <span className="text-sm font-semibold text-inherit">
                               {formatMoney(invoice.total)}
                             </span>
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/invoices/edit/${invoice.id}`);
-                            }}>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => {
+                      e.stopPropagation();
+                      navigate(`/invoices/edit/${invoice.id}`);
+                    }}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <Table>
+                        </div>;
+              })}
+                  </div> : <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Invoice #</TableHead>
@@ -276,13 +254,12 @@ export default function Invoices() {
                     </TableHeader>
                     <TableBody>
                       {filteredData.map(invoice => {
-                        const customer = customers[invoice.customer_id];
-                        const dueDate = new Date(invoice.due_date);
-                        const today = new Date();
-                        const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
-                        const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
-                        
-                        return <TableRow key={invoice.id}>
+                  const customer = customers[invoice.customer_id];
+                  const dueDate = new Date(invoice.due_date);
+                  const today = new Date();
+                  const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
+                  const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
+                  return <TableRow key={invoice.id}>
                           <TableCell>
                             <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
                               {invoice.reference_number}
@@ -310,10 +287,9 @@ export default function Invoices() {
                             {formatMoney(invoice.total)}
                           </TableCell>
                         </TableRow>;
-                      })}
+                })}
                     </TableBody>
-                  </Table>
-                )}
+                  </Table>}
               </div>}
           </CardContent>
         </Card>
