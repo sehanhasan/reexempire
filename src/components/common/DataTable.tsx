@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronRight, Clock, Calendar, Home } from "lucide-react";
+import { Search, ChevronRight, Info, Calendar, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export interface Column<T> {
   header: string;
@@ -98,37 +98,35 @@ export function DataTable<T extends Record<string, any>>({
           />
         </div>
       )}
-      
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="py-8 text-center bg-slate-100">
-              <p className="text-muted-foreground">Loading...</p>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-muted-foreground">{emptyMessage}</p>
-            </div>
-          ) : (
-            <>
-              {isMobile ? (
-                <div className="p-2 space-y-3">
-                  {filteredData.map((row, rowIndex) => (
-                    <div 
-                      key={getCardKey(row, rowIndex)} 
-                      className="border-l-4 border-l-blue-500 rounded-md shadow-sm"
-                    >
-                      <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
-                        <div>
+      <div className="table-container">
+        {isLoading ? (
+          <div className="h-24 flex items-center justify-center">
+            <p className="text-center text-muted-foreground">Loading...</p>
+          </div>
+        ) : filteredData.length === 0 ? (
+          <div className="h-24 flex items-center justify-center">
+            <p className="text-center text-muted-foreground">{emptyMessage}</p>
+          </div>
+        ) : (
+          <>
+            {isMobile ? (
+              <div className="space-y-3">
+                {filteredData.map((row, rowIndex) => (
+                  <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
+                    <CardContent className="p-0">
+                      {/* Card Header with primary information */}
+                      <div className="p-3 border-b bg-blue-50/30">
+                        <div className="flex justify-between items-center">
                           <div className="font-medium text-blue-700">
                             {primaryColumn.cell 
                               ? primaryColumn.cell({ row: { original: row } }) 
                               : String(row[primaryColumn.accessorKey] || '')}
                           </div>
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
                         </div>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
                       </div>
                       
+                      {/* Card Content */}
                       <div className="px-3 py-2 space-y-1.5">
                         {mobileColumns
                           .filter(col => col !== primaryColumn) // Skip the primary column as it's already in the header
@@ -142,22 +140,9 @@ export function DataTable<T extends Record<string, any>>({
                               return null;
                             }
                             
-                            // Get icon based on column header
-                            let icon = null;
-                            if (column.header.toLowerCase().includes('date')) {
-                              icon = <Calendar className="h-3.5 w-3.5 mr-1.5" />;
-                            } else if (column.header.toLowerCase().includes('status')) {
-                              icon = <Clock className="h-3.5 w-3.5 mr-1.5" />;
-                            } else if (column.header.toLowerCase().includes('customer')) {
-                              icon = <Home className="h-3.5 w-3.5 mr-1.5" />;
-                            }
-                            
                             return (
                               <div key={getCellKey(column, colIndex, rowIndex)} className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 flex items-center">
-                                  {icon}
-                                  {getMobileLabel(column)}
-                                </span>
+                                <span className="text-gray-500 font-medium">{getMobileLabel(column)}</span>
                                 <span className="font-normal">{cellValue}</span>
                               </div>
                             );
@@ -170,37 +155,37 @@ export function DataTable<T extends Record<string, any>>({
                           {actionsColumn.cell({ row: { original: row } })}
                         </div>
                       )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {columns.map((column, idx) => (
-                        <TableHead key={`header-${idx}-${column.header.replace(/\s+/g, '-')}`}>
-                          {column.header}
-                        </TableHead>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Table className="data-table">
+                <TableHeader className="data-table-header">
+                  <TableRow>
+                    {columns.map((column, idx) => (
+                      <TableHead key={`header-${idx}-${column.header.replace(/\s+/g, '-')}`} className="data-table-head">
+                        {column.header}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="data-table-body">
+                  {filteredData.map((row, rowIndex) => (
+                    <TableRow key={getRowKey(row, rowIndex)} className="data-table-row">
+                      {columns.map((column, colIndex) => (
+                        <TableCell key={getCellKey(column, colIndex, rowIndex)} className="data-table-cell">
+                          {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
+                        </TableCell>
                       ))}
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredData.map((row, rowIndex) => (
-                      <TableRow key={getRowKey(row, rowIndex)}>
-                        {columns.map((column, colIndex) => (
-                          <TableCell key={getCellKey(column, colIndex, rowIndex)}>
-                            {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

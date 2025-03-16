@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import type {
@@ -141,15 +140,6 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
-  // Only allow error toasts (variant: destructive)
-  if (props.variant !== "destructive") {
-    return {
-      id: "",
-      dismiss: () => {},
-      update: () => {},
-    }
-  }
-
   const id = genId()
 
   const update = (props: ToasterToast) =>

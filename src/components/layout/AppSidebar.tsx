@@ -4,29 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  Receipt, 
-  UserCircle, 
-  Calendar, 
-  FolderTree, 
-  LogOut, 
-  X, 
-  FilePlus, 
-  FileCheck, 
-  FileX, 
-  CreditCard, 
-  FileSearch, 
-  Clock
-} from "lucide-react";
+import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface AppSidebarProps {
   open?: boolean;
@@ -46,20 +25,6 @@ export function AppSidebar({
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  
-  // Collapsible state for submenu items
-  const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({
-    invoices: false,
-    quotations: false
-  });
-
-  // Toggle collapsible state
-  const toggleCollapsible = (name: string) => {
-    setOpenCollapsibles(prev => ({
-      ...prev,
-      [name]: !prev[name]
-    }));
-  };
 
   // Logo image
   const logoUrl = "https://i.ibb.co/Ltyts5K/reex-empire-logo.png";
@@ -79,66 +44,12 @@ export function AppSidebar({
     title: "Quotations",
     icon: <FileText className="h-5 w-5" />,
     href: "/quotations",
-    adminOnly: true,
-    submenu: [
-      {
-        title: "All Quotations",
-        icon: <FileSearch className="h-4 w-4" />,
-        href: "/quotations"
-      },
-      {
-        title: "Create New",
-        icon: <FilePlus className="h-4 w-4" />,
-        href: "/quotations/create"
-      },
-      {
-        title: "Pending Approval",
-        icon: <Clock className="h-4 w-4" />,
-        href: "/quotations?status=sent"
-      },
-      {
-        title: "Accepted",
-        icon: <FileCheck className="h-4 w-4" />,
-        href: "/quotations?status=accepted"
-      },
-      {
-        title: "Rejected",
-        icon: <FileX className="h-4 w-4" />,
-        href: "/quotations?status=rejected"
-      }
-    ]
+    adminOnly: true
   }, {
     title: "Invoices",
     icon: <Receipt className="h-5 w-5" />,
     href: "/invoices",
-    adminOnly: true,
-    submenu: [
-      {
-        title: "All Invoices",
-        icon: <FileSearch className="h-4 w-4" />,
-        href: "/invoices"
-      },
-      {
-        title: "Create New",
-        icon: <FilePlus className="h-4 w-4" />,
-        href: "/invoices/create"
-      },
-      {
-        title: "Unpaid",
-        icon: <Clock className="h-4 w-4" />,
-        href: "/invoices?status=Unpaid"
-      },
-      {
-        title: "Paid",
-        icon: <CreditCard className="h-4 w-4" />,
-        href: "/invoices?status=Paid"
-      },
-      {
-        title: "Overdue",
-        icon: <FileX className="h-4 w-4" />,
-        href: "/invoices?status=Overdue"
-      }
-    ]
+    adminOnly: true
   }, {
     title: "Schedule",
     icon: <Calendar className="h-5 w-5" />,
@@ -214,79 +125,20 @@ export function AppSidebar({
       
       <ScrollArea className="flex-1 py-2">
         <nav className="space-y-1 px-2">
-          {filteredNavItems.map(item => {
-            if (item.submenu) {
-              return (
-                <Collapsible 
-                  key={item.href}
-                  open={openCollapsibles[item.title.toLowerCase()]}
-                  onOpenChange={() => toggleCollapsible(item.title.toLowerCase())}
-                  className="space-y-1"
-                >
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className={cn(
-                        "w-full justify-start text-gray-600 h-10", 
-                        (isActiveRoute(item.href) || location.pathname.includes(item.href)) && "bg-gray-100 text-gray-900 font-medium"
-                      )}
-                    >
-                      {item.icon}
-                      <span className="ml-3 flex-1 text-left">{item.title}</span>
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="24" 
-                        height="24" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        className={cn("h-4 w-4 transition-transform", 
-                          openCollapsibles[item.title.toLowerCase()] ? "transform rotate-180" : ""
-                        )}
-                      >
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                      </svg>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pl-8 space-y-1">
-                    {item.submenu.map(subItem => (
-                      <Button
-                        key={subItem.href}
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "w-full justify-start text-gray-600 h-9",
-                          isActiveRoute(subItem.href) && "bg-gray-100 text-gray-900 font-medium"
-                        )}
-                        onClick={() => handleNavItemClick(subItem.href)}
-                      >
-                        {subItem.icon}
-                        <span className="ml-3">{subItem.title}</span>
-                      </Button>
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              )
-            }
-            
-            return (
-              <Button 
-                key={item.href} 
-                variant="ghost" 
-                className={cn(
-                  "w-full justify-start text-gray-600 h-10", 
-                  isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
-                )} 
-                onClick={() => handleNavItemClick(item.href)}
-              >
-                {item.icon}
-                <span className="ml-3">{item.title}</span>
-              </Button>
-            );
-          })}
+          {filteredNavItems.map(item => (
+            <Button 
+              key={item.href} 
+              variant="ghost" 
+              className={cn(
+                "w-full justify-start text-gray-600 h-10", 
+                isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
+              )} 
+              onClick={() => handleNavItemClick(item.href)}
+            >
+              {item.icon}
+              <span className="ml-3">{item.title}</span>
+            </Button>
+          ))}
         </nav>
       </ScrollArea>
       
