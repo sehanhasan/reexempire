@@ -6,9 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight } from "lucide-react";
+import { 
+  FilePlus, 
+  Search, 
+  MoreHorizontal, 
+  FileEdit, 
+  Trash2, 
+  FileText, 
+  Download, 
+  Send, 
+  Calendar, 
+  Clock, 
+  Home, 
+  AlertCircle, 
+  CheckCircle2, 
+  XCircle, 
+  TimerReset,
+  ChevronRight
+} from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { quotationService, customerService } from "@/services";
 import { formatDate } from "@/utils/formatters";
@@ -17,15 +34,13 @@ import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number?: string;
 }
-const StatusBadge = ({
-  status
-}: {
-  status: string;
-}) => {
+
+const StatusBadge = ({ status }: { status: string; }) => {
   let bgColor, textColor;
   switch (status) {
     case 'Draft':
@@ -56,11 +71,8 @@ const StatusBadge = ({
       {status}
     </span>;
 };
-const StatusIcon = ({
-  status
-}: {
-  status: string;
-}) => {
+
+const StatusIcon = ({ status }: { status: string; }) => {
   switch (status) {
     case 'Draft':
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
@@ -76,6 +88,7 @@ const StatusIcon = ({
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
   }
 };
+
 export default function Quotations() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -87,6 +100,7 @@ export default function Quotations() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -113,9 +127,11 @@ export default function Quotations() {
       });
     }
   };
+
   useEffect(() => {
     fetchData();
   }, []);
+
   useEffect(() => {
     let filtered = [...quotations];
     if (statusFilter !== "all") {
@@ -127,6 +143,7 @@ export default function Quotations() {
     }
     setFilteredQuotations(filtered);
   }, [quotations, searchTerm, statusFilter]);
+
   const handleDelete = async () => {
     if (!quotationToDelete) return;
     try {
@@ -136,7 +153,8 @@ export default function Quotations() {
       setQuotationToDelete(null);
       toast({
         title: "Quotation Deleted",
-        description: "The quotation has been deleted successfully."
+        description: "The quotation has been deleted successfully.",
+        variant: "destructive"
       });
     } catch (error) {
       console.error("Error deleting quotation:", error);
@@ -147,6 +165,7 @@ export default function Quotations() {
       });
     }
   };
+
   const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
     navigate("/invoices/create", {
       state: {
@@ -154,6 +173,7 @@ export default function Quotations() {
       }
     });
   };
+
   const handleSendWhatsapp = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
@@ -181,25 +201,6 @@ export default function Quotations() {
       }
       const message = `Dear ${customer.name},\n\nPlease find attached Quotation ${quotation.reference_number} valid until ${formatDate(quotation.expiry_date)}.\n\nThank you.\nStar Residences Management`;
       window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-      if (quotation.status === "Draft") {
-        quotationService.update(quotation.id, {
-          status: "Sent"
-        }).then(updatedQuotation => {
-          setQuotations(quotations.map(q => q.id === quotation.id ? {
-            ...updatedQuotation,
-            customer_name: q.customer_name,
-            unit_number: q.unit_number
-          } : q));
-          toast({
-            title: "Status Updated",
-            description: "Quotation status has been updated to Sent"
-          });
-        });
-      }
-      toast({
-        title: "WhatsApp Opened",
-        description: "WhatsApp has been opened with the quotation message. The document PDF will need to be attached manually."
-      });
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
@@ -209,6 +210,7 @@ export default function Quotations() {
       });
     }
   };
+
   const handleDownloadPDF = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
@@ -236,10 +238,6 @@ export default function Quotations() {
         }
       });
       downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-      toast({
-        title: "PDF Generated",
-        description: "Quotation PDF has been downloaded successfully."
-      });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
@@ -249,12 +247,14 @@ export default function Quotations() {
       });
     }
   };
+
   const formatMoney = (amount: number) => {
     return `RM ${parseFloat(amount.toString()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
+
   return <div className="page-container">
       <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
 
@@ -290,8 +290,8 @@ export default function Quotations() {
             </div> : <div className="overflow-x-auto">
               {isMobile ? <div className="p-2 space-y-3">
                   {filteredQuotations.map(quotation => {
-              const status = quotation.status;
-              return <div key={quotation.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                    const status = quotation.status;
+                    return <div key={quotation.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                         <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
                           <div>
                             <div className="font-medium text-blue-700">
@@ -339,15 +339,55 @@ export default function Quotations() {
                           <span className="text-sm font-semibold text-blue-700">
                             {formatMoney(quotation.total)}
                           </span>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => {
-                    e.stopPropagation();
-                    navigate(`/quotations/edit/${quotation.id}`);
-                  }}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/quotations/edit/${quotation.id}`);
+                              }}>
+                                <FileEdit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                handleSendWhatsapp(quotation);
+                              }}>
+                                <Send className="mr-2 h-4 w-4" />
+                                Send via WhatsApp
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadPDF(quotation);
+                              }}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download PDF
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                handleConvertToInvoice(quotation);
+                              }}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Convert to Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600" onClick={(e) => {
+                                e.stopPropagation();
+                                setQuotationToDelete(quotation);
+                                setDeleteDialogOpen(true);
+                              }}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>;
-            })}
+                  })}
                 </div> : <Table>
                   <TableHeader>
                     <TableRow>
@@ -357,28 +397,64 @@ export default function Quotations() {
                       <TableHead>Expiry Date</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="w-[80px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredQuotations.map(quotation => {
-                const status = quotation.status;
-                return <TableRow key={quotation.id}>
-                        <TableCell>
-                          <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
-                            {quotation.reference_number}
-                          </div>
-                        </TableCell>
-                        <TableCell>{quotation.unit_number || "-"}</TableCell>
-                        <TableCell>{formatDate(quotation.issue_date)}</TableCell>
-                        <TableCell>{formatDate(quotation.expiry_date)}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={status} />
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatMoney(quotation.total)}
-                        </TableCell>
-                      </TableRow>;
-              })}
+                      const status = quotation.status;
+                      return <TableRow key={quotation.id}>
+                          <TableCell>
+                            <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                              {quotation.reference_number}
+                            </div>
+                          </TableCell>
+                          <TableCell>{quotation.unit_number || "-"}</TableCell>
+                          <TableCell>{formatDate(quotation.issue_date)}</TableCell>
+                          <TableCell>{formatDate(quotation.expiry_date)}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={status} />
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatMoney(quotation.total)}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                                  <FileEdit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send via WhatsApp
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDownloadPDF(quotation)}>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Convert to Invoice
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600" onClick={() => {
+                                  setQuotationToDelete(quotation);
+                                  setDeleteDialogOpen(true);
+                                }}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>;
+                    })}
                   </TableBody>
                 </Table>}
             </div>}

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
@@ -42,24 +42,26 @@ export default function Categories() {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   
-  // Fetch categories from the API
+  // Fetch categories from the API - using queryKey with proper caching
   const { data: categories = [], refetch } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const categories = await categoryService.getAll();
       
-      // Fetch subcategories for each category
-      const categoriesWithSubcategories = await Promise.all(
-        categories.map(async (category) => {
+      // Fetch subcategories for each category - using Set to avoid duplicates
+      const processedCategories = new Map();
+      
+      for (const category of categories) {
+        if (!processedCategories.has(category.id)) {
           const subcategories = await categoryService.getSubcategoriesByCategoryId(category.id);
-          return {
+          processedCategories.set(category.id, {
             ...category,
             subcategories: subcategories || []
-          };
-        })
-      );
+          });
+        }
+      }
       
-      return categoriesWithSubcategories;
+      return Array.from(processedCategories.values());
     }
   });
 
@@ -90,7 +92,7 @@ export default function Categories() {
         await categoryService.delete(categoryToDelete.id);
         
         toast({
-          title: "Category Deleted",
+          title: "Error",
           description: `${categoryToDelete.name} has been deleted.`,
           variant: "destructive",
         });
@@ -124,7 +126,6 @@ export default function Categories() {
   };
 
   const columns = [
-    // ID and Description columns are now hidden as per requirements
     {
       header: "Name",
       accessorKey: "name" as keyof Category,
@@ -150,8 +151,9 @@ export default function Categories() {
               className="text-blue-600"
               onClick={() => {
                 toast({
-                  title: "Subcategories for " + row.original.name,
-                  description: row.original.subcategories?.map(sub => sub.name).join(", "),
+                  title: "Error",
+                  description: `Could not display subcategories for ${row.original.name}`,
+                  variant: "destructive",
                 });
               }}
             >
@@ -199,10 +201,9 @@ export default function Categories() {
     <div className="page-container">
       <PageHeader 
         title="Service Categories" 
-        description="Manage your service categories and subcategories."
       />
       
-      <div className="mt-8">
+      <div className="mt-6">
         <DataTable 
           columns={columns} 
           data={categories} 
