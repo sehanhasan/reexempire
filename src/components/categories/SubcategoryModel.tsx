@@ -10,7 +10,7 @@ import { categoryService } from '@/services';
 
 interface Subcategory {
   id?: string;
-  parent_id: string;
+  category_id: string;
   name: string;
   description?: string;
   price?: number;
@@ -34,7 +34,7 @@ export function SubcategoryModel({
   onSave,
 }: SubcategoryModelProps) {
   const [formData, setFormData] = useState<Subcategory>({
-    parent_id: parentId,
+    category_id: parentId,
     name: '',
     description: '',
     price: 0,
@@ -45,11 +45,11 @@ export function SubcategoryModel({
     if (initialData) {
       setFormData({
         ...initialData,
-        parent_id: parentId,
+        category_id: parentId,
       });
     } else {
       setFormData({
-        parent_id: parentId,
+        category_id: parentId,
         name: '',
         description: '',
         price: 0,
@@ -84,7 +84,7 @@ export function SubcategoryModel({
         // Update existing subcategory
         await categoryService.updateSubcategory(categoryId, {
           ...formData,
-          parent_id: parentId,
+          category_id: parentId,
         });
         toast({
           title: 'Subcategory Updated',
@@ -94,7 +94,7 @@ export function SubcategoryModel({
         // Create new subcategory
         await categoryService.createSubcategory({
           ...formData,
-          parent_id: parentId,
+          category_id: parentId,
         });
         toast({
           title: 'Subcategory Created',
