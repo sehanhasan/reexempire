@@ -13,7 +13,15 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { AppointmentDetailsDialog } from "../appointments/AppointmentDetailsDialog";
-import { Appointment, Service, Customer } from "@/types/database";
+import { Appointment, Customer } from "@/types/database";
+
+// Define a local interface for services since it's not in database.ts
+interface Service {
+  id: string;
+  name: string;
+  description?: string;
+  price?: number;
+}
 
 interface AppointmentWithRelations extends Appointment {
   service?: Service;
@@ -38,7 +46,7 @@ export function ListView({ appointments, onEdit, onMarkAsCompleted }: ListViewPr
     const grouped: Record<string, AppointmentWithRelations[]> = {};
     
     appointments.forEach(appointment => {
-      const date = appointment.date.split('T')[0]; // Get only the date part
+      const date = appointment.appointment_date.split('T')[0]; // Using appointment_date instead of date
       if (!grouped[date]) {
         grouped[date] = [];
       }
@@ -186,16 +194,10 @@ export function ListView({ appointments, onEdit, onMarkAsCompleted }: ListViewPr
       
       <AppointmentDetailsDialog
         open={detailsDialogOpen}
-        onOpenChange={setDetailsDialogOpen}
+        onClose={() => setDetailsDialogOpen(false)}
         appointment={selectedAppointment}
-        onEdit={appointment => {
-          setDetailsDialogOpen(false);
-          onEdit(appointment);
-        }}
-        onMarkAsCompleted={appointment => {
-          setDetailsDialogOpen(false);
-          onMarkAsCompleted(appointment);
-        }}
+        customer={selectedAppointment?.customer || null}
+        assignedStaff={null}
       />
     </div>
   );
