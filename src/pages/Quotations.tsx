@@ -17,12 +17,10 @@ import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number?: string;
 }
-
 const StatusBadge = ({
   status
 }: {
@@ -58,8 +56,11 @@ const StatusBadge = ({
       {status}
     </span>;
 };
-
-const StatusIcon = ({ status }: { status: string }) => {
+const StatusIcon = ({
+  status
+}: {
+  status: string;
+}) => {
   switch (status) {
     case 'Draft':
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
@@ -75,7 +76,6 @@ const StatusIcon = ({ status }: { status: string }) => {
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
   }
 };
-
 export default function Quotations() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -87,7 +87,6 @@ export default function Quotations() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -114,11 +113,9 @@ export default function Quotations() {
       });
     }
   };
-
   useEffect(() => {
     fetchData();
   }, []);
-
   useEffect(() => {
     let filtered = [...quotations];
     if (statusFilter !== "all") {
@@ -130,7 +127,6 @@ export default function Quotations() {
     }
     setFilteredQuotations(filtered);
   }, [quotations, searchTerm, statusFilter]);
-
   const handleDelete = async () => {
     if (!quotationToDelete) return;
     try {
@@ -151,7 +147,6 @@ export default function Quotations() {
       });
     }
   };
-
   const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
     navigate("/invoices/create", {
       state: {
@@ -159,7 +154,6 @@ export default function Quotations() {
       }
     });
   };
-
   const handleSendWhatsapp = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
@@ -215,7 +209,6 @@ export default function Quotations() {
       });
     }
   };
-
   const handleDownloadPDF = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
@@ -256,14 +249,12 @@ export default function Quotations() {
       });
     }
   };
-
   const formatMoney = (amount: number) => {
     return `RM ${parseFloat(amount.toString()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
-
   return <div className="page-container">
       <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
 
@@ -297,17 +288,10 @@ export default function Quotations() {
             </div> : filteredQuotations.length === 0 ? <div className="py-8 text-center">
               <p className="text-muted-foreground">No quotations found matching your criteria</p>
             </div> : <div className="overflow-x-auto">
-              {isMobile ? (
-                <div className="p-2 space-y-3">
+              {isMobile ? <div className="p-2 space-y-3">
                   {filteredQuotations.map(quotation => {
-                    const status = quotation.status;
-                    
-                    return (
-                      <div 
-                        key={quotation.id}
-                        className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm"
-                        onClick={() => navigate(`/quotations/edit/${quotation.id}`)}
-                      >
+              const status = quotation.status;
+              return <div key={quotation.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                         <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
                           <div>
                             <div className="font-medium text-blue-700">
@@ -319,12 +303,7 @@ export default function Quotations() {
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <Badge className={`flex items-center ${status === 'Accepted' ? 'bg-green-100 text-green-700' : 
-                              status === 'Sent' ? 'bg-blue-100 text-blue-700' : 
-                              status === 'Rejected' ? 'bg-red-100 text-red-700' : 
-                              status === 'Expired' ? 'bg-amber-100 text-amber-700' : 
-                              'bg-gray-100 text-gray-700'}`}
-                            >
+                            <Badge className={`flex items-center ${status === 'Accepted' ? 'bg-green-100 text-green-700' : status === 'Sent' ? 'bg-blue-100 text-blue-700' : status === 'Rejected' ? 'bg-red-100 text-red-700' : status === 'Expired' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}`}>
                               <StatusIcon status={status} />
                               {status}
                             </Badge>
@@ -357,22 +336,19 @@ export default function Quotations() {
                         </div>
                         
                         <div className="border-t p-2 bg-gray-50 flex justify-between items-center">
-                          <span className="text-sm font-semibold text-blue-700">
+                          <span className="text-sm font-semibold text-black">
                             {formatMoney(quotation.total)}
                           </span>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/quotations/edit/${quotation.id}`);
-                          }}>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={e => {
+                    e.stopPropagation();
+                    navigate(`/quotations/edit/${quotation.id}`);
+                  }}>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <Table>
+                      </div>;
+            })}
+                </div> : <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Quotation #</TableHead>
@@ -385,8 +361,8 @@ export default function Quotations() {
                   </TableHeader>
                   <TableBody>
                     {filteredQuotations.map(quotation => {
-                      const status = quotation.status;
-                      return <TableRow key={quotation.id}>
+                const status = quotation.status;
+                return <TableRow key={quotation.id}>
                         <TableCell>
                           <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                             {quotation.reference_number}
@@ -402,10 +378,9 @@ export default function Quotations() {
                           {formatMoney(quotation.total)}
                         </TableCell>
                       </TableRow>;
-                    })}
+              })}
                   </TableBody>
-                </Table>
-              )}
+                </Table>}
             </div>}
         </CardContent>
       </Card>
