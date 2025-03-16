@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { formatDate } from "@/utils/formatters";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, Calendar, MapPin, MoreHorizontal, Check, Edit } from "lucide-react";
-import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO, addDays } from "date-fns";
+import { Clock, Calendar, MapPin, MoreHorizontal, Check, Edit } from "lucide-react";
+import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO } from "date-fns";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -89,6 +88,7 @@ export function ListView({ appointments, onEdit, onMarkAsCompleted }: ListViewPr
       case 'completed':
         return <Badge className="bg-green-100 text-green-700">Completed</Badge>;
       case 'scheduled':
+      case 'confirmed':
         return <Badge className="bg-blue-100 text-blue-700">Scheduled</Badge>;
       case 'cancelled':
         return <Badge className="bg-red-100 text-red-700">Cancelled</Badge>;
@@ -139,17 +139,12 @@ export function ListView({ appointments, onEdit, onMarkAsCompleted }: ListViewPr
                           </span>
                         </div>
                         
-                        <h3 className="font-medium">{appointment.service?.name || "Unnamed Service"}</h3>
+                        <h3 className="font-medium">{appointment.title || "Unnamed Service"}</h3>
                         
-                        <div className="flex items-center space-x-1 text-gray-600">
-                          <User className="h-4 w-4" />
-                          <span className="text-sm">{appointment.customer?.name || "Unknown Customer"}</span>
-                        </div>
-                        
-                        {appointment.location && (
+                        {appointment.customer?.unit_number && (
                           <div className="flex items-center space-x-1 text-gray-600">
                             <MapPin className="h-4 w-4" />
-                            <span className="text-sm">{appointment.location}</span>
+                            <span className="text-sm">Unit #{appointment.customer.unit_number}</span>
                           </div>
                         )}
                       </div>
@@ -171,7 +166,7 @@ export function ListView({ appointments, onEdit, onMarkAsCompleted }: ListViewPr
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            {appointment.status !== 'completed' && (
+                            {appointment.status.toLowerCase() !== 'completed' && (
                               <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation();
                                 onMarkAsCompleted(appointment);
@@ -198,6 +193,7 @@ export function ListView({ appointments, onEdit, onMarkAsCompleted }: ListViewPr
         appointment={selectedAppointment}
         customer={selectedAppointment?.customer || null}
         assignedStaff={null}
+        onMarkAsCompleted={onMarkAsCompleted}
       />
     </div>
   );
