@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO, compare
 import { AppointmentDetailsDialog } from "../appointments/AppointmentDetailsDialog";
 import { Appointment, Customer } from "@/types/database";
 
-// Define a local interface for services since it's not in database.ts
 interface Service {
   id: string;
   name: string;
@@ -35,19 +33,17 @@ export function ListView({
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
-  // Process and group appointments by date
   useEffect(() => {
     if (!appointments.length) return;
     const grouped: Record<string, AppointmentWithRelations[]> = {};
     appointments.forEach(appointment => {
-      const date = appointment.appointment_date.split('T')[0]; // Using appointment_date instead of date
+      const date = appointment.appointment_date.split('T')[0];
       if (!grouped[date]) {
         grouped[date] = [];
       }
       grouped[date].push(appointment);
     });
 
-    // Sort appointments within each group by time
     Object.keys(grouped).forEach(date => {
       grouped[date].sort((a, b) => {
         return a.start_time.localeCompare(b.start_time);
@@ -56,7 +52,6 @@ export function ListView({
     setGroupedAppointments(grouped);
   }, [appointments]);
 
-  // Format date header
   const formatDateHeader = (dateString: string) => {
     const date = parseISO(dateString);
     if (isToday(date)) {
@@ -66,12 +61,11 @@ export function ListView({
     } else if (isYesterday(date)) {
       return "Yesterday";
     } else if (isThisWeek(date)) {
-      return format(date, "EEEE"); // Day name
+      return format(date, "EEEE");
     }
-    return format(date, "EEEE, MMMM d"); // Full date
+    return format(date, "EEEE, MMMM d");
   };
 
-  // Format time without seconds
   const formatTime = (time: string) => {
     if (!time) return "";
     const [hours, minutes] = time.split(':');
@@ -79,47 +73,45 @@ export function ListView({
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  // Get time range display
   const getTimeDisplay = (startTime: string, endTime: string) => {
     return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   };
 
-  // Format status badge
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>;
-      case 'in progress':
-        return <Badge className="bg-yellow-500 hover:bg-yellow-600">In Progress</Badge>;  
-      case 'scheduled':
-      case 'confirmed':
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Scheduled</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-red-500 hover:bg-red-600">Cancelled</Badge>;
+  const getStatusBadge = (status) => {
+    status = status.toLowerCase().replace(/\s+/g, '');
+    
+    switch(status) {
+      case "completed":
+        return <Badge variant="completed">Completed</Badge>;
+      case "inprogress":
+        return <Badge variant="inprogress">In Progress</Badge>;
+      case "cancelled":
+        return <Badge variant="cancelled">Cancelled</Badge>;
+      case "confirmed":
+      case "scheduled":
+        return <Badge variant="scheduled">Scheduled</Badge>;
+      case "pending":
+        return <Badge variant="pending">Pending</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
-  // Handle appointment click
   const handleAppointmentClick = (appointment: AppointmentWithRelations) => {
     setSelectedAppointment(appointment);
     setDetailsDialogOpen(true);
   };
 
-  // Sort dates in chronological order - with future dates first
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   
   const sortedDates = Object.keys(groupedAppointments).sort((a, b) => {
-    // First compare if dates are in the future or past
     const aInFuture = a >= today;
     const bInFuture = b >= today;
     
     if (aInFuture && !bInFuture) return -1;
     if (!aInFuture && bInFuture) return 1;
     
-    // If both are in the future or both are in the past, sort normally
     return a.localeCompare(b);
   });
 
@@ -186,3 +178,4 @@ export function ListView({
     </div>
   );
 }
+

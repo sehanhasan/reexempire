@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -108,18 +107,21 @@ export function AppointmentDetailsDialog({
   const isInProgress = appointment.status.toLowerCase() === "in progress";
   const isCancelled = appointment.status.toLowerCase() === "cancelled";
   
-  // Get appropriate status badge
   const getStatusBadge = () => {
-    switch(appointment.status.toLowerCase()) {
+    const status = appointment.status.toLowerCase().replace(/\s+/g, '');
+    
+    switch(status) {
       case "completed":
-        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>;
-      case "in progress":
-        return <Badge className="bg-yellow-500 hover:bg-yellow-600">In Progress</Badge>;
+        return <Badge variant="completed">Completed</Badge>;
+      case "inprogress":
+        return <Badge variant="inprogress">In Progress</Badge>;
       case "cancelled":
-        return <Badge className="bg-red-500 hover:bg-red-600">Cancelled</Badge>;
+        return <Badge variant="cancelled">Cancelled</Badge>;
       case "confirmed":
       case "scheduled":
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Scheduled</Badge>;
+        return <Badge variant="scheduled">Scheduled</Badge>;
+      case "pending":
+        return <Badge variant="pending">Pending</Badge>;
       default:
         return <Badge>{appointment.status}</Badge>;
     }

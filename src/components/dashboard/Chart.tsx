@@ -1,130 +1,308 @@
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+import { Badge } from "@/components/ui/badge";
+import { quotationService, invoiceService } from "@/services";
+import { format } from 'date-fns';
 
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent
-} from "@/components/ui/chart";
-import {
-  Bar,
-  BarChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
   Tooltip,
   Legend
-} from "recharts";
+);
 
 interface ChartProps {
-  type: "bar" | "pie";
-  data: any[];
-  categories: string[];
-  index: string;
-  colors: string[];
-  valueFormatter?: (value: number) => string;
-  height?: number;
+  title: string;
+  description?: string;
+  chartData: {
+    labels: string[];
+    datasets: {
+      label: string;
+      data: number[];
+      backgroundColor: string;
+    }[];
+  };
 }
 
-export function Chart({
-  type,
-  data,
-  categories,
-  index,
-  colors,
-  valueFormatter = (value: number) => value.toString(),
-  height = 300
-}: ChartProps) {
-  
-  if (type === "bar") {
-    return (
-      <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 30 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis 
-            dataKey={index}
-            tickLine={false}
-            axisLine={false}
-            fontSize={12}
-            tickMargin={10}
-          />
-          <YAxis 
-            tickFormatter={(value) => valueFormatter(value)}
-            tickLine={false}
-            axisLine={false}
-            fontSize={12}
-          />
-          <Tooltip 
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="rounded-lg border bg-background p-2 shadow-sm">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="font-medium">{payload[0].payload[index]}</div>
-                      <div className="font-medium text-right">
-                        {valueFormatter(Number(payload[0].value))}
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-              return null
-            }}
-          />
-          <Bar dataKey={categories[0]} radius={[4, 4, 0, 0]}>
-            {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    );
-  }
-  
-  if (type === "pie") {
-    return (
-      <ResponsiveContainer width="100%" height={height}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey={categories[0]}
-            nameKey={index}
-            cx="50%"
-            cy="50%"
-            outerRadius={80}
-            innerRadius={0}
-            paddingAngle={1}
-            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-            labelLine={false}
-          >
-            {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="rounded-lg border bg-background p-2 shadow-sm">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="font-medium">{payload[0].name}</div>
-                      <div className="font-medium text-right">
-                        {valueFormatter(Number(payload[0].value))}
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-              return null
-            }}
-          />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-    );
-  }
-  
-  return null;
+export function Chart({ title, description, chartData }: ChartProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+      </CardHeader>
+      <CardContent>
+        <Bar data={chartData} />
+      </CardContent>
+    </Card>
+  );
+}
+
+interface RecentQuotationsProps {
+  limit?: number;
+}
+
+export function RecentQuotations({ limit = 5 }: RecentQuotationsProps) {
+  const [quotations, useState]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchQuotations = async () => {
+      setIsLoading(true);
+      try {
+        const data = await quotationService.getAll();
+        setQuotations(data.slice(0, limit));
+      } catch (error) {
+        console.error("Error fetching quotations:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQuotations();
+  }, [limit]);
+
+  const getStatusBadge = (status) => {
+    status = status.toLowerCase().replace(/\s+/g, '');
+    
+    let variant = 'default';
+    
+    // Map status to appropriate variant
+    switch(status) {
+      case 'sent':
+        variant = 'sent';
+        break;
+      case 'accepted':
+        variant = 'accepted';
+        break;
+      case 'pending':
+      case 'partiallypaid':
+        variant = 'pending';
+        break;
+      case 'rejected':
+        variant = 'rejected';
+        break;
+      case 'draft':
+        variant = 'draft';
+        break;
+      case 'paid':
+        variant = 'paid';
+        break;
+      case 'unpaid':
+        variant = 'unpaid';
+        break;
+      case 'overdue':
+        variant = 'overdue';
+        break;
+      case 'completed':
+        variant = 'completed';
+        break;
+      case 'scheduled':
+      case 'confirmed':
+        variant = 'scheduled';
+        break;
+      case 'inprogress':
+        variant = 'inprogress';
+        break;
+      case 'cancelled':
+        variant = 'cancelled';
+        break;
+      default:
+        variant = 'default';
+    }
+    
+    return <Badge variant={variant}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Quotations</CardTitle>
+      </CardHeader>
+      <CardContent className="p-4">
+        {isLoading ? (
+          <p>Loading quotations...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Reference #
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {quotations.map((quotation) => (
+                  <tr key={quotation.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {quotation.reference_number}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {format(new Date(quotation.quotation_date), 'MMM dd, yyyy')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getStatusBadge(quotation.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                      RM {parseFloat(quotation.total_amount).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface RecentInvoicesProps {
+  limit?: number;
+}
+
+export function RecentInvoices({ limit = 5 }: RecentInvoicesProps) {
+  const [invoices, setInvoices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      setIsLoading(true);
+      try {
+        const data = await invoiceService.getAll();
+        setInvoices(data.slice(0, limit));
+      } catch (error) {
+        console.error("Error fetching invoices:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, [limit]);
+
+  const getStatusBadge = (status) => {
+    status = status.toLowerCase().replace(/\s+/g, '');
+    
+    let variant = 'default';
+    
+    // Map status to appropriate variant
+    switch(status) {
+      case 'sent':
+        variant = 'sent';
+        break;
+      case 'accepted':
+        variant = 'accepted';
+        break;
+      case 'pending':
+      case 'partiallypaid':
+        variant = 'pending';
+        break;
+      case 'rejected':
+        variant = 'rejected';
+        break;
+      case 'draft':
+        variant = 'draft';
+        break;
+      case 'paid':
+        variant = 'paid';
+        break;
+      case 'unpaid':
+        variant = 'unpaid';
+        break;
+      case 'overdue':
+        variant = 'overdue';
+        break;
+      case 'completed':
+        variant = 'completed';
+        break;
+      case 'scheduled':
+      case 'confirmed':
+        variant = 'scheduled';
+        break;
+      case 'inprogress':
+        variant = 'inprogress';
+        break;
+      case 'cancelled':
+        variant = 'cancelled';
+        break;
+      default:
+        variant = 'default';
+    }
+    
+    return <Badge variant={variant}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Invoices</CardTitle>
+      </CardHeader>
+      <CardContent className="p-4">
+        {isLoading ? (
+          <p>Loading invoices...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Reference #
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {invoices.map((invoice) => (
+                  
+                      {invoice.reference_number}
+                    
+                    
+                      {format(new Date(invoice.issue_date), 'MMM dd, yyyy')}
+                    
+                    
+                      {getStatusBadge(invoice.payment_status)}
+                    
+                    
+                      RM {parseFloat(invoice.total).toFixed(2)}
+                    
+                  
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
