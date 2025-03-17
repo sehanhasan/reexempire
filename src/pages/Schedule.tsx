@@ -8,6 +8,8 @@ import { appointmentService, customerService } from "@/services";
 import { ListView } from "@/components/schedule/ListView";
 import { PlusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -15,6 +17,7 @@ export default function Schedule() {
   const [customers, setCustomers] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("upcoming");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,8 +75,47 @@ export default function Schedule() {
       );
     } catch (error) {
       console.error("Error marking appointment as completed:", error);
+      toast({
+        title: "Error",
+        description: "Could not mark appointment as completed",
+        variant: "destructive"
+      });
     }
   };
+
+  const handleMarkAsInProgress = async (appointment) => {
+    try {
+      await appointmentService.update(appointment.id, {
+        ...appointment,
+        status: 'In Progress'
+      });
+      
+      // Update local state
+      setAppointments(prev => 
+        prev.map(app => app.id === appointment.id 
+          ? { ...app, status: 'In Progress' } 
+          : app
+        )
+      );
+    } catch (error) {
+      console.error("Error marking appointment as in progress:", error);
+      toast({
+        title: "Error",
+        description: "Could not mark appointment as in progress",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Filter appointments based on active tab
+  const filteredAppointments = appointments.filter(appointment => {
+    if (activeTab === "upcoming") {
+      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status);
+    } else if (activeTab === "completed") {
+      return appointment.status === "Completed";
+    }
+    return true;
+  });
 
   return (
     <div className="page-container">
@@ -91,12 +133,29 @@ export default function Schedule() {
         }
       />
       
-      <div className="mt-6">
-        <ListView 
-          appointments={appointments} 
-          onEdit={handleEdit}
-          onMarkAsCompleted={handleMarkAsCompleted}
-        />
+      <div className="mt-6 px-3">
+        <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+          <TabsContent value="upcoming" className="mt-4">
+            <ListView 
+              appointments={filteredAppointments} 
+              onEdit={handleEdit}
+              onMarkAsCompleted={handleMarkAsCompleted}
+              onMarkAsInProgress={handleMarkAsInProgress}
+            />
+          </TabsContent>
+          <TabsContent value="completed" className="mt-4">
+            <ListView 
+              appointments={filteredAppointments} 
+              onEdit={handleEdit}
+              onMarkAsCompleted={handleMarkAsCompleted}
+              onMarkAsInProgress={handleMarkAsInProgress}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
       
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />

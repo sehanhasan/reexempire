@@ -1,11 +1,9 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Edit, X, Check } from "lucide-react";
+import { Calendar, Clock, MapPin, Edit, X, Check, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
-import { closeDialog } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 
 interface AppointmentDetailsDialogProps {
@@ -15,6 +13,7 @@ interface AppointmentDetailsDialogProps {
   customer: Customer | null;
   assignedStaff: Staff | null;
   onMarkAsCompleted?: (appointment: Appointment) => void;
+  onMarkAsInProgress?: (appointment: Appointment) => void;
 }
 
 export function AppointmentDetailsDialog({ 
@@ -23,7 +22,8 @@ export function AppointmentDetailsDialog({
   appointment, 
   customer, 
   assignedStaff,
-  onMarkAsCompleted
+  onMarkAsCompleted,
+  onMarkAsInProgress
 }: AppointmentDetailsDialogProps) {
   const navigate = useNavigate();
   const [images, setImages] = useState<string[]>([]);
@@ -39,19 +39,16 @@ export function AppointmentDetailsDialog({
 
   if (!appointment) return null;
 
-  // Format time from "HH:MM" format to "h:MM AM/PM"
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  // Handle dialog close safely
   const handleClose = () => {
     onClose();
   };
 
-  // Handle edit navigation safely
   const handleEdit = () => {
     onClose();
     setTimeout(() => {
@@ -66,7 +63,13 @@ export function AppointmentDetailsDialog({
     }
   };
 
-  // Check for image URLs in the notes
+  const handleMarkInProgress = () => {
+    if (onMarkAsInProgress && appointment) {
+      onMarkAsInProgress(appointment);
+      onClose();
+    }
+  };
+
   const checkForImagesInNotes = (notes: string) => {
     if (notes && notes.includes("image_url:")) {
       const regex = /image_url:([^\s]+)/g;
@@ -80,10 +83,10 @@ export function AppointmentDetailsDialog({
     return [];
   };
 
-  // Clean notes by removing the image URLs
   const cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '') || '';
 
   const isCompleted = appointment.status.toLowerCase() === "completed";
+  const isInProgress = appointment.status.toLowerCase() === "in progress";
 
   return (
     <Dialog open={open} onOpenChange={(open) => {
@@ -106,10 +109,11 @@ export function AppointmentDetailsDialog({
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <Badge className={
-              appointment.status.toLowerCase() === "confirmed" ? "bg-blue-500" : 
+              appointment.status.toLowerCase() === "confirmed" || appointment.status.toLowerCase() === "scheduled" ? "bg-blue-500" : 
               appointment.status.toLowerCase() === "completed" ? "bg-green-500" : 
+              appointment.status.toLowerCase() === "in progress" ? "bg-yellow-500" :
               appointment.status.toLowerCase() === "cancelled" ? "bg-red-500" : 
-              "bg-yellow-500"
+              "bg-gray-500"
             }>
               {appointment.status}
             </Badge>
@@ -153,7 +157,6 @@ export function AppointmentDetailsDialog({
               </div>
             )}
 
-            {/* Display attached images if any */}
             {images.length > 0 && (
               <div className="mt-4">
                 <p className="font-medium">Attached Images</p>
@@ -178,8 +181,14 @@ export function AppointmentDetailsDialog({
             Close
           </Button>
           <div className="flex gap-2">
+            {!isCompleted && !isInProgress && onMarkAsInProgress && (
+              <Button onClick={handleMarkInProgress} variant="secondary" className="gap-2">
+                <Play className="h-4 w-4" />
+                Start
+              </Button>
+            )}
             {!isCompleted && onMarkAsCompleted && (
-              <Button onClick={handleMarkCompleted} variant="secondary" className="gap-2">
+              <Button onClick={handleMarkCompleted} variant="secondary" className="gap-2 bg-green-500 hover:bg-green-600 text-white">
                 <Check className="h-4 w-4" />
                 Mark Completed
               </Button>
@@ -194,3 +203,4 @@ export function AppointmentDetailsDialog({
     </Dialog>
   );
 }
+

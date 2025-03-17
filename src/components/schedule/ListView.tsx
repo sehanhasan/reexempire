@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, MapPin, Check, Edit } from "lucide-react";
+import { Clock, Calendar, MapPin, Check, Edit, Play } from "lucide-react";
 import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO, compareDesc } from "date-fns";
 import { AppointmentDetailsDialog } from "../appointments/AppointmentDetailsDialog";
 import { Appointment, Customer } from "@/types/database";
@@ -23,11 +23,13 @@ interface ListViewProps {
   appointments: AppointmentWithRelations[];
   onEdit: (appointment: AppointmentWithRelations) => void;
   onMarkAsCompleted: (appointment: AppointmentWithRelations) => void;
+  onMarkAsInProgress: (appointment: AppointmentWithRelations) => void;
 }
 export function ListView({
   appointments,
   onEdit,
-  onMarkAsCompleted
+  onMarkAsCompleted,
+  onMarkAsInProgress
 }: ListViewProps) {
   const [groupedAppointments, setGroupedAppointments] = useState<Record<string, AppointmentWithRelations[]>>({});
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null);
@@ -69,23 +71,33 @@ export function ListView({
     return format(date, "EEEE, MMMM d"); // Full date
   };
 
+  // Format time without seconds
+  const formatTime = (time: string) => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours, 10);
+    return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
+  };
+
   // Get time range display
   const getTimeDisplay = (startTime: string, endTime: string) => {
-    return `${startTime} - ${endTime}`;
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   };
 
   // Format status badge
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700">Completed</Badge>;
+        return <Badge className="bg-green-500 text-white">Completed</Badge>;
+      case 'in progress':
+        return <Badge className="bg-yellow-500 text-white">In Progress</Badge>;  
       case 'scheduled':
       case 'confirmed':
-        return <Badge className="bg-blue-100 text-blue-700">Scheduled</Badge>;
+        return <Badge className="bg-blue-500 text-white">Scheduled</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700">Cancelled</Badge>;
+        return <Badge className="bg-red-500 text-white">Cancelled</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-700">{status}</Badge>;
+        return <Badge className="bg-gray-500 text-white">{status}</Badge>;
     }
   };
 
@@ -95,7 +107,7 @@ export function ListView({
     setDetailsDialogOpen(true);
   };
 
-  // Sort dates in chronological order - now with future dates first
+  // Sort dates in chronological order - with future dates first
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   
@@ -111,7 +123,7 @@ export function ListView({
     return a.localeCompare(b);
   });
 
-  return <div className="space-y-6 px-3">
+  return <div className="space-y-6">
       {sortedDates.length === 0 ? <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-muted-foreground">No appointments found</p>
@@ -155,7 +167,8 @@ export function ListView({
         appointment={selectedAppointment} 
         customer={selectedAppointment?.customer || null} 
         assignedStaff={null} 
-        onMarkAsCompleted={onMarkAsCompleted} 
+        onMarkAsCompleted={onMarkAsCompleted}
+        onMarkAsInProgress={onMarkAsInProgress}
       />
     </div>;
 }
