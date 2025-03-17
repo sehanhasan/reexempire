@@ -8,12 +8,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface AdditionalInfoCardProps {
   notes: string;
   setNotes: React.Dispatch<React.SetStateAction<string>>;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.FormEvent, status?: string) => void;
   onCancel: () => void;
   documentType: "quotation" | "invoice";
   isSubmitting?: boolean;
   saveButtonText?: string;
   onSendWhatsapp?: () => void;
+  showDraft?: boolean;
 }
 
 export function AdditionalInfoCard({
@@ -24,7 +25,8 @@ export function AdditionalInfoCard({
   documentType,
   isSubmitting = false,
   saveButtonText = "Save",
-  onSendWhatsapp
+  onSendWhatsapp,
+  showDraft = true
 }: AdditionalInfoCardProps) {
   const isMobile = useIsMobile();
   
@@ -47,39 +49,42 @@ export function AdditionalInfoCard({
           </div>
           
           <div className={`flex ${isMobile ? 'flex-col' : 'justify-end'} gap-3 mt-6`}>
-            {documentType === "quotation" && (
+            {documentType === "quotation" ? (
               <>
                 <Button 
                   type="button" 
                   variant="outline" 
-                  className={`${isMobile ? 'w-full' : ''} gap-2`}
-                  onClick={(e) => {
-                    const formEvent = e as React.FormEvent;
-                    // Additional code to handle draft status
-                    onSubmit(formEvent);
-                  }}
+                  className={`${isMobile ? 'w-full' : ''}`}
+                  onClick={onCancel}
                   disabled={isSubmitting}
                 >
-                  <Save className="h-4 w-4" />
-                  Save Draft
+                  Cancel
                 </Button>
+                
+                {showDraft && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} gap-2`}
+                    onClick={(e) => onSubmit(e, "Draft")}
+                    disabled={isSubmitting}
+                  >
+                    <Save className="h-4 w-4" />
+                    Save Draft
+                  </Button>
+                )}
+                
                 <Button 
                   type="button"
                   className={`${isMobile ? 'w-full' : ''} gap-2 bg-blue-600 hover:bg-blue-700`}
-                  onClick={(e) => {
-                    const formEvent = e as React.FormEvent;
-                    // Additional code to handle sent status
-                    onSubmit(formEvent);
-                  }}
+                  onClick={(e) => onSubmit(e, "Sent")}
                   disabled={isSubmitting}
                 >
                   <Send className="h-4 w-4" />
                   {saveButtonText === "Save" ? "Send Quotation" : "Send Update"}
                 </Button>
               </>
-            )}
-            
-            {documentType === "invoice" && (
+            ) : (
               <>
                 <Button 
                   type="button" 

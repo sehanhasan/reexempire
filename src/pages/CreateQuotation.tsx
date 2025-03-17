@@ -137,10 +137,17 @@ export default function CreateQuotation() {
         }
       }
       
-      toast({
-        title: status === "Sent" ? "Quotation Sent" : "Quotation Created",
-        description: `Quotation for ${customer?.name} has been ${status === "Sent" ? "sent" : "created"} successfully.`,
-      });
+      if (status === "Sent") {
+        toast({
+          title: "Quotation Sent",
+          description: `Quotation for ${customer?.name} has been sent successfully.`,
+        });
+      } else {
+        toast({
+          title: "Quotation Created",
+          description: `Quotation for ${customer?.name} has been created as Draft.`,
+        });
+      }
       
       navigate("/quotations");
     } catch (error) {
@@ -195,10 +202,11 @@ export default function CreateQuotation() {
         <AdditionalInfoCard 
           notes={notes}
           setNotes={setNotes}
-          onSubmit={(e) => handleSubmit(e, e.currentTarget === document.activeElement ? "Sent" : "Draft")}
+          onSubmit={handleSubmit}
           onCancel={() => navigate("/quotations")}
           documentType="quotation"
           isSubmitting={isSubmitting}
+          showDraft={true}
         />
       </form>
     </div>

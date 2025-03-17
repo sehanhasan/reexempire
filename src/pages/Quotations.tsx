@@ -211,7 +211,7 @@ export default function Quotations() {
     }
   };
 
-  const handleDownloadPDF = (quotation: QuotationWithCustomer) => {
+  const handleDownloadPDF = async (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
       toast({
@@ -221,7 +221,19 @@ export default function Quotations() {
       });
       return;
     }
+    
     try {
+      const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
+      
+      const itemsForPDF = quotationItems.map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        amount: item.amount,
+        category: item.category || "Other Items",
+        unit: item.unit
+      }));
+      
       const pdf = generateQuotationPDF({
         documentNumber: quotation.reference_number,
         documentDate: quotation.issue_date,
@@ -230,13 +242,14 @@ export default function Quotations() {
         expiryDate: quotation.expiry_date,
         validUntil: quotation.expiry_date,
         notes: quotation.notes || "",
-        items: [],
+        items: itemsForPDF,
         depositInfo: {
           requiresDeposit: quotation.requires_deposit || false,
           depositAmount: quotation.deposit_amount || 0,
           depositPercentage: quotation.deposit_percentage || 0
         }
       });
+      
       downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);

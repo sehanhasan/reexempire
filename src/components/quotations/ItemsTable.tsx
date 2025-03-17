@@ -89,29 +89,27 @@ export function ItemsTable({
                       />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                    <div className="space-y-2">
+                      <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                      <Input 
+                        value={item.quantity} 
+                        onChange={e => handleItemChange(item.id, 'quantity', e.target.value)}
+                        className="h-10" 
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price</label>
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
                         <Input 
-                          value={item.quantity} 
-                          onChange={e => handleItemChange(item.id, 'quantity', e.target.value)}
-                          className="h-10" 
+                          type="number" 
+                          min="0" 
+                          step="0.01" 
+                          className="pl-8 h-10" 
+                          value={item.unitPrice} 
+                          onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
                         />
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price</label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            step="0.01" 
-                            className="pl-8 h-10 text-right" 
-                            value={item.unitPrice} 
-                            onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
-                          />
-                        </div>
                       </div>
                     </div>
                     

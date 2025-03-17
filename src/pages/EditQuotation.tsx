@@ -190,10 +190,17 @@ export default function EditQuotation() {
         }
       }
 
-      toast({
-        title: newStatus === "Sent" ? "Quotation Sent" : "Quotation Updated",
-        description: `Quotation for ${customer?.name} has been ${newStatus === "Sent" ? "sent" : "updated"} successfully.`
-      });
+      if (newStatus === "Sent") {
+        toast({
+          title: "Quotation Sent",
+          description: `Quotation for ${customer?.name} has been sent successfully.`
+        });
+      } else {
+        toast({
+          title: "Quotation Updated",
+          description: `Quotation for ${customer?.name} has been updated successfully.`
+        });
+      }
 
       navigate("/quotations");
     } catch (error) {
@@ -326,11 +333,12 @@ export default function EditQuotation() {
         <AdditionalInfoCard 
           notes={notes} 
           setNotes={setNotes} 
-          onSubmit={(e) => handleSubmit(e, e.currentTarget === document.activeElement ? "Sent" : "Draft")} 
+          onSubmit={handleSubmit} 
           onCancel={() => navigate("/quotations")} 
           documentType="quotation" 
           isSubmitting={isSubmitting} 
-          saveButtonText="Update Quotation" 
+          saveButtonText="Update Quotation"
+          showDraft={false}
         />
       </form>
     </div>;

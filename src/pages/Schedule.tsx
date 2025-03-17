@@ -78,6 +78,11 @@ export default function Schedule() {
           : app
         )
       );
+      
+      toast({
+        title: "Appointment Completed",
+        description: "Appointment has been marked as completed.",
+      });
     } catch (error) {
       console.error("Error marking appointment as completed:", error);
       toast({
@@ -101,6 +106,11 @@ export default function Schedule() {
           : app
         )
       );
+      
+      toast({
+        title: "Appointment In Progress",
+        description: "Appointment has been marked as in progress.",
+      });
     } catch (error) {
       console.error("Error marking appointment as in progress:", error);
       toast({
