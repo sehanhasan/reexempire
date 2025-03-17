@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,38 +8,42 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from './LoadingSpinner';
+
 export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!email || !password) {
       toast({
         title: "Error",
         description: "Please enter both email and password",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
+
     setIsLoading(true);
+
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
+
       if (error) {
         throw error;
       }
+
       toast({
         title: "Login successful",
-        description: "Welcome back!"
+        description: "Welcome back!",
       });
-
+      
       // Redirect to dashboard after successful login
       navigate('/');
     } catch (error: any) {
@@ -46,29 +51,49 @@ export function LoginForm() {
       toast({
         title: "Login failed",
         description: error.message || "Invalid email or password. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-  return <form onSubmit={handleLogin}>
+
+  return (
+    <form onSubmit={handleLogin}>
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center text-sky-600">Login</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} required />
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="Enter your email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required />
+            <Input 
+              id="password" 
+              type="password" 
+              placeholder="Enter your password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col">
-          <Button type="submit" className="w-full mb-4" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full mb-4" 
+            disabled={isLoading}
+          >
             {isLoading ? <LoadingSpinner /> : 'Sign In'}
           </Button>
           <div className="text-center mt-2">
@@ -81,5 +106,6 @@ export function LoginForm() {
           </div>
         </CardFooter>
       </Card>
-    </form>;
+    </form>
+  );
 }
