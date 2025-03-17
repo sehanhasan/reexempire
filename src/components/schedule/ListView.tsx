@@ -1,10 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, MapPin, MoreHorizontal, Check, Edit } from "lucide-react";
-import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO } from "date-fns";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Clock, Calendar, MapPin, Check, Edit } from "lucide-react";
+import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO, compareDesc } from "date-fns";
 import { AppointmentDetailsDialog } from "../appointments/AppointmentDetailsDialog";
 import { Appointment, Customer } from "@/types/database";
 
@@ -95,9 +95,23 @@ export function ListView({
     setDetailsDialogOpen(true);
   };
 
-  // Sort dates in chronological order
-  const sortedDates = Object.keys(groupedAppointments).sort();
-  return <div className="space-y-6">
+  // Sort dates in chronological order - now with future dates first
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  
+  const sortedDates = Object.keys(groupedAppointments).sort((a, b) => {
+    // First compare if dates are in the future or past
+    const aInFuture = a >= today;
+    const bInFuture = b >= today;
+    
+    if (aInFuture && !bInFuture) return -1;
+    if (!aInFuture && bInFuture) return 1;
+    
+    // If both are in the future or both are in the past, sort normally
+    return a.localeCompare(b);
+  });
+
+  return <div className="space-y-6 px-3">
       {sortedDates.length === 0 ? <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-muted-foreground">No appointments found</p>
@@ -120,40 +134,14 @@ export function ListView({
                           </span>
                         </div>
                         
-                        <h3 className="font-medium">{appointment.title || "Unnamed Service"}</h3>
-                        
-                        {appointment.customer?.unit_number && <div className="flex items-center space-x-1 text-gray-600">
-                            <MapPin className="h-4 w-4" />
-                            <span className="text-sm">Unit #{appointment.customer.unit_number}</span>
-                          </div>}
+                        <h3 className="font-medium">
+                          {appointment.customer?.unit_number && `#${appointment.customer.unit_number} - `}
+                          {appointment.title || "Unnamed Service"}
+                        </h3>
                       </div>
                       
-                      <div className="flex flex-col items-end">
+                      <div>
                         {getStatusBadge(appointment.status)}
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={e => {
-                      e.stopPropagation();
-                      onEdit(appointment);
-                    }}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            {appointment.status.toLowerCase() !== 'completed' && <DropdownMenuItem onClick={e => {
-                      e.stopPropagation();
-                      onMarkAsCompleted(appointment);
-                    }}>
-                                <Check className="mr-2 h-4 w-4" />
-                                Mark as Completed
-                              </DropdownMenuItem>}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
                     </div>
                   </CardContent>
@@ -161,6 +149,13 @@ export function ListView({
             </div>
           </div>)}
       
-      <AppointmentDetailsDialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} appointment={selectedAppointment} customer={selectedAppointment?.customer || null} assignedStaff={null} onMarkAsCompleted={onMarkAsCompleted} />
+      <AppointmentDetailsDialog 
+        open={detailsDialogOpen} 
+        onClose={() => setDetailsDialogOpen(false)} 
+        appointment={selectedAppointment} 
+        customer={selectedAppointment?.customer || null} 
+        assignedStaff={null} 
+        onMarkAsCompleted={onMarkAsCompleted} 
+      />
     </div>;
 }

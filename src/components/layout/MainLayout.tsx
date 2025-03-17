@@ -122,7 +122,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           />
         )}
         
-        <main className={`${isMobile ? 'px-0 pt-8 pb-16' : 'p-6 md:px-8 lg:px-10'} flex-1`}>
+        <main className={`${isMobile ? 'px-0 pt-14 pb-16' : 'p-6 md:px-8 lg:px-10'} flex-1`}>
           {children}
         </main>
       </div>

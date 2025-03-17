@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Edit, X, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
-import { closeDropdown } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { closeDialog } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
 
 interface AppointmentDetailsDialogProps {
   open: boolean;
@@ -27,6 +27,15 @@ export function AppointmentDetailsDialog({
 }: AppointmentDetailsDialogProps) {
   const navigate = useNavigate();
   const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (appointment?.notes) {
+      const foundImages = checkForImagesInNotes(appointment.notes);
+      setImages(foundImages);
+    } else {
+      setImages([]);
+    }
+  }, [appointment]);
 
   if (!appointment) return null;
 
@@ -58,25 +67,18 @@ export function AppointmentDetailsDialog({
   };
 
   // Check for image URLs in the notes
-  const checkForImagesInNotes = () => {
-    if (appointment.notes && appointment.notes.includes("image_url:")) {
+  const checkForImagesInNotes = (notes: string) => {
+    if (notes && notes.includes("image_url:")) {
       const regex = /image_url:([^\s]+)/g;
       let match;
       const foundImages = [];
-      while ((match = regex.exec(appointment.notes)) !== null) {
+      while ((match = regex.exec(notes)) !== null) {
         foundImages.push(match[1]);
       }
       return foundImages;
     }
     return [];
   };
-
-  // Extract images if they exist
-  useState(() => {
-    if (appointment?.notes) {
-      setImages(checkForImagesInNotes());
-    }
-  });
 
   // Clean notes by removing the image URLs
   const cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '') || '';
@@ -138,17 +140,6 @@ export function AppointmentDetailsDialog({
                 <div>
                   <p className="font-medium">Unit Number</p>
                   <p className="text-sm">#{customer.unit_number}</p>
-                </div>
-              </div>
-            )}
-
-            {assignedStaff && (
-              <div className="flex items-start gap-2">
-                <Clock className="h-4 w-4 mt-1 text-gray-500" />
-                <div>
-                  <p className="font-medium">Assigned Staff</p>
-                  <p className="text-sm">{assignedStaff.name}</p>
-                  <p className="text-sm text-gray-600">{assignedStaff.position || "Staff"}</p>
                 </div>
               </div>
             )}

@@ -1,14 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Chart } from "@/components/dashboard/Chart";
-import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt, Plus } from "lucide-react";
+import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt } from "lucide-react";
 import { quotationService, invoiceService, customerService, appointmentService } from "@/services";
 import { Button } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/utils/formatters";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
@@ -180,13 +178,13 @@ export default function Dashboard() {
         <CardContent>
           {loading ? <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div> : upcomingAppointments.length === 0 ? <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div> : <div className="space-y-4">
             {upcomingAppointments.map(appointment => <div key={appointment.id} className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2" onClick={() => showAppointmentDetails(appointment)}>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium">
+              <div className="w-full">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-medium text-base">
                     {appointment.unit_number ? `#${appointment.unit_number} - ` : ""}
                     {appointment.title}
                   </h3>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="ml-2 whitespace-nowrap">
                     {appointment.status}
                   </Badge>
                 </div>
@@ -195,15 +193,7 @@ export default function Dashboard() {
                   {' • '}
                   {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                 </p>
-                <p className="text-sm">{appointment.customer_name}</p>
               </div>
-              <Button variant="outline" size="sm" className="flex-shrink-0" onClick={e => {
-                e.stopPropagation();
-                showAppointmentDetails(appointment);
-              }}>
-                <Calendar className="h-4 w-4 mr-1" />
-                Details
-              </Button>
             </div>)}
           </div>}
         </CardContent>
@@ -400,13 +390,13 @@ export default function Dashboard() {
               <CardContent>
                 {loading ? <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div> : upcomingAppointments.length === 0 ? <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div> : <div className="space-y-4">
                     {upcomingAppointments.map(appointment => <div key={appointment.id} className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2" onClick={() => showAppointmentDetails(appointment)}>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-medium">
+                        <div className="w-full">
+                          <div className="flex justify-between items-start mb-1">
+                            <h3 className="font-medium text-base">
                               {appointment.unit_number ? `#${appointment.unit_number} - ` : ""}
                               {appointment.title}
                             </h3>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="ml-2 whitespace-nowrap">
                               {appointment.status}
                             </Badge>
                           </div>
@@ -415,15 +405,7 @@ export default function Dashboard() {
                             {' • '}
                             {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                           </p>
-                          <p className="text-sm">{appointment.customer_name}</p>
                         </div>
-                        <Button variant="outline" size="sm" className="flex-shrink-0" onClick={e => {
-                e.stopPropagation();
-                showAppointmentDetails(appointment);
-              }}>
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Details
-                        </Button>
                       </div>)}
                   </div>}
               </CardContent>
@@ -512,7 +494,31 @@ export default function Dashboard() {
         </>
       )}
 
-      <AppointmentDetailsDialog open={isAppointmentDetailOpen} onClose={() => setIsAppointmentDetailOpen(false)} appointment={selectedAppointment} customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null} assignedStaff={null} />
+      <AppointmentDetailsDialog 
+        open={isAppointmentDetailOpen} 
+        onClose={() => setIsAppointmentDetailOpen(false)} 
+        appointment={selectedAppointment} 
+        customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null} 
+        assignedStaff={null}
+        onMarkAsCompleted={async (appointment) => {
+          try {
+            await appointmentService.update(appointment.id, {
+              ...appointment,
+              status: 'Completed'
+            });
+            
+            setUpcomingAppointments(prev => 
+              prev.map(app => app.id === appointment.id 
+                ? { ...app, status: 'Completed' } 
+                : app
+              )
+            );
+            setIsAppointmentDetailOpen(false);
+          } catch (error) {
+            console.error("Error marking appointment as completed:", error);
+          }
+        }} 
+      />
     </div>
   );
 }

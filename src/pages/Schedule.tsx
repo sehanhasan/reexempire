@@ -91,7 +91,7 @@ export default function Schedule() {
         }
       />
       
-      <div className="mt-6 px-3">
+      <div className="mt-6">
         <ListView 
           appointments={appointments} 
           onEdit={handleEdit}
