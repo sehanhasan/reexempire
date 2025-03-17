@@ -18,10 +18,8 @@ export default function AuthLayout({
       navigate('/');
     }
   }, [session, navigate]);
-  return <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-sky-600">
-      <div className="mb-8">
-        <img src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" alt="Reex Empire Logo" className="h-16 mx-auto" />
-      </div>
+  return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      
       <div className="w-full max-w-md">
         {children}
       </div>
