@@ -96,9 +96,14 @@ export const appointmentService = {
   },
 
   async update(id: string, appointment: Partial<Omit<Appointment, "id" | "created_at" | "updated_at">>): Promise<Appointment> {
+    // Ensure we're not sending undefined values that might overwrite existing data
+    const cleanedAppointment = Object.fromEntries(
+      Object.entries(appointment).filter(([_, v]) => v !== undefined)
+    );
+
     const { data, error } = await supabase
       .from("appointments")
-      .update(appointment)
+      .update(cleanedAppointment)
       .eq("id", id)
       .select()
       .single();

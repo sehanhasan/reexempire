@@ -10,6 +10,7 @@ import { PlusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { Appointment } from "@/types/database";
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -49,6 +50,11 @@ export default function Schedule() {
       } catch (error) {
         console.error("Error fetching schedule data:", error);
         setIsLoading(false);
+        toast({
+          title: "Error",
+          description: "Failed to load appointments",
+          variant: "destructive"
+        });
       }
     };
     
@@ -59,10 +65,9 @@ export default function Schedule() {
     navigate(`/schedule/edit/${appointment.id}`);
   };
   
-  const handleMarkAsCompleted = async (appointment) => {
+  const handleMarkAsCompleted = async (appointment: Appointment) => {
     try {
       await appointmentService.update(appointment.id, {
-        ...appointment,
         status: 'Completed'
       });
       
@@ -83,10 +88,9 @@ export default function Schedule() {
     }
   };
 
-  const handleMarkAsInProgress = async (appointment) => {
+  const handleMarkAsInProgress = async (appointment: Appointment) => {
     try {
       await appointmentService.update(appointment.id, {
-        ...appointment,
         status: 'In Progress'
       });
       
@@ -110,9 +114,10 @@ export default function Schedule() {
   // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
     if (activeTab === "upcoming") {
-      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status);
+      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status) &&
+             appointment.status !== "Cancelled";
     } else if (activeTab === "completed") {
-      return appointment.status === "Completed";
+      return appointment.status === "Completed" || appointment.status === "Cancelled";
     }
     return true;
   });
@@ -133,7 +138,7 @@ export default function Schedule() {
         }
       />
       
-      <div className="mt-6 px-3">
+      <div className="mt-6">
         <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>

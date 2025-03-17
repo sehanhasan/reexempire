@@ -88,16 +88,16 @@ export function ListView({
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return <Badge className="bg-green-500 text-white">Completed</Badge>;
+        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>;
       case 'in progress':
-        return <Badge className="bg-yellow-500 text-white">In Progress</Badge>;  
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600">In Progress</Badge>;  
       case 'scheduled':
       case 'confirmed':
-        return <Badge className="bg-blue-500 text-white">Scheduled</Badge>;
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Scheduled</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-500 text-white">Cancelled</Badge>;
+        return <Badge className="bg-red-500 hover:bg-red-600">Cancelled</Badge>;
       default:
-        return <Badge className="bg-gray-500 text-white">{status}</Badge>;
+        return <Badge>{status}</Badge>;
     }
   };
 
@@ -123,19 +123,29 @@ export function ListView({
     return a.localeCompare(b);
   });
 
-  return <div className="space-y-6">
-      {sortedDates.length === 0 ? <Card>
+  return (
+    <div className="space-y-6 px-3">
+      {sortedDates.length === 0 ? (
+        <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-muted-foreground">No appointments found</p>
           </CardContent>
-        </Card> : sortedDates.map(date => <div key={date} className="space-y-3">
+        </Card>
+      ) : (
+        sortedDates.map(date => (
+          <div key={date} className="space-y-3">
             <h2 className="font-semibold flex items-center text-base">
               <Calendar className="mr-2 h-5 w-5 text-blue-600" />
               {formatDateHeader(date)}
             </h2>
             
             <div className="space-y-2">
-              {groupedAppointments[date].map(appointment => <Card key={appointment.id} className="border-l-4 border-l-blue-500 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleAppointmentClick(appointment)}>
+              {groupedAppointments[date].map(appointment => (
+                <Card 
+                  key={appointment.id} 
+                  className="border-l-4 border-l-blue-500 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleAppointmentClick(appointment)}
+                >
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
@@ -157,9 +167,12 @@ export function ListView({
                       </div>
                     </div>
                   </CardContent>
-                </Card>)}
+                </Card>
+              ))}
             </div>
-          </div>)}
+          </div>
+        ))
+      )}
       
       <AppointmentDetailsDialog 
         open={detailsDialogOpen} 
@@ -170,5 +183,6 @@ export function ListView({
         onMarkAsCompleted={onMarkAsCompleted}
         onMarkAsInProgress={onMarkAsInProgress}
       />
-    </div>;
+    </div>
+  );
 }
