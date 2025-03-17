@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -226,6 +227,7 @@ export default function Quotations() {
       const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
       
       const itemsForPDF = quotationItems.map(item => ({
+        id: item.id, // Add the id property
         description: item.description,
         quantity: item.quantity,
         unitPrice: item.unit_price,
