@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { quotationService, invoiceService } from "@/services";
@@ -15,6 +14,7 @@ interface ChartProps {
   colors?: string[];
   valueFormatter?: (value: any) => string;
   height?: number;
+  type?: string;
 }
 
 export function Chart({ 
@@ -25,7 +25,8 @@ export function Chart({
   index, 
   colors = ['#3b82f6'], 
   valueFormatter = (value) => `${value}`,
-  height = 300 
+  height = 300,
+  type = 'bar'
 }: ChartProps) {
   return (
     <Card>

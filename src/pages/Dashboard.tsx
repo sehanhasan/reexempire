@@ -311,7 +311,15 @@ export default function Dashboard() {
           <CardTitle className="text-lg text-cyan-600">Revenue</CardTitle>
         </CardHeader>
         <CardContent>
-          <Chart type="bar" data={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={300} />
+          <Chart 
+            chartData={revenueData} 
+            categories={["revenue"]} 
+            index="month" 
+            colors={["#3b82f6"]} 
+            valueFormatter={value => `RM ${value.toLocaleString()}`} 
+            height={300} 
+            title=""
+          />
         </CardContent>
       </Card>
     </div>
