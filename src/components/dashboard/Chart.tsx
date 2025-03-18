@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -55,7 +56,7 @@ interface RecentQuotationsProps {
 }
 
 export function RecentQuotations({ limit = 5 }: RecentQuotationsProps) {
-  const [quotations, useState]>([]);
+  const [quotations, setQuotations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -284,19 +285,20 @@ export function RecentInvoices({ limit = 5 }: RecentInvoicesProps) {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {invoices.map((invoice) => (
-                  
+                  <tr key={invoice.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {invoice.reference_number}
-                    
-                    
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {format(new Date(invoice.issue_date), 'MMM dd, yyyy')}
-                    
-                    
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {getStatusBadge(invoice.payment_status)}
-                    
-                    
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                       RM {parseFloat(invoice.total).toFixed(2)}
-                    
-                  
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
