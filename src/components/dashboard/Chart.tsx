@@ -1,43 +1,32 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar } from 'react-chartjs-2';
 import { Badge } from "@/components/ui/badge";
 import { quotationService, invoiceService } from "@/services";
 import { format } from 'date-fns';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface ChartProps {
   title: string;
   description?: string;
-  chartData: {
-    labels: string[];
-    datasets: {
-      label: string;
-      data: number[];
-      backgroundColor: string;
-    }[];
-  };
+  chartData: any[];
+  categories: string[];
+  index: string;
+  colors?: string[];
+  valueFormatter?: (value: any) => string;
+  height?: number;
 }
 
-export function Chart({ title, description, chartData }: ChartProps) {
+export function Chart({ 
+  title, 
+  description, 
+  chartData, 
+  categories, 
+  index, 
+  colors = ['#3b82f6'], 
+  valueFormatter = (value) => `${value}`,
+  height = 300 
+}: ChartProps) {
   return (
     <Card>
       <CardHeader>
@@ -45,7 +34,22 @@ export function Chart({ title, description, chartData }: ChartProps) {
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </CardHeader>
       <CardContent>
-        <Bar data={chartData} />
+        <ResponsiveContainer width="100%" height={height}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey={index} />
+            <YAxis />
+            <Tooltip formatter={valueFormatter} />
+            <Legend />
+            {categories.map((category, index) => (
+              <Bar 
+                key={category}
+                dataKey={category} 
+                fill={colors[index % colors.length]} 
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );
@@ -76,52 +80,56 @@ export function RecentQuotations({ limit = 5 }: RecentQuotationsProps) {
   }, [limit]);
 
   const getStatusBadge = (status) => {
-    status = status.toLowerCase().replace(/\s+/g, '');
+    const statusText = status?.toLowerCase().replace(/\s+/g, '') || 'default';
     
-    let variant = 'default';
+    // Ensure we use only valid badge variants
+    let variant: "default" | "destructive" | "outline" | "secondary" | 
+               "sent" | "accepted" | "pending" | "rejected" | "draft" | 
+               "paid" | "unpaid" | "overdue" | "completed" | "scheduled" | 
+               "inprogress" | "cancelled" = "default";
     
     // Map status to appropriate variant
-    switch(status) {
+    switch(statusText) {
       case 'sent':
-        variant = 'sent';
+        variant = "sent";
         break;
       case 'accepted':
-        variant = 'accepted';
+        variant = "accepted";
         break;
       case 'pending':
       case 'partiallypaid':
-        variant = 'pending';
+        variant = "pending";
         break;
       case 'rejected':
-        variant = 'rejected';
+        variant = "rejected";
         break;
       case 'draft':
-        variant = 'draft';
+        variant = "draft";
         break;
       case 'paid':
-        variant = 'paid';
+        variant = "paid";
         break;
       case 'unpaid':
-        variant = 'unpaid';
+        variant = "unpaid";
         break;
       case 'overdue':
-        variant = 'overdue';
+        variant = "overdue";
         break;
       case 'completed':
-        variant = 'completed';
+        variant = "completed";
         break;
       case 'scheduled':
       case 'confirmed':
-        variant = 'scheduled';
+        variant = "scheduled";
         break;
       case 'inprogress':
-        variant = 'inprogress';
+        variant = "inprogress";
         break;
       case 'cancelled':
-        variant = 'cancelled';
+        variant = "cancelled";
         break;
       default:
-        variant = 'default';
+        variant = "default";
     }
     
     return <Badge variant={variant}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
@@ -205,52 +213,56 @@ export function RecentInvoices({ limit = 5 }: RecentInvoicesProps) {
   }, [limit]);
 
   const getStatusBadge = (status) => {
-    status = status.toLowerCase().replace(/\s+/g, '');
+    const statusText = status?.toLowerCase().replace(/\s+/g, '') || 'default';
     
-    let variant = 'default';
+    // Ensure we use only valid badge variants
+    let variant: "default" | "destructive" | "outline" | "secondary" | 
+               "sent" | "accepted" | "pending" | "rejected" | "draft" | 
+               "paid" | "unpaid" | "overdue" | "completed" | "scheduled" | 
+               "inprogress" | "cancelled" = "default";
     
     // Map status to appropriate variant
-    switch(status) {
+    switch(statusText) {
       case 'sent':
-        variant = 'sent';
+        variant = "sent";
         break;
       case 'accepted':
-        variant = 'accepted';
+        variant = "accepted";
         break;
       case 'pending':
       case 'partiallypaid':
-        variant = 'pending';
+        variant = "pending";
         break;
       case 'rejected':
-        variant = 'rejected';
+        variant = "rejected";
         break;
       case 'draft':
-        variant = 'draft';
+        variant = "draft";
         break;
       case 'paid':
-        variant = 'paid';
+        variant = "paid";
         break;
       case 'unpaid':
-        variant = 'unpaid';
+        variant = "unpaid";
         break;
       case 'overdue':
-        variant = 'overdue';
+        variant = "overdue";
         break;
       case 'completed':
-        variant = 'completed';
+        variant = "completed";
         break;
       case 'scheduled':
       case 'confirmed':
-        variant = 'scheduled';
+        variant = "scheduled";
         break;
       case 'inprogress':
-        variant = 'inprogress';
+        variant = "inprogress";
         break;
       case 'cancelled':
-        variant = 'cancelled';
+        variant = "cancelled";
         break;
       default:
-        variant = 'default';
+        variant = "default";
     }
     
     return <Badge variant={variant}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
