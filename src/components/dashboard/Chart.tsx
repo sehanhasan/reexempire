@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { quotationService, invoiceService } from "@/services";
@@ -83,13 +83,11 @@ export function RecentQuotations({ limit = 5 }: RecentQuotationsProps) {
   const getStatusBadge = (status) => {
     const statusText = status?.toLowerCase().replace(/\s+/g, '') || 'default';
     
-    // Ensure we use only valid badge variants
     let variant: "default" | "destructive" | "outline" | "secondary" | 
                "sent" | "accepted" | "pending" | "rejected" | "draft" | 
                "paid" | "unpaid" | "overdue" | "completed" | "scheduled" | 
                "inprogress" | "cancelled" = "default";
     
-    // Map status to appropriate variant
     switch(statusText) {
       case 'sent':
         variant = "sent";
@@ -216,13 +214,11 @@ export function RecentInvoices({ limit = 5 }: RecentInvoicesProps) {
   const getStatusBadge = (status) => {
     const statusText = status?.toLowerCase().replace(/\s+/g, '') || 'default';
     
-    // Ensure we use only valid badge variants
     let variant: "default" | "destructive" | "outline" | "secondary" | 
                "sent" | "accepted" | "pending" | "rejected" | "draft" | 
                "paid" | "unpaid" | "overdue" | "completed" | "scheduled" | 
                "inprogress" | "cancelled" = "default";
     
-    // Map status to appropriate variant
     switch(statusText) {
       case 'sent':
         variant = "sent";
