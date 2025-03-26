@@ -9,7 +9,7 @@ import {
   Edit,
   MoreHorizontal,
   Trash,
-  List
+  ChevronRight,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "@/services/categoryService";
@@ -35,12 +35,17 @@ import {
   closeAlertDialog
 } from "@/components/ui/alert-dialog";
 
-import { Category } from "@/types/database";
+import "../styles/mobile-card.css";
+import { Card } from "@/components/ui/card";
+import { Category, Subcategory } from "@/types/database";
+import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
 
 export default function Categories() {
   const navigate = useNavigate();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [showSubcategories, setShowSubcategories] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   
   // Fetch categories from the API - using queryKey with proper caching
   const { data: categories = [], refetch } = useQuery({
@@ -80,6 +85,11 @@ export default function Categories() {
     }, 50);
   };
 
+  const handleViewSubcategories = (category: Category) => {
+    setSelectedCategory(category);
+    setShowSubcategories(true);
+  };
+
   const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
     
@@ -92,7 +102,7 @@ export default function Categories() {
         await categoryService.delete(categoryToDelete.id);
         
         toast({
-          title: "Error",
+          title: "Category Deleted",
           description: `${categoryToDelete.name} has been deleted.`,
           variant: "destructive",
         });
@@ -149,15 +159,9 @@ export default function Categories() {
               variant="ghost" 
               size="sm" 
               className="text-blue-600"
-              onClick={() => {
-                toast({
-                  title: "Error",
-                  description: `Could not display subcategories for ${row.original.name}`,
-                  variant: "destructive",
-                });
-              }}
+              onClick={() => handleViewSubcategories(row.original)}
             >
-              <List className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -197,6 +201,49 @@ export default function Categories() {
     },
   ];
 
+  // Custom render function for mobile view to match the design
+  const renderCustomMobileCard = (category: Category) => (
+    <Card key={category.id} className="mobile-card border-l-blue-500 overflow-visible">
+      <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
+        <div className="text-blue-600 font-medium">{category.name}</div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onClick={() => handleEditCategory(category)}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="cursor-pointer text-red-600"
+              onClick={() => handleDeleteCategory(category)}
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div 
+        className="flex justify-between items-center px-4 py-3 cursor-pointer" 
+        onClick={() => handleViewSubcategories(category)}
+      >
+        <div className="text-gray-600">Subcategories</div>
+        <div className="flex items-center">
+          <span className="mr-2">{category.subcategories?.length || 0}</span>
+          <ChevronRight className="h-4 w-4 text-blue-600" />
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <div className="page-container">
       <PageHeader 
@@ -208,6 +255,7 @@ export default function Categories() {
           columns={columns} 
           data={categories} 
           searchKey="name" 
+          renderCustomMobileCard={renderCustomMobileCard}
         />
       </div>
 
@@ -241,6 +289,14 @@ export default function Categories() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedCategory && (
+        <SubcategoriesDialog 
+          open={showSubcategories}
+          onOpenChange={setShowSubcategories}
+          category={selectedCategory}
+        />
+      )}
 
       <FloatingActionButton onClick={() => navigate("/categories/add")} />
     </div>
