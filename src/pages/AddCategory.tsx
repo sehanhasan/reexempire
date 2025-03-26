@@ -10,12 +10,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
 interface SubcategoryForm {
   id?: string;
   tempId: number | string;
   price: string;
   description: string;
 }
+
 export default function AddCategory() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -31,12 +33,14 @@ export default function AddCategory() {
     description: ""
   }]);
   const [edit, setEdit] = useState(false);
+
   useEffect(() => {
     if (categoryId) {
       setEdit(true);
       fetchCategory(categoryId);
     }
   }, [categoryId]);
+
   const fetchCategory = async (id: string) => {
     try {
       setLoading(true);
@@ -46,14 +50,21 @@ export default function AddCategory() {
           name: data.name || "",
           description: data.description || ""
         });
+        
         if (data.subcategories && data.subcategories.length > 0) {
-          const formSubcategories = data.subcategories.map(sub => ({
-            id: sub.id,
-            tempId: Date.now(),
-            price: sub.price ? sub.price.toString() : "",
-            description: sub.description || ""
-          }));
-          setSubcategories(formSubcategories);
+          const uniqueSubcategories = new Map();
+          data.subcategories.forEach(sub => {
+            if (!uniqueSubcategories.has(sub.id)) {
+              uniqueSubcategories.set(sub.id, {
+                id: sub.id,
+                tempId: Date.now() + Math.random(),
+                price: sub.price ? sub.price.toString() : "",
+                description: sub.description || ""
+              });
+            }
+          });
+          
+          setSubcategories(Array.from(uniqueSubcategories.values()));
         }
       }
       setLoading(false);
@@ -68,6 +79,7 @@ export default function AddCategory() {
       navigate("/categories");
     }
   };
+
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const {
       name,
@@ -78,11 +90,13 @@ export default function AddCategory() {
       [name]: value
     }));
   };
+
   const handleSubcategoryChange = (index: number, field: keyof SubcategoryForm, value: string) => {
     const updatedSubcategories = [...subcategories];
     updatedSubcategories[index][field] = value;
     setSubcategories(updatedSubcategories);
   };
+
   const addSubcategory = () => {
     setSubcategories([...subcategories, {
       tempId: Date.now(),
@@ -90,6 +104,7 @@ export default function AddCategory() {
       description: ""
     }]);
   };
+
   const removeSubcategory = (index: number) => {
     if (subcategories.length === 1) {
       setSubcategories([{
@@ -102,6 +117,7 @@ export default function AddCategory() {
       setSubcategories(updated);
     }
   };
+
   const validate = () => {
     if (!category.name) {
       toast({
@@ -132,6 +148,7 @@ export default function AddCategory() {
     }
     return true;
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -174,6 +191,7 @@ export default function AddCategory() {
       setLoading(false);
     }
   };
+
   return <div className="page-container">
       <PageHeader title={edit ? "Edit Category" : "Add Category"} actions={<Button variant="outline" onClick={() => navigate("/categories")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
