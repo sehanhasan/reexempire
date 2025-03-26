@@ -29,7 +29,7 @@ export function SubcategoriesDialog({ open, onOpenChange, category }: Subcategor
           console.error("Error fetching subcategories:", error);
           toast({
             title: "Error",
-            description: "Failed to load subcategories",
+            description: `Could not display subcategories for ${category.name}`,
             variant: "destructive",
           });
         } finally {

@@ -20,6 +20,7 @@ interface DataTableProps<T> {
   searchKey?: keyof T;
   isLoading?: boolean;
   emptyMessage?: string;
+  renderCustomMobileCard?: (item: T) => React.ReactNode;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -28,6 +29,7 @@ export function DataTable<T extends Record<string, any>>({
   searchKey,
   isLoading = false,
   emptyMessage = "No data available",
+  renderCustomMobileCard
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -113,53 +115,59 @@ export function DataTable<T extends Record<string, any>>({
             <>
               {isMobile ? (
                 <div className="p-2 space-y-3">
-                  {filteredData.map((row, rowIndex) => (
-                    <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
-                      <CardContent className="p-0">
-                        {/* Card Header with primary information */}
-                        <div className="p-3 border-b bg-blue-50/30">
-                          <div className="flex justify-between items-center">
-                            <div className="font-medium text-blue-700">
-                              {primaryColumn.cell 
-                                ? primaryColumn.cell({ row: { original: row } }) 
-                                : String(row[primaryColumn.accessorKey] || '')}
+                  {renderCustomMobileCard ? (
+                    // Use custom mobile card renderer if provided
+                    filteredData.map((item) => renderCustomMobileCard(item))
+                  ) : (
+                    // Default mobile card rendering
+                    filteredData.map((row, rowIndex) => (
+                      <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
+                        <CardContent className="p-0">
+                          {/* Card Header with primary information */}
+                          <div className="p-3 border-b bg-blue-50/30">
+                            <div className="flex justify-between items-center">
+                              <div className="font-medium text-blue-700">
+                                {primaryColumn.cell 
+                                  ? primaryColumn.cell({ row: { original: row } }) 
+                                  : String(row[primaryColumn.accessorKey] || '')}
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-gray-400" />
                             </div>
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
                           </div>
-                        </div>
-                        
-                        {/* Card Content */}
-                        <div className="px-3 py-2 space-y-1.5">
-                          {mobileColumns
-                            .filter(col => col !== primaryColumn) // Skip the primary column as it's already in the header
-                            .map((column, colIndex) => {
-                              // Skip empty values
-                              const cellValue = column.cell 
-                                ? column.cell({ row: { original: row } }) 
-                                : row[column.accessorKey];
-                              
-                              if (cellValue === null || cellValue === undefined || cellValue === '') {
-                                return null;
-                              }
-                              
-                              return (
-                                <div key={getCellKey(column, colIndex, rowIndex)} className="flex justify-between items-center text-sm">
-                                  <span className="text-gray-500 font-medium">{getMobileLabel(column)}</span>
-                                  <span className="font-normal">{cellValue}</span>
-                                </div>
-                              );
-                            })}
-                        </div>
-                        
-                        {/* Card Footer with Actions */}
-                        {actionsColumn && actionsColumn.cell && (
-                          <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
-                            {actionsColumn.cell({ row: { original: row } })}
+                          
+                          {/* Card Content */}
+                          <div className="px-3 py-2 space-y-1.5">
+                            {mobileColumns
+                              .filter(col => col !== primaryColumn) // Skip the primary column as it's already in the header
+                              .map((column, colIndex) => {
+                                // Skip empty values
+                                const cellValue = column.cell 
+                                  ? column.cell({ row: { original: row } }) 
+                                  : row[column.accessorKey];
+                                
+                                if (cellValue === null || cellValue === undefined || cellValue === '') {
+                                  return null;
+                                }
+                                
+                                return (
+                                  <div key={getCellKey(column, colIndex, rowIndex)} className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 font-medium">{getMobileLabel(column)}</span>
+                                    <span className="font-normal">{cellValue}</span>
+                                  </div>
+                                );
+                              })}
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                          
+                          {/* Card Footer with Actions */}
+                          {actionsColumn && actionsColumn.cell && (
+                            <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
+                              {actionsColumn.cell({ row: { original: row } })}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               ) : (
                 <Table>
@@ -192,3 +200,4 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
+
