@@ -53,7 +53,7 @@ export default function Categories() {
     queryFn: async () => {
       const categories = await categoryService.getAll();
       
-      // Fetch subcategories for each category - using Set to avoid duplicates
+      // Fetch subcategories for each category - using Map to avoid duplicates
       const processedCategories = new Map();
       
       for (const category of categories) {
@@ -205,7 +205,12 @@ export default function Categories() {
   const renderCustomMobileCard = (category: Category) => (
     <Card key={category.id} className="mobile-card border-l-blue-500 overflow-visible">
       <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
-        <div className="text-blue-600 font-medium">{category.name}</div>
+        <div 
+          className="text-blue-600 font-medium cursor-pointer"
+          onClick={() => handleEditCategory(category)}
+        >
+          {category.name}
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">

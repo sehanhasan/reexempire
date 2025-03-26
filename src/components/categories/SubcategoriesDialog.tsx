@@ -24,7 +24,17 @@ export function SubcategoriesDialog({ open, onOpenChange, category }: Subcategor
         setIsLoading(true);
         try {
           const subcats = await categoryService.getSubcategoriesByCategoryId(category.id);
-          setSubcategories(subcats);
+          
+          // Ensure we don't have duplicates by using a Map with the ID as key
+          const uniqueSubcategories = new Map();
+          subcats.forEach(subcat => {
+            if (!uniqueSubcategories.has(subcat.id)) {
+              uniqueSubcategories.set(subcat.id, subcat);
+            }
+          });
+          
+          // Convert Map back to array
+          setSubcategories(Array.from(uniqueSubcategories.values()));
         } catch (error) {
           console.error("Error fetching subcategories:", error);
           toast({

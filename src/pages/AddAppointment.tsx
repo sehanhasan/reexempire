@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Calendar, User, Check, Image, X, Phone, Share } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Check, Image, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
@@ -42,9 +42,6 @@ export default function AddAppointment() {
   // Customer selection
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
-
-  // WhatsApp sharing
-  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   // Fetch staff members
   const {
@@ -178,99 +175,6 @@ export default function AddAppointment() {
     );
   };
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  // Format time for display
-  const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':');
-    const hour = parseInt(hours, 10);
-    return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
-  };
-
-  // Create WhatsApp message
-  const createWhatsAppMessage = (appointmentData) => {
-    const formattedDate = formatDate(appointmentData.appointment_date);
-    const formattedStartTime = formatTime(appointmentData.start_time);
-    const formattedEndTime = formatTime(appointmentData.end_time);
-    
-    // Get assigned staff names
-    const assignedStaffNames = selectedStaff
-      .map(staffId => {
-        const staff = staffMembers.find((s: Staff) => s.id === staffId);
-        return staff ? staff.name : 'Unknown staff';
-      })
-      .join(', ');
-    
-    // Customer info
-    const customerInfo = selectedCustomer 
-      ? `${selectedCustomer.name}${selectedCustomer.phone ? ` - ${selectedCustomer.phone}` : ''}`
-      : 'No customer selected';
-    
-    // Location info  
-    const locationInfo = selectedCustomer && selectedCustomer.address
-      ? selectedCustomer.address
-      : 'No location specified';
-    
-    // Staff notes
-    const staffNotesText = Object.entries(staffNotes)
-      .map(([staffId, note]) => {
-        const staff = staffMembers.find((s: Staff) => s.id === staffId);
-        return `${staff ? staff.name : 'Staff'}: ${note}`;
-      })
-      .join('\n');
-    
-    // Create the message
-    let message = `🗓️ *NEW APPOINTMENT*\n\n`;
-    message += `📝 *${appointmentData.title}*\n`;
-    message += `📅 ${formattedDate}\n`;
-    message += `🕒 ${formattedStartTime} - ${formattedEndTime}\n\n`;
-    message += `👤 *Customer:* ${customerInfo}\n`;
-    message += `📍 *Location:* ${locationInfo}\n`;
-    message += `👷 *Assigned Staff:* ${assignedStaffNames || 'None'}\n\n`;
-    
-    if (notes) {
-      message += `📋 *Notes:*\n${notes}\n\n`;
-    }
-    
-    if (staffNotesText) {
-      message += `🔧 *Staff Notes:*\n${staffNotesText}\n\n`;
-    }
-    
-    message += `*Status:* ${appointmentData.status}`;
-    
-    return encodeURIComponent(message);
-  };
-
-  // Handle WhatsApp sharing
-  const handleWhatsAppShare = (appointmentData) => {
-    if (!whatsappNumber) {
-      toast({
-        title: "WhatsApp Number Required",
-        description: "Please enter a WhatsApp number to share with.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Format phone number: remove any non-digit characters
-    const formattedNumber = whatsappNumber.replace(/\D/g, '');
-    
-    // Create the message
-    const message = createWhatsAppMessage(appointmentData);
-    
-    // Open WhatsApp with the message
-    window.open(`https://wa.me/${formattedNumber}?text=${message}`, '_blank');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomer) {
@@ -334,15 +238,14 @@ export default function AddAppointment() {
       }
 
       // Save the appointment - create or update
-      let savedAppointment;
       if (isEditMode) {
-        savedAppointment = await appointmentService.update(id, appointmentData);
+        await appointmentService.update(id, appointmentData);
         toast({
           title: "Appointment Updated",
           description: "The appointment has been updated successfully."
         });
       } else {
-        savedAppointment = await appointmentService.create(appointmentData);
+        await appointmentService.create(appointmentData);
         toast({
           title: "Appointment Added",
           description: "The appointment has been scheduled successfully."
@@ -350,17 +253,6 @@ export default function AddAppointment() {
       }
       
       setIsLoading(false);
-      
-      // Show WhatsApp sharing option after saving
-      const userWantsToShare = window.confirm("Appointment saved successfully. Would you like to share this appointment via WhatsApp?");
-      if (userWantsToShare) {
-        const defaultNumber = window.prompt("Enter WhatsApp number to share with (include country code):", "60");
-        if (defaultNumber) {
-          setWhatsappNumber(defaultNumber);
-          setTimeout(() => handleWhatsAppShare(savedAppointment || appointmentData), 500);
-        }
-      }
-      
       navigate("/schedule");
     } catch (error) {
       console.error("Error saving appointment:", error);
@@ -571,39 +463,6 @@ export default function AddAppointment() {
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
-              {/* WhatsApp Sharing Option */}
-              <div className="space-y-2 border-t pt-4 mt-4">
-                <Label htmlFor="whatsapp">WhatsApp Sharing</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="whatsapp"
-                    placeholder="WhatsApp number with country code (e.g., 601234567890)"
-                    type="text"
-                    value={whatsappNumber}
-                    onChange={e => setWhatsappNumber(e.target.value)}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="flex-shrink-0 bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700"
-                    onClick={() => handleWhatsAppShare({
-                      title,
-                      appointment_date: date,
-                      start_time: startTime,
-                      end_time: endTime,
-                      status
-                    })}
-                    disabled={!whatsappNumber}
-                  >
-                    <Phone className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  After saving, you can share appointment details via WhatsApp to staff or the customer.
-                </p>
               </div>
             </CardContent>
             <CardFooter className="flex justify-end space-x-4">
