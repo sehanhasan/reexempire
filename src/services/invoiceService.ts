@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceImage } from "@/types/database";
 
@@ -122,32 +121,27 @@ const deleteItem = async (id: string) => {
   }
 };
 
-// Add invoice image - using a more TypeScript-friendly approach
 const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
-  // Using a raw query approach to insert into invoice_images table
   const { data, error } = await supabase
     .rpc('add_invoice_image', {
       p_invoice_id: invoiceId,
       p_image_url: imageUrl
-    } as any);
+    });
   
   if (error) throw error;
   return data;
 };
 
-// Get invoice images - using a more TypeScript-friendly approach
 const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
-  // Using a raw query approach to select from invoice_images table
   const { data, error } = await supabase
     .rpc('get_invoice_images', {
       p_invoice_id: invoiceId
-    } as any);
+    });
   
   if (error) throw error;
   return data || [];
 };
 
-// Define deleteItemsByInvoiceId function
 const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   const { error } = await supabase
     .from('invoice_items')
