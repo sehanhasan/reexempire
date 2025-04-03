@@ -1,148 +1,160 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice, InvoiceItem } from "@/types/database";
+import { Invoice } from "@/types/database";
 
-export const invoiceService = {
-  async getAll(): Promise<Invoice[]> {
-    const { data, error } = await supabase
-      .from("invoices")
-      .select("*")
-      .order("created_at", { ascending: false });
+const getAll = async (): Promise<Invoice[]> => {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error("Error fetching invoices:", error);
-      throw error;
-    }
-
-    return data || [];
-  },
-
-  async getById(id: string): Promise<Invoice | null> {
-    const { data, error } = await supabase
-      .from("invoices")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error(`Error fetching invoice with id ${id}:`, error);
-      throw error;
-    }
-
-    return data;
-  },
-
-  async create(invoice: Omit<Invoice, "id" | "created_at" | "updated_at">): Promise<Invoice> {
-    const { data, error } = await supabase
-      .from("invoices")
-      .insert([invoice])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating invoice:", error);
-      throw error;
-    }
-
-    return data;
-  },
-
-  async update(id: string, invoice: Partial<Omit<Invoice, "id" | "created_at" | "updated_at">>): Promise<Invoice> {
-    const { data, error } = await supabase
-      .from("invoices")
-      .update(invoice)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating invoice with id ${id}:`, error);
-      throw error;
-    }
-
-    return data;
-  },
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("invoices")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error(`Error deleting invoice with id ${id}:`, error);
-      throw error;
-    }
-  },
-
-  // Invoice Items
-  async getItemsByInvoiceId(invoiceId: string): Promise<InvoiceItem[]> {
-    const { data, error } = await supabase
-      .from("invoice_items")
-      .select("*")
-      .eq("invoice_id", invoiceId)
-      .order("id");
-
-    if (error) {
-      console.error(`Error fetching items for invoice ${invoiceId}:`, error);
-      throw error;
-    }
-
-    return data || [];
-  },
-
-  async createItem(item: Omit<InvoiceItem, "id" | "created_at" | "updated_at">): Promise<InvoiceItem> {
-    const { data, error } = await supabase
-      .from("invoice_items")
-      .insert([item])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating invoice item:", error);
-      throw error;
-    }
-
-    return data;
-  },
-
-  async updateItem(id: string, item: Partial<Omit<InvoiceItem, "id" | "created_at" | "updated_at">>): Promise<InvoiceItem> {
-    const { data, error } = await supabase
-      .from("invoice_items")
-      .update(item)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating invoice item with id ${id}:`, error);
-      throw error;
-    }
-
-    return data;
-  },
-
-  async deleteItem(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("invoice_items")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error(`Error deleting invoice item with id ${id}:`, error);
-      throw error;
-    }
-  },
-
-  async deleteAllItems(invoiceId: string): Promise<void> {
-    const { error } = await supabase
-      .from("invoice_items")
-      .delete()
-      .eq("invoice_id", invoiceId);
-
-    if (error) {
-      console.error(`Error deleting all items for invoice ${invoiceId}:`, error);
-      throw error;
-    }
+  if (error) {
+    throw error;
   }
+
+  return data || [];
+};
+
+const getById = async (id: string): Promise<Invoice | null> => {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+};
+
+const create = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<Invoice> => {
+  const { data, error } = await supabase
+    .from('invoices')
+    .insert([invoice])
+    .select('*')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+const update = async (id: string, updates: Partial<Invoice>): Promise<Invoice | null> => {
+  const { data, error } = await supabase
+    .from('invoices')
+    .update(updates)
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data || null;
+};
+
+const deleteInvoice = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('invoices')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+};
+
+const getItemsByInvoiceId = async (invoiceId: string) => {
+  const { data, error } = await supabase
+    .from('invoice_items')
+    .select('*')
+    .eq('invoice_id', invoiceId);
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+const createItem = async (item: any) => {
+  const { data, error } = await supabase
+    .from('invoice_items')
+    .insert([item])
+    .select('*')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+const updateItem = async (id: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('invoice_items')
+    .update(updates)
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+const deleteItem = async (id: string) => {
+  const { error } = await supabase
+    .from('invoice_items')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+};
+
+// Add invoice image
+const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
+  const { data, error } = await supabase
+    .from('invoice_images')
+    .insert({
+      invoice_id: invoiceId,
+      image_url: imageUrl
+    });
+  
+  if (error) throw error;
+  return data;
+};
+
+// Get invoice images
+const getInvoiceImages = async (invoiceId: string) => {
+  const { data, error } = await supabase
+    .from('invoice_images')
+    .select('*')
+    .eq('invoice_id', invoiceId);
+  
+  if (error) throw error;
+  return data;
+};
+
+export default {
+  getAll,
+  getById,
+  create,
+  update,
+  delete: deleteInvoice,
+  getItemsByInvoiceId,
+  createItem,
+  updateItem,
+  deleteItem,
+  addInvoiceImage,
+  getInvoiceImages
 };

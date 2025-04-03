@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -244,6 +245,10 @@ export default function Quotations() {
         validUntil: quotation.expiry_date,
         notes: quotation.notes || "",
         items: itemsForPDF,
+        subject: quotation.subject || "",
+        customerAddress: customer.address || "",
+        customerContact: customer.phone || "",
+        customerEmail: customer.email || "",
         depositInfo: {
           requiresDeposit: quotation.requires_deposit || false,
           depositAmount: quotation.deposit_amount || 0,

@@ -1,122 +1,90 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileDown, Send } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
-import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 import { invoiceService, customerService } from "@/services";
-import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
+import { Customer } from "@/types/database";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
-  
-  const [items, setItems] = useState<InvoiceItem[]>([
-    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
-  ]);
 
-  const [customerId, setCustomerId] = useState("");
+  const [invoice, setInvoice] = useState<any>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [dueDate, setDueDate] = useState(
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  );
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30);
   const [quotationReference, setQuotationReference] = useState("");
-  const [quotationId, setQuotationId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [documentNumber, setDocumentNumber] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchInvoiceData = async () => {
-      if (!id) {
-        navigate("/invoices");
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const invoice = await invoiceService.getById(id);
-        
-        if (invoice) {
-          setCustomerId(invoice.customer_id);
-          setDocumentNumber(invoice.reference_number);
-          setInvoiceDate(invoice.issue_date);
-          setDueDate(invoice.due_date);
-          setNotes(invoice.notes || "");
-          setSubject(invoice.subject || "");
-          setIsDepositInvoice(invoice.is_deposit_invoice || false);
-          setDepositAmount(invoice.deposit_amount || 0);
-          setDepositPercentage(invoice.deposit_percentage || 30);
-          
-          if (invoice.quotation_id) {
-            setQuotationId(invoice.quotation_id);
-            
-            try {
-              const quotation = await invoiceService.getById(invoice.quotation_id);
-              if (quotation) {
-                setQuotationReference(quotation.reference_number);
-              }
-            } catch (error) {
-              console.error("Error fetching quotation:", error);
-            }
-          }
-          
-          const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
-          if (invoiceItems && invoiceItems.length > 0) {
-            const orderMap: {[key: number]: number} = {};
-            invoiceItems.forEach((item, index) => {
-              orderMap[index + 1] = index;
-            });
-            setOriginalItemOrder(orderMap);
-            
-            setItems(invoiceItems.map((item, index) => ({
-              id: index + 1,
-              description: item.description,
-              category: item.category || "",
-              quantity: item.quantity,
-              unit: item.unit,
-              unitPrice: item.unit_price,
-              amount: item.amount
-            })));
-          }
-        } else {
+    if (id) {
+      const fetchInvoice = async () => {
+        try {
+          const invoiceData = await invoiceService.getById(id);
+          setInvoice(invoiceData);
+          setCustomerId(invoiceData.customer_id);
+          setInvoiceDate(invoiceData.issue_date);
+          setDueDate(invoiceData.due_date);
+          setNotes(invoiceData.notes || "");
+          setSubject(invoiceData.subject || "");
+          setIsDepositInvoice(invoiceData.is_deposit_invoice);
+          setDepositAmount(invoiceData.deposit_amount);
+          setDepositPercentage(invoiceData.deposit_percentage);
+          setQuotationReference(invoiceData.quotation_id || "");
+          setDocumentNumber(invoiceData.reference_number);
+        } catch (error) {
+          console.error("Error fetching invoice:", error);
           toast({
-            title: "Invoice Not Found",
-            description: "The invoice you're trying to edit doesn't exist.",
+            title: "Error",
+            description: "Failed to load invoice details. Please try again.",
             variant: "destructive",
           });
-          navigate("/invoices");
         }
-      } catch (error) {
-        console.error("Error fetching invoice:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load invoice data. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchInvoiceData();
-  }, [id, navigate]);
+      };
+
+      const fetchInvoiceItems = async () => {
+        try {
+          const itemsData = await invoiceService.getItemsByInvoiceId(id);
+          setItems(itemsData.map((item, index) => ({
+            id: index + 1,
+            description: item.description,
+            category: item.category || "Other Items",
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unit_price,
+            amount: item.amount
+          })));
+        } catch (error) {
+          console.error("Error fetching invoice items:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load invoice items. Please try again.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      fetchInvoice();
+      fetchInvoiceItems();
+    }
+  }, [id]);
 
   useEffect(() => {
     if (customerId) {
@@ -128,7 +96,7 @@ export default function EditInvoice() {
           console.error("Error fetching customer:", error);
         }
       };
-      
+
       fetchCustomer();
     }
   }, [customerId]);
@@ -140,16 +108,16 @@ export default function EditInvoice() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!customerId) {
       toast({
         title: "Missing Information",
-        description: "Please select a customer before saving the invoice.",
+        description: "Please select a customer before updating the invoice.",
         variant: "destructive",
       });
       return;
     }
-    
+
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
@@ -159,22 +127,22 @@ export default function EditInvoice() {
       });
       return;
     }
-    
+
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + (qty * item.unitPrice);
     }, 0);
     const total = isDepositInvoice ? depositAmount : subtotal;
-    
+
     try {
       setIsSubmitting(true);
-      
-      await invoiceService.update(id!, {
+
+      const invoiceData = {
         customer_id: customerId,
-        quotation_id: quotationId,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
+        status: "Draft",
         subtotal: subtotal,
         tax_rate: 0,
         tax_amount: 0,
@@ -184,25 +152,19 @@ export default function EditInvoice() {
         terms: null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
-        deposit_percentage: isDepositInvoice ? depositPercentage : 0
-      });
-      
-      await invoiceService.deleteAllItems(id!);
-      
-      const sortedItems = [...items].sort((a, b) => {
-        if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
-          return originalItemOrder[a.id] - originalItemOrder[b.id];
-        }
-        if (originalItemOrder[a.id] !== undefined) return -1;
-        if (originalItemOrder[b.id] !== undefined) return 1;
-        return a.id - b.id;
-      });
-      
-      for (const item of sortedItems) {
+        deposit_percentage: isDepositInvoice ? depositPercentage : 0,
+        payment_status: "Unpaid"
+      };
+
+      await invoiceService.update(id, invoiceData);
+
+      await invoiceService.deleteItemsByInvoiceId(id);
+
+      for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await invoiceService.createItem({
-            invoice_id: id!,
+            invoice_id: id,
             description: item.description,
             quantity: qty,
             unit: item.unit,
@@ -212,12 +174,12 @@ export default function EditInvoice() {
           });
         }
       }
-      
+
       toast({
         title: "Invoice Updated",
         description: `Invoice for ${customer?.name} has been updated successfully.`,
       });
-      
+
       navigate("/invoices");
     } catch (error) {
       console.error("Error updating invoice:", error);
@@ -231,104 +193,56 @@ export default function EditInvoice() {
     }
   };
 
-  const handleSendWhatsapp = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before sending the invoice.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const downloadInvoicePDF = async (invoice: any, customer: any, items: any[]) => {
     try {
-      let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
+      // Get invoice images from the database
+      const invoiceImages = await invoiceService.getInvoiceImages(invoice.id);
+      const imageUrls = invoiceImages.map(img => img.image_url);
       
-      if (!phoneNumber) {
-        toast({
-          title: "Missing Phone Number",
-          description: "Customer doesn't have a phone number for WhatsApp.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const itemsForPDF = items.map(item => ({
+        id: Number(item.id),
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        amount: item.amount,
+        category: item.category || '',
+        unit: item.unit || ''
+      }));
       
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = '6' + phoneNumber;
-      } else if (!phoneNumber.startsWith('6')) {
-        phoneNumber = '60' + phoneNumber;
-      }
-      
-      const message = `Dear ${customer.name},\n\nPlease find attached Invoice ${documentNumber}.\n\nThank you.`;
-      
-      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
-      
-      toast({
-        title: "WhatsApp Opened",
-        description: "WhatsApp has been opened with the invoice message. The document PDF will need to be attached manually.",
-      });
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDownloadPDF = () => {
-    if (!customerId || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a customer before downloading the PDF.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
       const pdf = generateInvoicePDF({
-        documentNumber: documentNumber,
-        documentDate: invoiceDate,
+        documentNumber: invoice.reference_number,
+        documentDate: invoice.issue_date,
         customerName: customer.name,
         unitNumber: customer.unit_number || "",
-        expiryDate: dueDate,
-        dueDate: dueDate,
-        paymentMethod: "",
-        notes: notes,
-        items: items,
-        subject: subject,
-        isDepositInvoice: isDepositInvoice,
-        depositAmount: depositAmount,
-        depositPercentage: depositPercentage,
-        quotationReference: quotationReference
+        expiryDate: invoice.due_date,
+        dueDate: invoice.due_date,
+        notes: invoice.notes || "",
+        items: itemsForPDF,
+        subject: invoice.subject || "",
+        customerAddress: customer.address || "",
+        customerContact: customer.phone || "",
+        customerEmail: customer.email || "",
+        paymentMethod: invoice.payment_method || "bank_transfer",
+        isDepositInvoice: invoice.is_deposit_invoice,
+        depositAmount: invoice.deposit_amount || 0,
+        depositPercentage: invoice.deposit_percentage || 0,
+        quotationReference: invoice.quotation_reference || "",
+        images: imageUrls
       });
       
-      downloadPDF(pdf, `Invoice_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-      
-      toast({
-        title: "PDF Generated",
-        description: "Invoice PDF has been downloaded successfully.",
-      });
+      downloadPDF(pdf, `Invoice_${invoice.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
         title: "PDF Generation Failed",
         description: "There was an error generating the PDF. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading invoice data...</p>
-        </div>
-      </div>
-    );
+  if (!invoice) {
+    return <div className="page-container">Loading...</div>;
   }
 
   return (
@@ -341,20 +255,16 @@ export default function EditInvoice() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Invoices
             </Button>
-            <Button variant="secondary" onClick={handleDownloadPDF}>
-              <FileDown className="mr-2 h-4 w-4" />
+            <Button variant="default" onClick={() => downloadInvoicePDF(invoice, customer, items)}>
+              <Download className="mr-2 h-4 w-4" />
               Download PDF
-            </Button>
-            <Button variant="default" onClick={handleSendWhatsapp}>
-              <Send className="mr-2 h-4 w-4" />
-              Send to WhatsApp
             </Button>
           </div>
         }
       />
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <CustomerInfoCard 
+        <CustomerInfoCard
           customerId={customerId}
           setCustomer={setCustomerId}
           documentType="invoice"
@@ -368,8 +278,8 @@ export default function EditInvoice() {
           subject={subject}
           setSubject={setSubject}
         />
-        
-        <InvoiceItemsCard 
+
+        <InvoiceItemsCard
           items={items}
           setItems={setItems}
           isDepositInvoice={isDepositInvoice}
@@ -380,16 +290,14 @@ export default function EditInvoice() {
           setDepositPercentage={setDepositPercentage}
           calculateItemAmount={calculateItemAmount}
         />
-        
-        <AdditionalInfoCard 
+
+        <AdditionalInfoCard
           notes={notes}
           setNotes={setNotes}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
           isSubmitting={isSubmitting}
-          onSendWhatsapp={handleSendWhatsapp}
-          saveButtonText="Update Invoice"
         />
       </form>
     </div>

@@ -13,6 +13,9 @@ interface DocumentDetails {
   notes: string;
   items: QuotationItem[] | InvoiceItem[];
   subject?: string;
+  customerAddress?: string;
+  customerContact?: string;
+  customerEmail?: string;
 }
 
 // Specific interfaces
@@ -28,6 +31,7 @@ interface InvoiceDetails extends DocumentDetails {
   depositAmount: number;
   depositPercentage: number;
   quotationReference?: string;
+  images?: string[]; // URLs for any images to include in the PDF
 }
 
 const formatCurrency = (amount: number): string => {
@@ -46,32 +50,49 @@ const calculateTotal = (subtotal: number): number => {
   return subtotal + calculateTax(subtotal);
 };
 
+// Add logo to PDF
+const addLogo = (pdf: jsPDF, x: number, y: number, width: number) => {
+  try {
+    // Using the Reex Empire logo
+    pdf.addImage('/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png', 'PNG', x, y, width, width * 0.75);
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    // Fallback if image fails to load
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('STAR RESIDENCES', x, y + 10);
+  }
+};
+
+// Add company info to PDF
+const addCompanyInfo = (pdf: jsPDF, x: number, y: number) => {
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(11);
+  pdf.text([
+    'Reex Empire Sdn Bhd (1426553-A)',
+    'No. 29-1, Jalan 2A/6',
+    'Taman Setapak Indah',
+    '53300 Setapak Kuala Lumpur',
+    'www.reexempire.com'
+  ], x, y);
+};
+
 // Base PDF generation function
 const generateBasePDF = (title: string): jsPDF => {
   const pdf = new jsPDF();
   
-  // Add company logo/header
-  pdf.setFillColor(59, 130, 246); // Blue color
-  pdf.rect(0, 0, pdf.internal.pageSize.width, 30, 'F');
-  
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(22);
-  pdf.text('STAR RESIDENCES', 15, 15);
-  
-  pdf.setFontSize(18);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text(title, 15, 40);
+  // Add logo
+  addLogo(pdf, 15, 15, 40);
   
   // Add company info
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(10);
-  pdf.text([
-    'Star Residences Management',
-    'Jalan Yap Kwan Seng, 50450 Kuala Lumpur',
-    'Phone: +603-2168-1688',
-    'Email: info@starresidences.com.my',
-  ], 15, 50);
+  addCompanyInfo(pdf, 70, 25);
+  
+  // Add document title
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(22);
+  pdf.text(title, pdf.internal.pageSize.width - 15, 30, { align: 'right' });
+  pdf.setLineWidth(0.5);
+  pdf.line(pdf.internal.pageSize.width - 130, 32, pdf.internal.pageSize.width - 15, 32);
   
   return pdf;
 };
@@ -83,71 +104,201 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   const tax = calculateTax(subtotal);
   const total = calculateTotal(subtotal);
   
-  // Add quotation details
+  // Add customer details section
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(15, 70, 80, 50, 'F');
+  pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('QUOTATION DETAILS', 15, 75);
+  pdf.text('Bill to:', 20, 80);
   
   pdf.setFont('helvetica', 'normal');
-  pdf.text([
-    `Quotation #: ${details.documentNumber}`,
-    `Date: ${details.documentDate}`,
-    `Valid Until: ${details.validUntil}`,
-  ], 15, 85);
+  pdf.setFontSize(10);
+  const billToLines = [
+    `Attn: ${details.customerName}`,
+    details.unitNumber ? `Unit ${details.unitNumber}` : '',
+    details.customerAddress || '',
+    details.customerContact || '',
+    details.customerEmail || ''
+  ].filter(line => line !== '');
   
-  // Add customer details
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('CUSTOMER DETAILS', 120, 75);
+  pdf.text(billToLines, 20, 90);
   
-  pdf.setFont('helvetica', 'normal');
-  pdf.text([
-    `Customer: ${details.customerName}`,
-    details.unitNumber ? `Unit #: ${details.unitNumber}` : '',
-  ], 120, 85);
-
+  // Add quotation details table on the right
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(pdf.internal.pageSize.width - 95, 70, 80, 50, 'F');
+  
+  const quotationDetailsTable = [
+    ['Date:', details.documentDate],
+    ['Quotation No:', details.documentNumber],
+    ['Customer ID:', '']
+  ];
+  
+  autoTable(pdf, {
+    startY: 75,
+    margin: { left: pdf.internal.pageSize.width - 93 },
+    tableWidth: 76,
+    body: quotationDetailsTable,
+    theme: 'plain',
+    styles: {
+      fontSize: 10,
+      cellPadding: 1,
+    },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 30 },
+      1: { cellWidth: 46 }
+    }
+  });
+  
+  let startY = 130;
+  
   // Add subject if available
   if (details.subject) {
     pdf.setFont('helvetica', 'bold');
-    pdf.text('SUBJECT', 15, 105);
+    pdf.text('Subject:', 15, startY);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(details.subject, 15, 115);
-    
-    // Start items table lower if subject exists
-    addItemsTable(pdf, details.items, 125);
-  } else {
-    addItemsTable(pdf, details.items, 105);
+    pdf.text(details.subject, 40, startY);
+    startY += 10;
   }
+  
+  // Add items table
+  const tableHeaders = [
+    { header: 'No.', dataKey: 'no' },
+    { header: 'Description', dataKey: 'description' },
+    { header: 'Price/Unit', dataKey: 'unitPrice' },
+    { header: 'QTY', dataKey: 'quantity' },
+    { header: 'Amount', dataKey: 'amount' }
+  ];
+  
+  const tableData = details.items.map((item, index) => ({
+    no: (index + 1).toString(),
+    description: item.description,
+    quantity: item.quantity,
+    unitPrice: formatCurrency(item.unitPrice),
+    amount: formatCurrency(item.amount)
+  }));
+  
+  autoTable(pdf, {
+    startY: startY,
+    head: [tableHeaders.map(h => h.header)],
+    body: tableData.map(item => [
+      item.no,
+      item.description,
+      item.unitPrice,
+      item.quantity,
+      item.amount
+    ]),
+    theme: 'grid',
+    headStyles: {
+      fillColor: [150, 150, 150],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold'
+    },
+    columnStyles: {
+      0: { cellWidth: 15, halign: 'center' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 35, halign: 'right' },
+      3: { cellWidth: 20, halign: 'center' },
+      4: { cellWidth: 35, halign: 'right' }
+    },
+    didParseCell: (data) => {
+      // Style for numeric columns
+      if (data.column.index > 1) {
+        data.cell.styles.halign = 'right';
+      }
+      // Make description column left-aligned
+      if (data.column.index === 1) {
+        data.cell.styles.halign = 'left';
+      }
+    }
+  });
   
   // Get the final Y position after the table
   // @ts-ignore - lastAutoTable is added by the plugin but not in the type definition
   const tableEndY = pdf.lastAutoTable?.finalY || 200;
   
+  // Add summary calculation
+  const summaryTable = [
+    ['Sub Total:', formatCurrency(subtotal)],
+    ['Others:', ''],
+    ['Total Balance Due:', formatCurrency(total)]
+  ];
+  
+  autoTable(pdf, {
+    startY: tableEndY + 5,
+    body: summaryTable,
+    theme: 'plain',
+    styles: {
+      fontSize: 10,
+    },
+    margin: { left: pdf.internal.pageSize.width - 95 },
+    tableWidth: 80,
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 40 },
+      1: { cellWidth: 40, halign: 'right' }
+    }
+  });
+  
+  // Add Terms and Conditions
+  const termsY = tableEndY + 50;
+  pdf.setFillColor(150, 150, 150);
+  pdf.rect(15, termsY, 20, 7, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.text('Terms and Conditions', 17, termsY + 5);
+  
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.text([
+    'Payment terms 30days',
+    'Pjt duration 5-7 working days'
+  ], 15, termsY + 15);
+  
+  // Add Contact Section
+  const contactY = termsY + 30;
+  pdf.setFillColor(150, 150, 150);
+  pdf.rect(15, contactY, 20, 7, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Contact', 17, contactY + 5);
+  
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text([
+    'For all enquiries, please contact Star Residences Management',
+    'Email: info@starresidences.com.my',
+    'Tel: +603-2168-1688'
+  ], 15, contactY + 15);
+  
+  // Add Customer Acceptance section
+  const acceptanceY = contactY + 35;
+  pdf.setFillColor(150, 150, 150);
+  pdf.rect(15, acceptanceY, 20, 7, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Customer Acceptance:', 17, acceptanceY + 5);
+  
+  pdf.setTextColor(0, 0, 0);
   pdf.setFontSize(11);
   
-  pdf.text(`Subtotal:`, 140, tableEndY + 10);
-  pdf.text(formatCurrency(subtotal), 170, tableEndY + 10, { align: 'right' });
+  // Signature line
+  pdf.text('Signature:', 30, acceptanceY + 20);
+  pdf.line(90, acceptanceY + 20, 190, acceptanceY + 20);
   
-  pdf.text(`SST (6%):`, 140, tableEndY + 20);
-  pdf.text(formatCurrency(tax), 170, tableEndY + 20, { align: 'right' });
+  // Name line
+  pdf.text('Name:', 30, acceptanceY + 35);
+  pdf.line(90, acceptanceY + 35, 190, acceptanceY + 35);
   
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`Total:`, 140, tableEndY + 30);
-  pdf.text(formatCurrency(total), 170, tableEndY + 30, { align: 'right' });
-  
-  // Add deposit information if required
-  if (details.depositInfo.requiresDeposit) {
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`Deposit (${details.depositInfo.depositPercentage}%):`, 140, tableEndY + 40);
-    pdf.text(formatCurrency(details.depositInfo.depositAmount), 170, tableEndY + 40, { align: 'right' });
-    
-    pdf.text(`Balance Due:`, 140, tableEndY + 50);
-    pdf.text(formatCurrency(total - details.depositInfo.depositAmount), 170, tableEndY + 50, { align: 'right' });
-  }
+  // Date line
+  pdf.text('Date:', 30, acceptanceY + 50);
+  pdf.line(90, acceptanceY + 50, 190, acceptanceY + 50);
   
   // Add notes
   if (details.notes) {
-    const notesY = details.depositInfo.requiresDeposit ? tableEndY + 70 : tableEndY + 50;
+    const notesY = Math.max(tableEndY + 120, acceptanceY + 60);
     pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11);
     pdf.text('NOTES', 15, notesY);
     
     pdf.setFont('helvetica', 'normal');
@@ -181,88 +332,242 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
   const tax = calculateTax(taxableAmount);
   const total = details.isDepositInvoice ? details.depositAmount + tax : subtotal + tax;
   
-  // Add invoice details
-  pdf.setFontSize(11);
+  // Add customer details section
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(15, 70, 80, 50, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.text('INVOICE DETAILS', 15, 75);
+  pdf.setFontSize(11);
+  pdf.text('Bill to:', 20, 80);
   
   pdf.setFont('helvetica', 'normal');
-  const invoiceDetails = [
-    `Invoice #: ${details.documentNumber}`,
-    `Date: ${details.documentDate}`,
-    `Due Date: ${details.dueDate}`,
-    `Payment Method: ${details.paymentMethod.replace('_', ' ').toUpperCase()}`
+  pdf.setFontSize(10);
+  const billToLines = [
+    `Attn: ${details.customerName}`,
+    details.unitNumber ? `Unit ${details.unitNumber}` : '',
+    details.customerAddress || '',
+    details.customerContact || '',
+    details.customerEmail || ''
+  ].filter(line => line !== '');
+  
+  pdf.text(billToLines, 20, 90);
+  
+  // Add invoice details table on the right
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(pdf.internal.pageSize.width - 95, 70, 80, 50, 'F');
+  
+  const invoiceDetailsTable = [
+    ['Date:', details.documentDate],
+    ['Invoice No:', details.documentNumber],
+    ['Due Date:', details.dueDate],
+    ['Payment Method:', details.paymentMethod.replace('_', ' ').toUpperCase()]
   ];
   
   if (details.quotationReference) {
-    invoiceDetails.push(`Quotation Ref: ${details.quotationReference}`);
+    invoiceDetailsTable.push(['Quotation Ref:', details.quotationReference]);
   }
   
-  if (details.isDepositInvoice) {
-    invoiceDetails.push(`Deposit Invoice (${details.depositPercentage}%)`);
-  }
+  autoTable(pdf, {
+    startY: 75,
+    margin: { left: pdf.internal.pageSize.width - 93 },
+    tableWidth: 76,
+    body: invoiceDetailsTable,
+    theme: 'plain',
+    styles: {
+      fontSize: 10,
+      cellPadding: 1,
+    },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 30 },
+      1: { cellWidth: 46 }
+    }
+  });
   
-  pdf.text(invoiceDetails, 15, 85);
+  let startY = 130;
   
-  // Add customer details
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('CUSTOMER DETAILS', 120, 75);
-  
-  pdf.setFont('helvetica', 'normal');
-  pdf.text([
-    `Customer: ${details.customerName}`,
-    details.unitNumber ? `Unit #: ${details.unitNumber}` : '',
-  ], 120, 85);
-
   // Add subject if available
   if (details.subject) {
     pdf.setFont('helvetica', 'bold');
-    pdf.text('SUBJECT', 15, 105);
+    pdf.text('Subject:', 15, startY);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(details.subject, 15, 115);
-    
-    // Start items table lower if subject exists
-    addItemsTable(pdf, details.items, 125);
-  } else {
-    addItemsTable(pdf, details.items, 105);
+    pdf.text(details.subject, 40, startY);
+    startY += 10;
   }
+  
+  // Add items table
+  const tableHeaders = [
+    { header: 'No.', dataKey: 'no' },
+    { header: 'Description', dataKey: 'description' },
+    { header: 'Price/Unit', dataKey: 'unitPrice' },
+    { header: 'QTY', dataKey: 'quantity' },
+    { header: 'Amount', dataKey: 'amount' }
+  ];
+  
+  const tableData = details.items.map((item, index) => ({
+    no: (index + 1).toString(),
+    description: item.description,
+    quantity: item.quantity,
+    unitPrice: formatCurrency(item.unitPrice),
+    amount: formatCurrency(item.amount)
+  }));
+  
+  autoTable(pdf, {
+    startY: startY,
+    head: [tableHeaders.map(h => h.header)],
+    body: tableData.map(item => [
+      item.no,
+      item.description,
+      item.unitPrice,
+      item.quantity,
+      item.amount
+    ]),
+    theme: 'grid',
+    headStyles: {
+      fillColor: [150, 150, 150],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold'
+    },
+    columnStyles: {
+      0: { cellWidth: 15, halign: 'center' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 35, halign: 'right' },
+      3: { cellWidth: 20, halign: 'center' },
+      4: { cellWidth: 35, halign: 'right' }
+    },
+    didParseCell: (data) => {
+      // Style for numeric columns
+      if (data.column.index > 1) {
+        data.cell.styles.halign = 'right';
+      }
+      // Make description column left-aligned
+      if (data.column.index === 1) {
+        data.cell.styles.halign = 'left';
+      }
+    }
+  });
   
   // Get the final Y position after the table
   // @ts-ignore - lastAutoTable is added by the plugin but not in the type definition
-  const tableEndY = pdf.lastAutoTable?.finalY || 200;
+  let tableEndY = pdf.lastAutoTable?.finalY || 200;
   
-  pdf.setFontSize(11);
-  
-  pdf.text(`Subtotal:`, 140, tableEndY + 10);
-  pdf.text(formatCurrency(subtotal), 170, tableEndY + 10, { align: 'right' });
-  
-  // Add deposit calculation if it's a deposit invoice
-  if (details.isDepositInvoice) {
-    pdf.text(`Deposit (${details.depositPercentage}%):`, 140, tableEndY + 20);
-    pdf.text(formatCurrency(details.depositAmount), 170, tableEndY + 20, { align: 'right' });
-    
-    pdf.text(`Balance Due (Future Invoice):`, 140, tableEndY + 30);
-    pdf.text(formatCurrency(subtotal - details.depositAmount), 170, tableEndY + 30, { align: 'right' });
-    
-    pdf.text(`SST (6%) on Deposit:`, 140, tableEndY + 40);
-    pdf.text(formatCurrency(tax), 170, tableEndY + 40, { align: 'right' });
+  // Add any images if provided
+  if (details.images && details.images.length > 0) {
+    pdf.addPage();
     
     pdf.setFont('helvetica', 'bold');
-    pdf.text(`Total Due Now:`, 140, tableEndY + 50);
-    pdf.text(formatCurrency(total), 170, tableEndY + 50, { align: 'right' });
-  } else {
-    pdf.text(`SST (6%):`, 140, tableEndY + 20);
-    pdf.text(formatCurrency(tax), 170, tableEndY + 20, { align: 'right' });
+    pdf.setFontSize(14);
+    pdf.text('WORK PHOTOS', 15, 20);
     
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(`Total Due:`, 140, tableEndY + 30);
-    pdf.text(formatCurrency(total), 170, tableEndY + 30, { align: 'right' });
+    const imagesPerRow = 2;
+    const imageWidth = 80;
+    const imageHeight = 80;
+    const marginX = 15;
+    const marginY = 30;
+    const spacingX = 20;
+    const spacingY = 90;
+    
+    details.images.forEach((imageUrl, index) => {
+      const row = Math.floor(index / imagesPerRow);
+      const col = index % imagesPerRow;
+      
+      const x = marginX + col * (imageWidth + spacingX);
+      const y = marginY + row * spacingY;
+      
+      try {
+        pdf.addImage(imageUrl, 'JPEG', x, y, imageWidth, imageHeight);
+        
+        // Add caption below image
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.text(`Photo ${index + 1}`, x, y + imageHeight + 10);
+      } catch (error) {
+        console.error(`Error adding image ${index}:`, error);
+        
+        // Draw a placeholder if image fails to load
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setFillColor(240, 240, 240);
+        pdf.roundedRect(x, y, imageWidth, imageHeight, 3, 3, 'FD');
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(10);
+        pdf.text('Image could not be loaded', x + imageWidth/2, y + imageHeight/2, { align: 'center' });
+      }
+    });
+    
+    // Reset to the first page
+    pdf.setPage(1);
   }
+  
+  // Add summary calculation
+  let summaryTable;
+  if (details.isDepositInvoice) {
+    summaryTable = [
+      ['Subtotal:', formatCurrency(subtotal)],
+      [`Deposit (${details.depositPercentage}%):`, formatCurrency(details.depositAmount)],
+      ['Balance Due (Future Invoice):', formatCurrency(subtotal - details.depositAmount)],
+      ['SST (6%) on Deposit:', formatCurrency(tax)],
+      ['Total Due Now:', formatCurrency(total)]
+    ];
+  } else {
+    summaryTable = [
+      ['Subtotal:', formatCurrency(subtotal)],
+      ['SST (6%):', formatCurrency(tax)],
+      ['Total Due:', formatCurrency(total)]
+    ];
+  }
+  
+  autoTable(pdf, {
+    startY: tableEndY + 5,
+    body: summaryTable,
+    theme: 'plain',
+    styles: {
+      fontSize: 10,
+    },
+    margin: { left: pdf.internal.pageSize.width - 95 },
+    tableWidth: 80,
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 40 },
+      1: { cellWidth: 40, halign: 'right' }
+    }
+  });
+  
+  // Add Terms and Conditions
+  const termsY = tableEndY + 50;
+  pdf.setFillColor(150, 150, 150);
+  pdf.rect(15, termsY, 20, 7, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.text('Terms and Conditions', 17, termsY + 5);
+  
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.text([
+    'Payment terms 30days',
+    'Pjt duration 5-7 working days'
+  ], 15, termsY + 15);
+  
+  // Add Contact Section
+  const contactY = termsY + 30;
+  pdf.setFillColor(150, 150, 150);
+  pdf.rect(15, contactY, 20, 7, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Contact', 17, contactY + 5);
+  
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text([
+    'For all enquiries, please contact Star Residences Management',
+    'Email: info@starresidences.com.my',
+    'Tel: +603-2168-1688'
+  ], 15, contactY + 15);
   
   // Add notes
   if (details.notes) {
-    const notesY = details.isDepositInvoice ? tableEndY + 70 : tableEndY + 50;
+    const notesY = contactY + 40;
     pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11);
     pdf.text('NOTES', 15, notesY);
     
     pdf.setFont('helvetica', 'normal');

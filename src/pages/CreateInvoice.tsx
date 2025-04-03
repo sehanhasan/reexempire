@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Image, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -12,6 +11,9 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { invoiceService, customerService, quotationService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExtendedQuotation {
   id: string;
@@ -48,8 +50,10 @@ export default function CreateInvoice() {
   const [quotationReference, setQuotationReference] = useState("");
   const [quotationId, setQuotationId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
-  // Generate reference number with year - INV-2025-00001 format
   const generateReferenceNumber = () => {
     const currentYear = new Date().getFullYear();
     const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -58,7 +62,6 @@ export default function CreateInvoice() {
 
   const [documentNumber, setDocumentNumber] = useState(generateReferenceNumber());
 
-  // Fetch customer details when customer ID changes
   useEffect(() => {
     if (customerId) {
       const fetchCustomer = async () => {
@@ -74,15 +77,12 @@ export default function CreateInvoice() {
     }
   }, [customerId]);
 
-  // Check if this invoice is being created from a quotation
   useEffect(() => {
     const fetchQuotationData = async () => {
-      // In a real app, you would get the quotation ID from the URL or state
       const fromQuotationId = location.state?.quotationId;
       
       if (fromQuotationId) {
         try {
-          // Fetch quotation details
           const quotation = await quotationService.getById(fromQuotationId) as ExtendedQuotation;
           if (quotation) {
             setQuotationId(quotation.id);
@@ -90,12 +90,10 @@ export default function CreateInvoice() {
             setCustomerId(quotation.customer_id);
             setSubject(quotation.subject || "");
             
-            // Set deposit info
             setIsDepositInvoice(quotation.requires_deposit || false);
             setDepositAmount(quotation.deposit_amount || 0);
             setDepositPercentage(quotation.deposit_percentage || 30);
             
-            // Fetch quotation items
             const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
             if (quotationItems && quotationItems.length > 0) {
               setItems(quotationItems.map((item, index) => ({
@@ -128,6 +126,70 @@ export default function CreateInvoice() {
     return qty * item.unitPrice;
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const validFiles = filesArray.filter(file => 
+        file.type.startsWith('image/')
+      );
+      
+      if (validFiles.length !== filesArray.length) {
+        toast({
+          title: "Invalid Files",
+          description: "Only image files are allowed.",
+          variant: "destructive"
+        });
+      }
+      
+      const newImageUrls = validFiles.map(file => URL.createObjectURL(file));
+      
+      setImages(prev => [...prev, ...validFiles]);
+      setImageUrls(prev => [...prev, ...newImageUrls]);
+    }
+  };
+  
+  const removeImage = (index: number) => {
+    URL.revokeObjectURL(imageUrls[index]);
+    
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const uploadImages = async (invoiceId: string): Promise<string[]> => {
+    if (images.length === 0) return [];
+    
+    const uploadedUrls: string[] = [];
+    setUploadingImages(true);
+    
+    try {
+      for (const file of images) {
+        const fileName = `${invoiceId}/${Date.now()}-${file.name}`;
+        
+        const { data, error } = await supabase.storage
+          .from('invoice-images')
+          .upload(fileName, file);
+        
+        if (error) {
+          console.error("Error uploading image:", error);
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('invoice-images')
+          .getPublicUrl(data.path);
+        
+        uploadedUrls.push(urlData.publicUrl);
+      }
+      
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error in image upload process:", error);
+      return [];
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -140,7 +202,6 @@ export default function CreateInvoice() {
       return;
     }
     
-    // Validate that there are at least one item with a value
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
@@ -151,7 +212,6 @@ export default function CreateInvoice() {
       return;
     }
     
-    // Calculate totals
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + (qty * item.unitPrice);
@@ -161,7 +221,6 @@ export default function CreateInvoice() {
     try {
       setIsSubmitting(true);
       
-      // Create invoice in database
       const invoice = {
         customer_id: customerId,
         quotation_id: quotationId,
@@ -170,11 +229,11 @@ export default function CreateInvoice() {
         due_date: dueDate,
         status: "Draft",
         subtotal: subtotal,
-        tax_rate: 0, // No SST as requested
+        tax_rate: 0,
         tax_amount: 0,
         total: total,
         notes: notes || null,
-        subject: subject || null, // Added subject field
+        subject: subject || null,
         terms: null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
@@ -182,10 +241,8 @@ export default function CreateInvoice() {
         payment_status: "Unpaid"
       };
       
-      
       const createdInvoice = await invoiceService.create(invoice);
       
-      // Add invoice items (preserving order)
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -196,8 +253,19 @@ export default function CreateInvoice() {
             unit: item.unit,
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
-            category: item.category // Include category field
+            category: item.category
           });
+        }
+      }
+      
+      let uploadedImageUrls: string[] = [];
+      if (images.length > 0) {
+        uploadedImageUrls = await uploadImages(createdInvoice.id);
+        
+        if (uploadedImageUrls.length > 0) {
+          for (const imageUrl of uploadedImageUrls) {
+            await invoiceService.addInvoiceImage(createdInvoice.id, imageUrl);
+          }
         }
       }
       
@@ -206,7 +274,6 @@ export default function CreateInvoice() {
         description: `Invoice for ${customer?.name} has been created successfully.`,
       });
       
-      // Navigate back to the invoices list
       navigate("/invoices");
     } catch (error) {
       console.error("Error creating invoice:", error);
@@ -262,13 +329,68 @@ export default function CreateInvoice() {
           calculateItemAmount={calculateItemAmount}
         />
         
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Work Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Label htmlFor="image-upload">Upload images to include in the invoice PDF</Label>
+              <div className="flex items-center gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                >
+                  <Image className="mr-2 h-4 w-4" />
+                  Add Images
+                </Button>
+                <Input 
+                  id="image-upload" 
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleFileChange}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {images.length} {images.length === 1 ? 'image' : 'images'} selected
+                </p>
+              </div>
+              
+              {imageUrls.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  {imageUrls.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={url} 
+                        alt={`Preview ${index + 1}`} 
+                        className="w-full h-32 object-cover rounded-md" 
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
         <AdditionalInfoCard 
           notes={notes}
           setNotes={setNotes}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting || uploadingImages}
         />
       </form>
     </div>
