@@ -122,25 +122,26 @@ const deleteItem = async (id: string) => {
   }
 };
 
-// Add invoice image
+// Add invoice image - using a more TypeScript-friendly approach
 const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
+  // Using a raw query approach to insert into invoice_images table
   const { data, error } = await supabase
-    .from('invoice_images')
-    .insert({
-      invoice_id: invoiceId,
-      image_url: imageUrl
+    .rpc('add_invoice_image', {
+      p_invoice_id: invoiceId,
+      p_image_url: imageUrl
     });
   
   if (error) throw error;
   return data;
 };
 
-// Get invoice images
+// Get invoice images - using a more TypeScript-friendly approach
 const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
+  // Using a raw query approach to select from invoice_images table
   const { data, error } = await supabase
-    .from('invoice_images')
-    .select('*')
-    .eq('invoice_id', invoiceId);
+    .rpc('get_invoice_images', {
+      p_invoice_id: invoiceId
+    });
   
   if (error) throw error;
   return data || [];
