@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -11,7 +12,7 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { invoiceService, customerService } from "@/services";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
-import { Customer } from "@/types/database";
+import { Customer, InvoiceImage } from "@/types/database";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
@@ -196,14 +197,14 @@ export default function EditInvoice() {
   const downloadInvoicePDF = async (invoice: any, customer: any, items: any[]) => {
     try {
       // Get invoice images from the database
-      const invoiceImages = await invoiceService.getInvoiceImages(invoice.id);
+      const invoiceImages: InvoiceImage[] = await invoiceService.getInvoiceImages(invoice.id);
       const imageUrls = invoiceImages.map(img => img.image_url);
       
       const itemsForPDF = items.map(item => ({
         id: Number(item.id),
         description: item.description,
         quantity: item.quantity,
-        unitPrice: item.unit_price,
+        unitPrice: item.unit_price || item.unitPrice,
         amount: item.amount,
         category: item.category || '',
         unit: item.unit || ''

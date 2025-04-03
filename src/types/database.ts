@@ -159,6 +159,14 @@ export interface InvoiceItem {
   category?: string | null; // Added category field to fix errors
 }
 
+export interface InvoiceImage {
+  id: string;
+  invoice_id: string;
+  image_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Appointment {
   id: string;
   customer_id: string;

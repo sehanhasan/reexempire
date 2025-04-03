@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice } from "@/types/database";
+import { Invoice, InvoiceImage } from "@/types/database";
 
 const getAll = async (): Promise<Invoice[]> => {
   const { data, error } = await supabase
@@ -136,14 +136,14 @@ const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
 };
 
 // Get invoice images
-const getInvoiceImages = async (invoiceId: string) => {
+const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
   const { data, error } = await supabase
     .from('invoice_images')
     .select('*')
     .eq('invoice_id', invoiceId);
   
   if (error) throw error;
-  return data;
+  return data || [];
 };
 
 // Define deleteItemsByInvoiceId function
@@ -173,17 +173,4 @@ export const invoiceService = {
   deleteItemsByInvoiceId
 };
 
-export default {
-  getAll,
-  getById,
-  create,
-  update,
-  delete: deleteInvoice,
-  getItemsByInvoiceId,
-  createItem,
-  updateItem,
-  deleteItem,
-  addInvoiceImage,
-  getInvoiceImages,
-  deleteItemsByInvoiceId
-};
+export default invoiceService;
