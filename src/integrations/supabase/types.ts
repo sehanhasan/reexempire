@@ -634,7 +634,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_invoice_image: {
+        Args: {
+          p_invoice_id: string
+          p_image_url: string
+        }
+        Returns: Json
+      }
+      get_invoice_images: {
+        Args: {
+          p_invoice_id: string
+        }
+        Returns: Json[]
+      }
     }
     Enums: {
       [_ in never]: never

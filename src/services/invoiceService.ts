@@ -129,7 +129,7 @@ const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
     .rpc('add_invoice_image', {
       p_invoice_id: invoiceId,
       p_image_url: imageUrl
-    });
+    } as any);
   
   if (error) throw error;
   return data;
@@ -141,7 +141,7 @@ const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
   const { data, error } = await supabase
     .rpc('get_invoice_images', {
       p_invoice_id: invoiceId
-    });
+    } as any);
   
   if (error) throw error;
   return data || [];
