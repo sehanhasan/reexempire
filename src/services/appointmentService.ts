@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -96,7 +95,6 @@ export const appointmentService = {
   },
 
   async update(id: string, appointment: Partial<Omit<Appointment, "id" | "created_at" | "updated_at">>): Promise<Appointment> {
-    // Ensure we're not sending undefined values that might overwrite existing data
     const cleanedAppointment = Object.fromEntries(
       Object.entries(appointment).filter(([_, v]) => v !== undefined)
     );
@@ -124,6 +122,28 @@ export const appointmentService = {
 
     if (error) {
       console.error(`Error deleting appointment with id ${id}:`, error);
+      throw error;
+    }
+  },
+  
+  async sendWhatsAppNotification(appointment: Appointment, staffMembers: any[], recipientPhone: string): Promise<any> {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-appointment-notification', {
+        body: { 
+          appointment, 
+          staffs: staffMembers,
+          recipientPhone
+        }
+      });
+      
+      if (error) {
+        console.error("Error sending WhatsApp notification:", error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Failed to send WhatsApp notification:", error);
       throw error;
     }
   }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +13,7 @@ import { toast } from "@/components/ui/use-toast";
 import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
+import { Switch } from "@/components/ui/switch";
 
 export default function AddAppointment() {
   const navigate = useNavigate();
@@ -42,6 +42,9 @@ export default function AddAppointment() {
   // Customer selection
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
+
+  // WhatsApp notification state
+  const [sendWhatsAppNotification, setSendWhatsAppNotification] = useState(true);
 
   // Fetch staff members
   const {
@@ -237,19 +240,49 @@ export default function AddAppointment() {
         appointmentData.notes = appointmentData.notes ? `${appointmentData.notes}\n\n--- Staff Notes ---\n${staffNotesText}` : `--- Staff Notes ---\n${staffNotesText}`;
       }
 
+      let savedAppointment;
+      
       // Save the appointment - create or update
       if (isEditMode) {
-        await appointmentService.update(id, appointmentData);
+        savedAppointment = await appointmentService.update(id, appointmentData);
         toast({
           title: "Appointment Updated",
           description: "The appointment has been updated successfully."
         });
       } else {
-        await appointmentService.create(appointmentData);
+        savedAppointment = await appointmentService.create(appointmentData);
         toast({
           title: "Appointment Added",
           description: "The appointment has been scheduled successfully."
         });
+      }
+      
+      // Send WhatsApp notification if enabled and customer has a phone number
+      if (sendWhatsAppNotification && selectedCustomer.phone) {
+        try {
+          // Get staff members details
+          const selectedStaffDetails = staffMembers.filter((staff: Staff) => 
+            selectedStaff.includes(staff.id)
+          );
+          
+          await appointmentService.sendWhatsAppNotification(
+            savedAppointment, 
+            selectedStaffDetails,
+            selectedCustomer.phone
+          );
+          
+          toast({
+            title: "WhatsApp Notification Sent",
+            description: "A WhatsApp message with appointment details has been sent to the customer."
+          });
+        } catch (error) {
+          console.error("Failed to send WhatsApp notification:", error);
+          toast({
+            title: "WhatsApp Notification Failed",
+            description: "Could not send the WhatsApp notification, but appointment was saved.",
+            variant: "destructive"
+          });
+        }
       }
       
       setIsLoading(false);
@@ -449,6 +482,22 @@ export default function AddAppointment() {
                   </div>
                 )}
               </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="whatsapp-notification"
+                  checked={sendWhatsAppNotification}
+                  onCheckedChange={setSendWhatsAppNotification}
+                />
+                <Label htmlFor="whatsapp-notification">
+                  Send WhatsApp notification to customer
+                </Label>
+              </div>
+              {sendWhatsAppNotification && !selectedCustomer?.phone && (
+                <div className="text-sm text-amber-600">
+                  Customer does not have a phone number. WhatsApp notification won't be sent.
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
