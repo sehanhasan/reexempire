@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Calendar, User, Check, Image, X } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Check, Image, X, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export default function AddAppointment() {
   const navigate = useNavigate();
@@ -42,9 +43,11 @@ export default function AddAppointment() {
   // Customer selection
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
-
-  // WhatsApp notification state
-  const [sendWhatsAppNotification, setSendWhatsAppNotification] = useState(true);
+  
+  // WhatsApp share dialog state
+  const [isWhatsAppDialogOpen, setIsWhatsAppDialogOpen] = useState(false);
+  const [whatsAppShareUrl, setWhatsAppShareUrl] = useState("");
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
   // Fetch staff members
   const {
@@ -63,7 +66,6 @@ export default function AddAppointment() {
           setIsLoading(true);
           const appointment = await appointmentService.getById(id);
           if (appointment) {
-            // Set basic appointment data
             setTitle(appointment.title || "");
             setDate(appointment.appointment_date || new Date().toISOString().split("T")[0]);
             setStartTime(appointment.start_time || "09:00");
@@ -71,12 +73,10 @@ export default function AddAppointment() {
             setNotes(appointment.notes || "");
             setStatus(appointment.status || "Confirmed");
 
-            // Set staff data
             if (appointment.staff_id) {
               setSelectedStaff([appointment.staff_id]);
             }
 
-            // Extract image URLs from notes if present
             if (appointment.notes && appointment.notes.includes("image_url:")) {
               const regex = /image_url:([^\s]+)/g;
               let match;
@@ -86,11 +86,9 @@ export default function AddAppointment() {
               }
               setImageURLs(foundImages);
               
-              // Clean notes by removing the image URLs
               setNotes(appointment.notes.replace(/image_url:[^\s]+/g, '').trim());
             }
 
-            // Fetch customer data
             if (appointment.customer_id) {
               const customer = await customerService.getById(appointment.customer_id);
               setSelectedCustomer(customer);
@@ -115,7 +113,6 @@ export default function AddAppointment() {
     if (selectedStaff.includes(staffId)) {
       setSelectedStaff(selectedStaff.filter(id => id !== staffId));
 
-      // Create a new object without the removed staff's notes
       const newStaffNotes = {
         ...staffNotes
       };
@@ -133,19 +130,16 @@ export default function AddAppointment() {
     }));
   };
 
-  // Handle image attachment
   const handleImageAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       setAttachedImages(prev => [...prev, ...newFiles]);
       
-      // Create temporary URLs for preview
       const newURLs = newFiles.map(file => URL.createObjectURL(file));
       setImageURLs(prev => [...prev, ...newURLs]);
     }
   };
 
-  // Remove attached image
   const removeImage = (index: number) => {
     setAttachedImages(prev => {
       const updated = [...prev];
@@ -155,7 +149,6 @@ export default function AddAppointment() {
     
     setImageURLs(prev => {
       const updated = [...prev];
-      // If it's a temporary URL, revoke it to avoid memory leaks
       if (updated[index].startsWith('blob:')) {
         URL.revokeObjectURL(updated[index]);
       }
@@ -164,7 +157,6 @@ export default function AddAppointment() {
     });
   };
 
-  // Convert images to base64 for storage
   const convertImagesToBase64 = async () => {
     return Promise.all(
       attachedImages.map(
@@ -178,8 +170,56 @@ export default function AddAppointment() {
     );
   };
 
+  const generateWhatsAppShareLink = async () => {
+    if (!selectedCustomer) {
+      toast({
+        title: "Customer Required",
+        description: "Please select a customer for this appointment.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsGeneratingLink(true);
+      
+      const appointmentData = {
+        title,
+        customer_id: selectedCustomer.id,
+        appointment_date: date,
+        start_time: startTime,
+        end_time: endTime,
+        status,
+        notes: notes || null,
+        location: selectedCustomer.address || null,
+      };
+      
+      const selectedStaffDetails = staffMembers.filter((staff: Staff) => 
+        selectedStaff.includes(staff.id)
+      );
+      
+      const shareUrl = await appointmentService.generateWhatsAppShareLink(
+        appointmentData as any, 
+        selectedStaffDetails
+      );
+      
+      setWhatsAppShareUrl(shareUrl);
+      setIsWhatsAppDialogOpen(true);
+      setIsGeneratingLink(false);
+    } catch (error) {
+      console.error("Failed to generate WhatsApp share link:", error);
+      toast({
+        title: "WhatsApp Share Link Failed",
+        description: "Could not generate the WhatsApp share link. Please try again.",
+        variant: "destructive"
+      });
+      setIsGeneratingLink(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!selectedCustomer) {
       toast({
         title: "Customer Required",
@@ -196,19 +236,17 @@ export default function AddAppointment() {
       });
       return;
     }
+    
     try {
       setIsLoading(true);
       
-      // Process new images into base64
       let base64Images: string[] = [];
       if (attachedImages.length > 0) {
         base64Images = await convertImagesToBase64();
       }
       
-      // Combine existing image URLs and new base64 images
       const allImageURLs = [...imageURLs.filter(url => !url.startsWith('blob:')), ...base64Images];
       
-      // Add image URLs to notes
       let notesWithImages = notes.trim();
       if (allImageURLs.length > 0) {
         allImageURLs.forEach(url => {
@@ -216,22 +254,19 @@ export default function AddAppointment() {
         });
       }
       
-      // Prepare the appointment data
       const appointmentData = {
         title,
         customer_id: selectedCustomer.id,
         staff_id: selectedStaff.length > 0 ? selectedStaff[0] : null,
-        // Taking first staff if multiple selected
         appointment_date: date,
         start_time: startTime,
         end_time: endTime,
         status,
         notes: notesWithImages || null,
         location: selectedCustomer.address || null,
-        description: null // Adding the missing description field
+        description: null
       };
 
-      // Save staff notes in the appointment notes if any
       if (Object.keys(staffNotes).length > 0) {
         const staffNotesText = Object.entries(staffNotes).map(([staffId, note]) => {
           const staffMember = staffMembers.find((staff: Staff) => staff.id === staffId);
@@ -242,7 +277,6 @@ export default function AddAppointment() {
 
       let savedAppointment;
       
-      // Save the appointment - create or update
       if (isEditMode) {
         savedAppointment = await appointmentService.update(id, appointmentData);
         toast({
@@ -255,34 +289,6 @@ export default function AddAppointment() {
           title: "Appointment Added",
           description: "The appointment has been scheduled successfully."
         });
-      }
-      
-      // Send WhatsApp notification if enabled and customer has a phone number
-      if (sendWhatsAppNotification && selectedCustomer.phone) {
-        try {
-          // Get staff members details
-          const selectedStaffDetails = staffMembers.filter((staff: Staff) => 
-            selectedStaff.includes(staff.id)
-          );
-          
-          await appointmentService.sendWhatsAppNotification(
-            savedAppointment, 
-            selectedStaffDetails,
-            selectedCustomer.phone
-          );
-          
-          toast({
-            title: "WhatsApp Notification Sent",
-            description: "A WhatsApp message with appointment details has been sent to the customer."
-          });
-        } catch (error) {
-          console.error("Failed to send WhatsApp notification:", error);
-          toast({
-            title: "WhatsApp Notification Failed",
-            description: "Could not send the WhatsApp notification, but appointment was saved.",
-            variant: "destructive"
-          });
-        }
       }
       
       setIsLoading(false);
@@ -458,7 +464,6 @@ export default function AddAppointment() {
                   />
                 </div>
                 
-                {/* Image preview */}
                 {imageURLs.length > 0 && (
                   <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
                     {imageURLs.map((url, idx) => (
@@ -483,21 +488,21 @@ export default function AddAppointment() {
                 )}
               </div>
               
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  id="whatsapp-notification"
-                  checked={sendWhatsAppNotification}
-                  onCheckedChange={setSendWhatsAppNotification}
-                />
-                <Label htmlFor="whatsapp-notification">
-                  Send WhatsApp notification to customer
-                </Label>
+              <div className="space-y-2 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={generateWhatsAppShareLink}
+                  disabled={isGeneratingLink || !selectedCustomer}
+                  className="flex items-center"
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  {isGeneratingLink ? "Generating..." : "Generate WhatsApp Share Link"}
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  Create a WhatsApp message with appointment details to share with staff.
+                </p>
               </div>
-              {sendWhatsAppNotification && !selectedCustomer?.phone && (
-                <div className="text-sm text-amber-600">
-                  Customer does not have a phone number. WhatsApp notification won't be sent.
-                </div>
-              )}
               
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
@@ -536,6 +541,37 @@ export default function AddAppointment() {
         }} 
         selectedCustomerId={selectedCustomer?.id} 
       />
+      
+      <Dialog open={isWhatsAppDialogOpen} onOpenChange={setIsWhatsAppDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Appointment via WhatsApp</DialogTitle>
+            <DialogDescription>
+              Click the button below to open WhatsApp with the appointment details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 py-4">
+            <div className="grid flex-1 gap-2">
+              <img 
+                src="/lovable-uploads/2d90ed11-8c7d-4d4e-8e6b-48a874d5c595.png" 
+                alt="WhatsApp Logo" 
+                className="w-16 h-16 mx-auto mb-2" 
+              />
+              <p className="text-center text-sm text-muted-foreground">
+                The appointment details have been formatted for WhatsApp
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-center">
+            <Button type="button" variant="default" className="bg-green-600 hover:bg-green-700">
+              <a href={whatsAppShareUrl} target="_blank" rel="noopener noreferrer" className="flex items-center">
+                <Share2 className="mr-2 h-4 w-4" />
+                Open WhatsApp
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,8 +1,6 @@
 
-// This edge function sends WhatsApp notifications when appointments are created or updated
+// This edge function generates WhatsApp message links for staff notifications
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { twilio } from "npm:twilio@4.19.0";
 
 // Set up CORS headers for browser requests
 const corsHeaders = {
@@ -17,32 +15,13 @@ serve(async (req) => {
   }
   
   try {
-    // Get environment variables
-    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
-    
-    // Check if Twilio credentials are configured
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-      console.error("Twilio credentials not configured");
-      return new Response(
-        JSON.stringify({ 
-          error: "Twilio credentials not configured" 
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
-    
     // Parse the request body
-    const { appointment, staffs, recipientPhone } = await req.json();
+    const { appointment, staffs } = await req.json();
     
     // Validate required data
-    if (!appointment || !recipientPhone) {
+    if (!appointment) {
       return new Response(
-        JSON.stringify({ error: "Missing required data" }),
+        JSON.stringify({ error: "Missing required appointment data" }),
         { 
           status: 400, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -58,7 +37,7 @@ serve(async (req) => {
     
     // Compose the WhatsApp message
     const message = `
-📅 *Appointment Confirmation*
+📅 *Appointment Details*
 Title: ${appointment.title}
 Date: ${appointmentDate}
 Time: ${appointment.start_time} - ${appointment.end_time}
@@ -69,30 +48,16 @@ Location: ${appointment.location || 'Not specified'}
 ${appointment.notes ? `\nNotes: ${appointment.notes}` : ''}
     `.trim();
     
-    // Initialize Twilio client
-    const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+    // Generate WhatsApp share URL
+    // Replace spaces with %20 and new lines with %0A for proper URL encoding
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
     
-    // Format the phone number (ensure it starts with +)
-    const formattedPhone = recipientPhone.startsWith('+') 
-      ? recipientPhone 
-      : `+${recipientPhone}`;
-    
-    console.log(`Sending WhatsApp message to ${formattedPhone}`);
-    
-    // Send the WhatsApp message using Twilio
-    const twilioResponse = await client.messages.create({
-      body: message,
-      from: `whatsapp:${TWILIO_PHONE_NUMBER}`,
-      to: `whatsapp:${formattedPhone}`
-    });
-    
-    console.log("WhatsApp message sent successfully", twilioResponse.sid);
-    
-    // Return success response
+    // Return the WhatsApp URL
     return new Response(
       JSON.stringify({ 
         success: true, 
-        messageId: twilioResponse.sid 
+        whatsappUrl: whatsappUrl
       }),
       { 
         status: 200, 
@@ -101,12 +66,12 @@ ${appointment.notes ? `\nNotes: ${appointment.notes}` : ''}
     );
     
   } catch (error) {
-    console.error("Error sending WhatsApp message:", error);
+    console.error("Error generating WhatsApp share link:", error);
     
     // Return error response
     return new Response(
       JSON.stringify({ 
-        error: error.message || "Failed to send WhatsApp message" 
+        error: error.message || "Failed to generate WhatsApp share link" 
       }),
       { 
         status: 500, 

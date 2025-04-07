@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -126,24 +127,23 @@ export const appointmentService = {
     }
   },
   
-  async sendWhatsAppNotification(appointment: Appointment, staffMembers: any[], recipientPhone: string): Promise<any> {
+  async generateWhatsAppShareLink(appointment: Appointment, staffMembers: any[]): Promise<string> {
     try {
       const { data, error } = await supabase.functions.invoke('send-appointment-notification', {
         body: { 
           appointment, 
-          staffs: staffMembers,
-          recipientPhone
+          staffs: staffMembers
         }
       });
       
       if (error) {
-        console.error("Error sending WhatsApp notification:", error);
+        console.error("Error generating WhatsApp share link:", error);
         throw error;
       }
       
-      return data;
+      return data.whatsappUrl;
     } catch (error) {
-      console.error("Failed to send WhatsApp notification:", error);
+      console.error("Failed to generate WhatsApp share link:", error);
       throw error;
     }
   }
