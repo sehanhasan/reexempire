@@ -1,11 +1,13 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Edit, X, Check, Play } from "lucide-react";
+import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { appointmentService } from "@/services";
 
 interface AppointmentDetailsDialogProps {
   open: boolean;
@@ -87,6 +89,20 @@ export function AppointmentDetailsDialog({
         variant: "destructive"
       });
     }
+  };
+
+  const handleShareWhatsApp = () => {
+    const staffInfo = assignedStaff ? [{ 
+      id: assignedStaff.id, 
+      name: assignedStaff.name,
+      phone: assignedStaff.phone 
+    }] : [];
+    
+    const customerName = customer?.name || null;
+    const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(appointment, customerName, staffInfo);
+    
+    // Open in a new tab
+    window.open(whatsAppUrl, '_blank');
   };
   
   const checkForImagesInNotes = (notes: string) => {
@@ -198,6 +214,15 @@ export function AppointmentDetailsDialog({
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-4">
+          <Button 
+            onClick={handleShareWhatsApp} 
+            variant="outline" 
+            className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+          >
+            <Share2 className="h-4 w-4" />
+            Share via WhatsApp
+          </Button>
+          
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {!isCompleted && !isCancelled && (
               <>

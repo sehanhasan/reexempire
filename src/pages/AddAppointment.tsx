@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Calendar, User, Check, Image, X } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Check, Image, X, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
+import { Switch } from "@/components/ui/switch";
 
 export default function AddAppointment() {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function AddAppointment() {
   const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
   const [staffNotes, setStaffNotes] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [shareViaWhatsApp, setShareViaWhatsApp] = useState(false);
   
   // Image attachment state
   const [attachedImages, setAttachedImages] = useState<File[]>([]);
@@ -238,18 +240,40 @@ export default function AddAppointment() {
       }
 
       // Save the appointment - create or update
+      let savedAppointment;
       if (isEditMode) {
-        await appointmentService.update(id, appointmentData);
+        savedAppointment = await appointmentService.update(id, appointmentData);
         toast({
           title: "Appointment Updated",
           description: "The appointment has been updated successfully."
         });
       } else {
-        await appointmentService.create(appointmentData);
+        savedAppointment = await appointmentService.create(appointmentData);
         toast({
           title: "Appointment Added",
           description: "The appointment has been scheduled successfully."
         });
+      }
+      
+      // If user wants to share via WhatsApp, generate and open the WhatsApp share URL
+      if (shareViaWhatsApp && savedAppointment) {
+        const selectedStaffMembers = selectedStaff.map(staffId => {
+          const staff = staffMembers.find((s: Staff) => s.id === staffId);
+          return {
+            id: staffId, 
+            name: staff?.name || "Unknown Staff",
+            phone: staff?.phone || null
+          };
+        });
+        
+        const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(
+          savedAppointment,
+          selectedCustomer.name,
+          selectedStaffMembers
+        );
+        
+        // Open in a new tab
+        window.open(whatsAppUrl, '_blank');
       }
       
       setIsLoading(false);
@@ -463,6 +487,18 @@ export default function AddAppointment() {
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <Switch 
+                  id="share-whatsapp" 
+                  checked={shareViaWhatsApp}
+                  onCheckedChange={setShareViaWhatsApp}
+                />
+                <Label htmlFor="share-whatsapp" className="cursor-pointer flex items-center gap-2">
+                  <Share2 className="h-4 w-4 text-green-600" />
+                  Share appointment details via WhatsApp after saving
+                </Label>
               </div>
             </CardContent>
             <CardFooter className="flex justify-end space-x-4">

@@ -4,18 +4,19 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { appointmentService, customerService } from "@/services";
+import { appointmentService, customerService, staffService } from "@/services";
 import { ListView } from "@/components/schedule/ListView";
 import { PlusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Appointment } from "@/types/database";
+import { Appointment, Staff } from "@/types/database";
 
 export default function Schedule() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState({});
+  const [staffMembers, setStaffMembers] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -24,9 +25,10 @@ export default function Schedule() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [appointmentsData, customersData] = await Promise.all([
+        const [appointmentsData, customersData, staffData] = await Promise.all([
           appointmentService.getAll(),
-          customerService.getAll()
+          customerService.getAll(),
+          staffService.getAll()
         ]);
         
         // Create a customer lookup map for quick access
@@ -35,17 +37,26 @@ export default function Schedule() {
           customersMap[customer.id] = customer;
         });
         
+        // Create a staff lookup map for quick access
+        const staffMap = {};
+        staffData.forEach(staff => {
+          staffMap[staff.id] = staff;
+        });
+        
         // Enhance appointments with customer data
         const enhancedAppointments = appointmentsData.map(appointment => {
           const customer = customersMap[appointment.customer_id] || null;
+          const staff = appointment.staff_id ? staffMap[appointment.staff_id] : null;
           return {
             ...appointment,
-            customer
+            customer,
+            staff
           };
         });
         
         setAppointments(enhancedAppointments);
         setCustomers(customersMap);
+        setStaffMembers(staffMap);
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching schedule data:", error);

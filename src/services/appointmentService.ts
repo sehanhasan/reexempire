@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -96,7 +95,6 @@ export const appointmentService = {
   },
 
   async update(id: string, appointment: Partial<Omit<Appointment, "id" | "created_at" | "updated_at">>): Promise<Appointment> {
-    // Ensure we're not sending undefined values that might overwrite existing data
     const cleanedAppointment = Object.fromEntries(
       Object.entries(appointment).filter(([_, v]) => v !== undefined)
     );
@@ -126,5 +124,50 @@ export const appointmentService = {
       console.error(`Error deleting appointment with id ${id}:`, error);
       throw error;
     }
+  },
+
+  generateWhatsAppShareUrl(appointment: Appointment, customerName: string | null = null, staffMembers: Array<{ id: string; name: string; phone?: string | null }> = []): string {
+    const dateStr = new Date(appointment.appointment_date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    
+    const formatTime = (time: string) => {
+      if (!time) return "";
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours, 10);
+      return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
+    };
+    
+    let message = `*Appointment Details*\n\n`;
+    message += `📅 *Date:* ${dateStr}\n`;
+    message += `⏰ *Time:* ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}\n`;
+    message += `📌 *Service:* ${appointment.title}\n`;
+    
+    if (customerName) {
+      message += `👤 *Customer:* ${customerName}\n`;
+    }
+    
+    if (appointment.location) {
+      message += `📍 *Location:* ${appointment.location}\n`;
+    }
+    
+    if (staffMembers.length > 0) {
+      message += `\n👨‍💼 *Staff Assigned*\n`;
+      staffMembers.forEach(staff => {
+        message += `- ${staff.name}${staff.phone ? ' ('+staff.phone+')' : ''}\n`;
+      });
+    }
+    
+    if (appointment.notes) {
+      const cleanNotes = appointment.notes.replace(/image_url:[^\s]+/g, '').trim();
+      if (cleanNotes) {
+        message += `\n📝 *Notes*\n${cleanNotes}\n`;
+      }
+    }
+    
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 };
