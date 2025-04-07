@@ -96,6 +96,7 @@ export const appointmentService = {
   },
 
   async update(id: string, appointment: Partial<Omit<Appointment, "id" | "created_at" | "updated_at">>): Promise<Appointment> {
+    // Ensure we're not sending undefined values that might overwrite existing data
     const cleanedAppointment = Object.fromEntries(
       Object.entries(appointment).filter(([_, v]) => v !== undefined)
     );
@@ -123,27 +124,6 @@ export const appointmentService = {
 
     if (error) {
       console.error(`Error deleting appointment with id ${id}:`, error);
-      throw error;
-    }
-  },
-  
-  async generateWhatsAppShareLink(appointment: Appointment, staffMembers: any[]): Promise<string> {
-    try {
-      const { data, error } = await supabase.functions.invoke('send-appointment-notification', {
-        body: { 
-          appointment, 
-          staffs: staffMembers
-        }
-      });
-      
-      if (error) {
-        console.error("Error generating WhatsApp share link:", error);
-        throw error;
-      }
-      
-      return data.whatsappUrl;
-    } catch (error) {
-      console.error("Failed to generate WhatsApp share link:", error);
       throw error;
     }
   }
