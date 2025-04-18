@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -185,23 +184,18 @@ export default function Quotations() {
       });
       return;
     }
+    
     try {
-      let phoneNumber = customer.phone?.replace(/\D/g, '') || '';
-      if (!phoneNumber) {
-        toast({
-          title: "Missing Phone Number",
-          description: "Customer doesn't have a phone number for WhatsApp.",
-          variant: "destructive"
-        });
-        return;
-      }
-      if (phoneNumber.startsWith('0')) {
-        phoneNumber = '6' + phoneNumber;
-      } else if (!phoneNumber.startsWith('6')) {
-        phoneNumber = '60' + phoneNumber;
-      }
-      const message = `Dear ${customer.name},\n\nPlease find attached Quotation ${quotation.reference_number} valid until ${formatDate(quotation.expiry_date)}.\n\nThank you.\nStar Residences Management`;
-      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+      const quotationViewUrl = `${window.location.origin}/quotations/view/${quotation.id}`;
+      
+      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+        quotation.id, 
+        quotation.reference_number, 
+        customer.name,
+        quotationViewUrl
+      );
+      
+      window.open(whatsappUrl, '_blank');
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({

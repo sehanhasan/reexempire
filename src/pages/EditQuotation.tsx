@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, FileText, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -251,6 +250,37 @@ export default function EditQuotation() {
     });
   };
 
+  const handleSendWhatsapp = () => {
+    if (!quotation || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Customer information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
+      
+      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+        id!,
+        quotation.reference_number,
+        customer.name,
+        quotationViewUrl
+      );
+      
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return <div className="page-container">
         <PageHeader title="Edit Quotation" />
@@ -288,6 +318,10 @@ export default function EditQuotation() {
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Mark as Accepted
               </Button>
+              <Button variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600" onClick={handleSendWhatsapp}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via WhatsApp
+              </Button>
             </div>
           </div>
         </div>}
@@ -298,7 +332,11 @@ export default function EditQuotation() {
               <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
               <p className="text-sm text-muted-foreground">This quotation has been accepted by the customer</p>
             </div>
-            <div>
+            <div className="flex gap-2">
+              <Button onClick={handleSendWhatsapp} variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600">
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via WhatsApp
+              </Button>
               <Button onClick={handleConvertToInvoice} className="bg-blue-600 hover:bg-blue-700">
                 <FileText className="mr-2 h-4 w-4" />
                 Convert to Invoice

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,55 +27,53 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ViewQuotation from "./pages/ViewQuotation";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/register" element={<Register />} />
-            
-            {/* Protected Routes */}
-            <Route path="/" element={<MainLayout><Dashboard /></MainLayout>} />
-            
-            <Route path="/quotations" element={<MainLayout><Quotations /></MainLayout>} />
-            <Route path="/quotations/create" element={<MainLayout><CreateQuotation /></MainLayout>} />
-            <Route path="/quotations/edit/:id" element={<MainLayout><EditQuotation /></MainLayout>} />
-            
-            <Route path="/invoices" element={<MainLayout><Invoices /></MainLayout>} />
-            <Route path="/invoices/create" element={<MainLayout><CreateInvoice /></MainLayout>} />
-            <Route path="/invoices/edit/:id" element={<MainLayout><EditInvoice /></MainLayout>} />
-            
-            <Route path="/customers" element={<MainLayout><Customers /></MainLayout>} />
-            <Route path="/customers/add" element={<MainLayout><AddCustomer /></MainLayout>} />
-            
-            <Route path="/staff" element={<MainLayout><Staff /></MainLayout>} />
-            <Route path="/staff/add" element={<MainLayout><AddStaffMember /></MainLayout>} />
-            <Route path="/staff/edit/:id" element={<MainLayout><EditStaffMember /></MainLayout>} />
-            
-            <Route path="/schedule" element={<MainLayout><Schedule /></MainLayout>} />
-            <Route path="/schedule/add" element={<MainLayout><AddAppointment /></MainLayout>} />
-            <Route path="/schedule/edit/:id" element={<MainLayout><AddAppointment /></MainLayout>} />
-            
-            <Route path="/categories" element={<MainLayout><Categories /></MainLayout>} />
-            <Route path="/categories/add" element={<MainLayout><AddCategory /></MainLayout>} />
-            
-            <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-            
-            {/* Catch all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Auth Routes */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+              
+              {/* Protected Routes */}
+              <Route element={<MainLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/customers" element={<Customers />} />
+                <Route path="/customers/add" element={<AddCustomer />} />
+                <Route path="/staff" element={<Staff />} />
+                <Route path="/staff/add" element={<AddStaffMember />} />
+                <Route path="/staff/edit/:id" element={<EditStaffMember />} />
+                <Route path="/schedule" element={<Schedule />} />
+                <Route path="/appointments/add" element={<AddAppointment />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/categories/add" element={<AddCategory />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/invoices" element={<Invoices />} />
+                <Route path="/invoices/create" element={<CreateInvoice />} />
+                <Route path="/invoices/edit/:id" element={<EditInvoice />} />
+                <Route path="/quotations" element={<Quotations />} />
+                <Route path="/quotations/create" element={<CreateQuotation />} />
+                <Route path="/quotations/edit/:id" element={<EditQuotation />} />
+              </Route>
+              
+              {/* Public quotation view route */}
+              <Route path="/quotations/view/:id" element={<ViewQuotation />} />
+              
+              {/* Catch all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}

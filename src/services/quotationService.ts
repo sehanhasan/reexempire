@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
 
@@ -146,5 +147,16 @@ export const quotationService = {
       console.error(`Error deleting all items for quotation ${quotationId}:`, error);
       throw error;
     }
+  },
+
+  generateWhatsAppShareUrl(quotationId: string, quotationNumber: string, customerName: string, previewUrl: string): string {
+    const message = `Dear ${customerName},\n\n` +
+      `Please find your quotation ${quotationNumber} for review at the link below: ` +
+      `${previewUrl}\n\n` +
+      `You can review the quotation details and accept it online with your signature.\n\n` +
+      `If you have any questions, please don't hesitate to contact us.\n\n` +
+      `Thank you,\nReex Empire Sdn Bhd`;
+    
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 };
