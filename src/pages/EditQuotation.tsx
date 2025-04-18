@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -32,6 +33,7 @@ export default function EditQuotation() {
   }]);
   const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [quotationData, setQuotationData] = useState<Quotation | null>(null);
   const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split("T")[0]);
   const [validUntil, setValidUntil] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
@@ -54,6 +56,7 @@ export default function EditQuotation() {
 
         const quotation = await quotationService.getById(id);
         if (quotation) {
+          setQuotationData(quotation);
           setCustomerId(quotation.customer_id);
           setDocumentNumber(quotation.reference_number);
           setQuotationDate(quotation.issue_date);
@@ -251,7 +254,7 @@ export default function EditQuotation() {
   };
 
   const handleSendWhatsapp = () => {
-    if (!quotation || !customer) {
+    if (!quotationData || !customer) {
       toast({
         title: "Missing Information",
         description: "Customer information not found.",
@@ -265,7 +268,7 @@ export default function EditQuotation() {
       
       const whatsappUrl = quotationService.generateWhatsAppShareUrl(
         id!,
-        quotation.reference_number,
+        quotationData.reference_number,
         customer.name,
         quotationViewUrl
       );
