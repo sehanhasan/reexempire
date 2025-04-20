@@ -222,7 +222,7 @@ export default function Dashboard() {
                       <Badge className={
                         quotation.status === 'Approved' ? "bg-green-500 text-white" : 
                         quotation.status === 'Draft' ? "bg-gray-500 text-white" : 
-                        "bg-yellow-500 text-white"
+                        "bg-green-500 text-white"
                       }>
                         {quotation.status}
                       </Badge>
@@ -429,7 +429,7 @@ export default function Dashboard() {
                                     <Badge className={
                                       quotation.status === 'Approved' ? "bg-green-500 text-white" : 
                                       quotation.status === 'Draft' ? "bg-gray-500 text-white" : 
-                                      "bg-yellow-500 text-white"
+                                      "bg-green-500 text-white"
                                     }>
                                       {quotation.status}
                                     </Badge>
