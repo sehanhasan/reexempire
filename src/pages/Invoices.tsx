@@ -335,13 +335,6 @@ export default function Invoices() {
                                     Mark as Paid
                                   </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleExportSingleInvoice(invoice);
-                                }}>
-                                  <FileOutput className="mr-2 h-4 w-4" />
-                                  Export
-                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   className="text-red-600"
@@ -426,10 +419,6 @@ export default function Invoices() {
                                     Mark as Paid
                                   </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem onClick={() => handleExportSingleInvoice(invoice)}>
-                                  <FileOutput className="mr-2 h-4 w-4" />
-                                  Export
-                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
                                   className="text-red-600"

@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Download } from "lucide-react";
 import { invoiceService, customerService } from "@/services";
 import { format } from "date-fns";
@@ -61,6 +61,13 @@ export default function ViewInvoice() {
     window.print();
   };
 
+  const getStatusColor = (status) => {
+    if (status === "Paid") return "bg-green-100 text-green-800 hover:bg-green-100";
+    if (status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+    if (status === "Overdue") return "bg-red-100 text-red-600 hover:bg-red-100";
+    return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -88,6 +95,7 @@ export default function ViewInvoice() {
   const dueDate = new Date(invoice.due_date);
   const today = new Date();
   const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
+  const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
 
   // Group items by category
   const groupedItems = {};
@@ -116,9 +124,14 @@ export default function ViewInvoice() {
             </div>
             <div className="text-center flex-1 px-4">
               <h1 className="text-lg font-bold text-blue-800">Invoice #{invoice.reference_number}</h1>
-              <p className="text-sm text-gray-600">
-                Issued: {format(new Date(invoice.issue_date), "MMM dd, yyyy")} | Due: {format(dueDate, "MMM dd, yyyy")}
-              </p>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                <p className="text-sm text-gray-600">
+                  Issued: {format(new Date(invoice.issue_date), "MMM dd, yyyy")} | Due: {format(dueDate, "MMM dd, yyyy")}
+                </p>
+                <Badge className={getStatusColor(displayPaymentStatus)}>
+                  {displayPaymentStatus}
+                </Badge>
+              </div>
             </div>
             <div className="flex items-center">
               <Button variant="outline" onClick={handlePrintPDF} className="flex items-center gap-1">
