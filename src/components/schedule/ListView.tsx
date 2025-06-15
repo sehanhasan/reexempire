@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar, MapPin, Check, Edit, Play } from "lucide-react";
 import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO, compareDesc } from "date-fns";
 import { AppointmentDetailsDialog } from "../appointments/AppointmentDetailsDialog";
-import { Appointment, Customer } from "@/types/database";
+import { Appointment, Customer, Staff } from "@/types/database";
+import { staffService } from "@/services";
 
 interface Service {
   id: string;
@@ -32,6 +33,7 @@ export function ListView({
   const [groupedAppointments, setGroupedAppointments] = useState<Record<string, AppointmentWithRelations[]>>({});
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [assignedStaff, setAssignedStaff] = useState<Staff | null>(null);
 
   useEffect(() => {
     if (!appointments.length) return;
@@ -51,6 +53,27 @@ export function ListView({
     });
     setGroupedAppointments(grouped);
   }, [appointments]);
+
+  // Fetch staff information when an appointment is selected
+  useEffect(() => {
+    const fetchStaffInfo = async () => {
+      if (selectedAppointment?.staff_id) {
+        try {
+          const staff = await staffService.getById(selectedAppointment.staff_id);
+          setAssignedStaff(staff);
+        } catch (error) {
+          console.error("Error fetching staff info:", error);
+          setAssignedStaff(null);
+        }
+      } else {
+        setAssignedStaff(null);
+      }
+    };
+
+    if (detailsDialogOpen && selectedAppointment) {
+      fetchStaffInfo();
+    }
+  }, [selectedAppointment, detailsDialogOpen]);
 
   const formatDateHeader = (dateString: string) => {
     const date = parseISO(dateString);
@@ -171,11 +194,10 @@ export function ListView({
         onClose={() => setDetailsDialogOpen(false)} 
         appointment={selectedAppointment} 
         customer={selectedAppointment?.customer || null} 
-        assignedStaff={null} 
+        assignedStaff={assignedStaff} 
         onMarkAsCompleted={onMarkAsCompleted}
         onMarkAsInProgress={onMarkAsInProgress}
       />
     </div>
   );
 }
-

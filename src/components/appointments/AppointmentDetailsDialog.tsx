@@ -1,8 +1,7 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
 import { useState, useEffect } from "react";
@@ -185,6 +184,19 @@ export function AppointmentDetailsDialog({
                 <div>
                   <p className="font-medium">Unit Number</p>
                   <p className="text-sm">#{customer.unit_number}</p>
+                </div>
+              </div>
+            )}
+
+            {assignedStaff && (
+              <div className="flex items-start gap-2">
+                <User className="h-4 w-4 mt-1 text-gray-500" />
+                <div>
+                  <p className="font-medium">Assigned Staff</p>
+                  <p className="text-sm">{assignedStaff.name}</p>
+                  {assignedStaff.phone && (
+                    <p className="text-sm text-gray-600">{assignedStaff.phone}</p>
+                  )}
                 </div>
               </div>
             )}
