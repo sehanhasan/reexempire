@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ViewQuotation from "./pages/ViewQuotation";
+import ViewInvoice from "./pages/ViewInvoice";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +71,9 @@ export default function App() {
               
               {/* Public quotation view route */}
               <Route path="/quotations/view/:id" element={<ViewQuotation />} />
+              
+              {/* Public invoice view route */}
+              <Route path="/invoices/view/:id" element={<ViewInvoice />} />
               
               {/* Catch all route */}
               <Route path="*" element={<NotFound />} />

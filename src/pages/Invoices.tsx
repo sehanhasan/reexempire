@@ -146,6 +146,11 @@ export default function Invoices() {
     }
   };
 
+  const handleViewInvoice = (invoice) => {
+    const viewUrl = `${window.location.origin}/invoices/view/${invoice.id}`;
+    window.open(viewUrl, '_blank');
+  };
+
   const formatMoney = amount => {
     return `RM ${parseFloat(amount).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -302,6 +307,13 @@ export default function Invoices() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={(e) => { 
                                   e.stopPropagation(); 
+                                  handleViewInvoice(invoice); 
+                                }}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { 
+                                  e.stopPropagation(); 
                                   navigate(`/invoices/edit/${invoice.id}`); 
                                 }}>
                                   <Edit className="mr-2 h-4 w-4" />
@@ -400,6 +412,10 @@ export default function Invoices() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleViewInvoice(invoice)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
