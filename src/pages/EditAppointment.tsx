@@ -17,7 +17,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { appointmentService, customerService, staffService } from "@/services";
 import { toast } from "@/hooks/use-toast";
-import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Appointment, Customer, Staff } from "@/types/database";
 
 const appointmentSchema = z.object({
@@ -183,13 +182,21 @@ export default function EditAppointment() {
                         <User className="h-4 w-4" />
                         Customer
                       </FormLabel>
-                      <FormControl>
-                        <CustomerSelector
-                          customers={customers}
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select customer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {customers.map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              {customer.unit_number ? `#${customer.unit_number} - ` : ""}
+                              {customer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -208,7 +215,7 @@ export default function EditAppointment() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No assignment</SelectItem>
+                          <SelectItem value="none">No assignment</SelectItem>
                           {staffMembers.map((staff) => (
                             <SelectItem key={staff.id} value={staff.id}>
                               {staff.name}
