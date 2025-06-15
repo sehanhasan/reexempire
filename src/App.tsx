@@ -22,6 +22,7 @@ import AddStaffMember from "./pages/AddStaffMember";
 import EditStaffMember from "./pages/EditStaffMember";
 import Schedule from "./pages/Schedule";
 import AddAppointment from "./pages/AddAppointment";
+import EditAppointment from "./pages/EditAppointment";
 import Categories from "./pages/Categories";
 import AddCategory from "./pages/AddCategory";
 import Profile from "./pages/Profile";
@@ -54,6 +55,8 @@ export default function App() {
                 <Route path="/staff/add" element={<AddStaffMember />} />
                 <Route path="/staff/edit/:id" element={<EditStaffMember />} />
                 <Route path="/schedule" element={<Schedule />} />
+                <Route path="/schedule/add" element={<AddAppointment />} />
+                <Route path="/schedule/edit/:id" element={<EditAppointment />} />
                 <Route path="/appointments/add" element={<AddAppointment />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/categories/add" element={<AddCategory />} />
