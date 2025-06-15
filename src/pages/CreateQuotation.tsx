@@ -176,10 +176,26 @@ export default function CreateQuotation() {
           description: `Quotation for ${customer?.name} has been sent successfully.`,
         });
         
-        // Auto-open WhatsApp after successful submission
-        setTimeout(() => {
-          handleSendWhatsapp();
-        }, 1000);
+        // Directly open WhatsApp with the newly created quotation
+        try {
+          const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotation.id}`;
+          
+          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+            createdQuotation.id,
+            documentNumber,
+            customer.name,
+            quotationViewUrl
+          );
+          
+          window.open(whatsappUrl, '_blank');
+        } catch (error) {
+          console.error("Error opening WhatsApp:", error);
+          toast({
+            title: "WhatsApp Error",
+            description: "Quotation saved successfully, but failed to open WhatsApp. You can share it manually from the quotations list.",
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
           title: "Quotation Created",
