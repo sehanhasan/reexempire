@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -11,19 +12,10 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { quotationService, customerService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
-  signature_image?: string | null;
-  signed_by?: string | null;
-  signed_date?: string | null;
 }
-
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString();
-};
 
 export default function EditQuotation() {
   const navigate = useNavigate();
@@ -41,7 +33,7 @@ export default function EditQuotation() {
   }]);
   const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [quotationData, setQuotationData] = useState<ExtendedQuotation | null>(null);
+  const [quotationData, setQuotationData] = useState<Quotation | null>(null);
   const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split("T")[0]);
   const [validUntil, setValidUntil] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
@@ -62,7 +54,7 @@ export default function EditQuotation() {
       try {
         setIsLoading(true);
 
-        const quotation = await quotationService.getById(id) as ExtendedQuotation;
+        const quotation = await quotationService.getById(id);
         if (quotation) {
           setQuotationData(quotation);
           setCustomerId(quotation.customer_id);
@@ -71,7 +63,7 @@ export default function EditQuotation() {
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
           
-          setSubject(quotation.subject || ""); 
+          setSubject((quotation as ExtendedQuotation).subject || ""); 
           setStatus(quotation.status);
 
           setDepositInfo({
@@ -287,50 +279,6 @@ export default function EditQuotation() {
       toast({
         title: "Error",
         description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!quotationData || !customer) return;
-    
-    try {
-      const itemsForPDF = items.map(item => ({
-        id: item.id,
-        description: item.description,
-        quantity: typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : item.quantity,
-        unitPrice: item.unitPrice,
-        amount: item.amount,
-        category: item.category || '',
-        unit: item.unit || ''
-      }));
-      
-      const pdf = generateQuotationPDF({
-        documentNumber: documentNumber,
-        documentDate: quotationDate,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || "",
-        expiryDate: validUntil,
-        validUntil: validUntil,
-        notes: notes || "",
-        items: itemsForPDF,
-        subject: subject || "",
-        customerAddress: customer.address || "",
-        customerContact: customer.phone || "",
-        customerEmail: customer.email || "",
-        depositInfo: depositInfo,
-        signatureImage: quotationData.signature_image || undefined,
-        signedBy: quotationData.signed_by || undefined,
-        signedDate: quotationData.signed_date ? formatDate(quotationData.signed_date) : undefined
-      });
-      
-      downloadPDF(pdf, `Quotation_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
         variant: "destructive"
       });
     }

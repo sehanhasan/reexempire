@@ -20,14 +20,9 @@ export function ItemsTable({
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
 
-  // Format currency with consistent styling
+  // Format currency
   const formatRM = (amount: number) => {
-    return (
-      <div className="flex items-center justify-end">
-        <span className="text-gray-500 mr-1">RM</span>
-        <span>{amount.toFixed(2)}</span>
-      </div>
-    );
+    return `RM ${amount.toFixed(2)}`;
   };
 
   // Group items by category
@@ -119,9 +114,8 @@ export function ItemsTable({
                       
                       <div className="space-y-2">
                         <label className="block text-xs mb-1 text-slate-600 font-medium">Amount</label>
-                        <div className="p-2 h-10 border rounded-md bg-gray-50 flex items-center justify-end">
-                          <span className="text-gray-500 text-xs mr-1">RM</span>
-                          <span className="text-sm">{item.amount.toFixed(2)}</span>
+                        <div className="p-2 h-10 border rounded-md bg-gray-50 text-right">
+                          {formatRM(item.amount)}
                         </div>
                       </div>
                     </div>
@@ -184,11 +178,8 @@ export function ItemsTable({
                         />
                       </div>
                     </td>
-                    <td className="py-3 px-2">
-                      <div className="flex items-center justify-end h-10 px-3 border rounded-md bg-gray-50">
-                        <span className="text-gray-500 mr-1">RM</span>
-                        <span>{item.amount.toFixed(2)}</span>
-                      </div>
+                    <td className="py-3 px-2 text-right">
+                      {formatRM(item.amount)}
                     </td>
                     <td className="py-3 px-1">
                       <Button 

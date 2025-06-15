@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { QuotationItem, InvoiceItem, DepositInfo } from '@/components/quotations/types';
@@ -15,9 +16,6 @@ interface DocumentDetails {
   customerAddress?: string;
   customerContact?: string;
   customerEmail?: string;
-  signatureImage?: string; // Base64 signature image
-  signedBy?: string; // Name of person who signed
-  signedDate?: string; // Date when signed
 }
 
 // Specific interfaces
@@ -69,7 +67,7 @@ const addLogo = (pdf: jsPDF, x: number, y: number, width: number) => {
 // Add company info to PDF
 const addCompanyInfo = (pdf: jsPDF, x: number, y: number) => {
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(10);
+  pdf.setFontSize(11);
   pdf.text([
     'Reex Empire Sdn Bhd (1426553-A)',
     'No. 29-1, Jalan 2A/6',
@@ -84,17 +82,17 @@ const generateBasePDF = (title: string): jsPDF => {
   const pdf = new jsPDF();
   
   // Add logo
-  addLogo(pdf, 15, 15, 35);
+  addLogo(pdf, 15, 15, 40);
   
   // Add company info
-  addCompanyInfo(pdf, 60, 25);
+  addCompanyInfo(pdf, 70, 25);
   
   // Add document title
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(20);
-  pdf.text(title, pdf.internal.pageSize.width - 15, 25, { align: 'right' });
+  pdf.setFontSize(22);
+  pdf.text(title, pdf.internal.pageSize.width - 15, 30, { align: 'right' });
   pdf.setLineWidth(0.5);
-  pdf.line(pdf.internal.pageSize.width - 80, 27, pdf.internal.pageSize.width - 15, 27);
+  pdf.line(pdf.internal.pageSize.width - 130, 32, pdf.internal.pageSize.width - 15, 32);
   
   return pdf;
 };
@@ -106,27 +104,28 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   const tax = calculateTax(subtotal);
   const total = calculateTotal(subtotal);
   
-  // Add customer details section - more compact
+  // Add customer details section
   pdf.setFillColor(240, 240, 240);
-  pdf.rect(15, 55, 85, 40, 'F');
+  pdf.rect(15, 70, 80, 50, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text('Bill to:', 20, 65);
+  pdf.setFontSize(11);
+  pdf.text('Bill to:', 20, 80);
   
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(10);
   const billToLines = [
     `Attn: ${details.customerName}`,
     details.unitNumber ? `Unit ${details.unitNumber}` : '',
     details.customerAddress || '',
-    details.customerContact || ''
+    details.customerContact || '',
+    details.customerEmail || ''
   ].filter(line => line !== '');
   
-  pdf.text(billToLines, 20, 72);
+  pdf.text(billToLines, 20, 90);
   
-  // Add quotation details table on the right - more compact
+  // Add quotation details table on the right
   pdf.setFillColor(240, 240, 240);
-  pdf.rect(pdf.internal.pageSize.width - 85, 55, 70, 40, 'F');
+  pdf.rect(pdf.internal.pageSize.width - 95, 70, 80, 50, 'F');
   
   const quotationDetailsTable = [
     ['Date:', details.documentDate],
@@ -135,34 +134,33 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   ];
   
   autoTable(pdf, {
-    startY: 60,
-    margin: { left: pdf.internal.pageSize.width - 83 },
-    tableWidth: 66,
+    startY: 75,
+    margin: { left: pdf.internal.pageSize.width - 93 },
+    tableWidth: 76,
     body: quotationDetailsTable,
     theme: 'plain',
     styles: {
-      fontSize: 9,
+      fontSize: 10,
       cellPadding: 1,
     },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 28 },
-      1: { cellWidth: 38 }
+      0: { fontStyle: 'bold', cellWidth: 30 },
+      1: { cellWidth: 46 }
     }
   });
   
-  let startY = 105;
+  let startY = 130;
   
-  // Add subject if available - more compact
+  // Add subject if available
   if (details.subject) {
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
     pdf.text('Subject:', 15, startY);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(details.subject, 45, startY);
-    startY += 8;
+    pdf.text(details.subject, 40, startY);
+    startY += 10;
   }
   
-  // Add items table with category information
+  // Add items table
   const tableHeaders = [
     { header: 'No.', dataKey: 'no' },
     { header: 'Description', dataKey: 'description' },
@@ -173,7 +171,7 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   
   const tableData = details.items.map((item, index) => ({
     no: (index + 1).toString(),
-    description: `${item.category ? item.category + ' - ' : ''}${item.description}`,
+    description: item.description,
     quantity: item.quantity,
     unitPrice: formatCurrency(item.unitPrice),
     amount: formatCurrency(item.amount)
@@ -193,18 +191,14 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
     headStyles: {
       fillColor: [150, 150, 150],
       textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 9
-    },
-    bodyStyles: {
-      fontSize: 9
+      fontStyle: 'bold'
     },
     columnStyles: {
       0: { cellWidth: 15, halign: 'center' },
       1: { cellWidth: 'auto' },
-      2: { cellWidth: 30, halign: 'right' },
-      3: { cellWidth: 18, halign: 'center' },
-      4: { cellWidth: 30, halign: 'right' }
+      2: { cellWidth: 35, halign: 'right' },
+      3: { cellWidth: 20, halign: 'center' },
+      4: { cellWidth: 35, halign: 'right' }
     },
     didParseCell: (data) => {
       // Style for numeric columns
@@ -222,7 +216,7 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   // @ts-ignore - lastAutoTable is added by the plugin but not in the type definition
   const tableEndY = pdf.lastAutoTable?.finalY || 200;
   
-  // Add summary calculation - more compact
+  // Add summary calculation
   const summaryTable = [
     ['Sub Total:', formatCurrency(subtotal)],
     ['Others:', ''],
@@ -230,44 +224,44 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   ];
   
   autoTable(pdf, {
-    startY: tableEndY + 3,
+    startY: tableEndY + 5,
     body: summaryTable,
     theme: 'plain',
     styles: {
-      fontSize: 9,
+      fontSize: 10,
     },
-    margin: { left: pdf.internal.pageSize.width - 80 },
-    tableWidth: 65,
+    margin: { left: pdf.internal.pageSize.width - 95 },
+    tableWidth: 80,
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 35 },
-      1: { cellWidth: 30, halign: 'right' }
+      0: { fontStyle: 'bold', cellWidth: 40 },
+      1: { cellWidth: 40, halign: 'right' }
     }
   });
   
-  // Add Terms and Conditions - more compact
-  const termsY = tableEndY + 30;
+  // Add Terms and Conditions
+  const termsY = tableEndY + 50;
   pdf.setFillColor(150, 150, 150);
-  pdf.rect(15, termsY, 40, 6, 'F');
+  pdf.rect(15, termsY, 20, 7, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text('Terms and Conditions', 17, termsY + 4);
+  pdf.setFontSize(11);
+  pdf.text('Terms and Conditions', 17, termsY + 5);
   
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(10);
   pdf.text([
     'Payment terms 30days',
     'Pjt duration 5-7 working days'
-  ], 15, termsY + 12);
+  ], 15, termsY + 15);
   
-  // Add Contact Section - more compact
-  const contactY = termsY + 25;
+  // Add Contact Section
+  const contactY = termsY + 30;
   pdf.setFillColor(150, 150, 150);
-  pdf.rect(15, contactY, 20, 6, 'F');
+  pdf.rect(15, contactY, 20, 7, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Contact', 17, contactY + 4);
+  pdf.text('Contact', 17, contactY + 5);
   
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'normal');
@@ -275,68 +269,51 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
     'For all enquiries, please contact Star Residences Management',
     'Email: info@starresidences.com.my',
     'Tel: +603-2168-1688'
-  ], 15, contactY + 12);
+  ], 15, contactY + 15);
   
-  // Add Customer Acceptance section with signature if available
-  const acceptanceY = contactY + 30;
+  // Add Customer Acceptance section
+  const acceptanceY = contactY + 35;
   pdf.setFillColor(150, 150, 150);
-  pdf.rect(15, acceptanceY, 35, 6, 'F');
+  pdf.rect(15, acceptanceY, 20, 7, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Customer Acceptance:', 17, acceptanceY + 4);
+  pdf.text('Customer Acceptance:', 17, acceptanceY + 5);
   
   pdf.setTextColor(0, 0, 0);
-  pdf.setFontSize(10);
+  pdf.setFontSize(11);
   
-  // If signature is available, add it
-  if (details.signatureImage && details.signedBy && details.signedDate) {
-    // Add signature image
-    try {
-      pdf.addImage(details.signatureImage, 'PNG', 65, acceptanceY + 10, 95, 30);
-    } catch (error) {
-      console.error('Error adding signature image:', error);
-    }
-    
-    // Add signature details
-    pdf.text('Signature:', 25, acceptanceY + 45);
-    pdf.text('Name:', 25, acceptanceY + 55);
-    pdf.text(details.signedBy, 65, acceptanceY + 55);
-    pdf.text('Date:', 25, acceptanceY + 65);
-    pdf.text(details.signedDate, 65, acceptanceY + 65);
-  } else {
-    // Signature line
-    pdf.text('Signature:', 25, acceptanceY + 15);
-    pdf.line(65, acceptanceY + 15, 160, acceptanceY + 15);
-    
-    // Name line
-    pdf.text('Name:', 25, acceptanceY + 25);
-    pdf.line(65, acceptanceY + 25, 160, acceptanceY + 25);
-    
-    // Date line
-    pdf.text('Date:', 25, acceptanceY + 35);
-    pdf.line(65, acceptanceY + 35, 160, acceptanceY + 35);
-  }
+  // Signature line
+  pdf.text('Signature:', 30, acceptanceY + 20);
+  pdf.line(90, acceptanceY + 20, 190, acceptanceY + 20);
   
-  // Add notes if any
+  // Name line
+  pdf.text('Name:', 30, acceptanceY + 35);
+  pdf.line(90, acceptanceY + 35, 190, acceptanceY + 35);
+  
+  // Date line
+  pdf.text('Date:', 30, acceptanceY + 50);
+  pdf.line(90, acceptanceY + 50, 190, acceptanceY + 50);
+  
+  // Add notes
   if (details.notes) {
-    const notesY = Math.max(tableEndY + 80, acceptanceY + 75);
+    const notesY = Math.max(tableEndY + 120, acceptanceY + 60);
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
+    pdf.setFontSize(11);
     pdf.text('NOTES', 15, notesY);
     
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
+    pdf.setFontSize(10);
     
     // Split notes into multiple lines if needed
     const splitNotes = pdf.splitTextToSize(details.notes, 180);
-    pdf.text(splitNotes, 15, notesY + 8);
+    pdf.text(splitNotes, 15, notesY + 10);
   }
   
   // Add footer
   const pageHeight = pdf.internal.pageSize.height;
-  pdf.setFontSize(8);
+  pdf.setFontSize(9);
   pdf.setTextColor(100, 100, 100);
-  pdf.text('Thank you for your business!', pdf.internal.pageSize.width / 2, pageHeight - 15, { align: 'center' });
+  pdf.text('Thank you for your business!', pdf.internal.pageSize.width / 2, pageHeight - 20, { align: 'center' });
   
   return pdf;
 };
@@ -355,27 +332,28 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
   const tax = calculateTax(taxableAmount);
   const total = details.isDepositInvoice ? details.depositAmount + tax : subtotal + tax;
   
-  // Add customer details section - more compact
+  // Add customer details section
   pdf.setFillColor(240, 240, 240);
-  pdf.rect(15, 55, 85, 40, 'F');
+  pdf.rect(15, 70, 80, 50, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text('Bill to:', 20, 65);
+  pdf.setFontSize(11);
+  pdf.text('Bill to:', 20, 80);
   
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(10);
   const billToLines = [
     `Attn: ${details.customerName}`,
     details.unitNumber ? `Unit ${details.unitNumber}` : '',
     details.customerAddress || '',
-    details.customerContact || ''
+    details.customerContact || '',
+    details.customerEmail || ''
   ].filter(line => line !== '');
   
-  pdf.text(billToLines, 20, 72);
+  pdf.text(billToLines, 20, 90);
   
-  // Add invoice details table on the right - more compact
+  // Add invoice details table on the right
   pdf.setFillColor(240, 240, 240);
-  pdf.rect(pdf.internal.pageSize.width - 85, 55, 70, 40, 'F');
+  pdf.rect(pdf.internal.pageSize.width - 95, 70, 80, 50, 'F');
   
   const invoiceDetailsTable = [
     ['Date:', details.documentDate],
@@ -389,34 +367,33 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
   }
   
   autoTable(pdf, {
-    startY: 60,
-    margin: { left: pdf.internal.pageSize.width - 83 },
-    tableWidth: 66,
+    startY: 75,
+    margin: { left: pdf.internal.pageSize.width - 93 },
+    tableWidth: 76,
     body: invoiceDetailsTable,
     theme: 'plain',
     styles: {
-      fontSize: 9,
+      fontSize: 10,
       cellPadding: 1,
     },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 28 },
-      1: { cellWidth: 38 }
+      0: { fontStyle: 'bold', cellWidth: 30 },
+      1: { cellWidth: 46 }
     }
   });
   
-  let startY = 105;
+  let startY = 130;
   
-  // Add subject if available - more compact
+  // Add subject if available
   if (details.subject) {
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
     pdf.text('Subject:', 15, startY);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(details.subject, 45, startY);
-    startY += 8;
+    pdf.text(details.subject, 40, startY);
+    startY += 10;
   }
   
-  // Add items table with category information
+  // Add items table
   const tableHeaders = [
     { header: 'No.', dataKey: 'no' },
     { header: 'Description', dataKey: 'description' },
@@ -427,7 +404,7 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
   
   const tableData = details.items.map((item, index) => ({
     no: (index + 1).toString(),
-    description: `${item.category ? item.category + ' - ' : ''}${item.description}`,
+    description: item.description,
     quantity: item.quantity,
     unitPrice: formatCurrency(item.unitPrice),
     amount: formatCurrency(item.amount)
@@ -447,18 +424,14 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
     headStyles: {
       fillColor: [150, 150, 150],
       textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 9
-    },
-    bodyStyles: {
-      fontSize: 9
+      fontStyle: 'bold'
     },
     columnStyles: {
       0: { cellWidth: 15, halign: 'center' },
       1: { cellWidth: 'auto' },
-      2: { cellWidth: 30, halign: 'right' },
-      3: { cellWidth: 18, halign: 'center' },
-      4: { cellWidth: 30, halign: 'right' }
+      2: { cellWidth: 35, halign: 'right' },
+      3: { cellWidth: 20, halign: 'center' },
+      4: { cellWidth: 35, halign: 'right' }
     },
     didParseCell: (data) => {
       // Style for numeric columns
@@ -481,16 +454,16 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
     pdf.addPage();
     
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(12);
+    pdf.setFontSize(14);
     pdf.text('WORK PHOTOS', 15, 20);
     
     const imagesPerRow = 2;
-    const imageWidth = 75;
-    const imageHeight = 75;
+    const imageWidth = 80;
+    const imageHeight = 80;
     const marginX = 15;
     const marginY = 30;
     const spacingX = 20;
-    const spacingY = 85;
+    const spacingY = 90;
     
     details.images.forEach((imageUrl, index) => {
       const row = Math.floor(index / imagesPerRow);
@@ -504,8 +477,8 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
         
         // Add caption below image
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
-        pdf.text(`Photo ${index + 1}`, x, y + imageHeight + 8);
+        pdf.setFontSize(10);
+        pdf.text(`Photo ${index + 1}`, x, y + imageHeight + 10);
       } catch (error) {
         console.error(`Error adding image ${index}:`, error);
         
@@ -515,7 +488,7 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
         pdf.roundedRect(x, y, imageWidth, imageHeight, 3, 3, 'FD');
         pdf.setTextColor(100, 100, 100);
         pdf.setFont('helvetica', 'italic');
-        pdf.setFontSize(9);
+        pdf.setFontSize(10);
         pdf.text('Image could not be loaded', x + imageWidth/2, y + imageHeight/2, { align: 'center' });
       }
     });
@@ -524,7 +497,7 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
     pdf.setPage(1);
   }
   
-  // Add summary calculation - more compact
+  // Add summary calculation
   let summaryTable;
   if (details.isDepositInvoice) {
     summaryTable = [
@@ -543,44 +516,44 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
   }
   
   autoTable(pdf, {
-    startY: tableEndY + 3,
+    startY: tableEndY + 5,
     body: summaryTable,
     theme: 'plain',
     styles: {
-      fontSize: 9,
+      fontSize: 10,
     },
-    margin: { left: pdf.internal.pageSize.width - 80 },
-    tableWidth: 65,
+    margin: { left: pdf.internal.pageSize.width - 95 },
+    tableWidth: 80,
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 35 },
-      1: { cellWidth: 30, halign: 'right' }
+      0: { fontStyle: 'bold', cellWidth: 40 },
+      1: { cellWidth: 40, halign: 'right' }
     }
   });
   
-  // Add Terms and Conditions - more compact
-  const termsY = tableEndY + 30;
+  // Add Terms and Conditions
+  const termsY = tableEndY + 50;
   pdf.setFillColor(150, 150, 150);
-  pdf.rect(15, termsY, 40, 6, 'F');
+  pdf.rect(15, termsY, 20, 7, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text('Terms and Conditions', 17, termsY + 4);
+  pdf.setFontSize(11);
+  pdf.text('Terms and Conditions', 17, termsY + 5);
   
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(10);
   pdf.text([
     'Payment terms 30days',
     'Pjt duration 5-7 working days'
-  ], 15, termsY + 12);
+  ], 15, termsY + 15);
   
-  // Add Contact Section - more compact
-  const contactY = termsY + 25;
+  // Add Contact Section
+  const contactY = termsY + 30;
   pdf.setFillColor(150, 150, 150);
-  pdf.rect(15, contactY, 20, 6, 'F');
+  pdf.rect(15, contactY, 20, 7, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Contact', 17, contactY + 4);
+  pdf.text('Contact', 17, contactY + 5);
   
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'normal');
@@ -588,28 +561,28 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
     'For all enquiries, please contact Star Residences Management',
     'Email: info@starresidences.com.my',
     'Tel: +603-2168-1688'
-  ], 15, contactY + 12);
+  ], 15, contactY + 15);
   
-  // Add notes if any
+  // Add notes
   if (details.notes) {
-    const notesY = contactY + 30;
+    const notesY = contactY + 40;
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
+    pdf.setFontSize(11);
     pdf.text('NOTES', 15, notesY);
     
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(9);
+    pdf.setFontSize(10);
     
     // Split notes into multiple lines if needed
     const splitNotes = pdf.splitTextToSize(details.notes, 180);
-    pdf.text(splitNotes, 15, notesY + 8);
+    pdf.text(splitNotes, 15, notesY + 10);
   }
   
   // Add footer
   const pageHeight = pdf.internal.pageSize.height;
-  pdf.setFontSize(8);
+  pdf.setFontSize(9);
   pdf.setTextColor(100, 100, 100);
-  pdf.text('Thank you for your business!', pdf.internal.pageSize.width / 2, pageHeight - 15, { align: 'center' });
+  pdf.text('Thank you for your business!', pdf.internal.pageSize.width / 2, pageHeight - 20, { align: 'center' });
   
   return pdf;
 };
