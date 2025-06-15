@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Image, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -13,6 +13,10 @@ import { invoiceService, customerService } from "@/services";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Customer, InvoiceImage } from "@/types/database";
+import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
@@ -33,6 +37,10 @@ export default function EditInvoice() {
   const [quotationReference, setQuotationReference] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<InvoiceImage[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -82,8 +90,18 @@ export default function EditInvoice() {
         }
       };
 
+      const fetchExistingImages = async () => {
+        try {
+          const existingImagesData = await invoiceService.getInvoiceImages(id);
+          setExistingImages(existingImagesData);
+        } catch (error) {
+          console.error("Error fetching existing images:", error);
+        }
+      };
+
       fetchInvoice();
       fetchInvoiceItems();
+      fetchExistingImages();
     }
   }, [id]);
 
@@ -105,6 +123,93 @@ export default function EditInvoice() {
   const calculateItemAmount = (item: InvoiceItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const validFiles = filesArray.filter(file => 
+        file.type.startsWith('image/')
+      );
+      
+      if (validFiles.length !== filesArray.length) {
+        toast({
+          title: "Invalid Files",
+          description: "Only image files are allowed.",
+          variant: "destructive"
+        });
+      }
+      
+      const newImageUrls = validFiles.map(file => URL.createObjectURL(file));
+      
+      setImages(prev => [...prev, ...validFiles]);
+      setImageUrls(prev => [...prev, ...newImageUrls]);
+    }
+  };
+  
+  const removeImage = (index: number) => {
+    URL.revokeObjectURL(imageUrls[index]);
+    
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = async (imageId: string) => {
+    try {
+      await supabase
+        .from('invoice_images')
+        .delete()
+        .eq('id', imageId);
+      
+      setExistingImages(prev => prev.filter(img => img.id !== imageId));
+      
+      toast({
+        title: "Image Removed",
+        description: "Image has been removed from the invoice.",
+      });
+    } catch (error) {
+      console.error("Error removing image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove image.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const uploadImages = async (invoiceId: string): Promise<string[]> => {
+    if (images.length === 0) return [];
+    
+    const uploadedUrls: string[] = [];
+    setUploadingImages(true);
+    
+    try {
+      for (const file of images) {
+        const fileName = `${invoiceId}/${Date.now()}-${file.name}`;
+        
+        const { data, error } = await supabase.storage
+          .from('invoice-images')
+          .upload(fileName, file);
+        
+        if (error) {
+          console.error("Error uploading image:", error);
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('invoice-images')
+          .getPublicUrl(data.path);
+        
+        uploadedUrls.push(urlData.publicUrl);
+      }
+      
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error in image upload process:", error);
+      return [];
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,6 +278,17 @@ export default function EditInvoice() {
             amount: qty * item.unitPrice,
             category: item.category
           });
+        }
+      }
+
+      let uploadedImageUrls: string[] = [];
+      if (images.length > 0) {
+        uploadedImageUrls = await uploadImages(id);
+        
+        if (uploadedImageUrls.length > 0) {
+          for (const imageUrl of uploadedImageUrls) {
+            await invoiceService.addInvoiceImage(id, imageUrl);
+          }
         }
       }
 
@@ -292,13 +408,86 @@ export default function EditInvoice() {
           calculateItemAmount={calculateItemAmount}
         />
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Work Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Label htmlFor="image-upload">Upload images to include in the invoice PDF</Label>
+              <div className="flex items-center gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                >
+                  <Image className="mr-2 h-4 w-4" />
+                  Add Images
+                </Button>
+                <Input 
+                  id="image-upload" 
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleFileChange}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {images.length + existingImages.length} {images.length + existingImages.length === 1 ? 'image' : 'images'} total
+                </p>
+              </div>
+              
+              {(existingImages.length > 0 || imageUrls.length > 0) && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  {existingImages.map((image) => (
+                    <div key={image.id} className="relative">
+                      <img 
+                        src={image.image_url} 
+                        alt="Existing invoice image" 
+                        className="w-full h-32 object-cover rounded-md" 
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeExistingImage(image.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {imageUrls.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={url} 
+                        alt={`Preview ${index + 1}`} 
+                        className="w-full h-32 object-cover rounded-md" 
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         <AdditionalInfoCard
           notes={notes}
           setNotes={setNotes}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting || uploadingImages}
         />
       </form>
     </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ export default function ViewInvoice() {
   const [invoice, setInvoice] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [items, setItems] = useState([]);
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,14 +24,16 @@ export default function ViewInvoice() {
       
       try {
         setLoading(true);
-        const [invoiceData, itemsData] = await Promise.all([
+        const [invoiceData, itemsData, imagesData] = await Promise.all([
           invoiceService.getById(id),
-          invoiceService.getItemsByInvoiceId(id)
+          invoiceService.getItemsByInvoiceId(id),
+          invoiceService.getInvoiceImages(id)
         ]);
         
         if (invoiceData) {
           setInvoice(invoiceData);
           setItems(itemsData || []);
+          setImages(imagesData || []);
           
           // Fetch customer data
           const customerData = await customerService.getById(invoiceData.customer_id);
@@ -240,6 +244,27 @@ export default function ViewInvoice() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Work Photos Card - only show if there are images */}
+          {images.length > 0 && (
+            <Card className="mb-6">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-gray-700 mb-4">Work Photos</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {images.map((image, index) => (
+                    <div key={image.id} className="relative">
+                      <img 
+                        src={image.image_url} 
+                        alt={`Work photo ${index + 1}`} 
+                        className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(image.image_url, '_blank')}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Notes Card - only show if there are actual notes */}
           {invoice.notes && (
