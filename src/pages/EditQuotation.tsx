@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -307,21 +306,33 @@ export default function EditQuotation() {
       />
 
       {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="flex flex-col gap-3">
             <div>
               <h3 className="font-medium">Quotation Status: <span className="text-amber-600">Sent</span></h3>
               <p className="text-sm text-muted-foreground">Update the status of this quotation</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="border-red-200 bg-red-50 hover:bg-red-100 text-red-600" onClick={() => handleStatusChange("Rejected")}>
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
+              <Button 
+                variant="outline" 
+                className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
+                onClick={() => handleStatusChange("Rejected")}
+              >
                 <XCircle className="mr-2 h-4 w-4" />
                 Mark as Rejected
               </Button>
-              <Button variant="outline" className="border-green-200 bg-green-50 hover:bg-green-100 text-green-600" onClick={() => handleStatusChange("Accepted")}>
+              <Button 
+                variant="outline" 
+                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                onClick={() => handleStatusChange("Accepted")}
+              >
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Mark as Accepted
               </Button>
-              <Button variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600" onClick={handleSendWhatsapp}>
+              <Button 
+                variant="outline" 
+                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                onClick={handleSendWhatsapp}
+              >
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp
               </Button>
@@ -330,17 +341,24 @@ export default function EditQuotation() {
         </div>}
 
       {status === "Accepted" && <div className="rounded-md p-4 mt-4 bg-white">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="flex flex-col gap-3">
             <div>
               <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
               <p className="text-sm text-muted-foreground">This quotation has been accepted by the customer</p>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSendWhatsapp} variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600">
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
+              <Button 
+                onClick={handleSendWhatsapp} 
+                variant="outline" 
+                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+              >
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp
               </Button>
-              <Button onClick={handleConvertToInvoice} className="bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={handleConvertToInvoice} 
+                className={`${isMobile ? 'w-full' : ''} bg-blue-600 hover:bg-blue-700`}
+              >
                 <FileText className="mr-2 h-4 w-4" />
                 Convert to Invoice
               </Button>
