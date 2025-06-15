@@ -177,10 +177,9 @@ export default function EditInvoice() {
     }
   };
   
-  const uploadImages = async (invoiceId: string): Promise<string[]> => {
-    if (images.length === 0) return [];
+  const uploadImages = async (invoiceId: string): Promise<boolean> => {
+    if (images.length === 0) return true;
     
-    const uploadedUrls: string[] = [];
     setUploadingImages(true);
     
     try {
@@ -193,20 +192,26 @@ export default function EditInvoice() {
         
         if (error) {
           console.error("Error uploading image:", error);
-          continue;
+          throw error;
         }
         
         const { data: urlData } = supabase.storage
           .from('invoice-images')
           .getPublicUrl(data.path);
         
-        uploadedUrls.push(urlData.publicUrl);
+        // Add the image to the database
+        await invoiceService.addInvoiceImage(invoiceId, urlData.publicUrl);
       }
       
-      return uploadedUrls;
+      return true;
     } catch (error) {
       console.error("Error in image upload process:", error);
-      return [];
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload some images. Please try again.",
+        variant: "destructive"
+      });
+      return false;
     } finally {
       setUploadingImages(false);
     }
@@ -281,14 +286,16 @@ export default function EditInvoice() {
         }
       }
 
-      let uploadedImageUrls: string[] = [];
+      // Upload new images if any
       if (images.length > 0) {
-        uploadedImageUrls = await uploadImages(id);
-        
-        if (uploadedImageUrls.length > 0) {
-          for (const imageUrl of uploadedImageUrls) {
-            await invoiceService.addInvoiceImage(id, imageUrl);
-          }
+        const uploadSuccess = await uploadImages(id!);
+        if (!uploadSuccess) {
+          toast({
+            title: "Partial Success",
+            description: "Invoice updated but some images failed to upload.",
+            variant: "destructive"
+          });
+          return;
         }
       }
 

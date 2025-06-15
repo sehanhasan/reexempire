@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceImage } from "@/types/database";
 
@@ -123,10 +124,13 @@ const deleteItem = async (id: string) => {
 
 const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
   const { data, error } = await supabase
-    .rpc('add_invoice_image', {
-      p_invoice_id: invoiceId,
-      p_image_url: imageUrl
-    });
+    .from('invoice_images')
+    .insert([{
+      invoice_id: invoiceId,
+      image_url: imageUrl
+    }])
+    .select('*')
+    .single();
   
   if (error) throw error;
   return data;
@@ -134,9 +138,10 @@ const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
 
 const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
   const { data, error } = await supabase
-    .rpc('get_invoice_images', {
-      p_invoice_id: invoiceId
-    });
+    .from('invoice_images')
+    .select('*')
+    .eq('invoice_id', invoiceId)
+    .order('created_at', { ascending: true });
   
   if (error) throw error;
   return data || [];
