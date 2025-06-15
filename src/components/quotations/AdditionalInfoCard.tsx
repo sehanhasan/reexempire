@@ -35,6 +35,11 @@ export function AdditionalInfoCard({
     onSubmit(e, "Sent");
   };
   
+  const fieldLabel = documentType === "quotation" ? "Terms and Conditions" : "Notes";
+  const fieldPlaceholder = documentType === "quotation" 
+    ? "Enter terms and conditions for this quotation..." 
+    : "Enter any additional notes for this invoice...";
+  
   return (
     <Card className="shadow-sm">
       <CardHeader className="py-3 px-4">
@@ -43,10 +48,10 @@ export function AdditionalInfoCard({
       <CardContent className="py-3 px-4">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="notes" className="text-sm font-medium">Notes</label>
+            <label htmlFor="notes" className="text-sm font-medium">{fieldLabel}</label>
             <Textarea 
               id="notes"
-              placeholder={`Enter any additional notes for this ${documentType}...`}
+              placeholder={fieldPlaceholder}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="min-h-20"

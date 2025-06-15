@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -317,7 +316,7 @@ export default function ViewQuotation() {
         {quotation.notes && (
           <Card className="mb-6">
             <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
+              <h3 className="font-semibold text-gray-700 mb-2">Terms and Conditions</h3>
               <p className="whitespace-pre-line">{quotation.notes}</p>
             </CardContent>
           </Card>

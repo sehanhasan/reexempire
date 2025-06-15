@@ -193,9 +193,30 @@ export default function EditQuotation() {
 
       if (newStatus === "Sent") {
         toast({
-          title: "Quotation Sent",
-          description: `Quotation for ${customer?.name} has been sent successfully.`
+          title: "Quotation Update Sent",
+          description: `Quotation for ${customer?.name} has been updated and sent successfully.`
         });
+        
+        // Open WhatsApp after successful update
+        try {
+          const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
+          
+          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+            id,
+            documentNumber,
+            customer?.name || '',
+            quotationViewUrl
+          );
+          
+          window.open(whatsappUrl, '_blank');
+        } catch (error) {
+          console.error("Error opening WhatsApp:", error);
+          toast({
+            title: "WhatsApp Error",
+            description: "Quotation updated successfully, but failed to open WhatsApp. You can share it manually.",
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
           title: "Quotation Updated",
