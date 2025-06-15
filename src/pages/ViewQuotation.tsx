@@ -215,24 +215,20 @@ export default function ViewQuotation() {
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center">
               <img 
-                src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+                src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
                 alt="Reex Empire Logo" 
                 className="h-10 w-auto"
               />
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
-                <p className="text-sm text-gray-600">
-                  Issued: {formatDate(quotation.issue_date)} | Valid until: {formatDate(quotation.expiry_date)}
-                </p>
-              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="sm:hidden">
-                <p className="text-sm font-semibold text-blue-800">#{quotation.reference_number}</p>
-                <p className="text-xs text-gray-600">Valid: {formatDate(quotation.expiry_date)}</p>
-              </div>
+            <div className="text-center flex-1 px-4">
+              <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
+              <p className="text-sm text-gray-600">
+                Issued: {formatDate(quotation.issue_date)} | Valid until: {formatDate(quotation.expiry_date)}
+              </p>
+            </div>
+            <div className="flex items-center">
               <Button variant="outline" onClick={handlePrintPDF} className="flex items-center gap-1">
                 <Download size={18} />
                 <span className="hidden sm:inline">Download PDF</span>
