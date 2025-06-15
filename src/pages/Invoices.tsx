@@ -120,6 +120,13 @@ export default function Invoices() {
     });
   };
 
+  const handleSendWhatsApp = (invoice) => {
+    const viewUrl = `${window.location.origin}/invoices/view/${invoice.id}`;
+    const message = `Hi! Please find your invoice #${invoice.reference_number} here: ${viewUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const handleExportSingleInvoice = (invoice) => {
     try {
       const data = [{
@@ -307,10 +314,10 @@ export default function Invoices() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={(e) => { 
                                   e.stopPropagation(); 
-                                  handleViewInvoice(invoice); 
+                                  handleSendWhatsApp(invoice); 
                                 }}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send via WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => { 
                                   e.stopPropagation(); 
@@ -412,9 +419,9 @@ export default function Invoices() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleViewInvoice(invoice)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View
+                                <DropdownMenuItem onClick={() => handleSendWhatsApp(invoice)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send via WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
                                   <Edit className="mr-2 h-4 w-4" />
