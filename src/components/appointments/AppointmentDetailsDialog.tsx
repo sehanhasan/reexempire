@@ -229,7 +229,6 @@ export function AppointmentDetailsDialog({
                 {!isInProgress ? (
                   <Button 
                     onClick={handleMarkInProgress} 
-                    variant="secondary" 
                     className="w-full sm:w-auto flex items-center justify-center gap-2"
                   >
                     <Play className="h-4 w-4" />
@@ -248,6 +247,7 @@ export function AppointmentDetailsDialog({
             )}
             <Button 
               onClick={handleEdit} 
+              variant="secondary"
               className="w-full sm:w-auto flex items-center justify-center gap-2"
             >
               <Edit className="h-4 w-4" />

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -156,12 +155,11 @@ export const appointmentService = {
     message += `⏰ *Time:* ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}\n`;
     message += `📌 *Service:* ${appointment.title}\n`;
     
-    // Show Unit # instead of Customer and Location
+    // Show full Unit # including the complete unit number
     if (appointment.location) {
-      // Extract unit number from location if it contains one
-      const unitMatch = appointment.location.match(/#(\w+)/);
-      if (unitMatch) {
-        message += `🏠 *Unit #:* ${unitMatch[1]}\n`;
+      // If location already contains a #, use it as is, otherwise format it
+      if (appointment.location.includes('#')) {
+        message += `🏠 *Unit #:* ${appointment.location.replace('#', '')}\n`;
       } else {
         message += `🏠 *Unit #:* ${appointment.location}\n`;
       }
