@@ -73,6 +73,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       return "Schedule";
     }
     if (path.includes("/profile")) return "Profile";
+    if (path.includes("/notifications")) return "Notifications";
     
     return "Reex Empire";
   };
