@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -175,6 +176,16 @@ export default function EditInvoice() {
       });
     }
   };
+
+  // Function to sanitize file names for storage
+  const sanitizeFileName = (fileName: string): string => {
+    // Remove or replace problematic characters
+    return fileName
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/[^\w\-_.]/g, '') // Remove special characters except word chars, hyphens, underscores, and dots
+      .replace(/_{2,}/g, '_') // Replace multiple underscores with single underscore
+      .toLowerCase(); // Convert to lowercase for consistency
+  };
   
   const uploadImages = async (invoiceId: string): Promise<boolean> => {
     if (images.length === 0) return true;
@@ -189,7 +200,11 @@ export default function EditInvoice() {
         const file = images[i];
         console.log(`Uploading image ${i + 1}/${images.length}:`, file.name);
         
-        const fileName = `${invoiceId}/${Date.now()}-${file.name}`;
+        // Sanitize the file name
+        const sanitizedFileName = sanitizeFileName(file.name);
+        const fileName = `${invoiceId}/${Date.now()}-${sanitizedFileName}`;
+        
+        console.log("Sanitized file name:", fileName);
         
         const { data, error } = await supabase.storage
           .from('invoice-images')
