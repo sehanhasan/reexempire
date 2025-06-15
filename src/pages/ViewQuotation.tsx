@@ -1,185 +1,246 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useNavigate, useParams } from "react-router-dom";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ArrowLeft, CheckCircle, XCircle, FileText, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { Download, Check, Share2 } from "lucide-react";
+import { QuotationItem, DepositInfo } from "@/components/quotations/types";
+import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
+import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
+import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { quotationService, customerService } from "@/services";
-import { Customer, Quotation, QuotationItem as QuotationItemType } from "@/types/database";
-import { formatDate } from "@/utils/formatters";
+import { Customer, Quotation } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
-import SignatureCanvas from "react-signature-canvas";
-import { Separator } from "@/components/ui/separator";
+import SignatureCanvas from 'react-signature-canvas';
 
 interface ExtendedQuotation extends Quotation {
+  subject?: string | null;
   signature_image?: string | null;
   signed_by?: string | null;
   signed_date?: string | null;
 }
 
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
+};
+
 export default function ViewQuotation() {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [quotation, setQuotation] = useState<ExtendedQuotation | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<QuotationItem[]>([{
+    id: 1,
+    description: "",
+    category: "",
+    quantity: 1,
+    unit: "Unit",
+    unitPrice: 0,
+    amount: 0
+  }]);
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [items, setItems] = useState<QuotationItemType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [customerName, setCustomerName] = useState("");
-  const [signatureDate] = useState(new Date().toISOString().split('T')[0]);
-  const [sigPad, setSigPad] = useState<SignatureCanvas | null>(null);
-  const [isSigned, setIsSigned] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quotationData, setQuotationData] = useState<ExtendedQuotation | null>(null);
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [status, setStatus] = useState("Draft");
+  const [depositInfo, setDepositInfo] = useState<DepositInfo>({
+    requiresDeposit: false,
+    depositAmount: 0,
+    depositPercentage: 30
+  });
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureCanvas, setSignatureCanvas] = useState<SignatureCanvas | null>(null);
 
   useEffect(() => {
     if (!id) return;
-    
     const fetchQuotationData = async () => {
       try {
-        setLoading(true);
-        
-        const quotationData = await quotationService.getById(id) as ExtendedQuotation;
-        if (quotationData) {
-          setQuotation(quotationData);
-          
-          // Check if already signed
-          if (quotationData.signature_image && quotationData.signed_by) {
-            setIsSigned(true);
-            setCustomerName(quotationData.signed_by);
-          }
-          
-          if (quotationData.customer_id) {
-            const customerData = await customerService.getById(quotationData.customer_id);
+        setIsLoading(true);
+
+        const quotation = await quotationService.getById(id) as ExtendedQuotation;
+        if (quotation) {
+          setQuotationData(quotation);
+          setDocumentNumber(quotation.reference_number);
+          setStatus(quotation.status);
+
+          setDepositInfo({
+            requiresDeposit: quotation.requires_deposit || false,
+            depositAmount: quotation.deposit_amount || 0,
+            depositPercentage: quotation.deposit_percentage || 30
+          });
+
+          if (quotation.customer_id) {
+            const customerData = await customerService.getById(quotation.customer_id);
             setCustomer(customerData);
-            if (!quotationData.signed_by) {
-              setCustomerName(customerData?.name || "");
-            }
           }
-          
-          const itemsData = await quotationService.getItemsByQuotationId(id);
-          setItems(itemsData);
+
+          const quotationItems = await quotationService.getItemsByQuotationId(id);
+          if (quotationItems && quotationItems.length > 0) {
+            setItems(quotationItems.map(item => ({
+              id: item.id,
+              description: item.description,
+              category: item.category || "Other Items",
+              quantity: item.quantity,
+              unit: item.unit,
+              unitPrice: item.unit_price,
+              amount: item.amount
+            })));
+          }
         }
-        
-        setLoading(false);
+        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching quotation:", error);
-        setLoading(false);
+        setIsLoading(false);
         toast({
           title: "Error",
-          description: "Could not load quotation details. Please try again later.",
+          description: "Failed to fetch quotation data. Please try again.",
           variant: "destructive"
         });
+        navigate("/quotations");
       }
     };
-    
     fetchQuotationData();
-  }, [id]);
+  }, [id, navigate]);
 
-  const handleSignature = () => {
-    if (!sigPad || sigPad.isEmpty()) {
+  const handleAcceptQuotation = async (signatureData: string, signedBy: string) => {
+    if (!id) return;
+    
+    try {
+      // Update quotation status and save signature
+      await quotationService.update(id, {
+        status: "Accepted"
+      });
+
+      // Save signature data separately - we'll need to extend the service for this
+      // For now, we'll update using a more generic approach
+      const response = await fetch(`/api/quotations/${id}/signature`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          signature_image: signatureData,
+          signed_by: signedBy,
+          signed_date: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save signature');
+      }
+
+      setStatus("Accepted");
+      
       toast({
-        title: "Signature Required",
-        description: "Please sign the quotation to accept it.",
+        title: "Quotation Accepted",
+        description: "The quotation has been accepted and your signature has been saved."
+      });
+      
+    } catch (error) {
+      console.error("Error accepting quotation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to accept quotation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRejectQuotation = async () => {
+    if (!id) return;
+    try {
+      await quotationService.update(id, {
+        status: "Rejected"
+      });
+      setStatus("Rejected");
+      toast({
+        title: "Quotation Rejected",
+        description: "The quotation has been rejected."
+      });
+    } catch (error) {
+      console.error("Error rejecting quotation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject quotation. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleConvertToInvoice = () => {
+    navigate("/invoices/create", {
+      state: {
+        quotationId: id
+      }
+    });
+  };
+
+  const handleSendWhatsapp = () => {
+    if (!quotationData || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Customer information not found.",
         variant: "destructive"
       });
       return;
     }
-
-    setIsSubmitting(true);
     
     try {
-      // Convert signature to data URL
-      const signatureDataUrl = sigPad.toDataURL('image/png');
+      const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
       
-      // Update quotation status to Accepted with signature data
-      if (id) {
-        quotationService.update(id, {
-          status: "Accepted",
-          notes: quotation?.notes ? 
-            `${quotation.notes}\n\nElectronically signed by: ${customerName} on ${formatDate(signatureDate)}` : 
-            `Electronically signed by: ${customerName} on ${formatDate(signatureDate)}`,
-          signature_image: signatureDataUrl,
-          signed_by: customerName,
-          signed_date: signatureDate
-        }).then(() => {
-          toast({
-            title: "Quotation Accepted",
-            description: "Thank you! The quotation has been accepted successfully."
-          });
-          setIsSigned(true);
-          setQuotation(prev => prev ? {
-            ...prev,
-            signature_image: signatureDataUrl,
-            signed_by: customerName,
-            signed_date: signatureDate,
-            status: "Accepted"
-          } : null);
-        }).catch((error) => {
-          console.error("Error accepting quotation:", error);
-          toast({
-            title: "Error",
-            description: "Failed to update quotation status. Please try again.",
-            variant: "destructive"
-          });
-        }).finally(() => {
-          setIsSubmitting(false);
-        });
-      }
+      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+        id!,
+        quotationData.reference_number,
+        customer.name,
+        quotationViewUrl
+      );
+      
+      window.open(whatsappUrl, '_blank');
     } catch (error) {
-      console.error("Error processing signature:", error);
+      console.error("Error sending WhatsApp message:", error);
       toast({
         title: "Error",
-        description: "Failed to process signature. Please try again.",
+        description: "Failed to open WhatsApp. Please try again.",
         variant: "destructive"
       });
-      setIsSubmitting(false);
-    }
-  };
-
-  const clearSignature = () => {
-    if (sigPad) {
-      sigPad.clear();
     }
   };
 
   const handleDownloadPDF = async () => {
-    if (!quotation || !customer) return;
+    if (!quotationData || !customer) return;
     
     try {
       const itemsForPDF = items.map(item => ({
-        id: Number(item.id),
+        id: item.id,
         description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unit_price,
+        quantity: typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : item.quantity,
+        unitPrice: item.unitPrice,
         amount: item.amount,
         category: item.category || '',
         unit: item.unit || ''
       }));
       
       const pdf = generateQuotationPDF({
-        documentNumber: quotation.reference_number,
-        documentDate: quotation.issue_date,
+        documentNumber: documentNumber,
+        documentDate: quotationData.issue_date,
         customerName: customer.name,
         unitNumber: customer.unit_number || "",
-        expiryDate: quotation.expiry_date,
-        validUntil: quotation.expiry_date,
-        notes: quotation.notes || "",
+        expiryDate: quotationData.expiry_date,
+        validUntil: quotationData.expiry_date,
+        notes: quotationData.notes || "",
         items: itemsForPDF,
-        subject: quotation.subject || "",
+        subject: quotationData.subject || "",
         customerAddress: customer.address || "",
         customerContact: customer.phone || "",
         customerEmail: customer.email || "",
-        depositInfo: {
-          requiresDeposit: quotation.requires_deposit || false,
-          depositAmount: quotation.deposit_amount || 0,
-          depositPercentage: quotation.deposit_percentage || 0
-        },
-        signatureImage: quotation.signature_image || undefined,
-        signedBy: quotation.signed_by || undefined,
-        signedDate: quotation.signed_date ? formatDate(quotation.signed_date) : undefined
+        depositInfo: depositInfo,
+        signatureImage: quotationData.signature_image || undefined,
+        signedBy: quotationData.signed_by || undefined,
+        signedDate: quotationData.signed_date ? formatDate(quotationData.signed_date) : undefined
       });
       
-      downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
+      downloadPDF(pdf, `Quotation_${documentNumber}_${customer.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
@@ -190,268 +251,181 @@ export default function ViewQuotation() {
     }
   };
 
-  const formatMoney = (amount: number) => {
-    return `RM ${parseFloat(amount.toString()).toFixed(2)}`;
+  const clearSignature = () => {
+    if (signatureCanvas) {
+      signatureCanvas.clear();
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading quotation details...</p>
+  const saveSignature = async (signedBy: string) => {
+    if (!signatureCanvas) return;
+    const signatureData = signatureCanvas.toDataURL();
+    
+    await handleAcceptQuotation(signatureData, signedBy);
+    setShowSignatureModal(false);
+  };
+
+  if (isLoading) {
+    return <div className="page-container">
+        <PageHeader title="View Quotation" />
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
         </div>
-      </div>
-    );
+      </div>;
   }
 
-  if (!quotation || !customer) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="text-center p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Quotation Not Found</h2>
-          <p className="text-gray-600 mb-6">The requested quotation could not be found or has expired.</p>
-          <Button onClick={() => navigate("/")}>Return Home</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Group items by category
-  const groupedItems: Record<string, QuotationItemType[]> = {};
-  items.forEach(item => {
-    const category = item.category || "Other Items";
-    if (!groupedItems[category]) {
-      groupedItems[category] = [];
-    }
-    groupedItems[category].push(item);
-  });
-  
-  const categories = Object.keys(groupedItems).sort();
-  
-  // Calculate subtotal
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
-            <p className="text-gray-600">Issued: {formatDate(quotation.issue_date)} | Valid until: {formatDate(quotation.expiry_date)}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleDownloadPDF} className="flex items-center gap-1">
-              <Download size={18} />
-              Download PDF
+  return <div className="page-container">
+      <PageHeader 
+        title="View Quotation"
+        actions={
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+            <Button variant="outline" onClick={() => navigate("/quotations")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Quotations
             </Button>
           </div>
-        </div>
+        } 
+      />
 
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-2">From</h3>
-                <div className="text-gray-700">
-                  <p className="font-medium">Reex Empire Sdn Bhd (1426553-A)</p>
-                  <p>No. 29-1, Jalan 2A/6</p>
-                  <p>Taman Setapak Indah</p>
-                  <p>53300 Setapak Kuala Lumpur</p>
-                  <p>www.reexempire.com</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-2">To</h3>
-                <div className="text-gray-700">
-                  <p className="font-medium">{customer.name}</p>
-                  {customer.unit_number && <p>Unit {customer.unit_number}</p>}
-                  {customer.address && <p>{customer.address}</p>}
-                  {customer.city && <p>{customer.city}, {customer.state} {customer.postal_code}</p>}
-                  {customer.phone && <p>Phone: {customer.phone}</p>}
-                  {customer.email && <p>Email: {customer.email}</p>}
-                </div>
-              </div>
+      {status === "Draft" && <div className="rounded-md p-4 mt-4 bg-white">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 className="font-medium">Quotation Status: <span className="text-gray-600">Draft</span></h3>
+              <p className="text-sm text-muted-foreground">This quotation is still a draft and has not been sent to the customer</p>
             </div>
-          </CardContent>
-        </Card>
-
-        {quotation.subject && (
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
-              <p>{quotation.subject}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-gray-700 mb-4">Items</h3>
-            
-            {categories.map(category => (
-              <div key={category} className="mb-6">
-                <h4 className="font-medium text-blue-800 mb-2">{category}</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50 text-left">
-                        <th className="py-2 px-4 border-b">Description</th>
-                        <th className="py-2 px-4 border-b text-right">Unit Price</th>
-                        <th className="py-2 px-4 border-b text-right">Qty</th>
-                        <th className="py-2 px-4 border-b text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {groupedItems[category].map((item, idx) => (
-                        <tr key={idx} className="border-b">
-                          <td className="py-3 px-4">{item.description}</td>
-                          <td className="py-3 px-4 text-right">{formatMoney(item.unit_price)}</td>
-                          <td className="py-3 px-4 text-right">{item.quantity} {item.unit}</td>
-                          <td className="py-3 px-4 text-right">{formatMoney(item.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-            
-            <div className="mt-6 flex justify-end">
-              <div className="w-full max-w-xs">
-                <div className="flex justify-between py-2">
-                  <span className="font-medium">Subtotal:</span>
-                  <span>{formatMoney(subtotal)}</span>
-                </div>
-                {quotation.requires_deposit && (
-                  <>
-                    <div className="flex justify-between py-2">
-                      <span className="font-medium">Deposit Required ({quotation.deposit_percentage}%):</span>
-                      <span>{formatMoney(quotation.deposit_amount || 0)}</span>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between py-2 text-lg font-bold">
-                  <span>Total:</span>
-                  <span>{formatMoney(quotation.total)}</span>
-                </div>
-              </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600" onClick={handleSendWhatsapp}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via WhatsApp
+              </Button>
+              <Button onClick={() => navigate(`/quotations/edit/${id}`)} className="bg-blue-600 hover:bg-blue-700">
+                Edit Quotation
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>}
 
-        {quotation.notes && (
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
-              <p className="whitespace-pre-line">{quotation.notes}</p>
-            </CardContent>
-          </Card>
-        )}
+      {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 className="font-medium">Quotation Status: <span className="text-amber-600">Sent</span></h3>
+              <p className="text-sm text-muted-foreground">This quotation has been sent to the customer</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="border-red-200 bg-red-50 hover:bg-red-100 text-red-600" onClick={handleRejectQuotation}>
+                <XCircle className="mr-2 h-4 w-4" />
+                Reject Quotation
+              </Button>
+              <Button variant="outline" className="border-green-200 bg-green-50 hover:bg-green-100 text-green-600" onClick={() => setShowSignatureModal(true)}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Accept Quotation
+              </Button>
+              <Button variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600" onClick={handleSendWhatsapp}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via WhatsApp
+              </Button>
+            </div>
+          </div>
+        </div>}
 
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-gray-700 mb-4">Terms and Conditions</h3>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Payment terms 30 days</li>
-              <li>Project duration 5-7 working days</li>
-              <li>This quotation is valid until {formatDate(quotation.expiry_date)}</li>
-            </ul>
-          </CardContent>
-        </Card>
+      {status === "Accepted" && <div className="rounded-md p-4 mt-4 bg-white">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
+              <p className="text-sm text-muted-foreground">This quotation has been accepted by the customer</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSendWhatsapp} variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600">
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via WhatsApp
+              </Button>
+              <Button onClick={handleConvertToInvoice} className="bg-blue-600 hover:bg-blue-700">
+                <FileText className="mr-2 h-4 w-4" />
+                Convert to Invoice
+              </Button>
+            </div>
+          </div>
+        </div>}
 
-        {quotation?.status !== "Accepted" && !isSigned ? (
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-4">Accept Quotation</h3>
-              <p className="mb-4">To accept this quotation, please fill out the information below:</p>
-              
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
-                  </label>
-                  <Input 
-                    id="customerName" 
-                    value={customerName} 
-                    onChange={(e) => setCustomerName(e.target.value)} 
-                    placeholder="Your full name" 
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="signatureDate" className="block text-sm font-medium text-gray-700 mb-1">
-                    Date
-                  </label>
-                  <Input 
-                    id="signatureDate" 
-                    value={formatDate(signatureDate)} 
-                    readOnly 
-                  />
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Signature
-                </label>
-                <div className="border border-gray-300 rounded-md p-2 bg-white">
-                  <SignatureCanvas 
-                    ref={(ref) => setSigPad(ref)} 
-                    penColor="black"
-                    canvasProps={{
-                      width: 500,
-                      height: 200,
-                      className: "w-full signature-canvas"
-                    }}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button onClick={clearSignature} variant="outline" type="button">
-                  Clear
-                </Button>
-                <Button 
-                  onClick={handleSignature} 
-                  className="bg-green-600 hover:bg-green-700"
-                  disabled={isSubmitting}
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  {isSubmitting ? "Processing..." : "Accept Quotation"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : isSigned || quotation?.status === "Accepted" ? (
-          <Card className="mb-6 bg-green-50 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center text-green-700">
-                <Check className="mr-2 h-5 w-5" />
-                <h3 className="font-semibold">Quotation Accepted</h3>
-              </div>
-              <p className="mt-2 text-green-700">
-                Thank you for accepting this quotation. We will be in touch shortly to proceed with the next steps.
-              </p>
-              {quotation?.signed_by && quotation?.signed_date && (
-                <div className="mt-4 p-3 bg-white rounded border">
-                  <p className="text-sm text-gray-600">
-                    Signed by: <span className="font-medium">{quotation.signed_by}</span>
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Date: <span className="font-medium">{formatDate(quotation.signed_date)}</span>
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ) : null}
+      {status === "Rejected" && <div className="rounded-md p-4 mt-4 bg-white">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 className="font-medium">Quotation Status: <span className="text-red-600">Rejected</span></h3>
+              <p className="text-sm text-muted-foreground">This quotation has been rejected by the customer</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSendWhatsapp} variant="outline" className="border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600">
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via WhatsApp
+              </Button>
+            </div>
+          </div>
+        </div>}
 
-        <div className="text-center text-gray-500 text-sm mt-8">
-          <p>Thank you for your business!</p>
-          <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
-        </div>
+      <div className="mt-8 space-y-6">
+        <CustomerInfoCard 
+          customerId={customer?.id || ""} 
+          setCustomer={() => {}}
+          documentType="quotation" 
+          documentNumber={documentNumber} 
+          setDocumentNumber={() => {}}
+          documentDate={quotationData?.issue_date || ""} 
+          setDocumentDate={() => {}}
+          expiryDate={quotationData?.expiry_date || ""} 
+          setExpiryDate={() => {}}
+          subject={quotationData?.subject || ""} 
+          setSubject={() => {}}
+          readOnly={true}
+        />
+        
+        <QuotationItemsCard 
+          items={items} 
+          setItems={() => {}}
+          depositInfo={depositInfo} 
+          setDepositInfo={() => {}}
+          calculateItemAmount={() => 0}
+          readOnly={true}
+        />
+        
+        <AdditionalInfoCard 
+          notes={quotationData?.notes || ""} 
+          setNotes={() => {}}
+          onSubmit={() => {}}
+          onCancel={() => navigate("/quotations")} 
+          documentType="quotation" 
+          isSubmitting={false}
+          saveButtonText="Update Quotation"
+          showDraft={false}
+          readOnly={true}
+        />
       </div>
-    </div>
-  );
+
+      {/* Signature Modal */}
+      {showSignatureModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg p-4 w-full max-w-md">
+            <h2 className="text-lg font-semibold mb-4">Accept Quotation</h2>
+            <p className="text-sm text-muted-foreground mb-4">Please sign below to accept this quotation.</p>
+            
+            <SignatureCanvas 
+              penColor='black'
+              backgroundColor='white'
+              canvasProps={{width: 500, height: 200, className: 'border rounded-md'}} 
+              ref={(canvas) => { setSignatureCanvas(canvas); }}
+            />
+
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="ghost" onClick={() => setShowSignatureModal(false)}>Cancel</Button>
+              <Button variant="secondary" onClick={clearSignature}>Clear</Button>
+              <Button onClick={() => {
+                  const signedBy = prompt("Please enter your name:");
+                  if (signedBy) {
+                    saveSignature(signedBy);
+                  }
+                }}>
+                Save Signature
+              </Button>
+            </div>
+          </div>
+        </div>}
+    </div>;
 }
