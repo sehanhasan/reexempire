@@ -310,42 +310,6 @@ export type Database = {
           },
         ]
       }
-      notifications: {
-        Row: {
-          created_at: string
-          id: string
-          is_read: boolean
-          message: string
-          reference_id: string | null
-          title: string
-          type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message: string
-          reference_id?: string | null
-          title: string
-          type: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message?: string
-          reference_id?: string | null
-          title?: string
-          type?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       pricing_options: {
         Row: {
           created_at: string
@@ -673,16 +637,6 @@ export type Database = {
       add_invoice_image: {
         Args: { p_invoice_id: string; p_image_url: string }
         Returns: Json
-      }
-      create_notification: {
-        Args: {
-          p_user_id: string
-          p_title: string
-          p_message: string
-          p_type: string
-          p_reference_id?: string
-        }
-        Returns: string
       }
       get_invoice_images: {
         Args: { p_invoice_id: string }

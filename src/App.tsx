@@ -30,7 +30,6 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ViewQuotation from "./pages/ViewQuotation";
-import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +67,6 @@ export default function App() {
                 <Route path="/quotations" element={<Quotations />} />
                 <Route path="/quotations/create" element={<CreateQuotation />} />
                 <Route path="/quotations/edit/:id" element={<EditQuotation />} />
-                <Route path="/notifications" element={<Notifications />} />
               </Route>
               
               {/* Public quotation view route */}

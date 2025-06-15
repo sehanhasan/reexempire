@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { ReactNode } from "react";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface MobileHeaderProps {
   title: string;
@@ -37,34 +36,28 @@ export function MobileHeader({ title, onMenuClick, actions }: MobileHeaderProps)
       </Button>
       <h1 className="font-semibold text-white truncate">{title}</h1>
       
-      <div className="flex items-center space-x-2">
-        <div className="text-white">
-          <NotificationBell />
-        </div>
-        
-        {actions && actions.length > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-white hover:bg-blue-700"
-              >
-                <MoreVertical className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {actions.map((action, index) => (
-                <DropdownMenuItem key={index} className="cursor-pointer">
-                  {action}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <div className="w-9" />
-        )}
-      </div>
+      {actions && actions.length > 0 ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:bg-blue-700"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {actions.map((action, index) => (
+              <DropdownMenuItem key={index} className="cursor-pointer">
+                {action}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <div className="w-9" />
+      )}
     </header>
   );
 }
