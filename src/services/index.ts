@@ -1,9 +1,9 @@
 
-export { default as quotationService } from './quotationService';
-export { default as invoiceService } from './invoiceService';
-export { default as customerService } from './customerService';
-export { default as categoryService } from './categoryService';
-export { default as staffService } from './staffService';
-export { default as appointmentService } from './appointmentService';
-export { default as exportService } from './exportService';
+export { quotationService } from './quotationService';
+export { invoiceService } from './invoiceService';
+export { customerService } from './customerService';
+export { categoryService } from './categoryService';
+export { staffService } from './staffService';
+export { appointmentService } from './appointmentService';
+export { exportService } from './exportService';
 export { paymentReceiptService } from './paymentReceiptService';
