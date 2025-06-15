@@ -248,6 +248,7 @@ export default function Dashboard() {
                       <p className="font-medium">{formatMoney(quotation.total)}</p>
                       <Badge className={
                         quotation.status === 'Approved' ? "bg-green-500 text-white" : 
+                        quotation.status === 'Sent' ? "bg-blue-500 text-white" : 
                         quotation.status === 'Draft' ? "bg-gray-500 text-white" : 
                         "bg-green-500 text-white"
                       }>
@@ -455,6 +456,7 @@ export default function Dashboard() {
                                     <p className="font-medium">{formatMoney(quotation.total)}</p>
                                     <Badge className={
                                       quotation.status === 'Approved' ? "bg-green-500 text-white" : 
+                                      quotation.status === 'Sent' ? "bg-blue-500 text-white" : 
                                       quotation.status === 'Draft' ? "bg-gray-500 text-white" : 
                                       "bg-green-500 text-white"
                                     }>
