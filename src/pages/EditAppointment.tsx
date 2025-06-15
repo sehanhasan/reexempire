@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -29,7 +28,6 @@ const appointmentSchema = z.object({
   }),
   start_time: z.string().min(1, "Start time is required"),
   end_time: z.string().min(1, "End time is required"),
-  location: z.string().optional(),
   status: z.string().min(1, "Status is required"),
   notes: z.string().optional(),
 });
@@ -53,7 +51,6 @@ export default function EditAppointment() {
       description: "",
       start_time: "",
       end_time: "",
-      location: "",
       status: "Scheduled",
       notes: "",
     },
@@ -94,7 +91,6 @@ export default function EditAppointment() {
           appointment_date: new Date(appointmentData.appointment_date),
           start_time: appointmentData.start_time,
           end_time: appointmentData.end_time,
-          location: appointmentData.location || "",
           status: appointmentData.status,
           notes: appointmentData.notes || "",
         });
@@ -118,10 +114,15 @@ export default function EditAppointment() {
     if (!id) return;
 
     try {
+      // Get the selected customer to set unit number as location
+      const selectedCustomer = customers.find(c => c.id === data.customer_id);
+      const locationValue = selectedCustomer?.unit_number ? `#${selectedCustomer.unit_number}` : selectedCustomer?.address;
+
       await appointmentService.update(id, {
         ...data,
         appointment_date: format(data.appointment_date, "yyyy-MM-dd"),
         staff_id: data.staff_id || null,
+        location: locationValue || null,
       });
 
       toast({
@@ -338,50 +339,31 @@ export default function EditAppointment() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Location
-                      </FormLabel>
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <Input placeholder="Enter location" {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Scheduled">Scheduled</SelectItem>
-                          <SelectItem value="Confirmed">Confirmed</SelectItem>
-                          <SelectItem value="Pending">Pending</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                          <SelectItem value="Cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      <SelectContent>
+                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                        <SelectItem value="Confirmed">Confirmed</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

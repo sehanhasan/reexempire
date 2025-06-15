@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +26,7 @@ export default function AddAppointment() {
 
   // Form state
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
@@ -35,7 +35,7 @@ export default function AddAppointment() {
   const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
   const [staffNotes, setStaffNotes] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [shareViaWhatsApp, setShareViaWhatsApp] = useState(false);
+  const [shareViaWhatsApp, setShareViaWhatsApp] = useState(true); // Default to true
   
   // Image attachment state
   const [attachedImages, setAttachedImages] = useState<File[]>([]);
@@ -64,6 +64,7 @@ export default function AddAppointment() {
           if (appointment) {
             // Set basic appointment data
             setTitle(appointment.title || "");
+            setDescription(appointment.description || "");
             setDate(appointment.appointment_date || new Date().toISOString().split("T")[0]);
             setStartTime(appointment.start_time || "09:00");
             setEndTime(appointment.end_time || "10:00");
@@ -215,19 +216,20 @@ export default function AddAppointment() {
         });
       }
       
-      // Prepare the appointment data
+      // Prepare the appointment data - use unit number as location for WhatsApp
+      const locationValue = selectedCustomer.unit_number ? `#${selectedCustomer.unit_number}` : selectedCustomer.address;
+      
       const appointmentData = {
         title,
+        description: description || null,
         customer_id: selectedCustomer.id,
         staff_id: selectedStaff.length > 0 ? selectedStaff[0] : null,
-        // Taking first staff if multiple selected
         appointment_date: date,
         start_time: startTime,
         end_time: endTime,
         status,
         notes: notesWithImages || null,
-        location: selectedCustomer.address || null,
-        description: null // Adding the missing description field
+        location: locationValue || null
       };
 
       // Save staff notes in the appointment notes if any
@@ -343,6 +345,17 @@ export default function AddAppointment() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  placeholder="Enter appointment description..." 
+                  rows={3} 
+                  value={description} 
+                  onChange={e => setDescription(e.target.value)} 
+                />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
