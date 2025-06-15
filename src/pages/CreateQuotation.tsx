@@ -29,11 +29,12 @@ export default function CreateQuotation() {
     new Date().toISOString().split("T")[0]
   );
   const [validUntil, setValidUntil] = useState(
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdQuotationId, setCreatedQuotationId] = useState<string | null>(null);
   
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
@@ -67,6 +68,37 @@ export default function CreateQuotation() {
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
+  };
+
+  const handleSendWhatsapp = () => {
+    if (!createdQuotationId || !customer) {
+      toast({
+        title: "Error",
+        description: "Quotation must be saved before sending to WhatsApp.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotationId}`;
+      
+      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+        createdQuotationId,
+        documentNumber,
+        customer.name,
+        quotationViewUrl
+      );
+      
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent, status: string = "Draft") => {
@@ -120,6 +152,7 @@ export default function CreateQuotation() {
       };
       
       const createdQuotation = await quotationService.create(quotation);
+      setCreatedQuotationId(createdQuotation.id);
       
       // Preserve the original order of items
       for (const item of items) {
@@ -142,6 +175,11 @@ export default function CreateQuotation() {
           title: "Quotation Sent",
           description: `Quotation for ${customer?.name} has been sent successfully.`,
         });
+        
+        // Auto-open WhatsApp after successful submission
+        setTimeout(() => {
+          handleSendWhatsapp();
+        }, 1000);
       } else {
         toast({
           title: "Quotation Created",
@@ -207,6 +245,7 @@ export default function CreateQuotation() {
           documentType="quotation"
           isSubmitting={isSubmitting}
           showDraft={true}
+          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>

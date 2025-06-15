@@ -30,6 +30,17 @@ export function AdditionalInfoCard({
 }: AdditionalInfoCardProps) {
   const isMobile = useIsMobile();
   
+  const handleSendQuotation = async (e: React.FormEvent) => {
+    // First submit the quotation with "Sent" status
+    await onSubmit(e, "Sent");
+    
+    // After successful submission, we would need access to the quotation ID and customer
+    // This would typically be handled by the parent component passing the necessary data
+    if (onSendWhatsapp) {
+      onSendWhatsapp();
+    }
+  };
+  
   return (
     <Card className="shadow-sm">
       <CardHeader className="py-3 px-4">
@@ -77,7 +88,7 @@ export function AdditionalInfoCard({
                 <Button 
                   type="button"
                   className={`${isMobile ? 'w-full' : ''} gap-2 bg-blue-600 hover:bg-blue-700`}
-                  onClick={(e) => onSubmit(e, "Sent")}
+                  onClick={handleSendQuotation}
                   disabled={isSubmitting}
                 >
                   <Send className="h-4 w-4" />
