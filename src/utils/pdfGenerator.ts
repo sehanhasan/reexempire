@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { QuotationItem, InvoiceItem, DepositInfo } from '@/components/quotations/types';
@@ -16,6 +15,9 @@ interface DocumentDetails {
   customerAddress?: string;
   customerContact?: string;
   customerEmail?: string;
+  signatureImage?: string; // Base64 signature image
+  signedBy?: string; // Name of person who signed
+  signedDate?: string; // Date when signed
 }
 
 // Specific interfaces
@@ -275,7 +277,7 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
     'Tel: +603-2168-1688'
   ], 15, contactY + 12);
   
-  // Add Customer Acceptance section - more compact
+  // Add Customer Acceptance section with signature if available
   const acceptanceY = contactY + 30;
   pdf.setFillColor(150, 150, 150);
   pdf.rect(15, acceptanceY, 35, 6, 'F');
@@ -286,21 +288,38 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   pdf.setTextColor(0, 0, 0);
   pdf.setFontSize(10);
   
-  // Signature line
-  pdf.text('Signature:', 25, acceptanceY + 15);
-  pdf.line(65, acceptanceY + 15, 160, acceptanceY + 15);
-  
-  // Name line
-  pdf.text('Name:', 25, acceptanceY + 25);
-  pdf.line(65, acceptanceY + 25, 160, acceptanceY + 25);
-  
-  // Date line
-  pdf.text('Date:', 25, acceptanceY + 35);
-  pdf.line(65, acceptanceY + 35, 160, acceptanceY + 35);
+  // If signature is available, add it
+  if (details.signatureImage && details.signedBy && details.signedDate) {
+    // Add signature image
+    try {
+      pdf.addImage(details.signatureImage, 'PNG', 65, acceptanceY + 10, 95, 30);
+    } catch (error) {
+      console.error('Error adding signature image:', error);
+    }
+    
+    // Add signature details
+    pdf.text('Signature:', 25, acceptanceY + 45);
+    pdf.text('Name:', 25, acceptanceY + 55);
+    pdf.text(details.signedBy, 65, acceptanceY + 55);
+    pdf.text('Date:', 25, acceptanceY + 65);
+    pdf.text(details.signedDate, 65, acceptanceY + 65);
+  } else {
+    // Signature line
+    pdf.text('Signature:', 25, acceptanceY + 15);
+    pdf.line(65, acceptanceY + 15, 160, acceptanceY + 15);
+    
+    // Name line
+    pdf.text('Name:', 25, acceptanceY + 25);
+    pdf.line(65, acceptanceY + 25, 160, acceptanceY + 25);
+    
+    // Date line
+    pdf.text('Date:', 25, acceptanceY + 35);
+    pdf.line(65, acceptanceY + 35, 160, acceptanceY + 35);
+  }
   
   // Add notes if any
   if (details.notes) {
-    const notesY = Math.max(tableEndY + 80, acceptanceY + 45);
+    const notesY = Math.max(tableEndY + 80, acceptanceY + 75);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
     pdf.text('NOTES', 15, notesY);

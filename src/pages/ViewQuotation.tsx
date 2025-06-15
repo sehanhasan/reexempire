@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -13,10 +12,16 @@ import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import SignatureCanvas from "react-signature-canvas";
 import { Separator } from "@/components/ui/separator";
 
+interface ExtendedQuotation extends Quotation {
+  signature_image?: string | null;
+  signed_by?: string | null;
+  signed_date?: string | null;
+}
+
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [quotation, setQuotation] = useState<Quotation | null>(null);
+  const [quotation, setQuotation] = useState<ExtendedQuotation | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [items, setItems] = useState<QuotationItemType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,14 +38,22 @@ export default function ViewQuotation() {
       try {
         setLoading(true);
         
-        const quotationData = await quotationService.getById(id);
+        const quotationData = await quotationService.getById(id) as ExtendedQuotation;
         if (quotationData) {
           setQuotation(quotationData);
+          
+          // Check if already signed
+          if (quotationData.signature_image && quotationData.signed_by) {
+            setIsSigned(true);
+            setCustomerName(quotationData.signed_by);
+          }
           
           if (quotationData.customer_id) {
             const customerData = await customerService.getById(quotationData.customer_id);
             setCustomer(customerData);
-            setCustomerName(customerData?.name || "");
+            if (!quotationData.signed_by) {
+              setCustomerName(customerData?.name || "");
+            }
           }
           
           const itemsData = await quotationService.getItemsByQuotationId(id);
@@ -78,19 +91,29 @@ export default function ViewQuotation() {
       // Convert signature to data URL
       const signatureDataUrl = sigPad.toDataURL('image/png');
       
-      // Update quotation status to Accepted
+      // Update quotation status to Accepted with signature data
       if (id) {
         quotationService.update(id, {
           status: "Accepted",
           notes: quotation?.notes ? 
             `${quotation.notes}\n\nElectronically signed by: ${customerName} on ${formatDate(signatureDate)}` : 
-            `Electronically signed by: ${customerName} on ${formatDate(signatureDate)}`
+            `Electronically signed by: ${customerName} on ${formatDate(signatureDate)}`,
+          signature_image: signatureDataUrl,
+          signed_by: customerName,
+          signed_date: signatureDate
         }).then(() => {
           toast({
             title: "Quotation Accepted",
             description: "Thank you! The quotation has been accepted successfully."
           });
           setIsSigned(true);
+          setQuotation(prev => prev ? {
+            ...prev,
+            signature_image: signatureDataUrl,
+            signed_by: customerName,
+            signed_date: signatureDate,
+            status: "Accepted"
+          } : null);
         }).catch((error) => {
           console.error("Error accepting quotation:", error);
           toast({
@@ -150,7 +173,10 @@ export default function ViewQuotation() {
           requiresDeposit: quotation.requires_deposit || false,
           depositAmount: quotation.deposit_amount || 0,
           depositPercentage: quotation.deposit_percentage || 0
-        }
+        },
+        signatureImage: quotation.signature_image || undefined,
+        signedBy: quotation.signed_by || undefined,
+        signedDate: quotation.signed_date ? formatDate(quotation.signed_date) : undefined
       });
       
       downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
@@ -334,7 +360,7 @@ export default function ViewQuotation() {
           </CardContent>
         </Card>
 
-        {quotation.status !== "Accepted" && !isSigned ? (
+        {quotation?.status !== "Accepted" && !isSigned ? (
           <Card className="mb-6">
             <CardContent className="p-6">
               <h3 className="font-semibold text-gray-700 mb-4">Accept Quotation</h3>
@@ -397,7 +423,7 @@ export default function ViewQuotation() {
               </div>
             </CardContent>
           </Card>
-        ) : isSigned || quotation.status === "Accepted" ? (
+        ) : isSigned || quotation?.status === "Accepted" ? (
           <Card className="mb-6 bg-green-50 border-green-200">
             <CardContent className="p-6">
               <div className="flex items-center text-green-700">
@@ -407,6 +433,16 @@ export default function ViewQuotation() {
               <p className="mt-2 text-green-700">
                 Thank you for accepting this quotation. We will be in touch shortly to proceed with the next steps.
               </p>
+              {quotation?.signed_by && quotation?.signed_date && (
+                <div className="mt-4 p-3 bg-white rounded border">
+                  <p className="text-sm text-gray-600">
+                    Signed by: <span className="font-medium">{quotation.signed_by}</span>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Date: <span className="font-medium">{formatDate(quotation.signed_date)}</span>
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : null}
