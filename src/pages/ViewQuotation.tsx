@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -336,7 +335,7 @@ export default function ViewQuotation() {
           {quotation.notes && (
             <Card className="mb-6">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Terms and Conditions</h3>
+                <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
                 <p className="whitespace-pre-line">{quotation.notes}</p>
               </CardContent>
             </Card>
@@ -349,9 +348,42 @@ export default function ViewQuotation() {
                 <li>Payment terms 30 days</li>
                 <li>Project duration 5-7 working days</li>
                 <li>This quotation is valid until {formatDate(quotation.expiry_date)}</li>
+                <li>All prices are in Malaysian Ringgit (RM)</li>
+                <li>Work will commence upon receipt of signed quotation and deposit (if applicable)</li>
+                <li>Any changes to the scope of work will require a new quotation</li>
+                <li>Company is not responsible for any delays caused by circumstances beyond our control</li>
               </ul>
             </CardContent>
           </Card>
+
+          {quotation.status === "Accepted" && (
+            <Card className="mb-6 bg-green-50 border-green-200">
+              <CardContent className="p-6">
+                <div className="flex items-center text-green-700 mb-4">
+                  <Check className="mr-2 h-5 w-5" />
+                  <h3 className="font-semibold">Quotation Accepted</h3>
+                </div>
+                <p className="mb-4 text-green-700">
+                  This quotation has been electronically signed and accepted.
+                </p>
+                
+                {/* Show signature information for accepted quotations */}
+                <div className="bg-white border border-green-200 rounded-md p-4">
+                  <h4 className="font-medium text-gray-700 mb-2">Digital Signature</h4>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p><strong>Signed by:</strong> {customerName || customer.name}</p>
+                    <p><strong>Date:</strong> {formatDate(signatureDate)}</p>
+                    <p><strong>Status:</strong> <span className="text-green-600 font-medium">Accepted</span></p>
+                  </div>
+                  
+                  {/* Placeholder for actual signature display */}
+                  <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded text-center text-gray-500 italic">
+                    [Digital Signature on File]
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {quotation.status !== "Accepted" && !isSigned ? (
             <Card className="mb-6">
@@ -416,7 +448,7 @@ export default function ViewQuotation() {
                 </div>
               </CardContent>
             </Card>
-          ) : isSigned || quotation.status === "Accepted" ? (
+          ) : isSigned ? (
             <Card className="mb-6 bg-green-50 border-green-200">
               <CardContent className="p-6">
                 <div className="flex items-center text-green-700">
