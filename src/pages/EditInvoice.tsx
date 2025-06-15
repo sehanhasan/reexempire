@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -180,10 +179,16 @@ export default function EditInvoice() {
   const uploadImages = async (invoiceId: string): Promise<boolean> => {
     if (images.length === 0) return true;
     
+    console.log("Starting image upload for invoice:", invoiceId);
+    console.log("Number of images to upload:", images.length);
+    
     setUploadingImages(true);
     
     try {
-      for (const file of images) {
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i];
+        console.log(`Uploading image ${i + 1}/${images.length}:`, file.name);
+        
         const fileName = `${invoiceId}/${Date.now()}-${file.name}`;
         
         const { data, error } = await supabase.storage
@@ -195,13 +200,28 @@ export default function EditInvoice() {
           throw error;
         }
         
+        console.log("Image uploaded successfully:", data.path);
+        
         const { data: urlData } = supabase.storage
           .from('invoice-images')
           .getPublicUrl(data.path);
         
+        console.log("Public URL generated:", urlData.publicUrl);
+        
         // Add the image to the database
-        await invoiceService.addInvoiceImage(invoiceId, urlData.publicUrl);
+        const imageRecord = await invoiceService.addInvoiceImage(invoiceId, urlData.publicUrl);
+        console.log("Image record saved to database:", imageRecord);
       }
+      
+      console.log("All images uploaded successfully");
+      
+      // Clear the uploaded images and URLs
+      setImages([]);
+      setImageUrls([]);
+      
+      // Refresh existing images to show the newly uploaded ones
+      const updatedImages = await invoiceService.getInvoiceImages(invoiceId);
+      setExistingImages(updatedImages);
       
       return true;
     } catch (error) {
@@ -427,9 +447,10 @@ export default function EditInvoice() {
                   type="button" 
                   variant="outline" 
                   onClick={() => document.getElementById('image-upload')?.click()}
+                  disabled={uploadingImages}
                 >
                   <Image className="mr-2 h-4 w-4" />
-                  Add Images
+                  {uploadingImages ? 'Uploading...' : 'Add Images'}
                 </Button>
                 <Input 
                   id="image-upload" 
