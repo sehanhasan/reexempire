@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -80,9 +81,15 @@ export const appointmentService = {
   },
 
   async create(appointment: Omit<Appointment, "id" | "created_at" | "updated_at">): Promise<Appointment> {
+    // Handle "none" value for staff_id
+    const cleanedAppointment = {
+      ...appointment,
+      staff_id: appointment.staff_id === "none" ? null : appointment.staff_id
+    };
+
     const { data, error } = await supabase
       .from("appointments")
-      .insert([appointment])
+      .insert([cleanedAppointment])
       .select()
       .single();
 
@@ -95,8 +102,11 @@ export const appointmentService = {
   },
 
   async update(id: string, appointment: Partial<Omit<Appointment, "id" | "created_at" | "updated_at">>): Promise<Appointment> {
+    // Handle "none" value for staff_id
     const cleanedAppointment = Object.fromEntries(
-      Object.entries(appointment).filter(([_, v]) => v !== undefined)
+      Object.entries(appointment)
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, k === "staff_id" && v === "none" ? null : v])
     );
 
     const { data, error } = await supabase

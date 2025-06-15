@@ -80,21 +80,16 @@ export default function Dashboard() {
         const today = format(now, 'yyyy-MM-dd');
         
         console.log("Today's date:", today);
-        console.log("All appointments:", appointments.map(apt => ({ 
-          id: apt.id, 
-          date: apt.appointment_date, 
-          title: apt.title,
-          status: apt.status 
-        })));
+        console.log("All appointments:", appointments);
 
         // Filter appointments that are today or in the future and not cancelled/completed
         const upcomingAppts = appointments.filter(appt => {
           const appointmentDate = appt.appointment_date;
           const isUpcoming = appointmentDate >= today;
-          const isNotCancelled = appt.status.toLowerCase() !== 'cancelled';
-          const isNotCompleted = appt.status.toLowerCase() !== 'completed';
+          const isNotCancelled = appt.status && appt.status.toLowerCase() !== 'cancelled';
+          const isNotCompleted = appt.status && appt.status.toLowerCase() !== 'completed';
           
-          console.log(`Appointment ${appt.id}: date=${appointmentDate}, upcoming=${isUpcoming}, notCancelled=${isNotCancelled}, notCompleted=${isNotCompleted}`);
+          console.log(`Appointment ${appt.id}: date=${appointmentDate}, upcoming=${isUpcoming}, status=${appt.status}, notCancelled=${isNotCancelled}, notCompleted=${isNotCompleted}`);
           
           return isUpcoming && isNotCancelled && isNotCompleted;
         }).sort((a, b) => {
