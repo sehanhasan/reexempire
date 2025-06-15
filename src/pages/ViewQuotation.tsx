@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -210,7 +211,7 @@ export default function ViewQuotation() {
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" style={{ minWidth: '1024px' }}>
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
         <div className="max-w-4xl mx-auto px-4 py-3">
@@ -231,7 +232,7 @@ export default function ViewQuotation() {
             <div className="flex items-center">
               <Button variant="outline" onClick={handlePrintPDF} className="flex items-center gap-1">
                 <Download size={18} />
-                <span className="hidden sm:inline">Download PDF</span>
+                <span>Download PDF</span>
               </Button>
             </div>
           </div>
@@ -242,7 +243,7 @@ export default function ViewQuotation() {
         <div className="max-w-4xl mx-auto">
           <Card className="mb-6">
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">From</h3>
                   <div className="text-gray-700">
@@ -289,7 +290,7 @@ export default function ViewQuotation() {
                       <thead>
                         <tr className="bg-gray-50 text-left">
                           <th className="py-2 px-4 border-b">Description</th>
-                          <th className="py-2 px-4 border-b text-right">Unit Price</th>
+                          <th className="py-2 px-4 border-b text-right">Price</th>
                           <th className="py-2 px-4 border-b text-right">Qty</th>
                           <th className="py-2 px-4 border-b text-right">Amount</th>
                         </tr>
