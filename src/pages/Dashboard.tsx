@@ -36,7 +36,15 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [customers, quotations, invoices, appointments] = await Promise.all([customerService.getAll(), quotationService.getAll(), invoiceService.getAll(), appointmentService.getAll()]);
+        console.log("Fetching dashboard data...");
+        const [customers, quotations, invoices, appointments] = await Promise.all([
+          customerService.getAll(), 
+          quotationService.getAll(), 
+          invoiceService.getAll(), 
+          appointmentService.getAll()
+        ]);
+
+        console.log("Fetched appointments:", appointments);
 
         const customersMapData = {};
         customers.forEach(customer => {
@@ -67,15 +75,37 @@ export default function Dashboard() {
         const revenueByMonth = generateRevenueByMonth(paidInvoices);
         setRevenueData(revenueByMonth);
 
+        // Fix the date filtering for upcoming appointments
         const now = new Date();
-        const today = new Date().toISOString().split('T')[0];
+        const today = format(now, 'yyyy-MM-dd');
+        
+        console.log("Today's date:", today);
+        console.log("All appointments:", appointments.map(apt => ({ 
+          id: apt.id, 
+          date: apt.appointment_date, 
+          title: apt.title,
+          status: apt.status 
+        })));
 
-        const upcomingAppts = appointments.filter(appt => appt.appointment_date >= today).sort((a, b) => {
+        // Filter appointments that are today or in the future and not cancelled/completed
+        const upcomingAppts = appointments.filter(appt => {
+          const appointmentDate = appt.appointment_date;
+          const isUpcoming = appointmentDate >= today;
+          const isNotCancelled = appt.status.toLowerCase() !== 'cancelled';
+          const isNotCompleted = appt.status.toLowerCase() !== 'completed';
+          
+          console.log(`Appointment ${appt.id}: date=${appointmentDate}, upcoming=${isUpcoming}, notCancelled=${isNotCancelled}, notCompleted=${isNotCompleted}`);
+          
+          return isUpcoming && isNotCancelled && isNotCompleted;
+        }).sort((a, b) => {
+          // Sort by date first, then by time
           if (a.appointment_date !== b.appointment_date) {
             return new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime();
           }
           return a.start_time.localeCompare(b.start_time);
         }).slice(0, 5);
+
+        console.log("Filtered upcoming appointments:", upcomingAppts);
 
         const enhancedAppointments = upcomingAppts.map(appointment => {
           const customer = customersMapData[appointment.customer_id] || {};
@@ -85,6 +115,8 @@ export default function Dashboard() {
             unit_number: customer.unit_number || ""
           };
         });
+        
+        console.log("Enhanced appointments:", enhancedAppointments);
         setUpcomingAppointments(enhancedAppointments);
 
         setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
