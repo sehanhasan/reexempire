@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -25,6 +24,8 @@ export default function ViewQuotation() {
   const [sigPad, setSigPad] = useState<SignatureCanvas | null>(null);
   const [isSigned, setIsSigned] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [signerInfo, setSignerInfo] = useState<{ name: string; date: string } | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -36,6 +37,24 @@ export default function ViewQuotation() {
         const quotationData = await quotationService.getById(id);
         if (quotationData) {
           setQuotation(quotationData);
+          
+          // Parse signature data and signer info from notes if it exists
+          if (quotationData.notes && quotationData.notes.includes('SIGNATURE_DATA:')) {
+            const signaturePart = quotationData.notes.split('SIGNATURE_DATA:')[1];
+            if (signaturePart) {
+              const parts = signaturePart.split('SIGNER_INFO:');
+              if (parts.length === 2) {
+                setSignatureData(parts[0].trim());
+                const signerInfoStr = parts[1].trim();
+                try {
+                  const parsedSignerInfo = JSON.parse(signerInfoStr);
+                  setSignerInfo(parsedSignerInfo);
+                } catch (e) {
+                  console.error("Error parsing signer info:", e);
+                }
+              }
+            }
+          }
           
           if (quotationData.customer_id) {
             const customerData = await customerService.getById(quotationData.customer_id);
@@ -77,20 +96,28 @@ export default function ViewQuotation() {
     try {
       // Convert signature to data URL
       const signatureDataUrl = sigPad.toDataURL('image/png');
+      const signerDetails = {
+        name: customerName,
+        date: signatureDate
+      };
       
-      // Update quotation status to Accepted
+      // Update quotation status to Accepted and store signature data
       if (id) {
+        const originalNotes = quotation?.notes || "";
+        const cleanNotes = originalNotes.split('SIGNATURE_DATA:')[0].trim();
+        const notesWithSignature = `${cleanNotes}\n\nSIGNATURE_DATA:${signatureDataUrl}\nSIGNER_INFO:${JSON.stringify(signerDetails)}`;
+        
         quotationService.update(id, {
           status: "Accepted",
-          notes: quotation?.notes ? 
-            `${quotation.notes}\n\nElectronically signed by: ${customerName} on ${formatDate(signatureDate)}` : 
-            `Electronically signed by: ${customerName} on ${formatDate(signatureDate)}`
+          notes: notesWithSignature
         }).then(() => {
           toast({
             title: "Quotation Accepted",
             description: "Thank you! The quotation has been accepted successfully."
           });
           setIsSigned(true);
+          setSignatureData(signatureDataUrl);
+          setSignerInfo(signerDetails);
         }).catch((error) => {
           console.error("Error accepting quotation:", error);
           toast({
@@ -209,6 +236,9 @@ export default function ViewQuotation() {
   
   // Calculate subtotal
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+
+  // Clean notes (remove signature data for display)
+  const displayNotes = quotation.notes ? quotation.notes.split('SIGNATURE_DATA:')[0].trim() : null;
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ minWidth: '1024px' }}>
@@ -333,11 +363,12 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {quotation.notes && (
+          {/* Notes Card - only show if there are actual notes (not signature data) */}
+          {displayNotes && (
             <Card className="mb-6">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Terms and Conditions</h3>
-                <p className="whitespace-pre-line">{quotation.notes}</p>
+                <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
+                <p className="whitespace-pre-line">{displayNotes}</p>
               </CardContent>
             </Card>
           )}
@@ -419,13 +450,32 @@ export default function ViewQuotation() {
           ) : isSigned || quotation.status === "Accepted" ? (
             <Card className="mb-6 bg-green-50 border-green-200">
               <CardContent className="p-6">
-                <div className="flex items-center text-green-700">
+                <div className="flex items-center text-green-700 mb-4">
                   <Check className="mr-2 h-5 w-5" />
                   <h3 className="font-semibold">Quotation Accepted</h3>
                 </div>
-                <p className="mt-2 text-green-700">
+                <p className="text-green-700 mb-4">
                   Thank you for accepting this quotation. We will be in touch shortly to proceed with the next steps.
                 </p>
+                
+                {/* Display actual signature */}
+                {signatureData && (
+                  <div className="mt-4">
+                    <div className="border border-gray-300 rounded-md p-4 bg-white inline-block">
+                      <img 
+                        src={signatureData} 
+                        alt="Electronic Signature" 
+                        className="max-w-md h-auto"
+                        style={{ maxHeight: '150px' }}
+                      />
+                    </div>
+                    {signerInfo && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        Electronically signed by: <strong>{signerInfo.name}</strong> on <strong>{formatDate(signerInfo.date)}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : null}
