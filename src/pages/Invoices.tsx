@@ -326,6 +326,13 @@ export default function Invoices() {
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSendInvoice(invoice);
+                                }}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send to Customer
+                                </DropdownMenuItem>
                                 {invoice.payment_status !== 'Paid' && (
                                   <DropdownMenuItem onClick={(e) => {
                                     e.stopPropagation();
@@ -419,6 +426,10 @@ export default function Invoices() {
                                 <DropdownMenuItem onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendInvoice(invoice)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send to Customer
                                 </DropdownMenuItem>
                                 {invoice.payment_status !== 'Paid' && (
                                   <DropdownMenuItem onClick={() => handlePaymentStatusChange(invoice, 'Paid')}>
