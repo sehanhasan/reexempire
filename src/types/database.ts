@@ -167,6 +167,16 @@ export interface InvoiceImage {
   updated_at: string;
 }
 
+export interface PaymentReceipt {
+  id: string;
+  invoice_id: string;
+  receipt_url: string;
+  original_filename: string | null;
+  uploaded_at: string;
+  customer_notes: string | null;
+  status: string;
+}
+
 export interface Appointment {
   id: string;
   customer_id: string;

@@ -223,6 +223,36 @@ export type Database = {
           },
         ]
       }
+      invoice_payment_receipts: {
+        Row: {
+          customer_notes: string | null
+          id: string
+          invoice_id: string
+          original_filename: string | null
+          receipt_url: string
+          status: string
+          uploaded_at: string
+        }
+        Insert: {
+          customer_notes?: string | null
+          id?: string
+          invoice_id: string
+          original_filename?: string | null
+          receipt_url: string
+          status?: string
+          uploaded_at?: string
+        }
+        Update: {
+          customer_notes?: string | null
+          id?: string
+          invoice_id?: string
+          original_filename?: string | null
+          receipt_url?: string
+          status?: string
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           created_at: string

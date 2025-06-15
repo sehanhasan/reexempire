@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download } from "lucide-react";
 import { invoiceService, customerService } from "@/services";
+import { paymentReceiptService, PaymentReceipt } from "@/services/paymentReceiptService";
+import { PaymentReceiptUpload } from "@/components/payments/PaymentReceiptUpload";
+import { PaymentReceiptsList } from "@/components/payments/PaymentReceiptsList";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 
@@ -16,6 +18,7 @@ export default function ViewInvoice() {
   const [customer, setCustomer] = useState(null);
   const [items, setItems] = useState([]);
   const [images, setImages] = useState([]);
+  const [paymentReceipts, setPaymentReceipts] = useState<PaymentReceipt[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,16 +27,18 @@ export default function ViewInvoice() {
       
       try {
         setLoading(true);
-        const [invoiceData, itemsData, imagesData] = await Promise.all([
+        const [invoiceData, itemsData, imagesData, receiptsData] = await Promise.all([
           invoiceService.getById(id),
           invoiceService.getItemsByInvoiceId(id),
-          invoiceService.getInvoiceImages(id)
+          invoiceService.getInvoiceImages(id),
+          paymentReceiptService.getReceiptsByInvoiceId(id)
         ]);
         
         if (invoiceData) {
           setInvoice(invoiceData);
           setItems(itemsData || []);
           setImages(imagesData || []);
+          setPaymentReceipts(receiptsData || []);
           
           // Fetch customer data
           const customerData = await customerService.getById(invoiceData.customer_id);
@@ -53,6 +58,10 @@ export default function ViewInvoice() {
 
     fetchInvoiceData();
   }, [id]);
+
+  const handleReceiptUploaded = (newReceipt: PaymentReceipt) => {
+    setPaymentReceipts(prev => [newReceipt, ...prev]);
+  };
 
   const formatMoney = (amount) => {
     return `RM ${parseFloat(amount).toLocaleString(undefined, {
@@ -149,6 +158,7 @@ export default function ViewInvoice() {
 
       <div className="py-8 px-4">
         <div className="max-w-4xl mx-auto">
+          {/* Company Info Card */}
           <Card className="mb-6">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 gap-6">
@@ -264,6 +274,23 @@ export default function ViewInvoice() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Payment Receipt Upload Section - Show only if invoice is not paid */}
+          {invoice.payment_status !== "Paid" && (
+            <div className="mb-6">
+              <PaymentReceiptUpload
+                invoiceId={id!}
+                onReceiptUploaded={handleReceiptUploaded}
+              />
+            </div>
+          )}
+
+          {/* Display uploaded payment receipts */}
+          {paymentReceipts.length > 0 && (
+            <div className="mb-6">
+              <PaymentReceiptsList receipts={paymentReceipts} />
+            </div>
           )}
 
           {/* Notes Card - only show if there are actual notes */}
