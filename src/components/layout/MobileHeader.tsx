@@ -38,7 +38,7 @@ export function MobileHeader({ title, onMenuClick, actions }: MobileHeaderProps)
       <h1 className="font-semibold text-white truncate">{title}</h1>
       
       <div className="flex items-center gap-2">
-        <div className="text-white mr-2">
+        <div className="text-white">
           <NotificationBell />
         </div>
         {actions && actions.length > 0 ? (

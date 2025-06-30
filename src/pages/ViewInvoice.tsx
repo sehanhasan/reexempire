@@ -177,8 +177,8 @@ export default function ViewInvoice() {
               </div>
               
               {invoice.subject && (
-                <div className="mt-4 pt-4 border-t">
-                  <h3 className="font-semibold text-gray-700 mb-2 inline-block mr-4">Subject:</h3>
+                <div className="mt-4 pt-4 border-t flex items-center">
+                  <h3 className="font-semibold text-gray-700 mr-4">Subject:</h3>
                   <span>{invoice.subject}</span>
                 </div>
               )}

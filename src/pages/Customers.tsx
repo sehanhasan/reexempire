@@ -72,9 +72,7 @@ export default function Customers() {
   }, []);
 
   const handleView = (customer: Customer) => {
-    // First clear the previous customer to avoid state issues
     setSelectedCustomer(null);
-    // Use setTimeout to ensure the state is updated before showing dialog
     setTimeout(() => {
       setSelectedCustomer(customer);
       setShowDetails(true);
@@ -113,7 +111,7 @@ export default function Customers() {
       accessorKey: "unit_number" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
         <div 
-          className="font-medium cursor-pointer"
+          className="font-medium cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleView(row.original)}
         >
           {row.original.unit_number || 'N/A'}
@@ -125,7 +123,7 @@ export default function Customers() {
       accessorKey: "name" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
         <div 
-          className="font-medium text-blue-600 cursor-pointer"
+          className="font-medium text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
           onClick={() => handleView(row.original)}
         >
           {row.original.name}
@@ -137,7 +135,7 @@ export default function Customers() {
       accessorKey: "phone" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
         <div 
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleView(row.original)}
         >
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -156,7 +154,7 @@ export default function Customers() {
       accessorKey: "address" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
         <span 
-          className="cursor-pointer"
+          className="cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleView(row.original)}
         >
           {row.original.address || 'Not provided'}
@@ -186,6 +184,7 @@ export default function Customers() {
           columns={columns} 
           data={customers} 
           searchKey="name" 
+          onRowClick={handleView}
         />
       </div>
 
