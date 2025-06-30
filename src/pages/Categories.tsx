@@ -297,9 +297,9 @@ export default function Categories() {
 
       {selectedCategory && (
         <SubcategoriesDialog 
-          open={showSubcategories}
-          onOpenChange={setShowSubcategories}
           category={selectedCategory}
+          isOpen={showSubcategories}
+          onClose={() => setShowSubcategories(false)}
         />
       )}
 

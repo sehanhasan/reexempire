@@ -34,6 +34,7 @@ export default function EditInvoice() {
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30);
   const [quotationId, setQuotationId] = useState("");
+  const [quotationReference, setQuotationReference] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
@@ -56,6 +57,7 @@ export default function EditInvoice() {
           setDepositAmount(invoiceData.deposit_amount);
           setDepositPercentage(invoiceData.deposit_percentage);
           setQuotationId(invoiceData.quotation_id || "");
+          setQuotationReference(invoiceData.quotation_reference || "");
           setDocumentNumber(invoiceData.reference_number);
         } catch (error) {
           console.error("Error fetching invoice:", error);

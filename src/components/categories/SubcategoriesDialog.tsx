@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -47,14 +48,15 @@ export function SubcategoriesDialog({ category, isOpen, onClose }: Subcategories
   useEffect(() => {
     const fetchSubcategories = async () => {
       try {
-        const fetchedSubcategories = await categoryService.getSubcategories(category.id);
+        const fetchedSubcategories = await categoryService.getSubcategoriesByCategoryId(category.id);
         setSubcategories(fetchedSubcategories);
 
         // Fetch pricing options for each subcategory
         const options: { [key: string]: PricingOption[] } = {};
         for (const subcategory of fetchedSubcategories) {
-          const fetchedOptions = await categoryService.getPricingOptions(subcategory.id);
-          options[subcategory.id] = fetchedOptions;
+          const fetchedOptions = await categoryService.getAllPricingOptions();
+          // Filter options for this subcategory
+          options[subcategory.id] = fetchedOptions.filter(option => option.subcategory_id === subcategory.id);
         }
         setPricingOptions(options);
       } catch (error) {

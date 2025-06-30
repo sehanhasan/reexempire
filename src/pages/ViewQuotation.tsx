@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { toast } from "@/components/ui/use-toast";
 import SignatureCanvas from 'react-signature-canvas';
 
 interface QuotationItem {
-  id: number;
+  id: string;
   description: string;
   quantity: number;
   unit_price: number;
@@ -31,7 +32,7 @@ interface Quotation {
   total: number;
   notes: string;
   terms: string;
-  subject: string;
+  subject?: string;
 }
 
 export default function ViewQuotation() {
@@ -56,7 +57,10 @@ export default function ViewQuotation() {
         const quotationData = await quotationService.getById(id);
         
         if (quotationData) {
-          setQuotation(quotationData);
+          setQuotation({
+            ...quotationData,
+            subject: quotationData.subject || ''
+          });
           
           // Fetch customer data
           const customerData = await customerService.getById(quotationData.customer_id);
@@ -64,7 +68,11 @@ export default function ViewQuotation() {
 
           // Fetch quotation items
           const itemsData = await quotationService.getItemsByQuotationId(id);
-          setItems(itemsData || []);
+          const mappedItems = itemsData?.map(item => ({
+            ...item,
+            id: item.id
+          })) || [];
+          setItems(mappedItems);
         }
       } catch (error) {
         console.error("Error fetching quotation:", error);
