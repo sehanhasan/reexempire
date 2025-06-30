@@ -21,6 +21,7 @@ interface DataTableProps<T> {
   isLoading?: boolean;
   emptyMessage?: string;
   renderCustomMobileCard?: (item: T) => React.ReactNode;
+  onRowClick?: (item: T) => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -29,7 +30,8 @@ export function DataTable<T extends Record<string, any>>({
   searchKey,
   isLoading = false,
   emptyMessage = "No data available",
-  renderCustomMobileCard
+  renderCustomMobileCard,
+  onRowClick
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -121,15 +123,19 @@ export function DataTable<T extends Record<string, any>>({
                   ) : (
                     // Default mobile card rendering
                     filteredData.map((row, rowIndex) => (
-                      <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
+                      <Card 
+                        key={getCardKey(row, rowIndex)} 
+                        className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => onRowClick?.(row)}
+                      >
                         <CardContent className="p-0">
                           {/* Card Header with primary information */}
                           <div className="p-3 border-b bg-blue-50/30">
                             <div className="flex justify-between items-center">
                               <div className="font-medium text-blue-700">
-                                {primaryColumn.cell 
+                                {primaryColumn?.cell 
                                   ? primaryColumn.cell({ row: { original: row } }) 
-                                  : String(row[primaryColumn.accessorKey] || '')}
+                                  : String(row[primaryColumn?.accessorKey || ''] || '')}
                               </div>
                               <ChevronRight className="h-4 w-4 text-gray-400" />
                             </div>
@@ -182,7 +188,11 @@ export function DataTable<T extends Record<string, any>>({
                   </TableHeader>
                   <TableBody>
                     {filteredData.map((row, rowIndex) => (
-                      <TableRow key={getRowKey(row, rowIndex)}>
+                      <TableRow 
+                        key={getRowKey(row, rowIndex)}
+                        className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                        onClick={() => onRowClick?.(row)}
+                      >
                         {columns.map((column, colIndex) => (
                           <TableCell key={getCellKey(column, colIndex, rowIndex)}>
                             {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
@@ -200,4 +210,3 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
-

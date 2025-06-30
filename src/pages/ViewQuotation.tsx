@@ -37,7 +37,10 @@ export default function ViewQuotation() {
         
         if (quotationData) {
           setQuotation(quotationData);
-          setItems(quotationData.items || []);
+          
+          // Fetch quotation items separately
+          const quotationItems = await quotationService.getItemsByQuotationId(id);
+          setItems(quotationItems || []);
           
           // Fetch customer data
           const customerData = await customerService.getById(quotationData.customer_id);
@@ -207,8 +210,8 @@ export default function ViewQuotation() {
               </div>
               
               {quotation.subject && (
-                <div className="mt-4 pt-4 border-t flex items-center">
-                  <h3 className="font-semibold text-gray-700 mr-4">Subject:</h3>
+                <div className="mt-4 pt-4 border-t">
+                  <span className="font-semibold text-gray-700 mr-4">Subject:</span>
                   <span>{quotation.subject}</span>
                 </div>
               )}
@@ -258,12 +261,6 @@ export default function ViewQuotation() {
                     <span className="font-medium">Subtotal:</span>
                     <span>{formatMoney(quotation.subtotal)}</span>
                   </div>
-                  {quotation.tax_rate > 0 && (
-                    <div className="flex justify-between py-2">
-                      <span className="font-medium">Tax ({quotation.tax_rate}%):</span>
-                      <span>{formatMoney(quotation.tax_amount)}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between py-2 text-lg font-bold">
                     <span>Total:</span>
                     <span>{formatMoney(quotation.total)}</span>
@@ -332,12 +329,20 @@ export default function ViewQuotation() {
                 canvasProps={{
                   width: 400,
                   height: 200,
-                  className: 'signature-canvas w-full h-full touch-action-none',
+                  className: 'signature-canvas w-full h-full',
                   style: { touchAction: 'none' }
                 }}
                 backgroundColor="white"
-                onBegin={() => console.log('Signature started')}
-                onEnd={() => console.log('Signature ended')}
+                onBegin={() => {
+                  console.log('Signature started');
+                  // Prevent scrolling on mobile
+                  document.body.style.overflow = 'hidden';
+                }}
+                onEnd={() => {
+                  console.log('Signature ended');
+                  // Re-enable scrolling
+                  document.body.style.overflow = 'auto';
+                }}
               />
             </div>
             <div className="flex justify-between">

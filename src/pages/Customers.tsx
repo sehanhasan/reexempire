@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -110,10 +109,7 @@ export default function Customers() {
       header: "Unit #",
       accessorKey: "unit_number" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div 
-          className="font-medium cursor-pointer hover:text-blue-600 transition-colors"
-          onClick={() => handleView(row.original)}
-        >
+        <div className="font-medium">
           {row.original.unit_number || 'N/A'}
         </div>
       ),
@@ -122,10 +118,7 @@ export default function Customers() {
       header: "Name",
       accessorKey: "name" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div 
-          className="font-medium text-blue-600 cursor-pointer hover:text-blue-800 transition-colors"
-          onClick={() => handleView(row.original)}
-        >
+        <div className="font-medium text-blue-600">
           {row.original.name}
         </div>
       ),
@@ -134,10 +127,7 @@ export default function Customers() {
       header: "WhatsApp",
       accessorKey: "phone" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div 
-          className="flex items-center cursor-pointer hover:text-blue-600 transition-colors"
-          onClick={() => handleView(row.original)}
-        >
+        <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           {row.original.phone ? (
             <span className="text-blue-600">
@@ -153,10 +143,7 @@ export default function Customers() {
       header: "Address",
       accessorKey: "address" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <span 
-          className="cursor-pointer hover:text-blue-600 transition-colors"
-          onClick={() => handleView(row.original)}
-        >
+        <span>
           {row.original.address || 'Not provided'}
         </span>
       ),
