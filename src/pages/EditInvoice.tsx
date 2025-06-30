@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Image, X, Phone } from "lucide-react";
+import { ArrowLeft, Download, Image, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -34,7 +34,6 @@ export default function EditInvoice() {
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30);
-  const [quotationId, setQuotationId] = useState("");
   const [quotationReference, setQuotationReference] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +56,7 @@ export default function EditInvoice() {
           setIsDepositInvoice(invoiceData.is_deposit_invoice);
           setDepositAmount(invoiceData.deposit_amount);
           setDepositPercentage(invoiceData.deposit_percentage);
-          setQuotationId(invoiceData.quotation_id || "");
+          setQuotationReference(invoiceData.quotation_id || "");
           setDocumentNumber(invoiceData.reference_number);
         } catch (error) {
           console.error("Error fetching invoice:", error);
@@ -286,7 +285,6 @@ export default function EditInvoice() {
 
       const invoiceData = {
         customer_id: customerId,
-        quotation_id: quotationId,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
@@ -354,21 +352,6 @@ export default function EditInvoice() {
     }
   };
 
-  const sendInvoiceWhatsApp = () => {
-    if (!customer?.phone) {
-      toast({
-        title: "No Phone Number",
-        description: "Customer phone number is required to send via WhatsApp.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const message = `Hello ${customer.name},\n\nYour invoice ${documentNumber} is ready for review.\n\nPlease click the link below to view your invoice:\n${window.location.origin}/invoices/${id}/view\n\nThank you for your business!\n\nReex Empire Sdn Bhd`;
-    const whatsappUrl = `https://wa.me/${customer.phone.replace(/^\+/, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
   const downloadInvoicePDF = async (invoice: any, customer: any, items: any[]) => {
     try {
       // Get invoice images from the database
@@ -434,14 +417,6 @@ export default function EditInvoice() {
             <Button variant="default" onClick={() => downloadInvoicePDF(invoice, customer, items)}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF
-            </Button>
-            <Button 
-              variant="default" 
-              onClick={sendInvoiceWhatsApp}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Phone className="mr-2 h-4 w-4" />
-              Send via WhatsApp
             </Button>
           </div>
         }

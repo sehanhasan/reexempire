@@ -162,7 +162,7 @@ export default function ViewInvoice() {
           {/* Company Info Card */}
           <Card className="mb-6">
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-6 mb-4">
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">From</h3>
                   <div className="text-gray-700">
@@ -188,8 +188,8 @@ export default function ViewInvoice() {
               
               {invoice.subject && (
                 <div className="mt-4 pt-4 border-t">
-                  <span className="font-semibold text-gray-700 mr-2">Subject:</span>
-                  <span>{invoice.subject}</span>
+                  <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
+                  <p>{invoice.subject}</p>
                 </div>
               )}
             </CardContent>
