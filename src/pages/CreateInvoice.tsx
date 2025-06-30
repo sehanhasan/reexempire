@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -192,7 +191,7 @@ export default function CreateInvoice() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, status: string = "Draft") => {
     e.preventDefault();
     
     if (!customerId) {
@@ -229,7 +228,7 @@ export default function CreateInvoice() {
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
-        status: "Draft",
+        status: status,
         subtotal: subtotal,
         tax_rate: 0,
         tax_amount: 0,
@@ -271,9 +270,19 @@ export default function CreateInvoice() {
         }
       }
       
+      if (status === "Sent") {
+        // Generate WhatsApp share URL
+        const invoiceUrl = `${window.location.origin}/view-invoice/${createdInvoice.id}`;
+        const whatsappUrl = invoiceService.generateWhatsAppShareUrl 
+          ? invoiceService.generateWhatsAppShareUrl(createdInvoice.id, createdInvoice.reference_number, customer?.name || "Customer", invoiceUrl)
+          : `https://wa.me/?text=${encodeURIComponent(`Dear ${customer?.name || "Customer"},\n\nPlease find your invoice ${createdInvoice.reference_number} for review at: ${invoiceUrl}\n\nThank you,\nReex Empire Sdn Bhd`)}`;
+        
+        window.open(whatsappUrl, '_blank');
+      }
+      
       toast({
-        title: "Invoice Created",
-        description: `Invoice for ${customer?.name} has been created successfully.`,
+        title: status === "Sent" ? "Invoice Sent" : "Invoice Created",
+        description: `Invoice for ${customer?.name} has been ${status === "Sent" ? "sent" : "created"} successfully.`,
       });
       
       navigate("/invoices");
@@ -303,7 +312,7 @@ export default function CreateInvoice() {
         }
       />
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      <form onSubmit={(e) => handleSubmit(e, "Draft")} className="mt-8 space-y-6">
         <CustomerInfoCard 
           customerId={customerId}
           setCustomer={setCustomerId}
@@ -386,14 +395,63 @@ export default function CreateInvoice() {
           </CardContent>
         </Card>
         
-        <AdditionalInfoCard 
-          notes={notes}
-          setNotes={setNotes}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/invoices")}
-          documentType="invoice"
-          isSubmitting={isSubmitting || uploadingImages}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Additional Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Label htmlFor="notes">Notes (Internal)</Label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any internal notes or comments..."
+                className="w-full p-3 border border-gray-300 rounded-md resize-none"
+                rows={4}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/invoices")}
+                disabled={isSubmitting || uploadingImages}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || uploadingImages}
+              >
+                {isSubmitting || uploadingImages ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {uploadingImages ? "Uploading..." : "Saving..."}
+                  </>
+                ) : (
+                  "Save Draft"
+                )}
+              </Button>
+              <Button
+                type="button"
+                onClick={(e) => handleSubmit(e, "Sent")}
+                disabled={isSubmitting || uploadingImages}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isSubmitting || uploadingImages ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  "Send Invoice"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </form>
     </div>
   );

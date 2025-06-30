@@ -112,7 +112,12 @@ export default function Customers() {
       header: "Unit #",
       accessorKey: "unit_number" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="font-medium">{row.original.unit_number || 'N/A'}</div>
+        <div 
+          className="font-medium cursor-pointer"
+          onClick={() => handleView(row.original)}
+        >
+          {row.original.unit_number || 'N/A'}
+        </div>
       ),
     },
     {
@@ -131,17 +136,15 @@ export default function Customers() {
       header: "WhatsApp",
       accessorKey: "phone" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="flex items-center">
+        <div 
+          className="flex items-center cursor-pointer"
+          onClick={() => handleView(row.original)}
+        >
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           {row.original.phone ? (
-            <a 
-              href={`https://wa.me/${row.original.phone.replace(/^\+/, '')}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <span className="text-blue-600">
               {row.original.phone}
-            </a>
+            </span>
           ) : (
             <span className="text-muted-foreground">Not provided</span>
           )}
@@ -152,7 +155,12 @@ export default function Customers() {
       header: "Address",
       accessorKey: "address" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <span>{row.original.address || 'Not provided'}</span>
+        <span 
+          className="cursor-pointer"
+          onClick={() => handleView(row.original)}
+        >
+          {row.original.address || 'Not provided'}
+        </span>
       ),
     },
   ];

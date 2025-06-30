@@ -82,7 +82,7 @@ export default function ViewQuotation() {
     fetchQuotationData();
   }, [id]);
 
-  const handleSignature = () => {
+  const handleSignature = async () => {
     if (!sigPad || sigPad.isEmpty()) {
       toast({
         title: "Signature Required",
@@ -108,35 +108,27 @@ export default function ViewQuotation() {
         const cleanNotes = originalNotes.split('SIGNATURE_DATA:')[0].trim();
         const notesWithSignature = `${cleanNotes}\n\nSIGNATURE_DATA:${signatureDataUrl}\nSIGNER_INFO:${JSON.stringify(signerDetails)}`;
         
-        quotationService.update(id, {
+        await quotationService.update(id, {
           status: "Accepted",
           notes: notesWithSignature
-        }).then(() => {
-          toast({
-            title: "Quotation Accepted",
-            description: "Thank you! The quotation has been accepted successfully."
-          });
-          setIsSigned(true);
-          setSignatureData(signatureDataUrl);
-          setSignerInfo(signerDetails);
-        }).catch((error) => {
-          console.error("Error accepting quotation:", error);
-          toast({
-            title: "Error",
-            description: "Failed to update quotation status. Please try again.",
-            variant: "destructive"
-          });
-        }).finally(() => {
-          setIsSubmitting(false);
         });
+        
+        toast({
+          title: "Quotation Accepted",
+          description: "Thank you! The quotation has been accepted successfully."
+        });
+        setIsSigned(true);
+        setSignatureData(signatureDataUrl);
+        setSignerInfo(signerDetails);
       }
     } catch (error) {
-      console.error("Error processing signature:", error);
+      console.error("Error accepting quotation:", error);
       toast({
         title: "Error",
-        description: "Failed to process signature. Please try again.",
+        description: "Failed to accept quotation. Please try again.",
         variant: "destructive"
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -300,8 +292,8 @@ export default function ViewQuotation() {
               
               {quotation.subject && (
                 <div className="mt-4 pt-4 border-t">
-                  <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
-                  <p>{quotation.subject}</p>
+                  <h3 className="font-semibold text-gray-700 mb-2 inline-block mr-4">Subject:</h3>
+                  <span>{quotation.subject}</span>
                 </div>
               )}
             </CardContent>
@@ -333,9 +325,9 @@ export default function ViewQuotation() {
                         {groupedItems[category].map((item, idx) => (
                           <tr key={idx} className="border-b">
                             <td className="py-3 px-4">{item.description}</td>
-                            <td className="py-3 px-4 text-right">{formatMoney(item.unit_price)}</td>
+                            <td className="py-3 px-4 text-right">RM {parseFloat(item.unit_price.toString()).toFixed(2)}</td>
                             <td className="py-3 px-4 text-right">{item.quantity}</td>
-                            <td className="py-3 px-4 text-right">{formatMoney(item.amount)}</td>
+                            <td className="py-3 px-4 text-right">RM {parseFloat(item.amount.toString()).toFixed(2)}</td>
                           </tr>
                         ))}
                       </>
@@ -348,19 +340,19 @@ export default function ViewQuotation() {
                 <div className="w-full max-w-xs">
                   <div className="flex justify-between py-2">
                     <span className="font-medium">Subtotal:</span>
-                    <span>{formatMoney(subtotal)}</span>
+                    <span>RM {parseFloat(subtotal.toString()).toFixed(2)}</span>
                   </div>
                   {quotation.requires_deposit && (
                     <>
                       <div className="flex justify-between py-2">
                         <span className="font-medium">Deposit Required ({quotation.deposit_percentage}%):</span>
-                        <span>{formatMoney(quotation.deposit_amount || 0)}</span>
+                        <span>RM {parseFloat((quotation.deposit_amount || 0).toString()).toFixed(2)}</span>
                       </div>
                     </>
                   )}
                   <div className="flex justify-between py-2 text-lg font-bold">
                     <span>Total:</span>
-                    <span>{formatMoney(quotation.total)}</span>
+                    <span>RM {parseFloat(quotation.total.toString()).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -423,7 +415,7 @@ export default function ViewQuotation() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Signature
                   </label>
-                  <div className="border border-gray-300 rounded-md p-2 bg-white" style={{ touchAction: 'none' }}>
+                  <div className="border border-gray-300 rounded-md p-2 bg-white">
                     <SignatureCanvas 
                       ref={(ref) => setSigPad(ref)} 
                       penColor="black"
@@ -431,7 +423,21 @@ export default function ViewQuotation() {
                         width: 500,
                         height: 200,
                         className: "w-full signature-canvas",
-                        style: { touchAction: 'none' }
+                        style: { 
+                          touchAction: 'none',
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
+                          MozUserSelect: 'none',
+                          msUserSelect: 'none'
+                        }
+                      }}
+                      onBegin={() => {
+                        // Prevent scrolling when signing
+                        document.body.style.overflow = 'hidden';
+                      }}
+                      onEnd={() => {
+                        // Re-enable scrolling when done signing
+                        document.body.style.overflow = 'auto';
                       }}
                     />
                   </div>
