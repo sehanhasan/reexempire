@@ -1,10 +1,26 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
 
 interface QuotationItemInput extends Omit<QuotationItem, "id" | "created_at" | "updated_at"> {
   category?: string;
 }
+
+const updateStatus = async (id: string, status: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('quotations')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) {
+      console.error("Error updating quotation status:", error);
+      throw new Error(`Failed to update quotation status: ${error.message}`);
+    }
+  } catch (error) {
+    console.error("Error in updateStatus:", error);
+    throw error;
+  }
+};
 
 export const quotationService = {
   async getAll(): Promise<Quotation[]> {
@@ -158,5 +174,7 @@ export const quotationService = {
       `Thank you,\nReex Empire Sdn Bhd`;
     
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
-  }
+  },
+
+  updateStatus
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -192,7 +191,7 @@ export default function CreateInvoice() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, isDraft = true) => {
     e.preventDefault();
     
     if (!customerId) {
@@ -229,7 +228,7 @@ export default function CreateInvoice() {
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
-        status: "Draft",
+        status: isDraft ? "Draft" : "Sent",
         subtotal: subtotal,
         tax_rate: 0,
         tax_amount: 0,
@@ -271,9 +270,14 @@ export default function CreateInvoice() {
         }
       }
       
+      if (!isDraft) {
+        // Send invoice via WhatsApp
+        sendInvoiceWhatsApp(createdInvoice.id);
+      }
+      
       toast({
         title: "Invoice Created",
-        description: `Invoice for ${customer?.name} has been created successfully.`,
+        description: `Invoice for ${customer?.name} has been ${isDraft ? 'saved as draft' : 'created and sent'} successfully.`,
       });
       
       navigate("/invoices");
@@ -287,6 +291,21 @@ export default function CreateInvoice() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const sendInvoiceWhatsApp = (invoiceId: string) => {
+    if (!customer?.phone) {
+      toast({
+        title: "No Phone Number",
+        description: "Customer phone number is required to send via WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const message = `Hello ${customer.name},\n\nYour invoice ${documentNumber} is ready for review.\n\nPlease click the link below to view your invoice:\n${window.location.origin}/invoices/${invoiceId}/view\n\nThank you for your business!\n\nReex Empire Sdn Bhd`;
+    const whatsappUrl = `https://wa.me/${customer.phone.replace(/^\+/, '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
@@ -303,7 +322,7 @@ export default function CreateInvoice() {
         }
       />
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      <form onSubmit={(e) => handleSubmit(e, true)} className="mt-8 space-y-6">
         <CustomerInfoCard 
           customerId={customerId}
           setCustomer={setCustomerId}
@@ -382,6 +401,33 @@ export default function CreateInvoice() {
                   ))}
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex gap-4 justify-end">
+              <Button variant="outline" onClick={() => navigate("/invoices")}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || uploadingImages}
+                variant="outline"
+              >
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Save Draft
+              </Button>
+              <Button 
+                type="button" 
+                onClick={(e) => handleSubmit(e, false)}
+                disabled={isSubmitting || uploadingImages}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Send Invoice
+              </Button>
             </div>
           </CardContent>
         </Card>

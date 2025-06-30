@@ -17,17 +17,6 @@ import {
 } from "lucide-react";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -44,8 +33,6 @@ export default function Customers() {
   const location = useLocation();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
@@ -72,9 +59,7 @@ export default function Customers() {
   }, []);
 
   const handleView = (customer: Customer) => {
-    // First clear the previous customer to avoid state issues
     setSelectedCustomer(null);
-    // Use setTimeout to ensure the state is updated before showing dialog
     setTimeout(() => {
       setSelectedCustomer(customer);
       setShowDetails(true);
@@ -112,7 +97,12 @@ export default function Customers() {
       header: "Unit #",
       accessorKey: "unit_number" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="font-medium">{row.original.unit_number || 'N/A'}</div>
+        <div 
+          className="font-medium cursor-pointer p-2 -m-2 rounded hover:bg-gray-50"
+          onClick={() => handleView(row.original)}
+        >
+          {row.original.unit_number || 'N/A'}
+        </div>
       ),
     },
     {
@@ -120,7 +110,7 @@ export default function Customers() {
       accessorKey: "name" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
         <div 
-          className="font-medium text-blue-600 cursor-pointer"
+          className="font-medium text-blue-600 cursor-pointer p-2 -m-2 rounded hover:bg-gray-50"
           onClick={() => handleView(row.original)}
         >
           {row.original.name}
@@ -131,17 +121,15 @@ export default function Customers() {
       header: "WhatsApp",
       accessorKey: "phone" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="flex items-center">
+        <div 
+          className="flex items-center cursor-pointer p-2 -m-2 rounded hover:bg-gray-50"
+          onClick={() => handleView(row.original)}
+        >
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           {row.original.phone ? (
-            <a 
-              href={`https://wa.me/${row.original.phone.replace(/^\+/, '')}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
+            <span className="text-blue-600">
               {row.original.phone}
-            </a>
+            </span>
           ) : (
             <span className="text-muted-foreground">Not provided</span>
           )}
@@ -152,7 +140,12 @@ export default function Customers() {
       header: "Address",
       accessorKey: "address" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <span>{row.original.address || 'Not provided'}</span>
+        <div 
+          className="cursor-pointer p-2 -m-2 rounded hover:bg-gray-50"
+          onClick={() => handleView(row.original)}
+        >
+          {row.original.address || 'Not provided'}
+        </div>
       ),
     },
   ];
@@ -291,6 +284,7 @@ export default function Customers() {
                   onClick={() => {
                     if (selectedCustomer) handleDelete(selectedCustomer);
                   }}
+                  className="border-red-500"
                 >
                   <Trash className="mr-2 h-4 w-4" />
                   Delete

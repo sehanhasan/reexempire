@@ -35,10 +35,10 @@ export function MobileHeader({ title, onMenuClick, actions }: MobileHeaderProps)
       >
         <Menu className="h-5 w-5" />
       </Button>
-      <h1 className="font-semibold text-white truncate">{title}</h1>
+      <h1 className="font-semibold text-white truncate flex-1 text-center">{title}</h1>
       
       <div className="flex items-center gap-2">
-        <div className="text-white">
+        <div className="text-white mr-4">
           <NotificationBell />
         </div>
         {actions && actions.length > 0 ? (

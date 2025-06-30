@@ -180,5 +180,22 @@ export const appointmentService = {
     }
     
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  },
+
+  async updateStatus(id: string, status: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) {
+        console.error("Error updating appointment status:", error);
+        throw new Error(`Failed to update appointment status: ${error.message}`);
+      }
+    } catch (error) {
+      console.error("Error in updateStatus:", error);
+      throw error;
+    }
   }
 };

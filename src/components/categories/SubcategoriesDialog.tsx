@@ -1,104 +1,121 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { categoryService } from "@/services";
 
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Category, Subcategory } from '@/types/database';
-import { categoryService } from '@/services/categoryService';
-import { toast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
-
-interface SubcategoriesDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  category: Category;
+interface Subcategory {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
 }
 
-export function SubcategoriesDialog({ open, onOpenChange, category }: SubcategoriesDialogProps) {
+interface PricingOption {
+  id: string;
+  name: string;
+  price: number;
+  unit: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface SubcategoriesDialogProps {
+  category: Category;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const formatMoney = (amount: number) => {
+  return `RM ${amount.toFixed(2)}`;
+};
+
+export function SubcategoriesDialog({ category, isOpen, onClose }: SubcategoriesDialogProps) {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [pricingOptions, setPricingOptions] = useState<{ [key: string]: PricingOption[] }>({});
 
   useEffect(() => {
     const fetchSubcategories = async () => {
-      if (open && category) {
-        setIsLoading(true);
-        try {
-          const subcats = await categoryService.getSubcategoriesByCategoryId(category.id);
-          
-          // Ensure we don't have duplicates by using a Map with the ID as key
-          const uniqueSubcategories = new Map();
-          subcats.forEach(subcat => {
-            if (!uniqueSubcategories.has(subcat.id)) {
-              uniqueSubcategories.set(subcat.id, subcat);
-            }
-          });
-          
-          // Convert Map back to array
-          setSubcategories(Array.from(uniqueSubcategories.values()));
-        } catch (error) {
-          console.error("Error fetching subcategories:", error);
-          toast({
-            title: "Error",
-            description: `Could not display subcategories for ${category.name}`,
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoading(false);
+      try {
+        const fetchedSubcategories = await categoryService.getSubcategories(category.id);
+        setSubcategories(fetchedSubcategories);
+
+        // Fetch pricing options for each subcategory
+        const options: { [key: string]: PricingOption[] } = {};
+        for (const subcategory of fetchedSubcategories) {
+          const fetchedOptions = await categoryService.getPricingOptions(subcategory.id);
+          options[subcategory.id] = fetchedOptions;
         }
+        setPricingOptions(options);
+      } catch (error) {
+        console.error("Error fetching subcategories:", error);
       }
     };
 
-    fetchSubcategories();
-  }, [open, category]);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-MY', {
-      style: 'currency',
-      currency: 'MYR',
-      minimumFractionDigits: 2
-    }).format(price);
-  };
+    if (isOpen) {
+      fetchSubcategories();
+    }
+  }, [category.id, isOpen]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0">
-        <DialogHeader className="p-6 border-b">
-          <DialogTitle>{category?.name} - Subcategories</DialogTitle>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{category.name} - Subcategories</DialogTitle>
+          <DialogDescription>
+            Manage subcategories and pricing options for {category.name}.
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
-            </div>
-          ) : subcategories.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              No subcategories found
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {subcategories.map((subcategory) => (
-                <Card key={subcategory.id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{subcategory.name}</h3>
-                        {subcategory.description && (
-                          <p className="text-sm text-gray-500 mt-1">{subcategory.description}</p>
-                        )}
+        <div className="space-y-6">
+          {subcategories.map((subcategory) => (
+            <div key={subcategory.id} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold">{subcategory.name}</h3>
+                <Badge variant="secondary">
+                  {formatMoney(subcategory.price)}
+                </Badge>
+              </div>
+              
+              {subcategory.description && (
+                <p className="text-sm text-muted-foreground mb-3">
+                  {subcategory.description}
+                </p>
+              )}
+              
+              {pricingOptions[subcategory.id] && pricingOptions[subcategory.id].length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700">Pricing Options:</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {pricingOptions[subcategory.id].map((option) => (
+                      <div key={option.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm">{option.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{formatMoney(option.price)}</span>
+                          <span className="text-xs text-muted-foreground">per {option.unit}</span>
+                        </div>
                       </div>
-                      {subcategory.price !== null && subcategory.price !== undefined && (
-                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-                          {formatPrice(subcategory.price)}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
+        
+        <DialogFooter>
+          <Button onClick={onClose}>Close</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
