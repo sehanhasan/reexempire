@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -299,7 +300,7 @@ export default function EditInvoice() {
         terms: null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
-        deposit_percentage: isDepositPercentage ? depositPercentage : 0,
+        deposit_percentage: isDepositInvoice ? depositPercentage : 0,
         payment_status: "Unpaid"
       };
 
