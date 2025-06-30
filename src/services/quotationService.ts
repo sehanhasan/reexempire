@@ -67,31 +67,6 @@ export const quotationService = {
     return data;
   },
 
-  async updateStatus(id: string, status: string, signatureDataUrl?: string): Promise<Quotation> {
-    const updateData: any = { status };
-    
-    // If signature is provided, you might want to store it
-    // For now, we'll just update the status
-    if (signatureDataUrl) {
-      // You could add a signature_url field to store the signature
-      // updateData.signature_url = signatureDataUrl;
-    }
-
-    const { data, error } = await supabase
-      .from("quotations")
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating quotation status with id ${id}:`, error);
-      throw error;
-    }
-
-    return data;
-  },
-
   async delete(id: string): Promise<void> {
     const { error } = await supabase
       .from("quotations")

@@ -113,7 +113,7 @@ export function NotificationBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 z-[60] bg-white border shadow-lg">
+      <DropdownMenuContent align="end" className="w-80">
         <div className="p-2 border-b">
           <h3 className="font-semibold">Notifications</h3>
         </div>

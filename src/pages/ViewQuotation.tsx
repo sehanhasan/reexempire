@@ -1,81 +1,203 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Download } from "lucide-react";
-import { quotationService, customerService } from "@/services";
-import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import SignatureCanvas from 'react-signature-canvas';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Download, Check, Share2 } from "lucide-react";
+import { quotationService, customerService } from "@/services";
+import { Customer, Quotation, QuotationItem as QuotationItemType } from "@/types/database";
+import { formatDate } from "@/utils/formatters";
+import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
+import SignatureCanvas from "react-signature-canvas";
+import { Separator } from "@/components/ui/separator";
 
 export default function ViewQuotation() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [quotation, setQuotation] = useState<any>(null);
-  const [customer, setCustomer] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
+  const [quotation, setQuotation] = useState<Quotation | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [items, setItems] = useState<QuotationItemType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAcceptDialog, setShowAcceptDialog] = useState(false);
-  const signatureCanvas = useRef<SignatureCanvas | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [signatureDate] = useState(new Date().toISOString().split('T')[0]);
+  const [sigPad, setSigPad] = useState<SignatureCanvas | null>(null);
+  const [isSigned, setIsSigned] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [signerInfo, setSignerInfo] = useState<{ name: string; date: string } | null>(null);
 
   useEffect(() => {
+    if (!id) return;
+    
     const fetchQuotationData = async () => {
-      if (!id) return;
-      
       try {
         setLoading(true);
-        const quotationData = await quotationService.getById(id);
         
+        const quotationData = await quotationService.getById(id);
         if (quotationData) {
           setQuotation(quotationData);
           
-          // Fetch quotation items separately
-          const quotationItems = await quotationService.getItemsByQuotationId(id);
-          setItems(quotationItems || []);
+          // Parse signature data and signer info from notes if it exists
+          if (quotationData.notes && quotationData.notes.includes('SIGNATURE_DATA:')) {
+            const signaturePart = quotationData.notes.split('SIGNATURE_DATA:')[1];
+            if (signaturePart) {
+              const parts = signaturePart.split('SIGNER_INFO:');
+              if (parts.length === 2) {
+                setSignatureData(parts[0].trim());
+                const signerInfoStr = parts[1].trim();
+                try {
+                  const parsedSignerInfo = JSON.parse(signerInfoStr);
+                  setSignerInfo(parsedSignerInfo);
+                } catch (e) {
+                  console.error("Error parsing signer info:", e);
+                }
+              }
+            }
+          }
           
-          // Fetch customer data
-          const customerData = await customerService.getById(quotationData.customer_id);
-          setCustomer(customerData);
+          if (quotationData.customer_id) {
+            const customerData = await customerService.getById(quotationData.customer_id);
+            setCustomer(customerData);
+            setCustomerName(customerData?.name || "");
+          }
+          
+          const itemsData = await quotationService.getItemsByQuotationId(id);
+          setItems(itemsData);
         }
+        
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching quotation:", error);
+        setLoading(false);
         toast({
           title: "Error",
-          description: "Failed to load quotation",
+          description: "Could not load quotation details. Please try again later.",
           variant: "destructive"
         });
-      } finally {
-        setLoading(false);
       }
     };
-
+    
     fetchQuotationData();
   }, [id]);
 
-  const formatMoney = (amount) => {
-    return `RM ${parseFloat(amount).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`;
+  const handleSignature = () => {
+    if (!sigPad || sigPad.isEmpty()) {
+      toast({
+        title: "Signature Required",
+        description: "Please sign the quotation to accept it.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Convert signature to data URL
+      const signatureDataUrl = sigPad.toDataURL('image/png');
+      const signerDetails = {
+        name: customerName,
+        date: signatureDate
+      };
+      
+      // Update quotation status to Accepted and store signature data
+      if (id) {
+        const originalNotes = quotation?.notes || "";
+        const cleanNotes = originalNotes.split('SIGNATURE_DATA:')[0].trim();
+        const notesWithSignature = `${cleanNotes}\n\nSIGNATURE_DATA:${signatureDataUrl}\nSIGNER_INFO:${JSON.stringify(signerDetails)}`;
+        
+        quotationService.update(id, {
+          status: "Accepted",
+          notes: notesWithSignature
+        }).then(() => {
+          toast({
+            title: "Quotation Accepted",
+            description: "Thank you! The quotation has been accepted successfully."
+          });
+          setIsSigned(true);
+          setSignatureData(signatureDataUrl);
+          setSignerInfo(signerDetails);
+        }).catch((error) => {
+          console.error("Error accepting quotation:", error);
+          toast({
+            title: "Error",
+            description: "Failed to update quotation status. Please try again.",
+            variant: "destructive"
+          });
+        }).finally(() => {
+          setIsSubmitting(false);
+        });
+      }
+    } catch (error) {
+      console.error("Error processing signature:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process signature. Please try again.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+    }
+  };
+
+  const clearSignature = () => {
+    if (sigPad) {
+      sigPad.clear();
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!quotation || !customer) return;
+    
+    try {
+      const itemsForPDF = items.map(item => ({
+        id: Number(item.id),
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unit_price,
+        amount: item.amount,
+        category: item.category || '',
+        unit: item.unit || ''
+      }));
+      
+      const pdf = generateQuotationPDF({
+        documentNumber: quotation.reference_number,
+        documentDate: quotation.issue_date,
+        customerName: customer.name,
+        unitNumber: customer.unit_number || "",
+        expiryDate: quotation.expiry_date,
+        validUntil: quotation.expiry_date,
+        notes: quotation.notes || "",
+        items: itemsForPDF,
+        subject: quotation.subject || "",
+        customerAddress: customer.address || "",
+        customerContact: customer.phone || "",
+        customerEmail: customer.email || "",
+        depositInfo: {
+          requiresDeposit: quotation.requires_deposit || false,
+          depositAmount: quotation.deposit_amount || 0,
+          depositPercentage: quotation.deposit_percentage || 0
+        }
+      });
+      
+      downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePrintPDF = () => {
     window.print();
   };
 
-  const getStatusColor = (status) => {
-    if (status === "Accepted") return "bg-green-100 text-green-800 hover:bg-green-100";
-    if (status === "Rejected") return "bg-red-100 text-red-600 hover:bg-red-100";
-    return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+  const formatMoney = (amount: number) => {
+    return `RM ${parseFloat(amount.toString()).toFixed(2)}`;
   };
 
   if (loading) {
@@ -102,7 +224,7 @@ export default function ViewQuotation() {
   }
 
   // Group items by category
-  const groupedItems = {};
+  const groupedItems: Record<string, QuotationItemType[]> = {};
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
@@ -112,39 +234,12 @@ export default function ViewQuotation() {
   });
   
   const categories = Object.keys(groupedItems).sort();
+  
+  // Calculate subtotal
+  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
 
-  const handleAcceptQuotation = async () => {
-    if (!signatureCanvas.current?.isEmpty()) {
-      const signatureDataURL = signatureCanvas.current?.toDataURL();
-      console.log('Signature captured:', signatureDataURL ? 'Yes' : 'No');
-      
-      try {
-        await quotationService.updateStatus(id!, 'Accepted', signatureDataURL);
-        toast({
-          title: "Success",
-          description: "Quotation has been accepted successfully!",
-        });
-        
-        // Refresh the quotation data
-        const updatedQuotation = await quotationService.getById(id!);
-        setQuotation(updatedQuotation);
-        setShowAcceptDialog(false);
-      } catch (error) {
-        console.error("Error accepting quotation:", error);
-        toast({
-          title: "Error",
-          description: "Failed to accept quotation. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } else {
-      toast({
-        title: "Signature Required",
-        description: "Please provide your signature to accept the quotation.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Clean notes (remove signature data for display)
+  const displayNotes = quotation.notes ? quotation.notes.split('SIGNATURE_DATA:')[0].trim() : null;
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ minWidth: '1024px' }}>
@@ -161,14 +256,9 @@ export default function ViewQuotation() {
             </div>
             <div className="text-center flex-1 px-4">
               <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
-              <div className="flex items-center justify-center gap-2 mt-1">
-                <p className="text-sm text-gray-600">
-                  Issued: {format(new Date(quotation.issue_date), "MMM dd, yyyy")}
-                </p>
-                <Badge className={getStatusColor(quotation.status)}>
-                  {quotation.status}
-                </Badge>
-              </div>
+              <p className="text-sm text-gray-600">
+                Issued: {formatDate(quotation.issue_date)} | Valid until: {formatDate(quotation.expiry_date)}
+              </p>
             </div>
             <div className="flex items-center">
               <Button variant="outline" onClick={handlePrintPDF} className="flex items-center gap-1">
@@ -182,7 +272,6 @@ export default function ViewQuotation() {
 
       <div className="py-8 px-4">
         <div className="max-w-4xl mx-auto">
-          {/* Company Info Card */}
           <Card className="mb-6">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 gap-6 mb-4">
@@ -211,8 +300,8 @@ export default function ViewQuotation() {
               
               {quotation.subject && (
                 <div className="mt-4 pt-4 border-t">
-                  <span className="font-semibold text-gray-700 mr-4">Subject:</span>
-                  <span>{quotation.subject}</span>
+                  <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
+                  <p>{quotation.subject}</p>
                 </div>
               )}
             </CardContent>
@@ -259,8 +348,16 @@ export default function ViewQuotation() {
                 <div className="w-full max-w-xs">
                   <div className="flex justify-between py-2">
                     <span className="font-medium">Subtotal:</span>
-                    <span>{formatMoney(quotation.subtotal)}</span>
+                    <span>{formatMoney(subtotal)}</span>
                   </div>
+                  {quotation.requires_deposit && (
+                    <>
+                      <div className="flex justify-between py-2">
+                        <span className="font-medium">Deposit Required ({quotation.deposit_percentage}%):</span>
+                        <span>{formatMoney(quotation.deposit_amount || 0)}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between py-2 text-lg font-bold">
                     <span>Total:</span>
                     <span>{formatMoney(quotation.total)}</span>
@@ -270,39 +367,123 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Notes Card - only show if there are actual notes */}
-          {quotation.notes && (
+          {/* Notes Card - only show if there are actual notes (not signature data) */}
+          {displayNotes && (
             <Card className="mb-6">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
-                <p className="whitespace-pre-line">{quotation.notes}</p>
+                <p className="whitespace-pre-line">{displayNotes}</p>
               </CardContent>
             </Card>
           )}
 
-          {/* Terms Card */}
-          {quotation.terms && (
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Terms & Conditions</h3>
-                <p className="whitespace-pre-line">{quotation.terms}</p>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="mb-6">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-gray-700 mb-4">Terms and Conditions</h3>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>Payment terms 30 days</li>
+                <li>Project duration 5-7 working days</li>
+                <li>This quotation is valid until {formatDate(quotation.expiry_date)}</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-          {quotation.status === 'Pending' && (
+          {quotation.status !== "Accepted" && !isSigned ? (
             <Card className="mb-6">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-gray-700 mb-4">Accept Quotation</h3>
-                <p className="text-gray-600 mb-4">
-                  Please review the quotation details and provide your signature to accept.
-                </p>
-                <Button onClick={() => setShowAcceptDialog(true)} className="bg-green-600 hover:bg-green-700">
-                  Accept Quotation
-                </Button>
+                <p className="mb-4">To accept this quotation, please fill out the information below:</p>
+                
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <Input 
+                      id="customerName" 
+                      value={customerName} 
+                      onChange={(e) => setCustomerName(e.target.value)} 
+                      placeholder="Your full name" 
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="signatureDate" className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
+                    <Input 
+                      id="signatureDate" 
+                      value={formatDate(signatureDate)} 
+                      readOnly 
+                    />
+                  </div>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Signature
+                  </label>
+                  <div className="border border-gray-300 rounded-md p-2 bg-white" style={{ touchAction: 'none' }}>
+                    <SignatureCanvas 
+                      ref={(ref) => setSigPad(ref)} 
+                      penColor="black"
+                      canvasProps={{
+                        width: 500,
+                        height: 200,
+                        className: "w-full signature-canvas",
+                        style: { touchAction: 'none' }
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button onClick={clearSignature} variant="outline" type="button">
+                    Clear
+                  </Button>
+                  <Button 
+                    onClick={handleSignature} 
+                    className="bg-green-600 hover:bg-green-700"
+                    disabled={isSubmitting}
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    {isSubmitting ? "Processing..." : "Accept Quotation"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          )}
+          ) : isSigned || quotation.status === "Accepted" ? (
+            <Card className="mb-6 bg-green-50 border-green-200">
+              <CardContent className="p-6">
+                <div className="flex items-center text-green-700 mb-4">
+                  <Check className="mr-2 h-5 w-5" />
+                  <h3 className="font-semibold">Quotation Accepted</h3>
+                </div>
+                <p className="text-green-700 mb-4">
+                  Thank you for accepting this quotation. We will be in touch shortly to proceed with the next steps.
+                </p>
+                
+                {/* Display actual signature */}
+                {signatureData && (
+                  <div className="mt-4">
+                    <div className="border border-gray-300 rounded-md p-4 bg-white inline-block">
+                      <img 
+                        src={signatureData} 
+                        alt="Electronic Signature" 
+                        className="max-w-md h-auto"
+                        style={{ maxHeight: '150px' }}
+                      />
+                    </div>
+                    {signerInfo && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        Electronically signed by: <strong>{signerInfo.name}</strong> on <strong>{formatDate(signerInfo.date)}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
 
           <div className="text-center text-gray-500 text-sm mt-8">
             <p>Thank you for your business!</p>
@@ -310,61 +491,6 @@ export default function ViewQuotation() {
           </div>
         </div>
       </div>
-
-      {/* Signature Dialog */}
-      <Dialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Accept Quotation</DialogTitle>
-            <DialogDescription>
-              Please provide your signature to accept this quotation.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-md p-4">
-              <SignatureCanvas
-                ref={signatureCanvas}
-                penColor="black"
-                canvasProps={{
-                  width: 400,
-                  height: 200,
-                  className: 'signature-canvas w-full h-full',
-                  style: { touchAction: 'none' }
-                }}
-                backgroundColor="white"
-                onBegin={() => {
-                  console.log('Signature started');
-                  // Prevent scrolling on mobile
-                  document.body.style.overflow = 'hidden';
-                }}
-                onEnd={() => {
-                  console.log('Signature ended');
-                  // Re-enable scrolling
-                  document.body.style.overflow = 'auto';
-                }}
-              />
-            </div>
-            <div className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={() => signatureCanvas.current?.clear()}
-              >
-                Clear Signature
-              </Button>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAcceptDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAcceptQuotation} className="bg-green-600 hover:bg-green-700">
-              Accept Quotation
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceImage } from "@/types/database";
 
@@ -157,17 +158,6 @@ const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   }
 };
 
-const generateWhatsAppShareUrl = (invoiceId: string, invoiceNumber: string, customerName: string, previewUrl: string): string => {
-  const message = `Dear ${customerName},\n\n` +
-    `Please find your invoice ${invoiceNumber} for review at the link below: ` +
-    `${previewUrl}\n\n` +
-    `You can review the invoice details and make payment online.\n\n` +
-    `If you have any questions, please don't hesitate to contact us.\n\n` +
-    `Thank you,\nReex Empire Sdn Bhd`;
-  
-  return `https://wa.me/?text=${encodeURIComponent(message)}`;
-};
-
 export const invoiceService = {
   getAll,
   getById,
@@ -180,8 +170,7 @@ export const invoiceService = {
   deleteItem,
   addInvoiceImage,
   getInvoiceImages,
-  deleteItemsByInvoiceId,
-  generateWhatsAppShareUrl
+  deleteItemsByInvoiceId
 };
 
 export default invoiceService;

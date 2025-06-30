@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -71,7 +72,9 @@ export default function Customers() {
   }, []);
 
   const handleView = (customer: Customer) => {
+    // First clear the previous customer to avoid state issues
     setSelectedCustomer(null);
+    // Use setTimeout to ensure the state is updated before showing dialog
     setTimeout(() => {
       setSelectedCustomer(customer);
       setShowDetails(true);
@@ -109,16 +112,17 @@ export default function Customers() {
       header: "Unit #",
       accessorKey: "unit_number" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="font-medium">
-          {row.original.unit_number || 'N/A'}
-        </div>
+        <div className="font-medium">{row.original.unit_number || 'N/A'}</div>
       ),
     },
     {
       header: "Name",
       accessorKey: "name" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="font-medium text-blue-600">
+        <div 
+          className="font-medium text-blue-600 cursor-pointer"
+          onClick={() => handleView(row.original)}
+        >
           {row.original.name}
         </div>
       ),
@@ -130,9 +134,14 @@ export default function Customers() {
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           {row.original.phone ? (
-            <span className="text-blue-600">
+            <a 
+              href={`https://wa.me/${row.original.phone.replace(/^\+/, '')}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
               {row.original.phone}
-            </span>
+            </a>
           ) : (
             <span className="text-muted-foreground">Not provided</span>
           )}
@@ -143,9 +152,7 @@ export default function Customers() {
       header: "Address",
       accessorKey: "address" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <span>
-          {row.original.address || 'Not provided'}
-        </span>
+        <span>{row.original.address || 'Not provided'}</span>
       ),
     },
   ];
@@ -171,7 +178,6 @@ export default function Customers() {
           columns={columns} 
           data={customers} 
           searchKey="name" 
-          onRowClick={handleView}
         />
       </div>
 
