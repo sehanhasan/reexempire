@@ -9,22 +9,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Edit,
-  MoreHorizontal,
   Trash,
-  Eye,
+  Loader2,
   Mail,
   Phone,
-  Loader2,
   MapPin
 } from "lucide-react";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import {
   AlertDialog,
@@ -95,23 +85,16 @@ export default function Customers() {
     navigate(`/customers/add?id=${customer.id}`);
   };
 
-  const handleDelete = (customer: Customer) => {
-    setCustomerToDelete(customer);
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!customerToDelete) return;
-    
+  const handleDelete = async (customer: Customer) => {
     try {
-      await customerService.delete(customerToDelete.id);
-      setCustomers(customers.filter(c => c.id !== customerToDelete.id));
-      setShowDeleteConfirm(false);
-      setCustomerToDelete(null);
+      await customerService.delete(customer.id);
+      setCustomers(customers.filter(c => c.id !== customer.id));
+      setShowDetails(false);
+      setSelectedCustomer(null);
       
       toast({
         title: "Customer Deleted",
-        description: `${customerToDelete.name} has been deleted successfully.`,
+        description: `${customer.name} has been deleted successfully.`,
         variant: "destructive",
       });
     } catch (error) {
@@ -172,54 +155,6 @@ export default function Customers() {
         <span>{row.original.address || 'Not provided'}</span>
       ),
     },
-    {
-      header: "Actions",
-      accessorKey: "id" as keyof Customer,
-      cell: ({ row }: { row: { original: Customer } }) => {
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleView(row.original)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleEdit(row.original)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => {
-                  navigate("/quotations/create", { state: { customerId: row.original.id } });
-                }}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                Create Quotation
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="cursor-pointer text-red-600"
-                onClick={() => handleDelete(row.original)}
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
   ];
 
   if (isLoading) {
@@ -236,7 +171,6 @@ export default function Customers() {
       <PageHeader 
         title="Customers" 
         description="Manage your customer database."
-        // Removed "Add Customer" button from header as requested
       />
       
       <div className="mt-8">
@@ -331,18 +265,19 @@ export default function Customers() {
                   Close
                 </Button>
                 <Button 
-                  variant="outline"
                   onClick={() => {
                     setShowDetails(false);
                     if (selectedCustomer) {
                       navigate("/quotations/create", { state: { customerId: selectedCustomer.id } });
                     }
                   }}
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Mail className="mr-2 h-4 w-4" />
                   Create Quotation
                 </Button>
                 <Button 
+                  variant="outline"
                   onClick={() => {
                     setShowDetails(false);
                     if (selectedCustomer) handleEdit(selectedCustomer);
@@ -351,32 +286,20 @@ export default function Customers() {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={() => {
+                    if (selectedCustomer) handleDelete(selectedCustomer);
+                  }}
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
               </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
-
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete {customerToDelete?.name}'s customer record.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <FloatingActionButton onClick={() => navigate("/customers/add")} />
     </div>

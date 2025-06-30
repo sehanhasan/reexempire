@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Menu, MoreVertical } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -36,28 +37,33 @@ export function MobileHeader({ title, onMenuClick, actions }: MobileHeaderProps)
       </Button>
       <h1 className="font-semibold text-white truncate">{title}</h1>
       
-      {actions && actions.length > 0 ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-white hover:bg-blue-700"
-            >
-              <MoreVertical className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {actions.map((action, index) => (
-              <DropdownMenuItem key={index} className="cursor-pointer">
-                {action}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        <div className="w-9" />
-      )}
+      <div className="flex items-center gap-2">
+        <div className="text-white">
+          <NotificationBell />
+        </div>
+        {actions && actions.length > 0 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-white hover:bg-blue-700"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {actions.map((action, index) => (
+                <DropdownMenuItem key={index} className="cursor-pointer">
+                  {action}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="w-9" />
+        )}
+      </div>
     </header>
   );
 }

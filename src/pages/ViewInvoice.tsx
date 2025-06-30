@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -161,7 +162,7 @@ export default function ViewInvoice() {
           {/* Company Info Card */}
           <Card className="mb-6">
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-6 mb-4">
                 <div>
                   <h3 className="font-semibold text-gray-700 mb-2">From</h3>
                   <div className="text-gray-700">
@@ -184,49 +185,52 @@ export default function ViewInvoice() {
                   </div>
                 </div>
               </div>
+              
+              {invoice.subject && (
+                <div className="mt-4 pt-4 border-t">
+                  <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
+                  <p>{invoice.subject}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
-
-          {invoice.subject && (
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
-                <p>{invoice.subject}</p>
-              </CardContent>
-            </Card>
-          )}
 
           <Card className="mb-6">
             <CardContent className="p-6">
               <h3 className="font-semibold text-gray-700 mb-4">Items</h3>
               
-              {categories.map(category => (
-                <div key={category} className="mb-6">
-                  <h4 className="font-medium text-blue-800 mb-2">{category}</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-gray-50 text-left">
-                          <th className="py-2 px-4 border-b">Description</th>
-                          <th className="py-2 px-4 border-b text-right">Price</th>
-                          <th className="py-2 px-4 border-b text-right">Qty</th>
-                          <th className="py-2 px-4 border-b text-right">Amount</th>
+              {/* Main table header */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-left">
+                      <th className="py-2 px-4 border-b">Description</th>
+                      <th className="py-2 px-4 border-b text-right">Price</th>
+                      <th className="py-2 px-4 border-b text-right">Qty</th>
+                      <th className="py-2 px-4 border-b text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categories.map(category => (
+                      <>
+                        <tr key={category}>
+                          <td colSpan={4} className="py-2 px-4 font-medium text-blue-800 bg-blue-50">
+                            {category}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
                         {groupedItems[category].map((item, idx) => (
                           <tr key={idx} className="border-b">
                             <td className="py-3 px-4">{item.description}</td>
                             <td className="py-3 px-4 text-right">{formatMoney(item.unit_price)}</td>
-                            <td className="py-3 px-4 text-right">{item.quantity} {item.unit}</td>
+                            <td className="py-3 px-4 text-right">{item.quantity}</td>
                             <td className="py-3 px-4 text-right">{formatMoney(item.amount)}</td>
                           </tr>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               
               <div className="mt-6 flex justify-end">
                 <div className="w-full max-w-xs">
