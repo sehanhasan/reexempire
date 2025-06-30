@@ -67,6 +67,22 @@ export const quotationService = {
     return data;
   },
 
+  async updateStatus(id: string, status: string): Promise<Quotation> {
+    const { data, error } = await supabase
+      .from("quotations")
+      .update({ status })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error updating quotation status for id ${id}:`, error);
+      throw error;
+    }
+
+    return data;
+  },
+
   async delete(id: string): Promise<void> {
     const { error } = await supabase
       .from("quotations")

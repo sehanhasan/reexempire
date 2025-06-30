@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -117,6 +118,22 @@ export const appointmentService = {
 
     if (error) {
       console.error(`Error updating appointment with id ${id}:`, error);
+      throw error;
+    }
+
+    return data;
+  },
+
+  async updateStatus(id: string, status: string): Promise<Appointment> {
+    const { data, error } = await supabase
+      .from("appointments")
+      .update({ status })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error updating appointment status for id ${id}:`, error);
       throw error;
     }
 
