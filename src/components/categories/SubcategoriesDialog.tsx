@@ -11,21 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { categoryService } from "@/services";
+import { Subcategory as DBSubcategory, PricingOption } from "@/types/database";
 
-interface Subcategory {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-}
-
-interface PricingOption {
-  id: string;
-  name: string;
-  price: number;
-  unit: string;
-}
-
+// Use the database types directly
 interface Category {
   id: string;
   name: string;
@@ -42,7 +30,7 @@ const formatMoney = (amount: number) => {
 };
 
 export function SubcategoriesDialog({ category, isOpen, onClose }: SubcategoriesDialogProps) {
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [subcategories, setSubcategories] = useState<DBSubcategory[]>([]);
   const [pricingOptions, setPricingOptions] = useState<{ [key: string]: PricingOption[] }>({});
 
   useEffect(() => {
@@ -54,9 +42,11 @@ export function SubcategoriesDialog({ category, isOpen, onClose }: Subcategories
         // Fetch pricing options for each subcategory
         const options: { [key: string]: PricingOption[] } = {};
         for (const subcategory of fetchedSubcategories) {
-          const fetchedOptions = await categoryService.getAllPricingOptions();
-          // Filter options for this subcategory
-          options[subcategory.id] = fetchedOptions.filter(option => option.subcategory_id === subcategory.id);
+          if (subcategory.id) {
+            const fetchedOptions = await categoryService.getAllPricingOptions();
+            // Filter options for this subcategory
+            options[subcategory.id] = fetchedOptions.filter(option => option.subcategory_id === subcategory.id);
+          }
         }
         setPricingOptions(options);
       } catch (error) {
@@ -95,7 +85,7 @@ export function SubcategoriesDialog({ category, isOpen, onClose }: Subcategories
                 </p>
               )}
               
-              {pricingOptions[subcategory.id] && pricingOptions[subcategory.id].length > 0 && (
+              {subcategory.id && pricingOptions[subcategory.id] && pricingOptions[subcategory.id].length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-700">Pricing Options:</h4>
                   <div className="grid grid-cols-1 gap-2">

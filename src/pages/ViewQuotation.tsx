@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +15,7 @@ interface QuotationItem {
   quantity: number;
   unit_price: number;
   amount: number;
-  category: string;
+  category?: string; // Make category optional to match database type
 }
 
 interface Quotation {
@@ -70,7 +69,8 @@ export default function ViewQuotation() {
           const itemsData = await quotationService.getItemsByQuotationId(id);
           const mappedItems = itemsData?.map(item => ({
             ...item,
-            id: item.id
+            id: item.id,
+            category: item.category || "Other Items" // Provide default value for category
           })) || [];
           setItems(mappedItems);
         }

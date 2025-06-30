@@ -57,7 +57,6 @@ export default function EditInvoice() {
           setDepositAmount(invoiceData.deposit_amount);
           setDepositPercentage(invoiceData.deposit_percentage);
           setQuotationId(invoiceData.quotation_id || "");
-          setQuotationReference(invoiceData.quotation_reference || "");
           setDocumentNumber(invoiceData.reference_number);
         } catch (error) {
           console.error("Error fetching invoice:", error);
@@ -300,7 +299,7 @@ export default function EditInvoice() {
         terms: null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
-        deposit_percentage: isDepositInvoice ? depositPercentage : 0,
+        deposit_percentage: isDepositPercentage ? depositPercentage : 0,
         payment_status: "Unpaid"
       };
 

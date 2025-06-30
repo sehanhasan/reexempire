@@ -435,7 +435,7 @@ export default function CreateInvoice() {
         <AdditionalInfoCard 
           notes={notes}
           setNotes={setNotes}
-          onSubmit={handleSubmit}
+          onSubmit={(e) => handleSubmit(e, true)}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
           isSubmitting={isSubmitting || uploadingImages}
