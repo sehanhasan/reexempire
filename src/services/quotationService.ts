@@ -52,6 +52,8 @@ export const quotationService = {
   },
 
   async update(id: string, quotation: Partial<Omit<Quotation, "id" | "created_at" | "updated_at">>): Promise<Quotation> {
+    console.log(`QuotationService: Updating quotation ${id} with data:`, quotation);
+    
     const { data, error } = await supabase
       .from("quotations")
       .update(quotation)
@@ -60,10 +62,12 @@ export const quotationService = {
       .single();
 
     if (error) {
-      console.error(`Error updating quotation with id ${id}:`, error);
+      console.error(`QuotationService: Error updating quotation with id ${id}:`, error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
       throw error;
     }
 
+    console.log(`QuotationService: Successfully updated quotation:`, data);
     return data;
   },
 

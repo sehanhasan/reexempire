@@ -35,7 +35,10 @@ export default function ViewQuotation() {
       try {
         setLoading(true);
         
+        console.log("Fetching quotation data for ID:", id);
         const quotationData = await quotationService.getById(id);
+        console.log("Quotation data received:", quotationData);
+        
         if (quotationData) {
           setQuotation(quotationData);
           
@@ -58,12 +61,16 @@ export default function ViewQuotation() {
           }
           
           if (quotationData.customer_id) {
+            console.log("Fetching customer data for ID:", quotationData.customer_id);
             const customerData = await customerService.getById(quotationData.customer_id);
+            console.log("Customer data received:", customerData);
             setCustomer(customerData);
             setCustomerName(customerData?.name || "");
           }
           
+          console.log("Fetching items for quotation ID:", id);
           const itemsData = await quotationService.getItemsByQuotationId(id);
+          console.log("Items data received:", itemsData);
           setItems(itemsData);
         }
         
@@ -82,7 +89,7 @@ export default function ViewQuotation() {
     fetchQuotationData();
   }, [id]);
 
-  const handleSignature = () => {
+  const handleSignature = async () => {
     if (!sigPad || sigPad.isEmpty()) {
       toast({
         title: "Signature Required",
@@ -92,9 +99,20 @@ export default function ViewQuotation() {
       return;
     }
 
+    if (!customerName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your full name.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      console.log("Starting signature processing...");
+      
       // Convert signature to data URL
       const signatureDataUrl = sigPad.toDataURL('image/png');
       const signerDetails = {
@@ -102,37 +120,61 @@ export default function ViewQuotation() {
         date: signatureDate
       };
       
+      console.log("Signature data URL length:", signatureDataUrl.length);
+      console.log("Signer details:", signerDetails);
+      
       // Update quotation status to Accepted and store signature data
-      if (id) {
-        const originalNotes = quotation?.notes || "";
+      if (id && quotation) {
+        const originalNotes = quotation.notes || "";
         const cleanNotes = originalNotes.split('SIGNATURE_DATA:')[0].trim();
         const notesWithSignature = `${cleanNotes}\n\nSIGNATURE_DATA:${signatureDataUrl}\nSIGNER_INFO:${JSON.stringify(signerDetails)}`;
         
-        // Update quotation with both status and notes in one call
-        quotationService.update(id, {
+        console.log("Updating quotation with ID:", id);
+        console.log("Update payload:", {
           status: "Accepted",
-          notes: notesWithSignature
-        }).then(() => {
+          notes: notesWithSignature.substring(0, 100) + "..." // Log first 100 chars only
+        });
+        
+        try {
+          const updatedQuotation = await quotationService.update(id, {
+            status: "Accepted",
+            notes: notesWithSignature
+          });
+          
+          console.log("Quotation updated successfully:", updatedQuotation);
+          
           toast({
             title: "Quotation Accepted",
             description: "Thank you! The quotation has been accepted successfully."
           });
+          
           setIsSigned(true);
           setSignatureData(signatureDataUrl);
           setSignerInfo(signerDetails);
-          // Update local quotation state
-          if (quotation) {
-            setQuotation({ ...quotation, status: "Accepted", notes: notesWithSignature });
+          setQuotation(updatedQuotation);
+          
+        } catch (updateError) {
+          console.error("Error updating quotation:", updateError);
+          console.error("Error details:", JSON.stringify(updateError, null, 2));
+          
+          // More specific error handling
+          let errorMessage = "Failed to update quotation status. Please try again.";
+          if (updateError instanceof Error) {
+            errorMessage = `Update failed: ${updateError.message}`;
           }
-        }).catch((error) => {
-          console.error("Error accepting quotation:", error);
+          
           toast({
             title: "Error",
-            description: "Failed to update quotation status. Please try again.",
+            description: errorMessage,
             variant: "destructive"
           });
-        }).finally(() => {
-          setIsSubmitting(false);
+        }
+      } else {
+        console.error("Missing required data - ID:", id, "Quotation:", quotation);
+        toast({
+          title: "Error",
+          description: "Missing quotation information. Please refresh and try again.",
+          variant: "destructive"
         });
       }
     } catch (error) {
@@ -142,6 +184,7 @@ export default function ViewQuotation() {
         description: "Failed to process signature. Please try again.",
         variant: "destructive"
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
