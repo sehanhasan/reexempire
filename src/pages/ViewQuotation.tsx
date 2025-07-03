@@ -108,12 +108,10 @@ export default function ViewQuotation() {
         const cleanNotes = originalNotes.split('SIGNATURE_DATA:')[0].trim();
         const notesWithSignature = `${cleanNotes}\n\nSIGNATURE_DATA:${signatureDataUrl}\nSIGNER_INFO:${JSON.stringify(signerDetails)}`;
         
-        // First update the status
-        quotationService.updateStatus(id, "Accepted").then(() => {
-          // Then update the notes with signature data
-          return quotationService.update(id, {
-            notes: notesWithSignature
-          });
+        // Update quotation with both status and notes in one call
+        quotationService.update(id, {
+          status: "Accepted",
+          notes: notesWithSignature
         }).then(() => {
           toast({
             title: "Quotation Accepted",
