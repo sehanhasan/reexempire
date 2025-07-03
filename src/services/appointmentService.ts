@@ -125,6 +125,8 @@ export const appointmentService = {
   },
 
   async updateStatus(id: string, status: string): Promise<Appointment> {
+    console.log(`Updating appointment ${id} status to ${status}`);
+    
     const { data, error } = await supabase
       .from("appointments")
       .update({ status })
@@ -137,6 +139,7 @@ export const appointmentService = {
       throw error;
     }
 
+    console.log(`Successfully updated appointment status:`, data);
     return data;
   },
 

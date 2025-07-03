@@ -68,6 +68,8 @@ export const quotationService = {
   },
 
   async updateStatus(id: string, status: string): Promise<Quotation> {
+    console.log(`Updating quotation ${id} status to ${status}`);
+    
     const { data, error } = await supabase
       .from("quotations")
       .update({ status })
@@ -80,6 +82,7 @@ export const quotationService = {
       throw error;
     }
 
+    console.log(`Successfully updated quotation status:`, data);
     return data;
   },
 

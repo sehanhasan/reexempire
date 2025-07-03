@@ -108,9 +108,12 @@ export default function ViewQuotation() {
         const cleanNotes = originalNotes.split('SIGNATURE_DATA:')[0].trim();
         const notesWithSignature = `${cleanNotes}\n\nSIGNATURE_DATA:${signatureDataUrl}\nSIGNER_INFO:${JSON.stringify(signerDetails)}`;
         
-        quotationService.update(id, {
-          status: "Accepted",
-          notes: notesWithSignature
+        // First update the status
+        quotationService.updateStatus(id, "Accepted").then(() => {
+          // Then update the notes with signature data
+          return quotationService.update(id, {
+            notes: notesWithSignature
+          });
         }).then(() => {
           toast({
             title: "Quotation Accepted",
@@ -119,6 +122,10 @@ export default function ViewQuotation() {
           setIsSigned(true);
           setSignatureData(signatureDataUrl);
           setSignerInfo(signerDetails);
+          // Update local quotation state
+          if (quotation) {
+            setQuotation({ ...quotation, status: "Accepted", notes: notesWithSignature });
+          }
         }).catch((error) => {
           console.error("Error accepting quotation:", error);
           toast({
