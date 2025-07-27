@@ -471,7 +471,7 @@ export default function ViewQuotation() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Signature
                   </label>
-                  <div className="border border-gray-300 rounded-md p-2 bg-white" style={{ touchAction: 'none' }}>
+                  <div className="border border-gray-300 rounded-md p-2 bg-white">
                     <SignatureCanvas 
                       ref={(ref) => setSigPad(ref)} 
                       penColor="black"
@@ -479,8 +479,12 @@ export default function ViewQuotation() {
                         width: 500,
                         height: 200,
                         className: "w-full signature-canvas",
-                        style: { touchAction: 'none' }
+                        style: { 
+                          touchAction: 'none',
+                          cursor: 'crosshair'
+                        }
                       }}
+                      backgroundColor="white"
                     />
                   </div>
                 </div>
