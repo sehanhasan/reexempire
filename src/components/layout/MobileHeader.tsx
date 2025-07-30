@@ -24,7 +24,7 @@ export function MobileHeader({ title, onMenuClick, actions }: MobileHeaderProps)
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex h-12 items-center justify-between px-4 bg-blue-600 w-full shadow-md">
+    <header className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between px-4 bg-blue-600 w-full shadow-md">
       <Button
         variant="ghost"
         size="icon"

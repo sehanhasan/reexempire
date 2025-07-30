@@ -36,15 +36,12 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        console.log("Fetching dashboard data...");
         const [customers, quotations, invoices, appointments] = await Promise.all([
           customerService.getAll(), 
           quotationService.getAll(), 
           invoiceService.getAll(), 
           appointmentService.getAll()
         ]);
-
-        console.log("Fetched appointments:", appointments);
 
         const customersMapData = {};
         customers.forEach(customer => {
@@ -75,43 +72,26 @@ export default function Dashboard() {
         const revenueByMonth = generateRevenueByMonth(paidInvoices);
         setRevenueData(revenueByMonth);
 
-        // Fix the date filtering for upcoming appointments
-        const now = new Date();
-        const today = format(now, 'yyyy-MM-dd');
+        // Filter upcoming appointments (not completed, not cancelled)
+        const today = new Date().toISOString().split('T')[0];
         
-        console.log("Today's date:", today);
-        console.log("All appointments:", appointments);
-
-        // Filter appointments that are today or in the future and not cancelled/completed
         const upcomingAppts = appointments.filter(appt => {
           const appointmentDate = appt.appointment_date;
           const isUpcoming = appointmentDate >= today;
-          const isNotCancelled = appt.status && appt.status.toLowerCase() !== 'cancelled';
-          const isNotCompleted = appt.status && appt.status.toLowerCase() !== 'completed';
-          
-          console.log(`Appointment ${appt.id}: date=${appointmentDate}, upcoming=${isUpcoming}, status=${appt.status}, notCancelled=${isNotCancelled}, notCompleted=${isNotCompleted}`);
+          const isNotCancelled = appt.status !== 'Cancelled';
+          const isNotCompleted = appt.status !== 'Completed';
           
           return isUpcoming && isNotCancelled && isNotCompleted;
-        }).sort((a, b) => {
-          // Sort by date first, then by time
-          if (a.appointment_date !== b.appointment_date) {
-            return new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime();
-          }
-          return a.start_time.localeCompare(b.start_time);
-        }).slice(0, 5);
-
-        console.log("Filtered upcoming appointments:", upcomingAppts);
-
-        const enhancedAppointments = upcomingAppts.map(appointment => {
-          const customer = customersMapData[appointment.customer_id] || {};
-          return {
-            ...appointment,
-            customer_name: customer.name || "Unknown Customer",
-            unit_number: customer.unit_number || ""
-          };
         });
         
-        console.log("Enhanced appointments:", enhancedAppointments);
+        // Group appointments by customer and add customer info
+        const enhancedAppointments = upcomingAppts
+          .slice(0, 5) // Show only the first 5 appointments
+          .map(appointment => ({
+            ...appointment,
+            customer: customersMapData[appointment.customer_id]
+          }));
+
         setUpcomingAppointments(enhancedAppointments);
 
         setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
@@ -190,32 +170,44 @@ export default function Dashboard() {
           </Button>
         </CardHeader>
         <CardContent>
-          {loading ? <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div> : upcomingAppointments.length === 0 ? <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div> : <div className="space-y-4">
-            {upcomingAppointments.map(appointment => <div key={appointment.id} className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2" onClick={() => showAppointmentDetails(appointment)}>
-              <div className="w-full">
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-medium text-base">
-                    {appointment.unit_number ? `#${appointment.unit_number} - ` : ""}
-                    {appointment.title}
-                  </h3>
-                  <Badge className={
-                    appointment.status.toLowerCase() === "confirmed" || appointment.status.toLowerCase() === "scheduled" ? "bg-blue-500 text-white" : 
-                    appointment.status.toLowerCase() === "completed" ? "bg-green-500 text-white" : 
-                    appointment.status.toLowerCase() === "in progress" ? "bg-yellow-500 text-white" :
-                    appointment.status.toLowerCase() === "cancelled" ? "bg-red-500 text-white" : 
-                    "bg-gray-500 text-white"
-                  }>
-                    {appointment.status}
-                  </Badge>
+          {loading ? (
+            <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div>
+          ) : upcomingAppointments.length === 0 ? (
+            <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div>
+          ) : (
+            <div className="space-y-4">
+              {upcomingAppointments.map(appointment => (
+                <div 
+                  key={appointment.id} 
+                  className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2" 
+                  onClick={() => showAppointmentDetails(appointment)}
+                >
+                  <div className="w-full">
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-medium text-base">
+                        {appointment.customer?.unit_number ? `#${appointment.customer.unit_number} - ` : ""}
+                        {appointment.title}
+                      </h3>
+                      <Badge className={
+                        appointment.status.toLowerCase() === "confirmed" || appointment.status.toLowerCase() === "scheduled" ? "bg-blue-500 text-white" : 
+                        appointment.status.toLowerCase() === "completed" ? "bg-green-500 text-white" : 
+                        appointment.status.toLowerCase() === "in progress" ? "bg-yellow-500 text-white" :
+                        appointment.status.toLowerCase() === "cancelled" ? "bg-red-500 text-white" : 
+                        "bg-gray-500 text-white"
+                      }>
+                        {appointment.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {new Date(appointment.appointment_date).toLocaleDateString()} 
+                      {' • '}
+                      {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {new Date(appointment.appointment_date).toLocaleDateString()} 
-                  {' • '}
-                  {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
-                </p>
-              </div>
-            </div>)}
-          </div>}
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -231,34 +223,42 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            {recentQuotations.length === 0 ? <p className="text-center py-10 text-muted-foreground">No quotations found</p> : <div className="space-y-4">
-              {recentQuotations.map(quotation => {
-                const customer = customersMap[quotation.customer_id] || {};
-                return (
-                  <div key={quotation.id} className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" onClick={() => navigateToQuotation(quotation.id)}>
-                    <div>
-                      <h3 className="font-medium">
-                        {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {quotation.reference_number} • {new Date(quotation.created_at).toLocaleDateString()}
-                      </p>
+            {recentQuotations.length === 0 ? (
+              <p className="text-center py-10 text-muted-foreground">No quotations found</p>
+            ) : (
+              <div className="space-y-4">
+                {recentQuotations.map(quotation => {
+                  const customer = customersMap[quotation.customer_id] || {};
+                  return (
+                    <div 
+                      key={quotation.id} 
+                      className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" 
+                      onClick={() => navigateToQuotation(quotation.id)}
+                    >
+                      <div>
+                        <h3 className="font-medium">
+                          {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {quotation.reference_number} • {new Date(quotation.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatMoney(quotation.total)}</p>
+                        <Badge className={
+                          quotation.status === 'Approved' ? "bg-green-500 text-white" : 
+                          quotation.status === 'Sent' ? "bg-blue-500 text-white" : 
+                          quotation.status === 'Draft' ? "bg-gray-500 text-white" : 
+                          "bg-green-500 text-white"
+                        }>
+                          {quotation.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatMoney(quotation.total)}</p>
-                      <Badge className={
-                        quotation.status === 'Approved' ? "bg-green-500 text-white" : 
-                        quotation.status === 'Sent' ? "bg-blue-500 text-white" : 
-                        quotation.status === 'Draft' ? "bg-gray-500 text-white" : 
-                        "bg-green-500 text-white"
-                      }>
-                        {quotation.status}
-                      </Badge>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>}
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -273,33 +273,41 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            {recentInvoices.length === 0 ? <p className="text-center py-10 text-muted-foreground">No invoices found</p> : <div className="space-y-4">
-              {recentInvoices.map(invoice => {
-                const customer = customersMap[invoice.customer_id] || {};
-                return (
-                  <div key={invoice.id} className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" onClick={() => navigateToInvoice(invoice.id)}>
-                    <div>
-                      <h3 className="font-medium">
-                        {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {invoice.reference_number} • {new Date(invoice.created_at).toLocaleDateString()}
-                      </p>
+            {recentInvoices.length === 0 ? (
+              <p className="text-center py-10 text-muted-foreground">No invoices found</p>
+            ) : (
+              <div className="space-y-4">
+                {recentInvoices.map(invoice => {
+                  const customer = customersMap[invoice.customer_id] || {};
+                  return (
+                    <div 
+                      key={invoice.id} 
+                      className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" 
+                      onClick={() => navigateToInvoice(invoice.id)}
+                    >
+                      <div>
+                        <h3 className="font-medium">
+                          {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {invoice.reference_number} • {new Date(invoice.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatMoney(invoice.total)}</p>
+                        <Badge className={
+                          invoice.payment_status === 'Paid' ? "bg-green-500 text-white" : 
+                          invoice.payment_status === 'Unpaid' ? "bg-red-500 text-white" : 
+                          "bg-yellow-500 text-white"
+                        }>
+                          {invoice.payment_status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatMoney(invoice.total)}</p>
-                      <Badge className={
-                        invoice.payment_status === 'Paid' ? "bg-green-500 text-white" : 
-                        invoice.payment_status === 'Unpaid' ? "bg-red-500 text-white" : 
-                        "bg-yellow-500 text-white"
-                      }>
-                        {invoice.payment_status}
-                      </Badge>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>}
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -309,30 +317,45 @@ export default function Dashboard() {
   const renderOverviewTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4">
-        <StatCard title="Total Customers" value={stats.customers} trend={{
-          value: 12,
-          isPositive: true
-        }} description="vs last month" icon={<Users className="h-4 w-4" />} onClick={() => navigate("/customers")} />
+        <StatCard 
+          title="Total Customers" 
+          value={stats.customers} 
+          trend={{ value: 12, isPositive: true }} 
+          description="vs last month" 
+          icon={<Users className="h-4 w-4" />} 
+          onClick={() => navigate("/customers")} 
+        />
           
-        <StatCard title="Active Quotations" value={stats.quotations} trend={{
-          value: 4,
-          isPositive: true
-        }} description="vs last month" icon={<ReceiptText className="h-4 w-4" />} onClick={() => navigate("/quotations")} />
+        <StatCard 
+          title="Active Quotations" 
+          value={stats.quotations} 
+          trend={{ value: 4, isPositive: true }} 
+          description="vs last month" 
+          icon={<ReceiptText className="h-4 w-4" />} 
+          onClick={() => navigate("/quotations")} 
+        />
           
-        <StatCard title="Invoices Issued" value={stats.invoices} trend={{
-          value: 2,
-          isPositive: true
-        }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
+        <StatCard 
+          title="Invoices Issued" 
+          value={stats.invoices} 
+          trend={{ value: 2, isPositive: true }} 
+          description="vs last month" 
+          icon={<Receipt className="h-4 w-4" />} 
+          onClick={() => navigate("/invoices")} 
+        />
       </div>
     </div>
   );
 
   const renderRevenueTab = () => (
     <div className="space-y-6">
-      <StatCard title="Total Revenue" value={formatMoney(stats.revenue)} trend={{
-        value: 8,
-        isPositive: true
-      }} description="vs last month" icon={<CreditCard className="h-4 w-4" />} />
+      <StatCard 
+        title="Total Revenue" 
+        value={formatMoney(stats.revenue)} 
+        trend={{ value: 8, isPositive: true }} 
+        description="vs last month" 
+        icon={<CreditCard className="h-4 w-4" />} 
+      />
       
       <Card>
         <CardHeader>
@@ -345,7 +368,7 @@ export default function Dashboard() {
             index="month" 
             colors={["#3b82f6"]} 
             valueFormatter={value => `RM ${value.toLocaleString()}`} 
-            height={300} 
+            height={isMobile ? 250 : 300} 
             title=""
           />
         </CardContent>
@@ -361,9 +384,9 @@ export default function Dashboard() {
         <div className="mt-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-3 w-full">
-              <TabsTrigger value="activity">Activity</TabsTrigger>
-              <TabsTrigger value="revenue">Revenue</TabsTrigger>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="activity" className="text-xs">Activity</TabsTrigger>
+              <TabsTrigger value="revenue" className="text-xs">Revenue</TabsTrigger>
+              <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
             </TabsList>
             <TabsContent value="activity" className="mt-4">
               {renderActivityTab()}
@@ -398,12 +421,22 @@ export default function Dashboard() {
                       </Button>
                     </CardHeader>
                     <CardContent>
-                      {loading ? <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div> : upcomingAppointments.length === 0 ? <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div> : <div className="space-y-4">
-                          {upcomingAppointments.map(appointment => <div key={appointment.id} className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2" onClick={() => showAppointmentDetails(appointment)}>
+                      {loading ? (
+                        <div className="py-4 text-center text-sm text-gray-500">Loading appointments...</div>
+                      ) : upcomingAppointments.length === 0 ? (
+                        <div className="py-4 text-center text-sm text-gray-500">No upcoming appointments scheduled</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {upcomingAppointments.map(appointment => (
+                            <div 
+                              key={appointment.id} 
+                              className="flex items-center justify-between border-b pb-3 cursor-pointer hover:bg-gray-50 rounded-md p-2" 
+                              onClick={() => showAppointmentDetails(appointment)}
+                            >
                               <div className="w-full">
                                 <div className="flex justify-between items-start mb-1">
                                   <h3 className="font-medium text-base">
-                                    {appointment.unit_number ? `#${appointment.unit_number} - ` : ""}
+                                    {appointment.customer?.unit_number ? `#${appointment.customer.unit_number} - ` : ""}
                                     {appointment.title}
                                   </h3>
                                   <Badge className={
@@ -422,8 +455,10 @@ export default function Dashboard() {
                                   {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                                 </p>
                               </div>
-                            </div>)}
-                        </div>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -439,11 +474,18 @@ export default function Dashboard() {
                         </Button>
                       </CardHeader>
                       <CardContent>
-                        {recentQuotations.length === 0 ? <p className="text-center py-3 text-muted-foreground">No quotations found</p> : <div className="space-y-3">
+                        {recentQuotations.length === 0 ? (
+                          <p className="text-center py-3 text-muted-foreground">No quotations found</p>
+                        ) : (
+                          <div className="space-y-3">
                             {recentQuotations.slice(0, 3).map(quotation => {
                               const customer = customersMap[quotation.customer_id] || {};
                               return (
-                                <div key={quotation.id} className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" onClick={() => navigateToQuotation(quotation.id)}>
+                                <div 
+                                  key={quotation.id} 
+                                  className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" 
+                                  onClick={() => navigateToQuotation(quotation.id)}
+                                >
                                   <div>
                                     <h3 className="font-medium">
                                       {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
@@ -466,7 +508,8 @@ export default function Dashboard() {
                                 </div>
                               );
                             })}
-                          </div>}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
 
@@ -481,11 +524,18 @@ export default function Dashboard() {
                         </Button>
                       </CardHeader>
                       <CardContent>
-                        {recentInvoices.length === 0 ? <p className="text-center py-3 text-muted-foreground">No invoices found</p> : <div className="space-y-3">
+                        {recentInvoices.length === 0 ? (
+                          <p className="text-center py-3 text-muted-foreground">No invoices found</p>
+                        ) : (
+                          <div className="space-y-3">
                             {recentInvoices.slice(0, 3).map(invoice => {
                               const customer = customersMap[invoice.customer_id] || {};
                               return (
-                                <div key={invoice.id} className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" onClick={() => navigateToInvoice(invoice.id)}>
+                                <div 
+                                  key={invoice.id} 
+                                  className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" 
+                                  onClick={() => navigateToInvoice(invoice.id)}
+                                >
                                   <div>
                                     <h3 className="font-medium">
                                       {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
@@ -507,7 +557,8 @@ export default function Dashboard() {
                                 </div>
                               );
                             })}
-                          </div>}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
@@ -518,20 +569,32 @@ export default function Dashboard() {
               </TabsContent>
               <TabsContent value="overview" className="mt-6">
                 <div className="grid grid-cols-3 gap-4">
-                  <StatCard title="Total Customers" value={stats.customers} trend={{
-                    value: 12,
-                    isPositive: true
-                  }} description="vs last month" icon={<Users className="h-4 w-4" />} onClick={() => navigate("/customers")} />
+                  <StatCard 
+                    title="Total Customers" 
+                    value={stats.customers} 
+                    trend={{ value: 12, isPositive: true }} 
+                    description="vs last month" 
+                    icon={<Users className="h-4 w-4" />} 
+                    onClick={() => navigate("/customers")} 
+                  />
                     
-                  <StatCard title="Active Quotations" value={stats.quotations} trend={{
-                    value: 4,
-                    isPositive: true
-                  }} description="vs last month" icon={<ReceiptText className="h-4 w-4" />} onClick={() => navigate("/quotations")} />
+                  <StatCard 
+                    title="Active Quotations" 
+                    value={stats.quotations} 
+                    trend={{ value: 4, isPositive: true }} 
+                    description="vs last month" 
+                    icon={<ReceiptText className="h-4 w-4" />} 
+                    onClick={() => navigate("/quotations")} 
+                  />
                     
-                  <StatCard title="Invoices Issued" value={stats.invoices} trend={{
-                    value: 2,
-                    isPositive: true
-                  }} description="vs last month" icon={<Receipt className="h-4 w-4" />} onClick={() => navigate("/invoices")} />
+                  <StatCard 
+                    title="Invoices Issued" 
+                    value={stats.invoices} 
+                    trend={{ value: 2, isPositive: true }} 
+                    description="vs last month" 
+                    icon={<Receipt className="h-4 w-4" />} 
+                    onClick={() => navigate("/invoices")} 
+                  />
                 </div>
               </TabsContent>
             </Tabs>

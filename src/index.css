@@ -107,7 +107,7 @@
   /* Mobile optimizations for page container */
   @media (max-width: 767px) {
     .page-container {
-      @apply px-0 py-1 mx-0 max-w-full;
+      @apply px-3 py-2 mx-0 max-w-full;
     }
   }
 
@@ -155,6 +155,35 @@
     
     .input-group {
       @apply flex flex-col space-y-1;
+    }
+    
+    /* Mobile typography optimizations */
+    .mobile-text-sm {
+      @apply text-sm;
+    }
+    
+    .mobile-text-xs {
+      @apply text-xs;
+    }
+    
+    /* Mobile button optimizations */
+    .mobile-btn-sm {
+      @apply px-2 py-1 text-xs;
+    }
+    
+    /* Mobile card optimizations */
+    .mobile-card-compact {
+      @apply p-3 space-y-2;
+    }
+    
+    /* Mobile table optimizations */
+    .mobile-table-responsive {
+      @apply block overflow-x-auto whitespace-nowrap;
+    }
+    
+    /* Mobile modal optimizations */
+    .mobile-modal-full {
+      @apply w-full max-w-none mx-2 max-h-[90vh] overflow-y-auto;
     }
   }
 }
