@@ -48,7 +48,7 @@ export function QuotationItemsCard({
     setItems([...items, {
       id: newId,
       description: "",
-      category: "Other Items",
+      category: "",
       quantity: 1,
       unit: "Unit",
       unitPrice: 0,

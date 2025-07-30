@@ -17,7 +17,7 @@ export default function CreateQuotation() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [items, setItems] = useState<QuotationItem[]>([
-    { id: 1, description: "", category: "Other Items", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
   const initialCustomerId = location.state?.customerId || "";

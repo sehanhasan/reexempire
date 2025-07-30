@@ -10,6 +10,7 @@ import { quotationService, customerService } from "@/services";
 import { Customer, Quotation, QuotationItem as QuotationItemType } from "@/types/database";
 import { formatDate } from "@/utils/formatters";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
+import { captureViewAsPDF } from "@/utils/htmlToPdf";
 import SignatureCanvas from "react-signature-canvas";
 import { Separator } from "@/components/ui/separator";
 
@@ -199,37 +200,27 @@ export default function ViewQuotation() {
     if (!quotation || !customer) return;
     
     try {
-      const itemsForPDF = items.map(item => ({
-        id: Number(item.id),
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unit_price,
-        amount: item.amount,
-        category: item.category || '',
-        unit: item.unit || ''
-      }));
+      // Hide the sticky header and print buttons before capturing
+      const stickyHeader = document.querySelector('.sticky') as HTMLElement;
+      const downloadButton = document.querySelector('.print\\:hidden') as HTMLElement;
       
-      const pdf = generateQuotationPDF({
-        documentNumber: quotation.reference_number,
-        documentDate: quotation.issue_date,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || "",
-        expiryDate: quotation.expiry_date,
-        validUntil: quotation.expiry_date,
-        notes: quotation.notes || "",
-        items: itemsForPDF,
-        subject: quotation.subject || "",
-        customerAddress: customer.address || "",
-        customerContact: customer.phone || "",
-        customerEmail: customer.email || "",
-        depositInfo: {
-          requiresDeposit: quotation.requires_deposit || false,
-          depositAmount: quotation.deposit_amount || 0,
-          depositPercentage: quotation.deposit_percentage || 0
+      if (stickyHeader) stickyHeader.style.display = 'none';
+      if (downloadButton) downloadButton.style.display = 'none';
+      
+      // Capture the view as PDF
+      await captureViewAsPDF(
+        'quotation-content',
+        `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`,
+        {
+          scale: 2,
+          backgroundColor: '#f9fafb'
         }
-      });
+      );
       
-      downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
+      // Restore the hidden elements
+      if (stickyHeader) stickyHeader.style.display = '';
+      if (downloadButton) downloadButton.style.display = '';
+      
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
@@ -237,6 +228,12 @@ export default function ViewQuotation() {
         description: "There was an error generating the PDF. Please try again.",
         variant: "destructive"
       });
+      
+      // Restore the hidden elements in case of error
+      const stickyHeader = document.querySelector('.sticky') as HTMLElement;
+      const downloadButton = document.querySelector('.print\\:hidden') as HTMLElement;
+      if (stickyHeader) stickyHeader.style.display = '';
+      if (downloadButton) downloadButton.style.display = '';
     }
   };
 
@@ -309,7 +306,7 @@ export default function ViewQuotation() {
               </p>
             </div>
             <div className="flex items-center">
-              <Button variant="outline" onClick={handlePrintPDF} className="flex items-center gap-1">
+              <Button variant="outline" onClick={handleDownloadPDF} className="flex items-center gap-1">
                 <Download size={18} />
                 <span>Download PDF</span>
               </Button>
@@ -319,7 +316,7 @@ export default function ViewQuotation() {
       </div>
 
       <div className="py-8 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div id="quotation-content" className="max-w-4xl mx-auto">
           <Card className="mb-6">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 gap-6 mb-4">
@@ -433,6 +430,26 @@ export default function ViewQuotation() {
                 <li>Project duration 5-7 working days</li>
                 <li>This quotation is valid until {formatDate(quotation.expiry_date)}</li>
               </ul>
+              
+              {/* Display signature data if quotation is signed */}
+              {signatureData && (
+                <div className="mt-6 pt-4 border-t">
+                  <h4 className="font-semibold text-gray-700 mb-3">Electronic Signature</h4>
+                  <div className="border border-gray-300 rounded-md p-4 bg-white inline-block">
+                    <img 
+                      src={signatureData} 
+                      alt="Electronic Signature" 
+                      className="max-w-md h-auto"
+                      style={{ maxHeight: '120px' }}
+                    />
+                  </div>
+                  {signerInfo && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      Electronically signed by: <strong>{signerInfo.name}</strong> on <strong>{formatDate(signerInfo.date)}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -481,7 +498,9 @@ export default function ViewQuotation() {
                         className: "w-full signature-canvas",
                         style: { 
                           touchAction: 'none',
-                          cursor: 'crosshair'
+                          cursor: 'crosshair',
+                          width: '100%',
+                          height: '200px'
                         }
                       }}
                       backgroundColor="white"
