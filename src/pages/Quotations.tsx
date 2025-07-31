@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Filter, FileText, Eye, Edit, Trash2, Share, Download } from 'lucide-react';
@@ -69,36 +70,36 @@ export default function Quotations() {
 
   const columns = [
     {
-      accessorKey: 'reference_number',
+      accessorKey: 'reference_number' as keyof any,
       header: 'Reference #',
       cell: ({ row }: { row: any }) => (
         <div className="font-medium">{row.getValue('reference_number')}</div>
       ),
     },
     {
-      accessorKey: 'customer_id',
+      accessorKey: 'customer_id' as keyof any,
       header: 'Customer',
       cell: ({ row }: { row: any }) => (
         <div>{row.getValue('customer_id')}</div>
       ),
     },
     {
-      accessorKey: 'issue_date',
+      accessorKey: 'issue_date' as keyof any,
       header: 'Issue Date',
       cell: ({ row }: { row: any }) => formatDate(row.getValue('issue_date')),
     },
     {
-      accessorKey: 'expiry_date',
+      accessorKey: 'expiry_date' as keyof any,
       header: 'Expiry Date',
       cell: ({ row }: { row: any }) => formatDate(row.getValue('expiry_date')),
     },
     {
-      accessorKey: 'total',
+      accessorKey: 'total' as keyof any,
       header: 'Total',
       cell: ({ row }: { row: any }) => formatCurrency(row.getValue('total')),
     },
     {
-      accessorKey: 'status',
+      accessorKey: 'status' as keyof any,
       header: 'Status',
       cell: ({ row }: { row: any }) => {
         const status = row.getValue('status') as string;
@@ -107,7 +108,7 @@ export default function Quotations() {
       },
     },
     {
-      id: 'actions',
+      accessorKey: 'actions' as keyof any,
       header: 'Actions',
       cell: ({ row }: { row: any }) => {
         const quotation = row.original;
@@ -168,11 +169,12 @@ export default function Quotations() {
       <PageHeader
         title="Quotations"
         description="Manage your quotations and track their status"
-        action={{
-          label: "Create Quotation",
-          onClick: () => navigate('/quotations/create'),
-          icon: Plus
-        }}
+        actions={
+          <Button onClick={() => navigate('/quotations/create')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Quotation
+          </Button>
+        }
       />
 
       {/* Filters */}
