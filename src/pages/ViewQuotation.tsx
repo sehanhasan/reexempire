@@ -1,566 +1,270 @@
-
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
-import { Download, Check, Share2 } from "lucide-react";
-import { quotationService, customerService } from "@/services";
-import { Customer, Quotation, QuotationItem as QuotationItemType } from "@/types/database";
-import { formatDate } from "@/utils/formatters";
-import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
-import { captureViewAsPDF } from "@/utils/htmlToPdf";
-import SignatureCanvas from "react-signature-canvas";
-import { Separator } from "@/components/ui/separator";
+import React, { useState, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { CustomerInfoCard } from '@/components/quotations/CustomerInfoCard';
+import { ItemsTable } from '@/components/quotations/ItemsTable';
+import { AdditionalInfoCard } from '@/components/quotations/AdditionalInfoCard';
+import { quotationService } from '@/services/quotationService';
+import { customerService } from '@/services/customerService';
+import { Download, FileText, CheckCircle, X } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import { toast } from 'sonner';
+import SignatureCanvas from 'react-signature-canvas';
+import { generateQuotationPDF } from '@/utils/htmlToPdf';
 
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [quotation, setQuotation] = useState<Quotation | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [items, setItems] = useState<QuotationItemType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [customerName, setCustomerName] = useState("");
-  const [signatureDate] = useState(new Date().toISOString().split('T')[0]);
-  const [sigPad, setSigPad] = useState<SignatureCanvas | null>(null);
-  const [isSigned, setIsSigned] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [signatureData, setSignatureData] = useState<string | null>(null);
-  const [signerInfo, setSignerInfo] = useState<{ name: string; date: string } | null>(null);
+  const [isSigning, setIsSigning] = useState(false);
+  const [signatureData, setSignatureData] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  useEffect(() => {
-    if (!id) return;
-    
-    const fetchQuotationData = async () => {
-      try {
-        setLoading(true);
-        
-        console.log("Fetching quotation data for ID:", id);
-        const quotationData = await quotationService.getById(id);
-        console.log("Quotation data received:", quotationData);
-        
-        if (quotationData) {
-          setQuotation(quotationData);
-          
-          // Parse signature data and signer info from notes if it exists
-          if (quotationData.notes && quotationData.notes.includes('SIGNATURE_DATA:')) {
-            const signaturePart = quotationData.notes.split('SIGNATURE_DATA:')[1];
-            if (signaturePart) {
-              const parts = signaturePart.split('SIGNER_INFO:');
-              if (parts.length === 2) {
-                setSignatureData(parts[0].trim());
-                const signerInfoStr = parts[1].trim();
-                try {
-                  const parsedSignerInfo = JSON.parse(signerInfoStr);
-                  setSignerInfo(parsedSignerInfo);
-                } catch (e) {
-                  console.error("Error parsing signer info:", e);
-                }
-              }
-            }
-          }
-          
-          if (quotationData.customer_id) {
-            console.log("Fetching customer data for ID:", quotationData.customer_id);
-            const customerData = await customerService.getById(quotationData.customer_id);
-            console.log("Customer data received:", customerData);
-            setCustomer(customerData);
-            setCustomerName(customerData?.name || "");
-          }
-          
-          console.log("Fetching items for quotation ID:", id);
-          const itemsData = await quotationService.getItemsByQuotationId(id);
-          console.log("Items data received:", itemsData);
-          setItems(itemsData);
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching quotation:", error);
-        setLoading(false);
-        toast({
-          title: "Error",
-          description: "Could not load quotation details. Please try again later.",
-          variant: "destructive"
-        });
-      }
-    };
-    
-    fetchQuotationData();
-  }, [id]);
-
-  const handleSignature = async () => {
-    if (!sigPad || sigPad.isEmpty()) {
-      toast({
-        title: "Signature Required",
-        description: "Please sign the quotation to accept it.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!customerName.trim()) {
-      toast({
-        title: "Name Required",
-        description: "Please enter your full name.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      console.log("Starting signature processing...");
-      
-      // Convert signature to data URL
-      const signatureDataUrl = sigPad.toDataURL('image/png');
-      const signerDetails = {
-        name: customerName,
-        date: signatureDate
-      };
-      
-      console.log("Signature data URL length:", signatureDataUrl.length);
-      console.log("Signer details:", signerDetails);
-      
-      // Update quotation status to Accepted and store signature data
-      if (id && quotation) {
-        const originalNotes = quotation.notes || "";
-        const cleanNotes = originalNotes.split('SIGNATURE_DATA:')[0].trim();
-        const notesWithSignature = `${cleanNotes}\n\nSIGNATURE_DATA:${signatureDataUrl}\nSIGNER_INFO:${JSON.stringify(signerDetails)}`;
-        
-        console.log("Updating quotation with ID:", id);
-        console.log("Update payload:", {
-          status: "Accepted",
-          notes: notesWithSignature.substring(0, 100) + "..." // Log first 100 chars only
-        });
-        
-        try {
-          const updatedQuotation = await quotationService.update(id, {
-            status: "Accepted",
-            notes: notesWithSignature
-          });
-          
-          console.log("Quotation updated successfully:", updatedQuotation);
-          
-          toast({
-            title: "Quotation Accepted",
-            description: "Thank you! The quotation has been accepted successfully."
-          });
-          
-          setIsSigned(true);
-          setSignatureData(signatureDataUrl);
-          setSignerInfo(signerDetails);
-          setQuotation(updatedQuotation);
-          
-        } catch (updateError) {
-          console.error("Error updating quotation:", updateError);
-          console.error("Error details:", JSON.stringify(updateError, null, 2));
-          
-          // More specific error handling
-          let errorMessage = "Failed to update quotation status. Please try again.";
-          if (updateError instanceof Error) {
-            errorMessage = `Update failed: ${updateError.message}`;
-          }
-          
-          toast({
-            title: "Error",
-            description: errorMessage,
-            variant: "destructive"
-          });
-        }
-      } else {
-        console.error("Missing required data - ID:", id, "Quotation:", quotation);
-        toast({
-          title: "Error",
-          description: "Missing quotation information. Please refresh and try again.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error("Error processing signature:", error);
-      toast({
-        title: "Error",
-        description: "Failed to process signature. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const clearSignature = () => {
-    if (sigPad) {
-      sigPad.clear();
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!quotation || !customer) return;
-    
-    try {
-      // Hide the sticky header and print buttons before capturing
-      const stickyHeader = document.querySelector('.sticky') as HTMLElement;
-      const downloadButton = document.querySelector('.print\\:hidden') as HTMLElement;
-      
-      if (stickyHeader) stickyHeader.style.display = 'none';
-      if (downloadButton) downloadButton.style.display = 'none';
-      
-      // Capture the view as PDF
-      await captureViewAsPDF(
-        'quotation-content',
-        `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`,
-        {
-          scale: 2,
-          backgroundColor: '#f9fafb'
-        }
-      );
-      
-      // Restore the hidden elements
-      if (stickyHeader) stickyHeader.style.display = '';
-      if (downloadButton) downloadButton.style.display = '';
-      
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
-        variant: "destructive"
-      });
-      
-      // Restore the hidden elements in case of error
-      const stickyHeader = document.querySelector('.sticky') as HTMLElement;
-      const downloadButton = document.querySelector('.print\\:hidden') as HTMLElement;
-      if (stickyHeader) stickyHeader.style.display = '';
-      if (downloadButton) downloadButton.style.display = '';
-    }
-  };
-
-  const handlePrintPDF = () => {
-    window.print();
-  };
-
-  const formatMoney = (amount: number) => {
-    return `RM ${parseFloat(amount.toString()).toFixed(2)}`;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading quotation details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!quotation || !customer) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="text-center p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Quotation Not Found</h2>
-          <p className="text-gray-600 mb-6">The requested quotation could not be found or has expired.</p>
-          <Button onClick={() => navigate("/")}>Return Home</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Group items by category
-  const groupedItems: Record<string, QuotationItemType[]> = {};
-  items.forEach(item => {
-    const category = item.category || "Other Items";
-    if (!groupedItems[category]) {
-      groupedItems[category] = [];
-    }
-    groupedItems[category].push(item);
+  const { data: quotation, isLoading, refetch } = useQuery({
+    queryKey: ['quotation', id],
+    queryFn: () => quotationService.getById(id!),
+    enabled: !!id,
   });
-  
-  const categories = Object.keys(groupedItems).sort();
-  
-  // Calculate subtotal
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
 
-  // Clean notes (remove signature data for display)
-  const displayNotes = quotation.notes ? quotation.notes.split('SIGNATURE_DATA:')[0].trim() : null;
+  const { data: customer } = useQuery({
+    queryKey: ['customer', quotation?.customer_id],
+    queryFn: () => customerService.getById(quotation!.customer_id),
+    enabled: !!quotation?.customer_id,
+  });
+
+  const { data: items = [] } = useQuery({
+    queryKey: ['quotation-items', id],
+    queryFn: () => quotationService.getItems(id!),
+    enabled: !!id,
+  });
+
+  // Handle signature clearing
+  const handleClearSignature = () => {
+    if (sigCanvasRef.current) {
+      sigCanvasRef.current.clear();
+    }
+  };
+
+  // Handle signature acceptance
+  const handleAcceptQuotation = async () => {
+    if (!sigCanvasRef.current || !quotation) return;
+
+    const signatureDataUrl = sigCanvasRef.current.toDataURL();
+    if (!signatureDataUrl || signatureDataUrl === 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==') {
+      toast.error('Please provide a signature before accepting');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      await quotationService.updateStatus(quotation.id, 'Accepted');
+      setSignatureData(signatureDataUrl);
+      setIsSigning(false);
+      toast.success('Quotation accepted successfully!');
+      refetch();
+    } catch (error) {
+      console.error('Error accepting quotation:', error);
+      toast.error('Failed to accept quotation');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle PDF download
+  const handleDownloadPDF = async () => {
+    if (!quotation) return;
+    
+    try {
+      setIsProcessing(true);
+      await generateQuotationPDF(quotation, customer, items);
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading quotation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!quotation) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
+          <p className="text-muted-foreground">The quotation you're looking for doesn't exist.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isAccepted = quotation.status === 'Accepted';
+  const hasSignature = signatureData || quotation.status === 'Accepted';
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ minWidth: '1024px' }}>
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <img 
-                src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
-                alt="Reex Empire Logo" 
-                className="h-10 w-auto"
-              />
+    <div className="min-h-screen bg-background p-4 sm:p-6" id="quotation-view">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header with actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Quotation #{quotation.reference_number}</h1>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant={isAccepted ? "default" : "secondary"}>
+                {quotation.status}
+              </Badge>
+              {hasSignature && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Signed
+                </Badge>
+              )}
             </div>
-            <div className="text-center flex-1 px-4">
-              <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
-              <p className="text-sm text-gray-600">
-                Issued: {formatDate(quotation.issue_date)} | Valid until: {formatDate(quotation.expiry_date)}
-              </p>
-            </div>
-            <div className="flex items-center">
-              <Button variant="outline" onClick={handleDownloadPDF} className="flex items-center gap-1">
-                <Download size={18} />
-                <span>Download PDF</span>
+          </div>
+          
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={isProcessing}
+              className="flex-1 sm:flex-none"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isProcessing ? 'Generating...' : 'Download PDF'}
+            </Button>
+            
+            {!isAccepted && !isSigning && (
+              <Button 
+                onClick={() => setIsSigning(true)}
+                variant="default"
+                className="flex-1 sm:flex-none"
+              >
+                Accept & Sign
               </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Customer Information */}
+        {customer && <CustomerInfoCard customer={customer} />}
+
+        {/* Quotation Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quotation Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Issue Date</p>
+                <p className="font-medium">{formatDate(quotation.issue_date)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Expiry Date</p>
+                <p className="font-medium">{formatDate(quotation.expiry_date)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Subtotal</p>
+                <p className="font-medium">{formatCurrency(quotation.subtotal)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="font-bold text-lg">{formatCurrency(quotation.total)}</p>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="py-8 px-4">
-        <div id="quotation-content" className="max-w-4xl mx-auto">
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 gap-6 mb-4">
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">From</h3>
-                  <div className="text-gray-700">
-                    <p className="font-medium">Reex Empire Sdn Bhd (1426553-A)</p>
-                    <p>No. 29-1, Jalan 2A/6</p>
-                    <p>Taman Setapak Indah</p>
-                    <p>53300 Setapak Kuala Lumpur</p>
-                    <p>www.reexempire.com</p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">To</h3>
-                  <div className="text-gray-700">
-                    <p className="font-medium">{customer.name}</p>
-                    {customer.unit_number && <p>Unit {customer.unit_number}</p>}
-                    {customer.address && <p>{customer.address}</p>}
-                    {customer.city && <p>{customer.city}, {customer.state} {customer.postal_code}</p>}
-                    {customer.phone && <p>Phone: {customer.phone}</p>}
-                    {customer.email && <p>Email: {customer.email}</p>}
-                  </div>
-                </div>
-              </div>
-              
-              {quotation.subject && (
-                <div className="mt-4 pt-4 border-t">
-                  <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
-                  <p>{quotation.subject}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-4">Items</h3>
-              
-              {/* Main table header */}
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 text-left">
-                      <th className="py-2 px-4 border-b">Description</th>
-                      <th className="py-2 px-4 border-b text-right">Price</th>
-                      <th className="py-2 px-4 border-b text-right">Qty</th>
-                      <th className="py-2 px-4 border-b text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map(category => (
-                      <>
-                        <tr key={category}>
-                          <td colSpan={4} className="py-2 px-4 font-medium text-blue-800 bg-blue-50">
-                            {category}
-                          </td>
-                        </tr>
-                        {groupedItems[category].map((item, idx) => (
-                          <tr key={idx} className="border-b">
-                            <td className="py-3 px-4">{item.description}</td>
-                            <td className="py-3 px-4 text-right">{formatMoney(item.unit_price)}</td>
-                            <td className="py-3 px-4 text-right">{item.quantity}</td>
-                            <td className="py-3 px-4 text-right">{formatMoney(item.amount)}</td>
-                          </tr>
-                        ))}
-                      </>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="mt-6 flex justify-end">
-                <div className="w-full max-w-xs">
-                  <div className="flex justify-between py-2">
-                    <span className="font-medium">Subtotal:</span>
-                    <span>{formatMoney(subtotal)}</span>
-                  </div>
-                  {quotation.requires_deposit && (
-                    <>
-                      <div className="flex justify-between py-2">
-                        <span className="font-medium">Deposit Required ({quotation.deposit_percentage}%):</span>
-                        <span>{formatMoney(quotation.deposit_amount || 0)}</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-between py-2 text-lg font-bold">
-                    <span>Total:</span>
-                    <span>{formatMoney(quotation.total)}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notes Card - only show if there are actual notes (not signature data) */}
-          {displayNotes && (
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
-                <p className="whitespace-pre-line">{displayNotes}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-4">Terms and Conditions</h3>
-              <ul className="list-disc pl-5 space-y-2">
-                <li>Payment terms 30 days</li>
-                <li>Project duration 5-7 working days</li>
-                <li>This quotation is valid until {formatDate(quotation.expiry_date)}</li>
-              </ul>
-              
-              {/* Display signature data if quotation is signed */}
-              {signatureData && (
-                <div className="mt-6 pt-4 border-t">
-                  <h4 className="font-semibold text-gray-700 mb-3">Electronic Signature</h4>
-                  <div className="border border-gray-300 rounded-md p-4 bg-white inline-block">
-                    <img 
-                      src={signatureData} 
-                      alt="Electronic Signature" 
-                      className="max-w-md h-auto"
-                      style={{ maxHeight: '120px' }}
-                    />
-                  </div>
-                  {signerInfo && (
-                    <p className="mt-2 text-sm text-gray-600">
-                      Electronically signed by: <strong>{signerInfo.name}</strong> on <strong>{formatDate(signerInfo.date)}</strong>
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {quotation.status !== "Accepted" && !isSigned ? (
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-4">Accept Quotation</h3>
-                <p className="mb-4">To accept this quotation, please fill out the information below:</p>
-                
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
-                    </label>
-                    <Input 
-                      id="customerName" 
-                      value={customerName} 
-                      onChange={(e) => setCustomerName(e.target.value)} 
-                      placeholder="Your full name" 
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="signatureDate" className="block text-sm font-medium text-gray-700 mb-1">
-                      Date
-                    </label>
-                    <Input 
-                      id="signatureDate" 
-                      value={formatDate(signatureDate)} 
-                      readOnly 
-                    />
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Signature
-                  </label>
-                  <div className="border border-gray-300 rounded-md p-2 bg-white">
-                    <SignatureCanvas 
-                      ref={(ref) => setSigPad(ref)} 
-                      penColor="black"
-                      canvasProps={{
-                        width: 500,
-                        height: 200,
-                        className: "w-full signature-canvas",
-                        style: { 
-                          touchAction: 'none',
-                          cursor: 'crosshair',
-                          width: '100%',
-                          height: '200px'
-                        }
-                      }}
-                      backgroundColor="white"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Button onClick={clearSignature} variant="outline" type="button">
-                    Clear
-                  </Button>
-                  <Button 
-                    onClick={handleSignature} 
-                    className="bg-green-600 hover:bg-green-700"
-                    disabled={isSubmitting}
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    {isSubmitting ? "Processing..." : "Accept Quotation"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : isSigned || quotation.status === "Accepted" ? (
-            <Card className="mb-6 bg-green-50 border-green-200">
-              <CardContent className="p-6">
-                <div className="flex items-center text-green-700 mb-4">
-                  <Check className="mr-2 h-5 w-5" />
-                  <h3 className="font-semibold">Quotation Accepted</h3>
-                </div>
-                <p className="text-green-700 mb-4">
-                  Thank you for accepting this quotation. We will be in touch shortly to proceed with the next steps.
+            {quotation.requires_deposit && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">Deposit Required</h4>
+                <p className="text-blue-700">
+                  Amount: {formatCurrency(quotation.deposit_amount || 0)} 
+                  {quotation.deposit_percentage && ` (${quotation.deposit_percentage}%)`}
                 </p>
-                
-                {/* Display actual signature */}
-                {signatureData && (
-                  <div className="mt-4">
-                    <div className="border border-gray-300 rounded-md p-4 bg-white inline-block">
-                      <img 
-                        src={signatureData} 
-                        alt="Electronic Signature" 
-                        className="max-w-md h-auto"
-                        style={{ maxHeight: '150px' }}
-                      />
-                    </div>
-                    {signerInfo && (
-                      <p className="mt-2 text-sm text-gray-600">
-                        Electronically signed by: <strong>{signerInfo.name}</strong> on <strong>{formatDate(signerInfo.date)}</strong>
-                      </p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : null}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <div className="text-center text-gray-500 text-sm mt-8">
-            <p>Thank you for your business!</p>
-            <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
-          </div>
-        </div>
+        {/* Items Table */}
+        <ItemsTable items={items} />
+
+        {/* Additional Information */}
+        <AdditionalInfoCard 
+          subject={quotation.subject}
+          notes={quotation.notes}
+          terms={quotation.terms}
+          signatureData={hasSignature ? signatureData : undefined}
+        />
+
+        {/* Signature Section */}
+        {isSigning && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle>Digital Signature</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSigning(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                By signing below, you accept the terms and conditions of this quotation.
+              </div>
+              
+              <div className="relative border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                <SignatureCanvas
+                  ref={sigCanvasRef}
+                  canvasProps={{
+                    className: 'w-full h-48 touch-none',
+                    style: {
+                      width: '100%',
+                      height: '192px',
+                      display: 'block',
+                      touchAction: 'none'
+                    }
+                  }}
+                  backgroundColor="white"
+                />
+                <div className="absolute top-2 left-2 text-xs text-gray-400 pointer-events-none">
+                  Sign here
+                </div>
+              </div>
+              
+              <div className="flex justify-between gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearSignature}
+                  type="button"
+                >
+                  Clear
+                </Button>
+                <Button 
+                  onClick={handleAcceptQuotation}
+                  disabled={isProcessing}
+                  type="button"
+                >
+                  {isProcessing ? 'Processing...' : 'Accept Quotation'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

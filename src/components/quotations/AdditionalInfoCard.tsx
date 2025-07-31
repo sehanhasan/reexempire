@@ -1,136 +1,68 @@
 
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Send, Save } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 interface AdditionalInfoCardProps {
-  notes: string;
-  setNotes: React.Dispatch<React.SetStateAction<string>>;
-  onSubmit: (e: React.FormEvent, status?: string) => void;
-  onCancel: () => void;
-  documentType: "quotation" | "invoice";
-  isSubmitting?: boolean;
-  saveButtonText?: string;
-  onSendWhatsapp?: () => void;
-  showDraft?: boolean;
+  subject?: string;
+  notes?: string;
+  terms?: string;
+  signatureData?: string;
 }
 
-export function AdditionalInfoCard({
-  notes,
-  setNotes,
-  onSubmit,
-  onCancel,
-  documentType,
-  isSubmitting = false,
-  saveButtonText = "Save",
-  onSendWhatsapp,
-  showDraft = true
-}: AdditionalInfoCardProps) {
-  const isMobile = useIsMobile();
-  
-  const handleSendQuotation = (e: React.FormEvent) => {
-    // Submit the quotation with "Sent" status - this will auto-save and then trigger WhatsApp
-    onSubmit(e, "Sent");
-  };
-  
-  const fieldLabel = documentType === "quotation" ? "Terms and Conditions" : "Notes";
-  const fieldPlaceholder = documentType === "quotation" 
-    ? "Enter terms and conditions for this quotation..." 
-    : "Enter any additional notes for this invoice...";
-  
+export function AdditionalInfoCard({ subject, notes, terms, signatureData }: AdditionalInfoCardProps) {
+  const hasAnyContent = subject || notes || terms || signatureData;
+
+  if (!hasAnyContent) {
+    return null;
+  }
+
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="py-3 px-4">
-        <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>Additional Information</CardTitle>
       </CardHeader>
-      <CardContent className="py-3 px-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="notes" className="text-sm font-medium">{fieldLabel}</label>
-            <Textarea 
-              id="notes"
-              placeholder={fieldPlaceholder}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="min-h-20"
-            />
+      <CardContent className="space-y-4">
+        {subject && (
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-2">Subject</h4>
+            <p className="text-sm">{subject}</p>
           </div>
-          
-          <div className={`flex ${isMobile ? 'flex-col' : 'justify-end'} gap-3 mt-6`}>
-            {documentType === "quotation" ? (
-              <>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className={`${isMobile ? 'w-full' : ''}`}
-                  onClick={onCancel}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                
-                {showDraft && (
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className={`${isMobile ? 'w-full' : ''} gap-2`}
-                    onClick={(e) => onSubmit(e, "Draft")}
-                    disabled={isSubmitting}
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Draft
-                  </Button>
-                )}
-                
-                <Button 
-                  type="button"
-                  className={`${isMobile ? 'w-full' : ''} gap-2 bg-blue-600 hover:bg-blue-700`}
-                  onClick={handleSendQuotation}
-                  disabled={isSubmitting}
-                >
-                  <Send className="h-4 w-4" />
-                  {saveButtonText === "Save" ? "Send Quotation" : "Send Update"}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={onCancel}
-                  className={`${isMobile ? 'w-full' : ''}`}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                
-                <Button 
-                  type="submit" 
-                  onClick={(e) => onSubmit(e)}
-                  className={`${isMobile ? 'w-full' : ''} bg-blue-600 hover:bg-blue-700`}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Saving...' : saveButtonText}
-                </Button>
-                
-                {onSendWhatsapp && (
-                  <Button 
-                    type="button" 
-                    variant="secondary"
-                    onClick={onSendWhatsapp}
-                    className={`${isMobile ? 'w-full' : ''} gap-2`}
-                    disabled={isSubmitting}
-                  >
-                    <Send className="h-4 w-4" />
-                    Send to WhatsApp
-                  </Button>
-                )}
-              </>
-            )}
+        )}
+
+        {notes && (
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-2">Notes</h4>
+            <p className="text-sm whitespace-pre-wrap">{notes}</p>
           </div>
-        </div>
+        )}
+
+        {terms && (
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
+            <p className="text-sm whitespace-pre-wrap">{terms}</p>
+          </div>
+        )}
+
+        {signatureData && (
+          <>
+            {(subject || notes || terms) && <Separator />}
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <img 
+                  src={signatureData} 
+                  alt="Customer Signature" 
+                  className="max-w-full h-auto border border-gray-200 rounded bg-white"
+                  style={{ maxHeight: '150px' }}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Signed digitally on {new Date().toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
