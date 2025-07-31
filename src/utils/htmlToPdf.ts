@@ -1,3 +1,4 @@
+
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -60,6 +61,12 @@ export const captureViewAsPDF = async (
     console.error('Error generating PDF:', error);
     throw error;
   }
+};
+
+// Export the function that ViewQuotation expects
+export const generateQuotationPDF = async (quotation: any, customer: any, items: any[]) => {
+  const filename = `quotation-${quotation.reference_number}.pdf`;
+  return captureViewAsPDF('quotation-view', filename);
 };
 
 export const captureMultiPageViewAsPDF = async (

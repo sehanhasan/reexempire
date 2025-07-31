@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -38,7 +39,7 @@ export default function ViewQuotation() {
 
   const { data: items = [] } = useQuery({
     queryKey: ['quotation-items', id],
-    queryFn: () => quotationService.getItems(id!),
+    queryFn: () => quotationService.getItemsByQuotationId(id!),
     enabled: !!id,
   });
 
@@ -159,7 +160,7 @@ export default function ViewQuotation() {
         </div>
 
         {/* Customer Information */}
-        {customer && <CustomerInfoCard customer={customer} />}
+        {customer && <CustomerInfoCard customerId={customer.id} />}
 
         {/* Quotation Details */}
         <Card>
@@ -199,7 +200,27 @@ export default function ViewQuotation() {
         </Card>
 
         {/* Items Table */}
-        <ItemsTable items={items} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ItemsTable 
+              items={items.map(item => ({
+                id: parseInt(item.id),
+                description: item.description,
+                category: item.category || 'Other Items',
+                quantity: item.quantity,
+                unit: item.unit,
+                unitPrice: item.unit_price,
+                amount: item.amount
+              }))} 
+              handleItemChange={() => {}} 
+              removeItem={() => {}} 
+              showDescription={true}
+            />
+          </CardContent>
+        </Card>
 
         {/* Additional Information */}
         <AdditionalInfoCard 
@@ -227,16 +248,17 @@ export default function ViewQuotation() {
                 By signing below, you accept the terms and conditions of this quotation.
               </div>
               
-              <div className="relative border-2 border-dashed border-gray-300 rounded-lg bg-white">
+              <div className="relative border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden">
                 <SignatureCanvas
                   ref={sigCanvasRef}
                   canvasProps={{
-                    className: 'w-full h-48 touch-none',
+                    className: 'signature-canvas',
                     style: {
                       width: '100%',
                       height: '192px',
                       display: 'block',
-                      touchAction: 'none'
+                      touchAction: 'none',
+                      cursor: 'crosshair'
                     }
                   }}
                   backgroundColor="white"
