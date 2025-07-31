@@ -8,6 +8,7 @@ import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -252,7 +253,7 @@ export default function CreateQuotation() {
           calculateItemAmount={calculateItemAmount}
         />
         
-        <AdditionalInfoCard 
+        <AdditionalInfoForm 
           notes={notes}
           setNotes={setNotes}
           onSubmit={handleSubmit}

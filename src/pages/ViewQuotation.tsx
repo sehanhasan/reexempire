@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -159,8 +158,42 @@ export default function ViewQuotation() {
           </div>
         </div>
 
-        {/* Customer Information */}
-        {customer && <CustomerInfoCard customerId={customer.id} />}
+        {/* Customer Information - Read-only display */}
+        {customer && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Customer</p>
+                  <p className="font-medium">{customer.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{customer.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium">{customer.phone || 'N/A'}</p>
+                </div>
+                {customer.unit_number && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Unit Number</p>
+                    <p className="font-medium">{customer.unit_number}</p>
+                  </div>
+                )}
+                {customer.address && (
+                  <div className="col-span-full">
+                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p className="font-medium">{customer.address}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quotation Details */}
         <Card>
