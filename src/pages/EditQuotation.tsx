@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -7,7 +8,7 @@ import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
-import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -410,14 +411,13 @@ export default function EditQuotation() {
           calculateItemAmount={calculateItemAmount} 
         />
         
-        <AdditionalInfoCard 
+        <AdditionalInfoForm 
           notes={notes} 
           setNotes={setNotes} 
           onSubmit={handleSubmit} 
           onCancel={() => navigate("/quotations")} 
           documentType="quotation" 
-          isSubmitting={isSubmitting} 
-          saveButtonText="Update Quotation"
+          isSubmitting={isSubmitting}
           showDraft={false}
         />
       </form>
