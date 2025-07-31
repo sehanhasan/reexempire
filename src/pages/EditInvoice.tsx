@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -8,7 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
-import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { invoiceService, customerService } from "@/services";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
@@ -524,7 +523,7 @@ export default function EditInvoice() {
           </CardContent>
         </Card>
 
-        <AdditionalInfoCard
+        <AdditionalInfoForm
           notes={notes}
           setNotes={setNotes}
           onSubmit={handleSubmit}
