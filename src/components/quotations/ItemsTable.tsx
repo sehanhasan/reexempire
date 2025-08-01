@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ export function ItemsTable({
     return `RM ${amount.toFixed(2)}`;
   };
 
-  // Group items by category
+  // Group items by category, but only show categories that have items
   const groupItemsByCategory = () => {
     const groupedItems: {
       [key: string]: QuotationItem[];
@@ -33,7 +34,8 @@ export function ItemsTable({
     const orderedCategories: string[] = [];
 
     items.forEach(item => {
-      const category = item.category || 'Other Items';
+      // Only create categories for items that actually have content
+      const category = (item.category && item.category.trim()) || 'Other Items';
       if (!groupedItems[category]) {
         groupedItems[category] = [];
         orderedCategories.push(category);
@@ -41,9 +43,16 @@ export function ItemsTable({
       groupedItems[category].push(item);
     });
 
+    // Filter out empty categories
+    const filteredCategories = orderedCategories.filter(category => 
+      groupedItems[category].some(item => 
+        item.description && item.description.trim() !== ''
+      )
+    );
+
     return {
       groupedItems,
-      orderedCategories
+      orderedCategories: filteredCategories
     };
   };
 
@@ -58,7 +67,10 @@ export function ItemsTable({
         <div className="space-y-5">
           {orderedCategories.map(category => (
             <div key={category} className="space-y-3">
-              <div className="font-medium text-base text-blue-600">{category}</div>
+              {/* Only show category header if there are actual items with content */}
+              {groupedItems[category].some(item => item.description && item.description.trim() !== '') && (
+                <div className="font-medium text-base text-blue-600">{category}</div>
+              )}
               {groupedItems[category].map((item, index) => (
                 <div key={item.id} className="border rounded-md p-3 space-y-2 relative bg-white">
                   <div className="absolute top-2 right-2">
@@ -140,11 +152,14 @@ export function ItemsTable({
           <tbody>
             {orderedCategories.map(category => (
               <React.Fragment key={category}>
-                <tr className="bg-gray-50">
-                  <td colSpan={6} className="py-2 px-2 font-small text-blue-600 border-t">
-                    {category}
-                  </td>
-                </tr>
+                {/* Only show category row if there are items with actual content */}
+                {groupedItems[category].some(item => item.description && item.description.trim() !== '') && (
+                  <tr className="bg-gray-50">
+                    <td colSpan={6} className="py-2 px-2 font-small text-blue-600 border-t">
+                      {category}
+                    </td>
+                  </tr>
+                )}
                 {groupedItems[category].map((item, index) => (
                   <tr key={item.id} className="border-b last:border-b-0">
                     <td className="py-3 px-1 align-top">

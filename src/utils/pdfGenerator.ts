@@ -30,7 +30,7 @@ interface InvoiceDetails extends DocumentDetails {
   depositAmount: number;
   depositPercentage: number;
   quotationReference?: string;
-  images?: string[]; // URLs for any images to include in the PDF
+  images?: string[];
 }
 
 const formatCurrency = (amount: number): string => {
@@ -42,7 +42,7 @@ const calculateSubtotal = (items: QuotationItem[] | InvoiceItem[]): number => {
 };
 
 const calculateTax = (subtotal: number): number => {
-  return subtotal * 0.06; // 6% SST in Malaysia
+  return subtotal * 0.06;
 };
 
 const calculateTotal = (subtotal: number): number => {
@@ -52,11 +52,9 @@ const calculateTotal = (subtotal: number): number => {
 // Add logo to PDF
 const addLogo = (pdf: jsPDF, x: number, y: number, width: number) => {
   try {
-    // Using the Reex Empire logo
     pdf.addImage('/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png', 'PNG', x, y, width, width * 0.75);
   } catch (error) {
     console.error('Error loading logo:', error);
-    // Fallback if image fails to load
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     pdf.text('STAR RESIDENCES', x, y + 10);
@@ -76,7 +74,7 @@ const addCompanyInfo = (pdf: jsPDF, x: number, y: number) => {
   ], x, y);
 };
 
-// Base PDF generation function with proper A4 margins
+// Base PDF generation function
 const generateBasePDF = (title: string): jsPDF => {
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -84,18 +82,20 @@ const generateBasePDF = (title: string): jsPDF => {
     format: 'a4'
   });
   
-  // Add logo
-  addLogo(pdf, 20, 15, 30);
+  // Add logo (smaller and properly positioned)
+  addLogo(pdf, 20, 10, 25);
   
-  // Add company info
-  addCompanyInfo(pdf, 60, 20);
+  // Add company info (aligned with logo)
+  addCompanyInfo(pdf, 55, 15);
   
-  // Add document title
+  // Add document title (properly aligned)
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(18);
-  pdf.text(title, 190, 25, { align: 'right' });
-  pdf.setLineWidth(0.3);
-  pdf.line(140, 27, 190, 27);
+  pdf.setFontSize(20);
+  pdf.text(title, 190, 20, { align: 'right' });
+  
+  // Add a line under the title
+  pdf.setLineWidth(0.5);
+  pdf.line(140, 25, 190, 25);
   
   return pdf;
 };
@@ -105,101 +105,124 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   const pdf = generateBasePDF('QUOTATION');
   const subtotal = calculateSubtotal(details.items);
   
-  // Add quotation number
+  // Document info section
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
-  pdf.text(`Quotation #${details.documentNumber}`, 105, 40, { align: 'center' });
-  pdf.text('Sent', 105, 48, { align: 'center' });
+  pdf.text(`Quotation #${details.documentNumber}`, 20, 45);
   
-  // Customer Information section
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(20, 55, 170, 35, 'F');
+  // Customer Information in a clean box
+  pdf.setFillColor(248, 249, 250);
+  pdf.rect(20, 55, 170, 40, 'F');
+  pdf.setDrawColor(200, 200, 200);
+  pdf.rect(20, 55, 170, 40, 'S');
+  
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text('Customer Information', 25, 62);
+  pdf.setFontSize(11);
+  pdf.text('CUSTOMER INFORMATION', 25, 62);
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(9);
   
-  // Customer details in columns
+  // Customer details in organized layout
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Customer', 25, 70);
-  pdf.text('Email', 100, 70);
-  pdf.text('Phone', 150, 70);
-  
+  pdf.text('Name:', 25, 70);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(details.customerName || 'N/A', 25, 76);
-  pdf.text(details.customerEmail || 'N/A', 100, 76);
-  pdf.text(details.customerContact || 'N/A', 150, 76);
+  pdf.text(details.customerName || 'N/A', 45, 70);
   
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Unit Number', 25, 82);
+  pdf.text('Unit:', 25, 76);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(details.unitNumber || 'N/A', 25, 88);
+  pdf.text(details.unitNumber || 'N/A', 45, 76);
   
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Address', 100, 82);
+  pdf.text('Email:', 105, 70);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(details.customerAddress || 'N/A', 100, 88);
+  pdf.text(details.customerEmail || 'N/A', 120, 70);
   
-  // Quotation Details section
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(20, 95, 170, 25, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text('Quotation Details', 25, 102);
+  pdf.text('Phone:', 105, 76);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(details.customerContact || 'N/A', 120, 76);
+  
+  if (details.customerAddress) {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Address:', 25, 82);
+    pdf.setFont('helvetica', 'normal');
+    // Split long addresses
+    const addressLines = pdf.splitTextToSize(details.customerAddress, 140);
+    pdf.text(addressLines, 45, 82);
+  }
+  
+  // Quotation details
+  pdf.setFillColor(248, 249, 250);
+  pdf.rect(20, 100, 170, 20, 'F');
+  pdf.setDrawColor(200, 200, 200);
+  pdf.rect(20, 100, 170, 20, 'S');
+  
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.text('QUOTATION DETAILS', 25, 107);
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(9);
   
-  // Details in columns
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Issue Date', 25, 108);
-  pdf.text('Expiry Date', 80, 108);
-  pdf.text('Subtotal', 130, 108);
-  pdf.text('Total', 155, 108);
-  
+  pdf.text('Date:', 25, 114);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(details.documentDate, 25, 114);
-  pdf.text(details.expiryDate, 80, 114);
-  pdf.text(`RM ${subtotal.toFixed(2)}`, 130, 114);
+  pdf.text(details.documentDate, 45, 114);
+  
   pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(0, 100, 200);
-  pdf.text(`RM ${subtotal.toFixed(2)}`, 155, 114);
-  pdf.setTextColor(0, 0, 0);
+  pdf.text('Valid Until:', 80, 114);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(details.expiryDate, 110, 114);
+  
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Total:', 140, 114);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(10);
+  pdf.text(formatCurrency(subtotal), 160, 114);
   
   // Items section
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(20, 125, 170, 10, 'F');
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text('Items', 25, 131);
+  let currentY = 130;
   
-  // Group items by category and display them properly
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.text('ITEMS', 20, currentY);
+  currentY += 10;
+  
+  // Group items by category for better organization
   const groupedItems: { [key: string]: (QuotationItem | InvoiceItem)[] } = {};
   details.items.forEach(item => {
-    const category = item.category || 'Other Items';
+    const category = (item.category && item.category.trim()) || 'Other Items';
     if (!groupedItems[category]) {
       groupedItems[category] = [];
     }
     groupedItems[category].push(item);
   });
   
-  let currentY = 145;
+  // Only show categories that have items with content
+  const validCategories = Object.keys(groupedItems).filter(category => 
+    groupedItems[category].some(item => item.description && item.description.trim() !== '')
+  );
   
-  Object.keys(groupedItems).forEach(category => {
-    // Category header
-    if (category !== 'Other Items' || groupedItems[category].some(item => item.category)) {
+  validCategories.forEach(category => {
+    const categoryItems = groupedItems[category].filter(item => 
+      item.description && item.description.trim() !== ''
+    );
+    
+    if (categoryItems.length === 0) return;
+    
+    // Category header (only if not "Other Items" or if explicitly set)
+    if (category !== 'Other Items' || categoryItems.some(item => item.category)) {
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(9);
+      pdf.setFontSize(10);
       pdf.setTextColor(0, 100, 200);
-      pdf.text(category, 25, currentY);
-      currentY += 8;
+      pdf.text(category, 20, currentY);
+      currentY += 6;
       pdf.setTextColor(0, 0, 0);
     }
     
     // Items table for this category
-    const categoryItems = groupedItems[category];
     const tableData = categoryItems.map(item => [
       item.description,
       item.quantity.toString(),
@@ -210,7 +233,7 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
     
     autoTable(pdf, {
       startY: currentY,
-      head: [['Description', 'Quantity', 'Unit', 'Unit Price', 'Amount']],
+      head: [['Description', 'Qty', 'Unit', 'Unit Price', 'Amount']],
       body: tableData,
       theme: 'grid',
       styles: {
@@ -218,26 +241,63 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
         cellPadding: 2
       },
       headStyles: {
-        fillColor: [150, 150, 150],
+        fillColor: [100, 100, 100],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         fontSize: 8
       },
       columnStyles: {
-        0: { cellWidth: 80 },
+        0: { cellWidth: 85 },
         1: { cellWidth: 20, halign: 'center' },
         2: { cellWidth: 20, halign: 'center' },
-        3: { cellWidth: 25, halign: 'right' },
-        4: { cellWidth: 25, halign: 'right' }
+        3: { cellWidth: 30, halign: 'right' },
+        4: { cellWidth: 30, halign: 'right' }
       },
       margin: { left: 20, right: 20 }
     });
     
-    // @ts-ignore - lastAutoTable is added by the plugin
-    currentY = pdf.lastAutoTable?.finalY + 10 || currentY + 20;
+    // @ts-ignore
+    currentY = pdf.lastAutoTable?.finalY + 8 || currentY + 20;
   });
   
-  // Add footer
+  // Summary section
+  const summaryY = currentY + 10;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  
+  // Subtotal
+  pdf.text('Subtotal:', 140, summaryY);
+  pdf.text(formatCurrency(subtotal), 175, summaryY, { align: 'right' });
+  
+  // Deposit information if applicable
+  if (details.depositInfo.requiresDeposit && details.depositInfo.depositAmount > 0) {
+    pdf.text(`Deposit (${details.depositInfo.depositPercentage.toFixed(1)}%):`, 140, summaryY + 6);
+    pdf.text(formatCurrency(details.depositInfo.depositAmount), 175, summaryY + 6, { align: 'right' });
+    
+    pdf.text('Balance Due:', 140, summaryY + 12);
+    pdf.text(formatCurrency(subtotal - details.depositInfo.depositAmount), 175, summaryY + 12, { align: 'right' });
+  }
+  
+  // Total
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.text('TOTAL:', 140, summaryY + 20);
+  pdf.text(formatCurrency(subtotal), 175, summaryY + 20, { align: 'right' });
+  
+  // Notes if any
+  if (details.notes && details.notes.trim()) {
+    const notesY = summaryY + 35;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.text('NOTES:', 20, notesY);
+    
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    const splitNotes = pdf.splitTextToSize(details.notes, 170);
+    pdf.text(splitNotes, 20, notesY + 6);
+  }
+  
+  // Footer
   const pageHeight = pdf.internal.pageSize.height;
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
@@ -253,7 +313,6 @@ export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
   let subtotal = calculateSubtotal(details.items);
   let taxableAmount = subtotal;
   
-  // If this is a deposit invoice, only calculate tax on the deposit amount
   if (details.isDepositInvoice) {
     taxableAmount = details.depositAmount;
   }
@@ -527,7 +586,6 @@ const addItemsTable = (pdf: jsPDF, items: QuotationItem[] | InvoiceItem[], start
       4: { cellWidth: 30, halign: 'right' }
     },
     didParseCell: (data) => {
-      // Align numeric columns to the right
       if (data.column.index > 2) {
         data.cell.styles.halign = 'right';
       }

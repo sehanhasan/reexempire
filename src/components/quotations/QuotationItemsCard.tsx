@@ -46,8 +46,9 @@ export function QuotationItemsCard({
   };
   
   const addItem = () => {
+    // Only add one item at a time
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems(prevItems => [...prevItems, {
+    const newItem = {
       id: newId,
       description: "",
       category: "",
@@ -55,7 +56,9 @@ export function QuotationItemsCard({
       unit: "Unit",
       unitPrice: 0,
       amount: 0
-    }]);
+    };
+    
+    setItems(prevItems => [...prevItems, newItem]);
     setShowItemsTable(true);
   };
   
@@ -89,7 +92,9 @@ export function QuotationItemsCard({
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     // Filter out items that don't have proper data to avoid blank entries
     const validSelectedItems = selectedItems.filter(item => 
-      item.description && item.description.trim() !== '' && item.price > 0
+      item.description && 
+      item.description.trim() !== '' && 
+      item.price > 0
     );
     
     if (validSelectedItems.length === 0) {
@@ -100,17 +105,20 @@ export function QuotationItemsCard({
       return;
     }
 
-    const newItems = validSelectedItems.map((selectedItem, index) => ({
-      id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
-      description: selectedItem.description,
-      category: selectedItem.category || "Other Items",
-      quantity: selectedItem.quantity,
-      unit: selectedItem.unit,
-      unitPrice: selectedItem.price,
-      amount: selectedItem.quantity * selectedItem.price
-    }));
+    const newItems = validSelectedItems.map((selectedItem, index) => {
+      const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1;
+      return {
+        id: newId,
+        description: selectedItem.description,
+        category: selectedItem.category || "", // Don't default to "Other Items" here
+        quantity: selectedItem.quantity,
+        unit: selectedItem.unit,
+        unitPrice: selectedItem.price,
+        amount: selectedItem.quantity * selectedItem.price
+      };
+    });
     
-    setItems([...items, ...newItems]);
+    setItems(prevItems => [...prevItems, ...newItems]);
     setShowItemsTable(true);
     toast({
       title: "Items Added",
