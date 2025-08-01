@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,6 +51,11 @@ export default function ViewInvoice() {
     };
 
     fetchInvoiceData();
+    
+    // Set up interval to refresh data every 5 minutes to keep the link active
+    const interval = setInterval(fetchInvoiceData, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
   }, [id]);
 
   const formatMoney = (amount) => {
@@ -87,8 +91,13 @@ export default function ViewInvoice() {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <div className="text-center p-8">
+          <img 
+            src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+            alt="Reex Empire Logo" 
+            className="h-20 w-auto mx-auto mb-4"
+          />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Invoice Not Found</h2>
-          <p className="text-gray-600 mb-6">The requested invoice could not be found or has expired.</p>
+          <p className="text-gray-600 mb-6">The requested invoice could not be found. The link may have expired or the invoice may not exist.</p>
           <Button onClick={() => navigate("/")}>Return Home</Button>
         </div>
       </div>
@@ -121,7 +130,7 @@ export default function ViewInvoice() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <img 
-                src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
+                src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
                 alt="Reex Empire Logo" 
                 className="h-10 w-auto"
               />
@@ -149,6 +158,15 @@ export default function ViewInvoice() {
 
       <div className="py-8 px-4">
         <div className="max-w-4xl mx-auto">
+          {/* Company Logo */}
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+              alt="Reex Empire Logo" 
+              className="h-20 w-auto"
+            />
+          </div>
+
           {/* Company Info Card */}
           <Card className="mb-6">
             <CardContent className="p-6">
@@ -189,31 +207,31 @@ export default function ViewInvoice() {
             <CardContent className="p-6">
               <h3 className="font-semibold text-gray-700 mb-4">Items</h3>
               
-              {/* Main table header */}
+              {/* Items displayed as a clean table without input fields */}
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-gray-50 text-left">
-                      <th className="py-2 px-4 border-b">Description</th>
-                      <th className="py-2 px-4 border-b text-right">Price</th>
-                      <th className="py-2 px-4 border-b text-right">Qty</th>
-                      <th className="py-2 px-4 border-b text-right">Amount</th>
+                      <th className="py-3 px-4 border-b font-medium">Description</th>
+                      <th className="py-3 px-4 border-b text-right font-medium">Price</th>
+                      <th className="py-3 px-4 border-b text-right font-medium">Qty</th>
+                      <th className="py-3 px-4 border-b text-right font-medium">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categories.map(category => (
                       <>
                         <tr key={category}>
-                          <td colSpan={4} className="py-2 px-4 font-medium text-blue-800 bg-blue-50">
+                          <td colSpan={4} className="py-2 px-4 font-medium text-blue-800 bg-blue-50 border-b">
                             {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (
-                          <tr key={idx} className="border-b">
+                          <tr key={idx} className="border-b hover:bg-gray-50">
                             <td className="py-3 px-4">{item.description}</td>
                             <td className="py-3 px-4 text-right">{formatMoney(item.unit_price)}</td>
                             <td className="py-3 px-4 text-right">{item.quantity}</td>
-                            <td className="py-3 px-4 text-right">{formatMoney(item.amount)}</td>
+                            <td className="py-3 px-4 text-right font-medium">{formatMoney(item.amount)}</td>
                           </tr>
                         ))}
                       </>
@@ -240,7 +258,7 @@ export default function ViewInvoice() {
                       <span>{formatMoney(invoice.deposit_amount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between py-2 text-lg font-bold">
+                  <div className="flex justify-between py-2 text-lg font-bold border-t">
                     <span>Total:</span>
                     <span>{formatMoney(invoice.total)}</span>
                   </div>
@@ -275,7 +293,7 @@ export default function ViewInvoice() {
             <Card className="mb-6">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
-                <p className="whitespace-pre-line">{invoice.notes}</p>
+                <div className="whitespace-pre-line text-gray-700">{invoice.notes}</div>
               </CardContent>
             </Card>
           )}
@@ -285,7 +303,7 @@ export default function ViewInvoice() {
             <Card className="mb-6">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-gray-700 mb-2">Terms & Conditions</h3>
-                <p className="whitespace-pre-line">{invoice.terms}</p>
+                <div className="whitespace-pre-line text-gray-700">{invoice.terms}</div>
               </CardContent>
             </Card>
           )}

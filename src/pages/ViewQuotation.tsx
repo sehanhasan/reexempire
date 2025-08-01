@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +11,7 @@ import { ItemsTable } from '@/components/quotations/ItemsTable';
 import { AdditionalInfoCard } from '@/components/quotations/AdditionalInfoCard';
 import { quotationService } from '@/services/quotationService';
 import { customerService } from '@/services/customerService';
-import { Download, FileText, CheckCircle, X } from 'lucide-react';
+import { Download, FileText, CheckCircle, X, Pen } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
@@ -28,18 +29,23 @@ export default function ViewQuotation() {
     queryKey: ['quotation', id],
     queryFn: () => quotationService.getById(id!),
     enabled: !!id,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: customer } = useQuery({
     queryKey: ['customer', quotation?.customer_id],
     queryFn: () => customerService.getById(quotation!.customer_id),
     enabled: !!quotation?.customer_id,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { data: items = [] } = useQuery({
     queryKey: ['quotation-items', id],
     queryFn: () => quotationService.getItemsByQuotationId(id!),
     enabled: !!id,
+    staleTime: 0, // Always fetch fresh data
   });
 
   // Handle signature clearing
@@ -107,7 +113,8 @@ export default function ViewQuotation() {
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
-          <p className="text-muted-foreground">The quotation you're looking for doesn't exist.</p>
+          <p className="text-muted-foreground">The quotation you're looking for doesn't exist or may have expired.</p>
+          <Button onClick={() => navigate('/')} className="mt-4">Return Home</Button>
         </div>
       </div>
     );
@@ -119,11 +126,16 @@ export default function ViewQuotation() {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6" id="quotation-view">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header with actions */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
+        {/* Company Logo and Header */}
+        <div className="flex flex-col items-center mb-8">
+          <img 
+            src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+            alt="Reex Empire Logo" 
+            className="h-20 w-auto mb-4"
+          />
+          <div className="text-center">
             <h1 className="text-2xl sm:text-3xl font-bold">Quotation #{quotation.reference_number}</h1>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center justify-center gap-2 mt-2">
               <Badge variant={isAccepted ? "default" : "secondary"}>
                 {quotation.status}
               </Badge>
@@ -135,30 +147,32 @@ export default function ViewQuotation() {
               )}
             </div>
           </div>
-          
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              onClick={handleDownloadPDF}
-              disabled={isProcessing}
-              className="flex-1 sm:flex-none"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isProcessing ? 'Generating...' : 'Download PDF'}
-            </Button>
-            
-            {!isAccepted && !isSigning && (
-              <Button 
-                onClick={() => setIsSigning(true)}
-                variant="default"
-                className="flex-1 sm:flex-none"
-              >
-                Accept & Sign
-              </Button>
-            )}
-          </div>
         </div>
 
-        {/* Customer Information - Read-only display */}
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-2 w-full sm:w-auto mb-6">
+          <Button
+            onClick={handleDownloadPDF}
+            disabled={isProcessing}
+            className="flex-1 sm:flex-none"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isProcessing ? 'Generating...' : 'Download PDF'}
+          </Button>
+          
+          {!isAccepted && (
+            <Button 
+              onClick={() => setIsSigning(true)}
+              variant="default"
+              className="flex-1 sm:flex-none"
+            >
+              <Pen className="h-4 w-4 mr-2" />
+              Accept & Sign
+            </Button>
+          )}
+        </div>
+
+        {/* Customer Information */}
         {customer && (
           <Card>
             <CardHeader>
@@ -232,26 +246,36 @@ export default function ViewQuotation() {
           </CardContent>
         </Card>
 
-        {/* Items Table */}
+        {/* Items Table - Display as read-only table */}
         <Card>
           <CardHeader>
             <CardTitle>Items</CardTitle>
           </CardHeader>
           <CardContent>
-            <ItemsTable 
-              items={items.map(item => ({
-                id: parseInt(item.id),
-                description: item.description,
-                category: item.category || 'Other Items',
-                quantity: item.quantity,
-                unit: item.unit,
-                unitPrice: item.unit_price,
-                amount: item.amount
-              }))} 
-              handleItemChange={() => {}} 
-              removeItem={() => {}} 
-              showDescription={true}
-            />
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2 font-medium">Description</th>
+                    <th className="text-right p-2 font-medium">Quantity</th>
+                    <th className="text-right p-2 font-medium">Unit</th>
+                    <th className="text-right p-2 font-medium">Unit Price</th>
+                    <th className="text-right p-2 font-medium">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-2">{item.description}</td>
+                      <td className="text-right p-2">{item.quantity}</td>
+                      <td className="text-right p-2">{item.unit}</td>
+                      <td className="text-right p-2">{formatCurrency(item.unit_price)}</td>
+                      <td className="text-right p-2 font-medium">{formatCurrency(item.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
@@ -263,60 +287,80 @@ export default function ViewQuotation() {
           signatureData={hasSignature ? signatureData : undefined}
         />
 
-        {/* Signature Section */}
-        {isSigning && (
+        {/* Signature Section - Always show if not accepted yet */}
+        {!isAccepted && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Digital Signature</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSigning(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              {isSigning && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSigning(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                By signing below, you accept the terms and conditions of this quotation.
-              </div>
-              
-              <div className="relative border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden">
-                <SignatureCanvas
-                  ref={sigCanvasRef}
-                  canvasProps={{
-                    className: 'signature-canvas',
-                    style: {
-                      width: '100%',
-                      height: '192px',
-                      display: 'block',
-                      touchAction: 'none',
-                      cursor: 'crosshair'
-                    }
-                  }}
-                  backgroundColor="white"
-                />
-                <div className="absolute top-2 left-2 text-xs text-gray-400 pointer-events-none">
-                  Sign here
+              {!isSigning ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    Click the "Accept & Sign" button above to digitally sign this quotation.
+                  </p>
+                  <Button 
+                    onClick={() => setIsSigning(true)}
+                    variant="default"
+                    size="lg"
+                  >
+                    <Pen className="h-4 w-4 mr-2" />
+                    Start Digital Signature
+                  </Button>
                 </div>
-              </div>
-              
-              <div className="flex justify-between gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={handleClearSignature}
-                  type="button"
-                >
-                  Clear
-                </Button>
-                <Button 
-                  onClick={handleAcceptQuotation}
-                  disabled={isProcessing}
-                  type="button"
-                >
-                  {isProcessing ? 'Processing...' : 'Accept Quotation'}
-                </Button>
-              </div>
+              ) : (
+                <>
+                  <div className="text-sm text-muted-foreground">
+                    By signing below, you accept the terms and conditions of this quotation.
+                  </div>
+                  
+                  <div className="relative border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden">
+                    <SignatureCanvas
+                      ref={sigCanvasRef}
+                      canvasProps={{
+                        className: 'signature-canvas',
+                        style: {
+                          width: '100%',
+                          height: '192px',
+                          display: 'block',
+                          touchAction: 'none',
+                          cursor: 'crosshair'
+                        }
+                      }}
+                      backgroundColor="white"
+                    />
+                    <div className="absolute top-2 left-2 text-xs text-gray-400 pointer-events-none">
+                      Sign here
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleClearSignature}
+                      type="button"
+                    >
+                      Clear
+                    </Button>
+                    <Button 
+                      onClick={handleAcceptQuotation}
+                      disabled={isProcessing}
+                      type="button"
+                    >
+                      {isProcessing ? 'Processing...' : 'Accept Quotation'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
