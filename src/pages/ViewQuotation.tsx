@@ -29,7 +29,7 @@ export default function ViewQuotation() {
     queryKey: ['quotation', id],
     queryFn: () => quotationService.getById(id!),
     enabled: !!id,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
@@ -38,24 +38,22 @@ export default function ViewQuotation() {
     queryKey: ['customer', quotation?.customer_id],
     queryFn: () => customerService.getById(quotation!.customer_id),
     enabled: !!quotation?.customer_id,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
   });
 
   const { data: items = [] } = useQuery({
     queryKey: ['quotation-items', id],
     queryFn: () => quotationService.getItemsByQuotationId(id!),
     enabled: !!id,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
   });
 
-  // Handle signature clearing
   const handleClearSignature = () => {
     if (sigCanvasRef.current) {
       sigCanvasRef.current.clear();
     }
   };
 
-  // Handle signature acceptance
   const handleAcceptQuotation = async () => {
     if (!sigCanvasRef.current || !quotation) return;
 
@@ -80,7 +78,6 @@ export default function ViewQuotation() {
     }
   };
 
-  // Handle PDF download
   const handleDownloadPDF = async () => {
     if (!quotation) return;
     
@@ -98,7 +95,7 @@ export default function ViewQuotation() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
@@ -109,7 +106,7 @@ export default function ViewQuotation() {
 
   if (!quotation) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -123,38 +120,48 @@ export default function ViewQuotation() {
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.status === 'Accepted';
 
+  // Group items by category
+  const groupedItems: { [key: string]: any[] } = {};
+  items.forEach(item => {
+    const category = item.category || "Other Items";
+    if (!groupedItems[category]) {
+      groupedItems[category] = [];
+    }
+    groupedItems[category].push(item);
+  });
+  
+  const categories = Object.keys(groupedItems).sort();
+
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6" id="quotation-view">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Company Logo and Header */}
-        <div className="flex flex-col items-center mb-8">
+    <div className="min-h-screen bg-background py-8 px-4" id="quotation-view">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header with Logo */}
+        <div className="text-center bg-white rounded-lg shadow-sm p-8">
           <img 
             src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
             alt="Reex Empire Logo" 
-            className="h-20 w-auto mb-4"
+            className="h-20 w-auto mx-auto mb-6"
           />
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold">Quotation #{quotation.reference_number}</h1>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <Badge variant={isAccepted ? "default" : "secondary"}>
-                {quotation.status}
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Quotation #{quotation.reference_number}</h1>
+          <div className="flex items-center justify-center gap-3 mt-3">
+            <Badge variant={isAccepted ? "default" : "secondary"} className="text-sm px-3 py-1">
+              {quotation.status}
+            </Badge>
+            {hasSignature && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-sm px-3 py-1">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Signed
               </Badge>
-              {hasSignature && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Signed
-                </Badge>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-2 w-full sm:w-auto mb-6">
+        <div className="flex justify-center gap-3 print:hidden">
           <Button
             onClick={handleDownloadPDF}
             disabled={isProcessing}
-            className="flex-1 sm:flex-none"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
           >
             <Download className="h-4 w-4 mr-2" />
             {isProcessing ? 'Generating...' : 'Download PDF'}
@@ -164,7 +171,7 @@ export default function ViewQuotation() {
             <Button 
               onClick={() => setIsSigning(true)}
               variant="default"
-              className="flex-1 sm:flex-none"
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
             >
               <Pen className="h-4 w-4 mr-2" />
               Accept & Sign
@@ -174,34 +181,34 @@ export default function ViewQuotation() {
 
         {/* Customer Information */}
         {customer && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Customer Information</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="bg-gray-50 rounded-t-lg">
+              <CardTitle className="text-lg text-gray-800">Customer Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <p className="text-sm text-muted-foreground">Customer</p>
-                  <p className="font-medium">{customer.name}</p>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Customer</p>
+                  <p className="font-semibold text-gray-900">{customer.name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{customer.email || 'N/A'}</p>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Email</p>
+                  <p className="text-gray-800">{customer.email || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">{customer.phone || 'N/A'}</p>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Phone</p>
+                  <p className="text-gray-800">{customer.phone || 'N/A'}</p>
                 </div>
                 {customer.unit_number && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Unit Number</p>
-                    <p className="font-medium">{customer.unit_number}</p>
+                    <p className="text-sm text-gray-500 font-medium mb-1">Unit Number</p>
+                    <p className="text-gray-800">{customer.unit_number}</p>
                   </div>
                 )}
                 {customer.address && (
                   <div className="col-span-full">
-                    <p className="text-sm text-muted-foreground">Address</p>
-                    <p className="font-medium">{customer.address}</p>
+                    <p className="text-sm text-gray-500 font-medium mb-1">Address</p>
+                    <p className="text-gray-800">{customer.address}</p>
                   </div>
                 )}
               </div>
@@ -210,34 +217,34 @@ export default function ViewQuotation() {
         )}
 
         {/* Quotation Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quotation Details</CardTitle>
+        <Card className="shadow-sm">
+          <CardHeader className="bg-gray-50 rounded-t-lg">
+            <CardTitle className="text-lg text-gray-800">Quotation Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
-                <p className="text-sm text-muted-foreground">Issue Date</p>
-                <p className="font-medium">{formatDate(quotation.issue_date)}</p>
+                <p className="text-sm text-gray-500 font-medium mb-1">Issue Date</p>
+                <p className="text-gray-800 font-medium">{formatDate(quotation.issue_date)}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Expiry Date</p>
-                <p className="font-medium">{formatDate(quotation.expiry_date)}</p>
+                <p className="text-sm text-gray-500 font-medium mb-1">Expiry Date</p>
+                <p className="text-gray-800 font-medium">{formatDate(quotation.expiry_date)}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Subtotal</p>
-                <p className="font-medium">{formatCurrency(quotation.subtotal)}</p>
+                <p className="text-sm text-gray-500 font-medium mb-1">Subtotal</p>
+                <p className="text-gray-800 font-medium">{formatCurrency(quotation.subtotal)}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="font-bold text-lg">{formatCurrency(quotation.total)}</p>
+                <p className="text-sm text-gray-500 font-medium mb-1">Total</p>
+                <p className="text-xl font-bold text-blue-600">{formatCurrency(quotation.total)}</p>
               </div>
             </div>
 
             {quotation.requires_deposit && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Deposit Required</h4>
-                <p className="text-blue-700">
+              <div className="mt-6 bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">Deposit Required</h4>
+                <p className="text-blue-800">
                   Amount: {formatCurrency(quotation.deposit_amount || 0)} 
                   {quotation.deposit_percentage && ` (${quotation.deposit_percentage}%)`}
                 </p>
@@ -246,32 +253,41 @@ export default function ViewQuotation() {
           </CardContent>
         </Card>
 
-        {/* Items Table - Display as read-only table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Items</CardTitle>
+        {/* Items by Category */}
+        <Card className="shadow-sm">
+          <CardHeader className="bg-gray-50 rounded-t-lg">
+            <CardTitle className="text-lg text-gray-800">Items</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2 font-medium">Description</th>
-                    <th className="text-right p-2 font-medium">Quantity</th>
-                    <th className="text-right p-2 font-medium">Unit</th>
-                    <th className="text-right p-2 font-medium">Unit Price</th>
-                    <th className="text-right p-2 font-medium">Amount</th>
+              <table className="w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="text-left p-4 font-semibold text-gray-700">Description</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">Quantity</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">Unit</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">Unit Price</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="p-2">{item.description}</td>
-                      <td className="text-right p-2">{item.quantity}</td>
-                      <td className="text-right p-2">{item.unit}</td>
-                      <td className="text-right p-2">{formatCurrency(item.unit_price)}</td>
-                      <td className="text-right p-2 font-medium">{formatCurrency(item.amount)}</td>
-                    </tr>
+                  {categories.map(category => (
+                    <React.Fragment key={category}>
+                      <tr className="bg-blue-50 border-t border-b">
+                        <td colSpan={5} className="p-3 font-semibold text-blue-800 text-sm">
+                          {category}
+                        </td>
+                      </tr>
+                      {groupedItems[category].map((item, index) => (
+                        <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
+                          <td className="p-4 text-gray-800">{item.description}</td>
+                          <td className="text-right p-4 text-gray-800">{item.quantity}</td>
+                          <td className="text-right p-4 text-gray-800">{item.unit}</td>
+                          <td className="text-right p-4 text-gray-800">{formatCurrency(item.unit_price)}</td>
+                          <td className="text-right p-4 font-semibold text-gray-800">{formatCurrency(item.amount)}</td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -287,11 +303,11 @@ export default function ViewQuotation() {
           signatureData={hasSignature ? signatureData : undefined}
         />
 
-        {/* Signature Section - Always show if not accepted yet */}
+        {/* Signature Section */}
         {!isAccepted && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Digital Signature</CardTitle>
+          <Card className="shadow-sm print:hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg text-gray-800">Digital Signature</CardTitle>
               {isSigning && (
                 <Button
                   variant="ghost"
@@ -302,68 +318,66 @@ export default function ViewQuotation() {
                 </Button>
               )}
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               {!isSigning ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <p className="text-gray-600 mb-6 text-lg">
                     Click the "Accept & Sign" button above to digitally sign this quotation.
                   </p>
                   <Button 
                     onClick={() => setIsSigning(true)}
-                    variant="default"
-                    size="lg"
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
                   >
-                    <Pen className="h-4 w-4 mr-2" />
+                    <Pen className="h-5 w-5 mr-2" />
                     Start Digital Signature
                   </Button>
                 </div>
               ) : (
-                <>
-                  <div className="text-sm text-muted-foreground">
+                <div className="space-y-6">
+                  <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                     By signing below, you accept the terms and conditions of this quotation.
                   </div>
                   
-                  <div className="relative border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden">
+                  <div className="signature-container">
                     <SignatureCanvas
                       ref={sigCanvasRef}
                       canvasProps={{
                         className: 'signature-canvas',
-                        style: {
-                          width: '100%',
-                          height: '192px',
-                          display: 'block',
-                          touchAction: 'none',
-                          cursor: 'crosshair'
-                        }
                       }}
                       backgroundColor="white"
                     />
-                    <div className="absolute top-2 left-2 text-xs text-gray-400 pointer-events-none">
+                    <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
                       Sign here
                     </div>
                   </div>
                   
-                  <div className="flex justify-between gap-2">
+                  <div className="flex justify-between gap-3">
                     <Button 
                       variant="outline" 
                       onClick={handleClearSignature}
-                      type="button"
+                      className="px-6"
                     >
                       Clear
                     </Button>
                     <Button 
                       onClick={handleAcceptQuotation}
                       disabled={isProcessing}
-                      type="button"
+                      className="bg-green-600 hover:bg-green-700 text-white px-8"
                     >
                       {isProcessing ? 'Processing...' : 'Accept Quotation'}
                     </Button>
                   </div>
-                </>
+                </div>
               )}
             </CardContent>
           </Card>
         )}
+
+        {/* Footer */}
+        <div className="text-center text-gray-500 text-sm py-6">
+          <p>Thank you for your business!</p>
+          <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+        </div>
       </div>
     </div>
   );

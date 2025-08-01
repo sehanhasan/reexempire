@@ -78,7 +78,7 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background flex justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading invoice details...</p>
@@ -89,7 +89,7 @@ export default function ViewInvoice() {
 
   if (!invoice || !customer) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background flex justify-center items-center">
         <div className="text-center p-8">
           <img 
             src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
@@ -123,7 +123,7 @@ export default function ViewInvoice() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ minWidth: '1024px' }}>
+    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
         <div className="max-w-4xl mx-auto px-4 py-3">
@@ -157,23 +157,29 @@ export default function ViewInvoice() {
       </div>
 
       <div className="py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Company Logo */}
-          <div className="flex justify-center mb-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Header with Logo */}
+          <div className="text-center bg-white rounded-lg shadow-sm p-8">
             <img 
               src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
               alt="Reex Empire Logo" 
-              className="h-20 w-auto"
+              className="h-20 w-auto mx-auto mb-6"
             />
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Invoice #{invoice.reference_number}</h1>
+            <div className="flex items-center justify-center gap-3 mt-3">
+              <Badge className={getStatusColor(displayPaymentStatus) + " text-sm px-3 py-1"}>
+                {displayPaymentStatus}
+              </Badge>
+            </div>
           </div>
 
           {/* Company Info Card */}
-          <Card className="mb-6">
+          <Card className="shadow-sm">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 gap-6 mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">From</h3>
-                  <div className="text-gray-700">
+                  <h3 className="font-semibold text-gray-700 mb-3 text-lg">From</h3>
+                  <div className="text-gray-700 space-y-1">
                     <p className="font-medium">Reex Empire Sdn Bhd (1426553-A)</p>
                     <p>No. 29-1, Jalan 2A/6</p>
                     <p>Taman Setapak Indah</p>
@@ -182,8 +188,8 @@ export default function ViewInvoice() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">To</h3>
-                  <div className="text-gray-700">
+                  <h3 className="font-semibold text-gray-700 mb-3 text-lg">To</h3>
+                  <div className="text-gray-700 space-y-1">
                     <p className="font-medium">{customer.name}</p>
                     {customer.unit_number && <p>Unit {customer.unit_number}</p>}
                     {customer.address && <p>{customer.address}</p>}
@@ -195,90 +201,90 @@ export default function ViewInvoice() {
               </div>
               
               {invoice.subject && (
-                <div className="mt-4 pt-4 border-t">
+                <div className="mt-6 pt-4 border-t">
                   <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
-                  <p>{invoice.subject}</p>
+                  <p className="text-gray-700">{invoice.subject}</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="mb-6">
+          <Card className="shadow-sm">
             <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-4">Items</h3>
+              <h3 className="font-semibold text-gray-700 mb-4 text-lg">Items</h3>
               
               {/* Items displayed as a clean table without input fields */}
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gray-50 text-left">
-                      <th className="py-3 px-4 border-b font-medium">Description</th>
-                      <th className="py-3 px-4 border-b text-right font-medium">Price</th>
-                      <th className="py-3 px-4 border-b text-right font-medium">Qty</th>
-                      <th className="py-3 px-4 border-b text-right font-medium">Amount</th>
+                    <tr className="bg-gray-100">
+                      <th className="py-3 px-4 border-b font-semibold text-gray-700 text-left">Description</th>
+                      <th className="py-3 px-4 border-b text-right font-semibold text-gray-700">Price</th>
+                      <th className="py-3 px-4 border-b text-right font-semibold text-gray-700">Qty</th>
+                      <th className="py-3 px-4 border-b text-right font-semibold text-gray-700">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categories.map(category => (
-                      <>
-                        <tr key={category}>
-                          <td colSpan={4} className="py-2 px-4 font-medium text-blue-800 bg-blue-50 border-b">
+                      <React.Fragment key={category}>
+                        <tr>
+                          <td colSpan={4} className="py-3 px-4 font-semibold text-blue-800 bg-blue-50 border-b">
                             {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (
                           <tr key={idx} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4">{item.description}</td>
-                            <td className="py-3 px-4 text-right">{formatMoney(item.unit_price)}</td>
-                            <td className="py-3 px-4 text-right">{item.quantity}</td>
-                            <td className="py-3 px-4 text-right font-medium">{formatMoney(item.amount)}</td>
+                            <td className="py-3 px-4 text-gray-800">{item.description}</td>
+                            <td className="py-3 px-4 text-right text-gray-800">{formatMoney(item.unit_price)}</td>
+                            <td className="py-3 px-4 text-right text-gray-800">{item.quantity}</td>
+                            <td className="py-3 px-4 text-right font-medium text-gray-800">{formatMoney(item.amount)}</td>
                           </tr>
                         ))}
-                      </>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
               </div>
               
-              <div className="mt-6 flex justify-end">
-                <div className="w-full max-w-xs">
+              <div className="mt-8 flex justify-end">
+                <div className="w-full max-w-xs bg-gray-50 p-4 rounded-lg">
                   <div className="flex justify-between py-2">
-                    <span className="font-medium">Subtotal:</span>
-                    <span>{formatMoney(invoice.subtotal)}</span>
+                    <span className="font-medium text-gray-700">Subtotal:</span>
+                    <span className="text-gray-800">{formatMoney(invoice.subtotal)}</span>
                   </div>
                   {invoice.tax_rate > 0 && (
                     <div className="flex justify-between py-2">
-                      <span className="font-medium">Tax ({invoice.tax_rate}%):</span>
-                      <span>{formatMoney(invoice.tax_amount)}</span>
+                      <span className="font-medium text-gray-700">Tax ({invoice.tax_rate}%):</span>
+                      <span className="text-gray-800">{formatMoney(invoice.tax_amount)}</span>
                     </div>
                   )}
                   {invoice.is_deposit_invoice && (
                     <div className="flex justify-between py-2">
-                      <span className="font-medium">Deposit Amount:</span>
-                      <span>{formatMoney(invoice.deposit_amount)}</span>
+                      <span className="font-medium text-gray-700">Deposit Amount:</span>
+                      <span className="text-gray-800">{formatMoney(invoice.deposit_amount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between py-2 text-lg font-bold border-t">
-                    <span>Total:</span>
-                    <span>{formatMoney(invoice.total)}</span>
+                  <div className="flex justify-between py-2 text-lg font-bold border-t border-gray-300 mt-2 pt-2">
+                    <span className="text-gray-800">Total:</span>
+                    <span className="text-blue-600">{formatMoney(invoice.total)}</span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Work Photos Card - only show if there are images */}
+          {/* Work Photos Card */}
           {images.length > 0 && (
-            <Card className="mb-6">
+            <Card className="shadow-sm">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-4">Work Photos</h3>
+                <h3 className="font-semibold text-gray-700 mb-4 text-lg">Work Photos</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {images.map((image, index) => (
                     <div key={image.id} className="relative">
                       <img 
                         src={image.image_url} 
                         alt={`Work photo ${index + 1}`} 
-                        className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                        className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
                         onClick={() => window.open(image.image_url, '_blank')}
                       />
                     </div>
@@ -288,27 +294,28 @@ export default function ViewInvoice() {
             </Card>
           )}
 
-          {/* Notes Card - only show if there are actual notes */}
+          {/* Notes Card */}
           {invoice.notes && (
-            <Card className="mb-6">
+            <Card className="shadow-sm">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
-                <div className="whitespace-pre-line text-gray-700">{invoice.notes}</div>
+                <h3 className="font-semibold text-gray-700 mb-3 text-lg">Notes</h3>
+                <div className="whitespace-pre-line text-gray-700 bg-gray-50 p-4 rounded-lg">{invoice.notes}</div>
               </CardContent>
             </Card>
           )}
 
           {/* Terms Card */}
           {invoice.terms && (
-            <Card className="mb-6">
+            <Card className="shadow-sm">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Terms & Conditions</h3>
-                <div className="whitespace-pre-line text-gray-700">{invoice.terms}</div>
+                <h3 className="font-semibold text-gray-700 mb-3 text-lg">Terms & Conditions</h3>
+                <div className="whitespace-pre-line text-gray-700 bg-gray-50 p-4 rounded-lg">{invoice.terms}</div>
               </CardContent>
             </Card>
           )}
 
-          <div className="text-center text-gray-500 text-sm mt-8">
+          {/* Footer */}
+          <div className="text-center text-gray-500 text-sm py-6">
             <p>Thank you for your business!</p>
             <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
           </div>
