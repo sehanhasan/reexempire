@@ -70,47 +70,47 @@ export default function Quotations() {
 
   const columns = [
     {
-      accessorKey: 'reference_number' as keyof any,
+      accessorKey: 'reference_number',
       header: 'Reference #',
-      cell: ({ row }: { row: any }) => (
-        <div className="font-medium">{row.getValue('reference_number')}</div>
+      cell: ({ row }: { row: { original: any } }) => (
+        <div className="font-medium">{row.original.reference_number}</div>
       ),
     },
     {
-      accessorKey: 'customer_id' as keyof any,
+      accessorKey: 'customer_id',
       header: 'Customer',
-      cell: ({ row }: { row: any }) => (
-        <div>{row.getValue('customer_id')}</div>
+      cell: ({ row }: { row: { original: any } }) => (
+        <div>{row.original.customer_id}</div>
       ),
     },
     {
-      accessorKey: 'issue_date' as keyof any,
+      accessorKey: 'issue_date',
       header: 'Issue Date',
-      cell: ({ row }: { row: any }) => formatDate(row.getValue('issue_date')),
+      cell: ({ row }: { row: { original: any } }) => formatDate(row.original.issue_date),
     },
     {
-      accessorKey: 'expiry_date' as keyof any,
+      accessorKey: 'expiry_date',
       header: 'Expiry Date',
-      cell: ({ row }: { row: any }) => formatDate(row.getValue('expiry_date')),
+      cell: ({ row }: { row: { original: any } }) => formatDate(row.original.expiry_date),
     },
     {
-      accessorKey: 'total' as keyof any,
+      accessorKey: 'total',
       header: 'Total',
-      cell: ({ row }: { row: any }) => formatCurrency(row.getValue('total')),
+      cell: ({ row }: { row: { original: any } }) => formatCurrency(row.original.total),
     },
     {
-      accessorKey: 'status' as keyof any,
+      accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }: { row: any }) => {
-        const status = row.getValue('status') as string;
+      cell: ({ row }: { row: { original: any } }) => {
+        const status = row.original.status as string;
         const variant = status === 'Accepted' ? 'default' : status === 'Rejected' ? 'destructive' : 'secondary';
         return <Badge variant={variant}>{status}</Badge>;
       },
     },
     {
-      accessorKey: 'actions' as keyof any,
+      accessorKey: 'actions',
       header: 'Actions',
-      cell: ({ row }: { row: any }) => {
+      cell: ({ row }: { row: { original: any } }) => {
         const quotation = row.original;
         return (
           <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function Quotations() {
 
       <FloatingActionButton
         onClick={() => navigate('/quotations/create')}
-        icon={Plus}
+        icon={<Plus className="h-4 w-4" />}
         label="Create Quotation"
       />
     </div>
