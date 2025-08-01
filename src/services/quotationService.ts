@@ -1,6 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
-import { notificationService } from "./notificationService";
 
 interface QuotationItemInput extends Omit<QuotationItem, "id" | "created_at" | "updated_at"> {
   category?: string;
@@ -87,23 +87,6 @@ export const quotationService = {
     }
 
     console.log(`Successfully updated quotation status:`, data);
-
-    // Create notification when quotation is accepted
-    if (status === 'Accepted') {
-      try {
-        await notificationService.create({
-          title: 'Quotation Accepted',
-          message: `Quotation ${data.reference_number} has been accepted by the customer.`,
-          type: 'quotation_approved',
-          reference_id: data.id
-        });
-        console.log('Notification created for accepted quotation');
-      } catch (notificationError) {
-        console.error('Error creating notification:', notificationError);
-        // Don't throw error here as the main operation succeeded
-      }
-    }
-
     return data;
   },
 
