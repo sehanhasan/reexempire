@@ -47,7 +47,7 @@ export function QuotationItemsCard({
   
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items, {
+    setItems(prevItems => [...prevItems, {
       id: newId,
       description: "",
       category: "",
@@ -87,7 +87,20 @@ export function QuotationItemsCard({
   };
   
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
-    const newItems = selectedItems.map((selectedItem, index) => ({
+    // Filter out items that don't have proper data to avoid blank entries
+    const validSelectedItems = selectedItems.filter(item => 
+      item.description && item.description.trim() !== '' && item.price > 0
+    );
+    
+    if (validSelectedItems.length === 0) {
+      toast({
+        title: "No Valid Items",
+        description: "No valid items were selected to add."
+      });
+      return;
+    }
+
+    const newItems = validSelectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
       description: selectedItem.description,
       category: selectedItem.category || "Other Items",
@@ -96,6 +109,7 @@ export function QuotationItemsCard({
       unitPrice: selectedItem.price,
       amount: selectedItem.quantity * selectedItem.price
     }));
+    
     setItems([...items, ...newItems]);
     setShowItemsTable(true);
     toast({
