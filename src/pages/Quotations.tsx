@@ -228,7 +228,6 @@ export default function Quotations() {
       <FloatingActionButton
         onClick={() => navigate('/quotations/create')}
         icon={<Plus className="h-4 w-4" />}
-        label="Create Quotation"
       />
     </div>
   );
