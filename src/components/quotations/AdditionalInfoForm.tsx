@@ -28,8 +28,7 @@ export function AdditionalInfoForm({
   onCancel,
   documentType,
   isSubmitting,
-  showDraft = false,
-  onSendWhatsapp
+  showDraft = false
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
 
@@ -96,18 +95,6 @@ export function AdditionalInfoForm({
           >
             {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`}
           </Button>
-
-          {onSendWhatsapp && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onSendWhatsapp}
-              disabled={isSubmitting}
-              className={isMobile ? "w-full" : ""}
-            >
-              Send via WhatsApp
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>
