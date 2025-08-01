@@ -105,204 +105,158 @@ export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
   const pdf = generateBasePDF('QUOTATION');
   const subtotal = calculateSubtotal(details.items);
   
-  // Document info section
+  // Add header with quotation number
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.text(`Quotation #${details.documentNumber}`, 20, 50);
+  
+  // Add quotation date and validity
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.text(`Date: ${details.documentDate}`, 20, 60);
+  pdf.text(`Valid Until: ${details.expiryDate}`, 20, 67);
+  
+  // Customer Information Section
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
-  pdf.text(`Quotation #${details.documentNumber}`, 20, 45);
-  
-  // Customer Information in a clean box
-  pdf.setFillColor(248, 249, 250);
-  pdf.rect(20, 55, 170, 40, 'F');
-  pdf.setDrawColor(200, 200, 200);
-  pdf.rect(20, 55, 170, 40, 'S');
-  
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(11);
-  pdf.text('CUSTOMER INFORMATION', 25, 62);
+  pdf.text('BILL TO:', 20, 80);
   
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(10);
+  let yPos = 90;
   
-  // Customer details in organized layout
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Name:', 25, 70);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(details.customerName || 'N/A', 45, 70);
-  
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Unit:', 25, 76);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(details.unitNumber || 'N/A', 45, 76);
-  
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Email:', 105, 70);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(details.customerEmail || 'N/A', 120, 70);
-  
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Phone:', 105, 76);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(details.customerContact || 'N/A', 120, 76);
-  
-  if (details.customerAddress) {
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Address:', 25, 82);
-    pdf.setFont('helvetica', 'normal');
-    // Split long addresses
-    const addressLines = pdf.splitTextToSize(details.customerAddress, 140);
-    pdf.text(addressLines, 45, 82);
+  if (details.customerName) {
+    pdf.text(`Name: ${details.customerName}`, 20, yPos);
+    yPos += 7;
   }
   
-  // Quotation details
-  pdf.setFillColor(248, 249, 250);
-  pdf.rect(20, 100, 170, 20, 'F');
-  pdf.setDrawColor(200, 200, 200);
-  pdf.rect(20, 100, 170, 20, 'S');
+  if (details.unitNumber) {
+    pdf.text(`Unit: ${details.unitNumber}`, 20, yPos);
+    yPos += 7;
+  }
   
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(11);
-  pdf.text('QUOTATION DETAILS', 25, 107);
+  if (details.customerEmail) {
+    pdf.text(`Email: ${details.customerEmail}`, 20, yPos);
+    yPos += 7;
+  }
   
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  if (details.customerContact) {
+    pdf.text(`Phone: ${details.customerContact}`, 20, yPos);
+    yPos += 7;
+  }
   
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Date:', 25, 114);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(details.documentDate, 45, 114);
+  if (details.customerAddress) {
+    const addressLines = pdf.splitTextToSize(`Address: ${details.customerAddress}`, 170);
+    pdf.text(addressLines, 20, yPos);
+    yPos += addressLines.length * 7;
+  }
   
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Valid Until:', 80, 114);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(details.expiryDate, 110, 114);
+  // Add some spacing
+  yPos += 10;
   
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Total:', 140, 114);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.text(formatCurrency(subtotal), 160, 114);
+  // Subject line if available
+  if (details.subject) {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Subject:', 20, yPos);
+    pdf.setFont('helvetica', 'normal');
+    const subjectLines = pdf.splitTextToSize(details.subject, 150);
+    pdf.text(subjectLines, 50, yPos);
+    yPos += subjectLines.length * 7 + 10;
+  }
   
-  // Items section
-  let currentY = 130;
-  
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(12);
-  pdf.text('ITEMS', 20, currentY);
-  currentY += 10;
-  
-  // Group items by category for better organization
-  const groupedItems: { [key: string]: (QuotationItem | InvoiceItem)[] } = {};
-  details.items.forEach(item => {
-    const category = (item.category && item.category.trim()) || 'Other Items';
-    if (!groupedItems[category]) {
-      groupedItems[category] = [];
-    }
-    groupedItems[category].push(item);
-  });
-  
-  // Only show categories that have items with content
-  const validCategories = Object.keys(groupedItems).filter(category => 
-    groupedItems[category].some(item => item.description && item.description.trim() !== '')
-  );
-  
-  validCategories.forEach(category => {
-    const categoryItems = groupedItems[category].filter(item => 
-      item.description && item.description.trim() !== ''
-    );
-    
-    if (categoryItems.length === 0) return;
-    
-    // Category header (only if not "Other Items" or if explicitly set)
-    if (category !== 'Other Items' || categoryItems.some(item => item.category)) {
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 100, 200);
-      pdf.text(category, 20, currentY);
-      currentY += 6;
-      pdf.setTextColor(0, 0, 0);
-    }
-    
-    // Items table for this category
-    const tableData = categoryItems.map(item => [
+  // Items table
+  const tableData = details.items
+    .filter(item => item.description && item.description.trim() !== '')
+    .map((item, index) => [
+      (index + 1).toString(),
       item.description,
-      item.quantity.toString(),
+      typeof item.quantity === 'string' ? item.quantity : item.quantity.toString(),
       item.unit,
       formatCurrency(item.unitPrice),
       formatCurrency(item.amount)
     ]);
-    
+  
+  if (tableData.length > 0) {
     autoTable(pdf, {
-      startY: currentY,
-      head: [['Description', 'Qty', 'Unit', 'Unit Price', 'Amount']],
+      startY: yPos,
+      head: [['No.', 'Description', 'Qty', 'Unit', 'Unit Price', 'Amount']],
       body: tableData,
       theme: 'grid',
       styles: {
-        fontSize: 8,
-        cellPadding: 2
+        fontSize: 9,
+        cellPadding: 3
       },
       headStyles: {
-        fillColor: [100, 100, 100],
+        fillColor: [70, 130, 180],
         textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 8
+        fontStyle: 'bold'
       },
       columnStyles: {
-        0: { cellWidth: 85 },
-        1: { cellWidth: 20, halign: 'center' },
+        0: { cellWidth: 15, halign: 'center' },
+        1: { cellWidth: 80 },
         2: { cellWidth: 20, halign: 'center' },
-        3: { cellWidth: 30, halign: 'right' },
-        4: { cellWidth: 30, halign: 'right' }
+        3: { cellWidth: 20, halign: 'center' },
+        4: { cellWidth: 30, halign: 'right' },
+        5: { cellWidth: 30, halign: 'right' }
       },
       margin: { left: 20, right: 20 }
     });
     
     // @ts-ignore
-    currentY = pdf.lastAutoTable?.finalY + 8 || currentY + 20;
-  });
+    yPos = pdf.lastAutoTable?.finalY + 15 || yPos + 50;
+  }
   
   // Summary section
-  const summaryY = currentY + 10;
+  const summaryStartX = 120;
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(10);
   
-  // Subtotal
-  pdf.text('Subtotal:', 140, summaryY);
-  pdf.text(formatCurrency(subtotal), 175, summaryY, { align: 'right' });
+  pdf.text('Subtotal:', summaryStartX, yPos);
+  pdf.text(formatCurrency(subtotal), 170, yPos, { align: 'right' });
+  yPos += 8;
   
   // Deposit information if applicable
   if (details.depositInfo.requiresDeposit && details.depositInfo.depositAmount > 0) {
-    pdf.text(`Deposit (${details.depositInfo.depositPercentage.toFixed(1)}%):`, 140, summaryY + 6);
-    pdf.text(formatCurrency(details.depositInfo.depositAmount), 175, summaryY + 6, { align: 'right' });
+    const depositPercentage = typeof details.depositInfo.depositPercentage === 'string' 
+      ? parseFloat(details.depositInfo.depositPercentage) 
+      : details.depositInfo.depositPercentage;
     
-    pdf.text('Balance Due:', 140, summaryY + 12);
-    pdf.text(formatCurrency(subtotal - details.depositInfo.depositAmount), 175, summaryY + 12, { align: 'right' });
+    pdf.text(`Deposit (${depositPercentage.toFixed(1)}%):`, summaryStartX, yPos);
+    pdf.text(formatCurrency(details.depositInfo.depositAmount), 170, yPos, { align: 'right' });
+    yPos += 8;
+    
+    pdf.text('Balance Due:', summaryStartX, yPos);
+    pdf.text(formatCurrency(subtotal - details.depositInfo.depositAmount), 170, yPos, { align: 'right' });
+    yPos += 8;
   }
   
   // Total
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
-  pdf.text('TOTAL:', 140, summaryY + 20);
-  pdf.text(formatCurrency(subtotal), 175, summaryY + 20, { align: 'right' });
+  pdf.text('TOTAL:', summaryStartX, yPos);
+  pdf.text(formatCurrency(subtotal), 170, yPos, { align: 'right' });
+  yPos += 15;
   
-  // Notes if any
+  // Notes section
   if (details.notes && details.notes.trim()) {
-    const notesY = summaryY + 35;
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.text('NOTES:', 20, notesY);
+    pdf.setFontSize(11);
+    pdf.text('NOTES:', 20, yPos);
+    yPos += 8;
     
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(9);
-    const splitNotes = pdf.splitTextToSize(details.notes, 170);
-    pdf.text(splitNotes, 20, notesY + 6);
+    const notesLines = pdf.splitTextToSize(details.notes, 170);
+    pdf.text(notesLines, 20, yPos);
   }
   
   // Footer
   const pageHeight = pdf.internal.pageSize.height;
+  pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(100, 100, 100);
-  pdf.text('Thank you for your business!', 105, pageHeight - 15, { align: 'center' });
-  pdf.text('© 2025 Reex Empire Sdn Bhd. All rights reserved.', 105, pageHeight - 10, { align: 'center' });
+  pdf.text('Thank you for your business!', 105, pageHeight - 20, { align: 'center' });
+  pdf.text('© 2025 Reex Empire Sdn Bhd. All rights reserved.', 105, pageHeight - 15, { align: 'center' });
   
   return pdf;
 };
