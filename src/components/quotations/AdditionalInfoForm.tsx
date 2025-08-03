@@ -28,9 +28,17 @@ export function AdditionalInfoForm({
   onCancel,
   documentType,
   isSubmitting,
-  showDraft = false
+  showDraft = false,
+  onSendWhatsapp
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
+
+  const handleSendWithWhatsapp = async (e: React.FormEvent) => {
+    await onSubmit(e, "Sent");
+    if (onSendWhatsapp) {
+      onSendWhatsapp();
+    }
+  };
 
   return (
     <Card className="shadow-sm">
@@ -89,7 +97,7 @@ export function AdditionalInfoForm({
 
           <Button
             type="button"
-            onClick={(e) => onSubmit(e, documentType === "quotation" ? "Sent" : "Sent")}
+            onClick={documentType === "invoice" && onSendWhatsapp ? handleSendWithWhatsapp : (e) => onSubmit(e, documentType === "quotation" ? "Sent" : "Sent")}
             disabled={isSubmitting}
             className={isMobile ? "w-full" : ""}
           >

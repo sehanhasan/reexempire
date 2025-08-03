@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -54,7 +53,7 @@ export function InvoiceItemsCard({
   
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items, {
+    setItems(prevItems => [...prevItems, {
       id: newId,
       description: "",
       category: "Other Items",
@@ -95,11 +94,9 @@ export function InvoiceItemsCard({
     }
   };
 
-  // Handle deposit invoice checkbox change
   const handleDepositInvoiceChange = (checked: boolean) => {
     setIsDepositInvoice(checked);
     if (checked && depositPercentage === 30) {
-      // Set default to 50% if not set already
       setDepositPercentage(50);
       setDepositAmount(calculateSubtotal() * 0.5);
     }
