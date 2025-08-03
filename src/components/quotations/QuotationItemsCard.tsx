@@ -28,7 +28,6 @@ export function QuotationItemsCard({
   calculateItemAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [showItemsTable, setShowItemsTable] = useState(false);
   const isMobile = useIsMobile();
   
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
@@ -46,9 +45,8 @@ export function QuotationItemsCard({
   };
   
   const addItem = () => {
-    // Only add one item at a time
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    const newItem = {
+    const newItem: QuotationItem = {
       id: newId,
       description: "",
       category: "",
@@ -59,7 +57,6 @@ export function QuotationItemsCard({
     };
     
     setItems(prevItems => [...prevItems, newItem]);
-    setShowItemsTable(true);
   };
   
   const removeItem = (id: number) => {
@@ -90,7 +87,6 @@ export function QuotationItemsCard({
   };
   
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
-    // Filter out items that don't have proper data to avoid blank entries
     const validSelectedItems = selectedItems.filter(item => 
       item.description && 
       item.description.trim() !== '' && 
@@ -110,7 +106,7 @@ export function QuotationItemsCard({
       return {
         id: newId,
         description: selectedItem.description,
-        category: selectedItem.category || "", // Don't default to "Other Items" here
+        category: selectedItem.category || "",
         quantity: selectedItem.quantity,
         unit: selectedItem.unit,
         unitPrice: selectedItem.price,
@@ -119,104 +115,114 @@ export function QuotationItemsCard({
     });
     
     setItems(prevItems => [...prevItems, ...newItems]);
-    setShowItemsTable(true);
     toast({
       title: "Items Added",
       description: `${newItems.length} item(s) have been added to the quotation.`
     });
   };
   
-  return <>
+  return (
+    <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-lg text-cyan-600">Quotation Items</CardTitle>
         </CardHeader>
         <CardContent className="py-3 px-4">
-          {!showItemsTable ? (
-            <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2`}>
-              <Button type="button" variant="outline" onClick={addItem} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                Add Item
-              </Button>
-              
-              <Button type="button" onClick={() => setShowCategorySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white`}>
-                <FolderOpen className="mr-1 h-3.5 w-3.5" />
-                Select from Categories
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
-                <Button type="button" variant="outline" onClick={addItem} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
-                  <Plus className="mr-1 h-3.5 w-3.5" />
-                  Add Item
-                </Button>
-                
-                <Button type="button" onClick={() => setShowCategorySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white`}>
-                  <FolderOpen className="mr-1 h-3.5 w-3.5" />
-                  Select from Categories
-                </Button>
+          <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
+            <Button type="button" variant="outline" onClick={addItem} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              Add Item
+            </Button>
+            
+            <Button type="button" onClick={() => setShowCategorySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white`}>
+              <FolderOpen className="mr-1 h-3.5 w-3.5" />
+              Select from Categories
+            </Button>
+          </div>
+
+          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
+          
+          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
+            <div className={isMobile ? "w-full" : "w-72"}>
+              <div className="flex justify-between py-1.5 text-sm">
+                <span className="font-medium">Subtotal:</span>
+                <span>RM {calculateTotal().toFixed(2)}</span>
               </div>
 
-              <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
-              
-              <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
-                <div className={isMobile ? "w-full" : "w-72"}>
-                  <div className="flex justify-between py-1.5 text-sm">
-                    <span className="font-medium">Subtotal:</span>
-                    <span>RM {calculateTotal().toFixed(2)}</span>
-                  </div>
-
-                  {/* Deposit Section */}
-                  <div className="border-t pt-2 mt-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={checked => setDepositInfo({
+              {/* Deposit Section */}
+              <div className="border-t pt-2 mt-1">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Checkbox 
+                    id="requiresDeposit" 
+                    checked={depositInfo.requiresDeposit} 
+                    onCheckedChange={checked => setDepositInfo({
                       ...depositInfo,
                       requiresDeposit: !!checked,
-                      depositPercentage: 0,
-                      depositAmount: 0
-                    })} />
-                      <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
-                        <Wallet className="h-3.5 w-3.5 mr-1" />
-                        Require Deposit Payment
-                      </label>
-                    </div>
-                    
-                    {depositInfo.requiresDeposit && <div className="space-y-2 ml-6">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
-                            <Label htmlFor="depositPercentage" className="text-xs">Percentage</Label>
-                            <div className="relative">
-                              <Input id="depositPercentage" type="number" min="0" max="100" value={depositInfo.depositPercentage || ""} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value) || 0)} className="pr-7 h-10 text-sm" />
-                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
-                            </div>
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
-                            <div className="relative">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                              <Input id="depositAmount" type="number" min="0" value={depositInfo.depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value))} className="pl-8 h-10 text-sm" />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex justify-between text-sm py-1">
-                          <span>Balance Due:</span>
-                          <span>RM {(calculateTotal() - depositInfo.depositAmount).toFixed(2)}</span>
-                        </div>
-                      </div>}
-                  </div>
-
-                  <div className="flex justify-between py-2 border-t mt-1">
-                    <span className="font-semibold text-base">Total:</span>
-                    <span className="font-semibold text-base">RM {calculateTotal().toFixed(2)}</span>
-                  </div>
+                      depositPercentage: checked ? depositInfo.depositPercentage : 0,
+                      depositAmount: checked ? depositInfo.depositAmount : 0
+                    })} 
+                  />
+                  <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
+                    <Wallet className="h-3.5 w-3.5 mr-1" />
+                    Require Deposit Payment
+                  </label>
                 </div>
+                
+                {depositInfo.requiresDeposit && (
+                  <div className="space-y-2 ml-6">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="depositPercentage" className="text-xs">Percentage</Label>
+                        <div className="relative">
+                          <Input 
+                            id="depositPercentage" 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            value={depositInfo.depositPercentage || ""} 
+                            onChange={e => handleDepositPercentageChange(parseFloat(e.target.value) || 0)} 
+                            className="pr-7 h-10 text-sm" 
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
+                          <Input 
+                            id="depositAmount" 
+                            type="number" 
+                            min="0" 
+                            value={depositInfo.depositAmount.toFixed(2)} 
+                            onChange={e => handleDepositAmountChange(parseFloat(e.target.value) || 0)} 
+                            className="pl-8 h-10 text-sm" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-sm py-1">
+                      <span>Balance Due:</span>
+                      <span>RM {(calculateTotal() - depositInfo.depositAmount).toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-            </>
-          )}
+
+              <div className="flex justify-between py-2 border-t mt-1">
+                <span className="font-semibold text-base">Total:</span>
+                <span className="font-semibold text-base">RM {calculateTotal().toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      <CategoryItemSelector open={showCategorySelector} onOpenChange={setShowCategorySelector} onSelectItems={handleItemsFromCategories} />
-    </>;
+      <CategoryItemSelector 
+        open={showCategorySelector} 
+        onOpenChange={setShowCategorySelector} 
+        onSelectItems={handleItemsFromCategories} 
+      />
+    </>
+  );
 }
