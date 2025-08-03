@@ -29,8 +29,7 @@ export const captureViewAsPDF = async (
     const allElements = element.querySelectorAll('*');
     allElements.forEach(el => {
       const htmlEl = el as HTMLElement;
-      const computedStyle = window.getComputedStyle(htmlEl);
-      if (computedStyle.backgroundColor && computedStyle.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+      if (htmlEl.style.backgroundColor) {
         originalStyles.set(htmlEl, htmlEl.style.backgroundColor);
         htmlEl.style.backgroundColor = 'white';
       }
@@ -74,7 +73,7 @@ export const captureViewAsPDF = async (
     // A4 dimensions in mm
     const pdfWidth = 210;
     const pdfHeight = 297;
-    const margin = 10; // Reduced margin for more content space
+    const margin = 15; // 15mm margin on all sides
     const contentWidth = pdfWidth - (2 * margin);
     const contentHeight = pdfHeight - (2 * margin);
     
@@ -83,21 +82,66 @@ export const captureViewAsPDF = async (
     const imgHeight = canvas.height;
     const ratio = imgWidth / imgHeight;
     
-    // Calculate dimensions to fit within content area with maximum width usage
+    // Calculate dimensions to fit within content area
     let width = contentWidth;
     let height = contentWidth / ratio;
     
-    // If height exceeds one page, scale to fit page height
+    // If height exceeds one page, handle multi-page
     if (height > contentHeight) {
-      height = contentHeight;
-      width = height * ratio;
+      // Calculate how many pages we need
+      const pagesNeeded = Math.ceil(height / contentHeight);
+      const pageHeight = contentHeight;
+      
+      for (let i = 0; i < pagesNeeded; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate the source region for this page
+        const sourceY = (i * pageHeight * imgHeight) / height;
+        const sourceHeight = Math.min((pageHeight * imgHeight) / height, imgHeight - sourceY);
+        
+        // Create a temporary canvas for this page section
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = imgWidth;
+        pageCanvas.height = sourceHeight;
+        
+        const pageCtx = pageCanvas.getContext('2d');
+        if (pageCtx) {
+          // Fill with white background
+          pageCtx.fillStyle = '#ffffff';
+          pageCtx.fillRect(0, 0, imgWidth, sourceHeight);
+          
+          const img = new Image();
+          img.onload = () => {
+            pageCtx.drawImage(img, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
+            
+            const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
+            const pageRatio = imgWidth / sourceHeight;
+            
+            let pageImgWidth = contentWidth;
+            let pageImgHeight = contentWidth / pageRatio;
+            
+            if (pageImgHeight > pageHeight) {
+              pageImgHeight = pageHeight;
+              pageImgWidth = pageHeight * pageRatio;
+            }
+            
+            const pageX = margin + (contentWidth - pageImgWidth) / 2;
+            const pageY = margin;
+            
+            pdf.addImage(pageImgData, 'PNG', pageX, pageY, pageImgWidth, pageImgHeight, undefined, 'FAST');
+          };
+          img.src = imgData;
+        }
+      }
+    } else {
+      // Single page - center the content
+      const x = margin + (contentWidth - width) / 2;
+      const y = margin + (contentHeight - height) / 2;
+      
+      pdf.addImage(imgData, 'PNG', x, y, width, height, undefined, 'FAST');
     }
-    
-    // Center the content on the page
-    const x = margin + (contentWidth - width) / 2;
-    const y = margin + (contentHeight - height) / 2;
-    
-    pdf.addImage(imgData, 'PNG', x, y, width, height, undefined, 'FAST');
     
     // Download the PDF
     pdf.save(filename);
