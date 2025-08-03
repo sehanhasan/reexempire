@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { MessageCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AdditionalInfoFormProps {
@@ -28,7 +29,8 @@ export function AdditionalInfoForm({
   onCancel,
   documentType,
   isSubmitting,
-  showDraft = false
+  showDraft = false,
+  onSendWhatsapp
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
 
@@ -95,6 +97,19 @@ export function AdditionalInfoForm({
           >
             {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`}
           </Button>
+
+          {onSendWhatsapp && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSendWhatsapp}
+              disabled={isSubmitting}
+              className={`${isMobile ? "w-full" : ""} text-green-600 hover:text-green-700 hover:bg-green-50`}
+            >
+              <MessageCircle className="h-4 w-4 mr-1" />
+              Send via WhatsApp
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
