@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -56,7 +55,12 @@ export function QuotationItemsCard({
       amount: 0
     };
     
-    setItems(prevItems => [...prevItems, newItem]);
+    console.log("Adding new item:", newItem);
+    setItems(prevItems => {
+      const updatedItems = [...prevItems, newItem];
+      console.log("Updated items array:", updatedItems);
+      return updatedItems;
+    });
   };
   
   const removeItem = (id: number) => {
@@ -129,7 +133,12 @@ export function QuotationItemsCard({
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
-            <Button type="button" variant="outline" onClick={addItem} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={addItem} 
+              className={`${isMobile ? "w-full" : ""} text-sm h-10`}
+            >
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Item
             </Button>
