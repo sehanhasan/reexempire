@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -48,19 +49,14 @@ export function QuotationItemsCard({
     const newItem: QuotationItem = {
       id: newId,
       description: "",
-      category: "Other Items",
+      category: "",
       quantity: 1,
       unit: "Unit",
       unitPrice: 0,
       amount: 0
     };
     
-    console.log("Adding new item:", newItem);
-    setItems(prevItems => {
-      const updatedItems = [...prevItems, newItem];
-      console.log("Updated items array:", updatedItems);
-      return updatedItems;
-    });
+    setItems(prevItems => [...prevItems, newItem]);
   };
   
   const removeItem = (id: number) => {
@@ -110,7 +106,7 @@ export function QuotationItemsCard({
       return {
         id: newId,
         description: selectedItem.description,
-        category: selectedItem.category || "Other Items",
+        category: selectedItem.category || "",
         quantity: selectedItem.quantity,
         unit: selectedItem.unit,
         unitPrice: selectedItem.price,
@@ -133,12 +129,7 @@ export function QuotationItemsCard({
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={addItem} 
-              className={`${isMobile ? "w-full" : ""} text-sm h-10`}
-            >
+            <Button type="button" variant="outline" onClick={addItem} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Item
             </Button>
