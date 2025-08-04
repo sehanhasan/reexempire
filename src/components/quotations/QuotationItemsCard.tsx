@@ -49,7 +49,7 @@ export function QuotationItemsCard({
     const newItem: QuotationItem = {
       id: newId,
       description: "",
-      category: "",
+      category: "Other Items",
       quantity: 1,
       unit: "Unit",
       unitPrice: 0,

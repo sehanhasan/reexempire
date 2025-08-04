@@ -48,6 +48,7 @@ export default function Customers() {
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   
   const fetchCustomers = async () => {
     try {
@@ -166,6 +167,22 @@ export default function Customers() {
     );
   }
 
+  // Set up mobile search
+  useEffect(() => {
+    const mobileSearchEvent = new CustomEvent('setup-mobile-search', {
+      detail: {
+        searchTerm,
+        onSearchChange: setSearchTerm,
+        placeholder: "Search customers..."
+      }
+    });
+    window.dispatchEvent(mobileSearchEvent);
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-mobile-search'));
+    };
+  }, [searchTerm]);
+
   return (
     <div className="page-container">
       <PageHeader 
@@ -178,6 +195,8 @@ export default function Customers() {
           columns={columns} 
           data={customers} 
           searchKey="name" 
+          externalSearchTerm={searchTerm}
+          onExternalSearchChange={setSearchTerm}
         />
       </div>
 

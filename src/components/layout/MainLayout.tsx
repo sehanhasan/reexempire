@@ -9,11 +9,21 @@ import { LoadingSpinner } from "@/components/auth/LoadingSpinner";
 
 interface MainLayoutProps {
   children: ReactNode;
+  searchProps?: {
+    searchTerm: string;
+    onSearchChange: (value: string) => void;
+    placeholder?: string;
+  };
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children, searchProps }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileActions, setMobileActions] = useState<ReactNode[]>([]);
+  const [mobileSearchProps, setMobileSearchProps] = useState<{
+    searchTerm: string;
+    onSearchChange: (value: string) => void;
+    placeholder?: string;
+  } | null>(null);
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
@@ -42,11 +52,25 @@ export function MainLayout({ children }: MainLayoutProps) {
       }
     };
 
-    // Type assertion for the event handler
+    const handleSetupMobileSearch = (event: CustomEvent) => {
+      if (event.detail) {
+        setMobileSearchProps(event.detail);
+      }
+    };
+
+    const handleClearMobileSearch = () => {
+      setMobileSearchProps(null);
+    };
+
+    // Type assertion for the event handlers
     window.addEventListener('get-mobile-actions', handleGetMobileActions as EventListener);
+    window.addEventListener('setup-mobile-search', handleSetupMobileSearch as EventListener);
+    window.addEventListener('clear-mobile-search', handleClearMobileSearch as EventListener);
     
     return () => {
       window.removeEventListener('get-mobile-actions', handleGetMobileActions as EventListener);
+      window.removeEventListener('setup-mobile-search', handleSetupMobileSearch as EventListener);
+      window.removeEventListener('clear-mobile-search', handleClearMobileSearch as EventListener);
     };
   }, []);
   
@@ -119,6 +143,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             title={getPageTitle()} 
             onMenuClick={toggleSidebar} 
             actions={mobileActions}
+            searchProps={mobileSearchProps}
           />
         )}
         

@@ -42,13 +42,32 @@ export default function CreateQuotation() {
     depositPercentage: 30
   });
 
-  const generateReferenceNumber = () => {
+  const generateReferenceNumber = async () => {
     const currentYear = new Date().getFullYear();
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `QT-${currentYear}-${randomNum.toString().padStart(5, '0')}`;
+    try {
+      const quotations = await quotationService.getAll();
+      
+      const currentYearQuotations = quotations?.filter(q => 
+        q.reference_number?.startsWith(`QT-${currentYear}`)
+      ) || [];
+      
+      const nextNumber = currentYearQuotations.length + 1;
+      return `QT-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+      console.error('Error generating reference number:', error);
+      return `QT-${currentYear}-0001`;
+    }
   };
 
-  const [documentNumber, setDocumentNumber] = useState(generateReferenceNumber());
+  const [documentNumber, setDocumentNumber] = useState("");
+
+  useEffect(() => {
+    const initializeReferenceNumber = async () => {
+      const refNumber = await generateReferenceNumber();
+      setDocumentNumber(refNumber);
+    };
+    initializeReferenceNumber();
+  }, []);
 
   useEffect(() => {
     if (customerId) {

@@ -268,13 +268,30 @@ export default function Quotations() {
     })}`;
   };
 
+  // Set up mobile search
+  useEffect(() => {
+    const mobileSearchEvent = new CustomEvent('setup-mobile-search', {
+      detail: {
+        searchTerm,
+        onSearchChange: setSearchTerm,
+        placeholder: "Search quotations..."
+      }
+    });
+    window.dispatchEvent(mobileSearchEvent);
+
+    // Clear search when leaving the page
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-mobile-search'));
+    };
+  }, [searchTerm]);
+
   return <div className="page-container">
       <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
 
       <Card className="mt-6">
         <CardContent className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1 hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input type="search" placeholder="Search quotations..." className="pl-10 h-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>

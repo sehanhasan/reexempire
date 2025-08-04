@@ -21,6 +21,8 @@ interface DataTableProps<T> {
   isLoading?: boolean;
   emptyMessage?: string;
   renderCustomMobileCard?: (item: T) => React.ReactNode;
+  externalSearchTerm?: string;
+  onExternalSearchChange?: (value: string) => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -29,16 +31,20 @@ export function DataTable<T extends Record<string, any>>({
   searchKey,
   isLoading = false,
   emptyMessage = "No data available",
-  renderCustomMobileCard
+  renderCustomMobileCard,
+  externalSearchTerm,
+  onExternalSearchChange
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
+  
+  const activeSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchQuery;
 
   const filteredData = searchKey
     ? data.filter((item) => {
         const value = item[searchKey];
         if (typeof value === 'string') {
-          return value.toLowerCase().includes(searchQuery.toLowerCase());
+          return value.toLowerCase().includes(activeSearchTerm.toLowerCase());
         }
         return false;
       })
@@ -89,13 +95,24 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      {searchKey && (
+      {searchKey && !isMobile && externalSearchTerm === undefined && (
         <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 max-w-sm h-10"
+          />
+        </div>
+      )}
+      {searchKey && !isMobile && externalSearchTerm !== undefined && onExternalSearchChange && (
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value={externalSearchTerm}
+            onChange={(e) => onExternalSearchChange(e.target.value)}
             className="pl-10 max-w-sm h-10"
           />
         </div>

@@ -48,6 +48,7 @@ import type { Staff } from "@/types/database";
 export default function StaffPage() {
   const navigate = useNavigate();
   const [staffMembers, setStaffMembers] = useState<Staff[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
@@ -265,6 +266,22 @@ export default function StaffPage() {
     },
   ];
 
+  // Set up mobile search
+  useEffect(() => {
+    const mobileSearchEvent = new CustomEvent('setup-mobile-search', {
+      detail: {
+        searchTerm,
+        onSearchChange: setSearchTerm,
+        placeholder: "Search staff..."
+      }
+    });
+    window.dispatchEvent(mobileSearchEvent);
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-mobile-search'));
+    };
+  }, [searchTerm]);
+
   return (
     <div className="page-container">
       <PageHeader 
@@ -278,6 +295,8 @@ export default function StaffPage() {
           data={staffMembers} 
           searchKey="name" 
           isLoading={isLoading}
+          externalSearchTerm={searchTerm}
+          onExternalSearchChange={setSearchTerm}
         />
       </div>
 

@@ -211,6 +211,23 @@ export default function Invoices() {
     return <Clock className="h-3.5 w-3.5 mr-1" />;
   };
 
+  // Set up mobile search
+  useEffect(() => {
+    const mobileSearchEvent = new CustomEvent('setup-mobile-search', {
+      detail: {
+        searchTerm,
+        onSearchChange: setSearchTerm,
+        placeholder: "Search invoices..."
+      }
+    });
+    window.dispatchEvent(mobileSearchEvent);
+
+    // Clear search when leaving the page
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-mobile-search'));
+    };
+  }, [searchTerm]);
+
   return <div className="page-container">
       <PageHeader title="Invoices" description="" actions={<Button variant="default" className="flex items-center bg-blue-600 hover:bg-blue-700" onClick={exportInvoices}>
             <Download className="mr-2 h-4 w-4" />
@@ -221,7 +238,7 @@ export default function Invoices() {
         <Card>
           <CardContent className="p-0">
             <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-              <div className="relative flex-1">
+              <div className="relative flex-1 hidden md:block">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search invoices..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
               </div>

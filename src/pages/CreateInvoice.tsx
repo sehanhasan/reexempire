@@ -55,13 +55,32 @@ export default function CreateInvoice() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
 
-  const generateReferenceNumber = () => {
+  const generateReferenceNumber = async () => {
     const currentYear = new Date().getFullYear();
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `INV-${currentYear}-${randomNum.toString().padStart(5, '0')}`;
+    try {
+      const invoices = await invoiceService.getAll();
+      
+      const currentYearInvoices = invoices?.filter(inv => 
+        inv.reference_number?.startsWith(`INV-${currentYear}`)
+      ) || [];
+      
+      const nextNumber = currentYearInvoices.length + 1;
+      return `INV-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+      console.error('Error generating reference number:', error);
+      return `INV-${currentYear}-0001`;
+    }
   };
 
-  const [documentNumber, setDocumentNumber] = useState(generateReferenceNumber());
+  const [documentNumber, setDocumentNumber] = useState("");
+
+  useEffect(() => {
+    const initializeReferenceNumber = async () => {
+      const refNumber = await generateReferenceNumber();
+      setDocumentNumber(refNumber);
+    };
+    initializeReferenceNumber();
+  }, []);
 
   useEffect(() => {
     if (customerId) {
