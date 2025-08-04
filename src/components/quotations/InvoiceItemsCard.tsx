@@ -54,7 +54,7 @@ export function InvoiceItemsCard({
   
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    setItems([...items, {
+    const newItem: InvoiceItem = {
       id: newId,
       description: "",
       category: "Other Items",
@@ -62,7 +62,9 @@ export function InvoiceItemsCard({
       unit: "Unit",
       unitPrice: 0,
       amount: 0
-    }]);
+    };
+    
+    setItems(prevItems => [...prevItems, newItem]);
   };
   
   const removeItem = (id: number) => {
