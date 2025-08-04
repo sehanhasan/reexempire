@@ -72,6 +72,22 @@ export default function Customers() {
     fetchCustomers();
   }, []);
 
+  // Set up mobile search
+  useEffect(() => {
+    const mobileSearchEvent = new CustomEvent('setup-mobile-search', {
+      detail: {
+        searchTerm,
+        onSearchChange: setSearchTerm,
+        placeholder: "Search customers..."
+      }
+    });
+    window.dispatchEvent(mobileSearchEvent);
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('clear-mobile-search'));
+    };
+  }, [searchTerm]);
+
   const handleView = (customer: Customer) => {
     // First clear the previous customer to avoid state issues
     setSelectedCustomer(null);
@@ -167,21 +183,6 @@ export default function Customers() {
     );
   }
 
-  // Set up mobile search
-  useEffect(() => {
-    const mobileSearchEvent = new CustomEvent('setup-mobile-search', {
-      detail: {
-        searchTerm,
-        onSearchChange: setSearchTerm,
-        placeholder: "Search customers..."
-      }
-    });
-    window.dispatchEvent(mobileSearchEvent);
-
-    return () => {
-      window.dispatchEvent(new CustomEvent('clear-mobile-search'));
-    };
-  }, [searchTerm]);
 
   return (
     <div className="page-container">
