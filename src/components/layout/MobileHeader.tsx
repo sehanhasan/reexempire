@@ -3,25 +3,14 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { SearchButton } from '@/components/common/SearchButton';
 
 interface MobileHeaderProps {
   title: string;
   onMenuClick: () => void;
   actions?: React.ReactNode[];
-  showSearch?: boolean;
-  onSearch?: (query: string) => void;
-  searchPlaceholder?: string;
 }
 
-export function MobileHeader({ 
-  title, 
-  onMenuClick, 
-  actions = [],
-  showSearch = false,
-  onSearch,
-  searchPlaceholder
-}: MobileHeaderProps) {
+export function MobileHeader({ title, onMenuClick, actions = [] }: MobileHeaderProps) {
   return (
     <div className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-border">
       <div className="flex items-center justify-between h-14 px-4">
@@ -41,12 +30,6 @@ export function MobileHeader({
           {actions.map((action, index) => (
             <div key={index}>{action}</div>
           ))}
-          {showSearch && onSearch && (
-            <SearchButton 
-              onSearch={onSearch} 
-              placeholder={searchPlaceholder}
-            />
-          )}
           <NotificationBell />
         </div>
       </div>

@@ -44,8 +44,8 @@ export default function CreateQuotation() {
 
   const generateReferenceNumber = () => {
     const currentYear = new Date().getFullYear();
-    const randomNum = Math.floor(1 + Math.random() * 9999);
-    return `QT-${currentYear}-${randomNum.toString().padStart(4, '0')}`;
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `QT-${currentYear}-${randomNum.toString().padStart(5, '0')}`;
   };
 
   const [documentNumber, setDocumentNumber] = useState(generateReferenceNumber());
