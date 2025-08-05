@@ -145,11 +145,12 @@ export default function ViewQuotation() {
                 alt="Reex Empire Logo" 
                 className="h-20 w-auto mb-4"
               />
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Reex Empire Sdn Bhd</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Reex Empire Sdn Bhd (1426553-A)</h2>
               <div className="text-sm text-gray-600 space-y-1">
-                <p className="font-semibold">For all enquiries, please contact Khalil Pasha</p>
-                <p>Email: reexsb@gmail.com</p>
-                <p>Tel: 011-1665 6525 / 019-999 1024</p>
+                <p>No. 29-1, Jalan 2A/6</p>
+                <p>Taman Setapak Indah</p>
+                <p>53300 Setapak Kuala Lumpur</p>
+                <p className="font-semibold">www.reexempire.com</p>
               </div>
             </div>
             
@@ -280,7 +281,7 @@ export default function ViewQuotation() {
         {!isAccepted && (
           <Card className="shadow-sm print:hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle className="text-lg text-gray-800">Digital Signature</CardTitle>
+              <CardTitle className="text-lg text-gray-800">Acceptance</CardTitle>
               {isSigning && (
                 <Button
                   variant="ghost"
@@ -348,7 +349,8 @@ export default function ViewQuotation() {
 
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm py-6">
-          <p>Thank you for your business!</p>
+          <p>Thank you for your business! For all enquiries, please contact Khalil Pasha</p>
+          <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p></br>
           <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
         </div>
       </div>
