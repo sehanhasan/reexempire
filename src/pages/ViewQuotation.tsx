@@ -164,7 +164,7 @@ export default function ViewQuotation() {
                   alt="Reex Empire Logo" 
                   className="h-16 w-auto mb-3"
                 />
-                <h2 className="text-lg font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
+                <h2 className="text-sm font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
                   <p>53300 Setapak Kuala Lumpur</p>
@@ -175,7 +175,7 @@ export default function ViewQuotation() {
               {/* Right Column - Quotation Details and Customer */}
               <div>
                 <div className="mb-3">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-1">Quotation #{quotation.reference_number}</h1>
+                  <h1 className="text-xl font-bold text-gray-900 mb-1">Quotation #{quotation.reference_number}</h1>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
@@ -184,10 +184,10 @@ export default function ViewQuotation() {
                 
                 {customer && (
                   <div>
-                    <p className="text-sm text-gray-500 font-medium mb-1">Attn</p>
+                    <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
                     <div className="text-sm text-gray-800 space-y-1">
-                      <p className="font-semibold">{customer.name}</p>
-                      <p>{customer.unit_number}</p>
+                      <p>Attn: {customer.name}</p>
+                      <p className="font-semibold">{customer.unit_number}</p>
                       <p>{customer.address}</p>
                     </div>
                   </div>
