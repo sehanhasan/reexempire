@@ -149,7 +149,7 @@ export default function ViewQuotation() {
                   Signed
                 </Badge>
               )}
-              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="ml-4 flex items-center gap-1">
+              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="h-3 w-3 flex items-center gap-1">
                 <Download size={16} />
                 <span>Download</span>
               </Button>
@@ -186,6 +186,13 @@ export default function ViewQuotation() {
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
                   </div>
+                    {/* Subject within customer info */}
+                    {quotation.subject && (
+                      <div className="mt-3 pt-2 border-t">
+                        <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
+                        <p className="text-sm text-gray-800">{quotation.subject}</p>
+                      </div>
+                    )}
                 </div>
                 
                 {customer && (
@@ -196,13 +203,6 @@ export default function ViewQuotation() {
                       <p className="font-semibold">{customer.unit_number}</p>
                       <p>{customer.address}</p>
                     </div>
-                    {/* Subject within customer info */}
-                    {quotation.subject && (
-                      <div className="mt-3 pt-2 border-t">
-                        <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
-                        <p className="text-sm text-gray-800">{quotation.subject}</p>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -274,7 +274,6 @@ export default function ViewQuotation() {
 
           {/* Compact Additional Information */}
           <AdditionalInfoCard 
-            subject={quotation.subject}
             notes={quotation.notes}
             terms={quotation.terms}
             signatureData={hasSignature ? signatureData : undefined}
