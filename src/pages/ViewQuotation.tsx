@@ -135,24 +135,39 @@ export default function ViewQuotation() {
   return (
     <div className="min-h-screen bg-background py-8 px-4" id="quotation-view">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header with Logo */}
-        <div className="text-center bg-white rounded-lg shadow-sm p-8">
-          <img 
-            src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
-            alt="Reex Empire Logo" 
-            className="h-20 w-auto mx-auto mb-6"
-          />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Quotation #{quotation.reference_number}</h1>
-          <div className="flex items-center justify-center gap-3 mt-3">
-            <Badge variant={isAccepted ? "default" : "secondary"} className="text-sm px-3 py-1">
-              {quotation.status}
-            </Badge>
-            {hasSignature && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-sm px-3 py-1">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Signed
-              </Badge>
-            )}
+        {/* Header with Logo and Quotation Details in Two Columns */}
+        <div className="bg-white rounded-lg shadow-sm p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left Column - Company Logo and Details */}
+            <div className="text-left">
+              <img 
+                src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+                alt="Reex Empire Logo" 
+                className="h-20 w-auto mb-4"
+              />
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Reex Empire Sdn Bhd</h2>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p className="font-semibold">For all enquiries, please contact Khalil Pasha</p>
+                <p>Email: reexsb@gmail.com</p>
+                <p>Tel: 011-1665 6525 / 019-999 1024</p>
+              </div>
+            </div>
+            
+            {/* Right Column - Quotation and Status */}
+            <div className="text-left md:text-right">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Quotation #{quotation.reference_number}</h1>
+              <div className="flex items-center justify-start md:justify-end gap-3 mt-3">
+                <Badge variant={isAccepted ? "default" : "secondary"} className="text-sm px-3 py-1">
+                  {quotation.status}
+                </Badge>
+                {hasSignature && (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-sm px-3 py-1">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Signed
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -160,62 +175,32 @@ export default function ViewQuotation() {
         {customer && (
           <Card className="shadow-sm">
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-gray-500 font-medium mb-1">Attn</p>
                   <p className="font-semibold text-gray-900">{customer.name}</p>
                   <p className="text-gray-800">{customer.unit_number}</p>
                   <p className="text-gray-800">{customer.address}</p>
                 </div>
-               <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Quotation Details</p>
-                  <p className="text-gray-800 font-medium">Quotation #{quotation.reference_number}</p>
+                <div>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Details</p>
                   <p className="text-gray-800 font-medium">Issue Date: {formatDate(quotation.issue_date)}</p>
                   <p className="text-gray-800 font-medium">Expiry Date: {formatDate(quotation.expiry_date)}</p>
                 </div> 
               </div>
+              
+              {/* Subject Section */}
+              {quotation.subject && (
+                <div className="mt-6 pt-4 border-t">
+                  <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
+                  <p className="text-gray-800">{quotation.subject}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Quotation Details */}
-        <Card className="shadow-sm">
-          <CardHeader className="bg-gray-50 rounded-t-lg">
-            <CardTitle className="text-lg text-gray-800">Quotation Details</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">Issue Date</p>
-                <p className="text-gray-800 font-medium">{formatDate(quotation.issue_date)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">Expiry Date</p>
-                <p className="text-gray-800 font-medium">{formatDate(quotation.expiry_date)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">Subtotal</p>
-                <p className="text-gray-800 font-medium">{formatCurrency(quotation.subtotal)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-medium mb-1">Total</p>
-                <p className="text-xl font-bold text-blue-600">{formatCurrency(quotation.total)}</p>
-              </div>
-            </div>
-
-            {quotation.requires_deposit && (
-              <div className="mt-6 bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">Deposit Required</h4>
-                <p className="text-blue-800">
-                  Amount: {formatCurrency(quotation.deposit_amount || 0)} 
-                  {quotation.deposit_percentage && ` (${quotation.deposit_percentage}%)`}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Items by Category */}
+        {/* Items */}
         <Card className="shadow-sm">
           <CardHeader className="bg-gray-50 rounded-t-lg">
             <CardTitle className="text-lg text-gray-800">Items</CardTitle>
@@ -253,6 +238,32 @@ export default function ViewQuotation() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Subtotal, Deposit and Total Information */}
+            <div className="p-6 bg-gray-50 border-t">
+              <div className="flex justify-end">
+                <div className="w-72 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium">Subtotal:</span>
+                    <span>{formatCurrency(quotation.subtotal)}</span>
+                  </div>
+                  
+                  {quotation.requires_deposit && (
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">
+                        Deposit ({quotation.deposit_percentage}%):
+                      </span>
+                      <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <span>Total:</span>
+                    <span className="text-blue-600">{formatCurrency(quotation.total)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
