@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-bottom-toast';
 import { categoryService } from '@/services';
 
 interface Subcategory {
   id?: string;
   category_id: string;
   name: string;
-  description: string; // Changed from optional to required to match the API expectations
+  description: string;
   price?: number;
 }
 
@@ -23,6 +23,7 @@ interface SubcategoryModelProps {
   categoryId?: string;
   initialData?: Subcategory;
   onSave: () => void;
+  onDelete?: (subcategoryId: string) => void;
 }
 
 export function SubcategoryModel({
@@ -32,14 +33,16 @@ export function SubcategoryModel({
   categoryId,
   initialData,
   onSave,
+  onDelete,
 }: SubcategoryModelProps) {
   const [formData, setFormData] = useState<Subcategory>({
     category_id: parentId,
     name: '',
-    description: '', // Initialize with empty string since it's required
+    description: '',
     price: 0,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -51,7 +54,7 @@ export function SubcategoryModel({
       setFormData({
         category_id: parentId,
         name: '',
-        description: '', // Initialize with empty string
+        description: '',
         price: 0,
       });
     }
@@ -61,7 +64,6 @@ export function SubcategoryModel({
     const { name, value } = e.target;
     
     if (name === 'price') {
-      // Only allow numbers and decimals for price
       const numValue = parseFloat(value);
       setFormData({
         ...formData,
@@ -75,13 +77,36 @@ export function SubcategoryModel({
     }
   };
 
+  const handleDelete = async () => {
+    if (!categoryId || !onDelete) return;
+    
+    setDeleting(true);
+    try {
+      await categoryService.deleteSubcategory(categoryId);
+      toast({
+        title: 'Subcategory Deleted',
+        description: 'The subcategory has been deleted successfully.',
+      });
+      onDelete(categoryId);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error deleting subcategory:', error);
+      toast({
+        title: 'Error',
+        description: 'There was a problem deleting the subcategory.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     
     try {
       if (categoryId) {
-        // Update existing subcategory
         await categoryService.updateSubcategory(categoryId, {
           ...formData,
           category_id: parentId,
@@ -91,7 +116,6 @@ export function SubcategoryModel({
           description: 'The subcategory has been updated successfully.',
         });
       } else {
-        // Create new subcategory
         await categoryService.createSubcategory({
           ...formData,
           category_id: parentId,
@@ -149,7 +173,7 @@ export function SubcategoryModel({
                 value={formData.description || ''}
                 onChange={handleChange}
                 rows={3}
-                required // Added required attribute to match type requirement
+                required
               />
             </div>
             
@@ -167,18 +191,32 @@ export function SubcategoryModel({
             </div>
           </div>
           
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={submitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Saving...' : categoryId ? 'Save Changes' : 'Add Subcategory'}
-            </Button>
+          <DialogFooter className="flex justify-between">
+            <div>
+              {categoryId && onDelete && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleting || submitting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={submitting || deleting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting || deleting}>
+                {submitting ? 'Saving...' : categoryId ? 'Save Changes' : 'Add Subcategory'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

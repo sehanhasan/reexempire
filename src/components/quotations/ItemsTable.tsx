@@ -46,7 +46,7 @@ export function ItemsTable({
     // Filter out empty categories
     const filteredCategories = orderedCategories.filter(category => 
       groupedItems[category].some(item => 
-        item.description && item.description.trim() !== ''
+        item.description || item.description === '' // Show all items, including empty ones
       )
     );
 

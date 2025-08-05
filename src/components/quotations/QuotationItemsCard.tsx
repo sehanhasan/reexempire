@@ -9,7 +9,7 @@ import { Plus, FolderOpen, Wallet } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { QuotationItem, DepositInfo } from "./types";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-bottom-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuotationItemsCardProps {
@@ -45,9 +45,6 @@ export function QuotationItemsCard({
   };
   
   const addItem = () => {
-    console.log("🔥 Add Item button clicked!");
-    console.log("Current items before adding:", items);
-    
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     const newItem: QuotationItem = {
       id: newId,
@@ -59,12 +56,7 @@ export function QuotationItemsCard({
       amount: 0
     };
     
-    console.log("New item to add:", newItem);
-    setItems(prevItems => {
-      const updatedItems = [...prevItems, newItem];
-      console.log("Updated items array:", updatedItems);
-      return updatedItems;
-    });
+    setItems(prevItems => [...prevItems, newItem]);
   };
   
   const removeItem = (id: number) => {
