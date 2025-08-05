@@ -82,6 +82,8 @@ export function SubcategoriesDialog({ open, onOpenChange, category }: Subcategor
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
+                        <h3 className="font-medium">{subcategory.name}</h3>
+                        {subcategory.description && (
                         <p className="text-sm mt-1">{subcategory.description}</p>
                       </div>
                       {subcategory.price !== null && subcategory.price !== undefined && (
