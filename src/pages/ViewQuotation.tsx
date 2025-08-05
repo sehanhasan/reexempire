@@ -175,7 +175,7 @@ export default function ViewQuotation() {
               {/* Right Column - Quotation Details and Customer */}
               <div>
                 <div className="mb-3">
-                  <h1 className="text-xl font-bold text-gray-900 mb-1">Quotation #{quotation.reference_number}</h1>
+                  <h1 className="text-xl font-bold text-gray-900 mb-1">Quotation</h1>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
@@ -213,7 +213,6 @@ export default function ViewQuotation() {
                     <tr>
                       <th className="text-left p-2 font-semibold text-gray-700">Description</th>
                       <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Unit</th>
                       <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
                       <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
                     </tr>
@@ -230,7 +229,6 @@ export default function ViewQuotation() {
                           <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
                             <td className="p-2 text-gray-800">{item.description}</td>
                             <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 text-gray-800">{item.unit}</td>
                             <td className="text-right p-2 text-gray-800">{formatCurrency(item.unit_price)}</td>
                             <td className="text-right p-2 font-semibold text-gray-800">{formatCurrency(item.amount)}</td>
                           </tr>
