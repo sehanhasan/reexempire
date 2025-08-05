@@ -78,16 +78,17 @@ export function SubcategoryModel({
   };
 
   const handleDelete = async () => {
-    if (!categoryId || !onDelete) return;
+    if (!initialData?.id || !onDelete) return;
     
     setDeleting(true);
     try {
-      await categoryService.deleteSubcategory(categoryId);
+      // Use the actual subcategory ID from initialData
+      await categoryService.deleteSubcategory(initialData.id);
       toast({
         title: 'Subcategory Deleted',
         description: 'The subcategory has been deleted successfully.',
       });
-      onDelete(categoryId);
+      onDelete(initialData.id);
       onOpenChange(false);
     } catch (error) {
       console.error('Error deleting subcategory:', error);
@@ -193,7 +194,7 @@ export function SubcategoryModel({
           
           <DialogFooter className="flex justify-between">
             <div>
-              {categoryId && onDelete && (
+              {initialData?.id && onDelete && (
                 <Button
                   type="button"
                   variant="destructive"
