@@ -141,7 +141,7 @@ export default function ViewQuotation() {
             {/* Left Column - Company Logo and Details */}
             <div className="text-left">
               <img 
-                src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+                src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
                 alt="Reex Empire Logo" 
                 className="h-20 w-auto mb-4"
               />
@@ -203,9 +203,6 @@ export default function ViewQuotation() {
 
         {/* Items */}
         <Card className="shadow-sm">
-          <CardHeader className="bg-gray-50 rounded-t-lg">
-            <CardTitle className="text-lg text-gray-800">Items</CardTitle>
-          </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -350,7 +347,7 @@ export default function ViewQuotation() {
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm py-6">
           <p>Thank you for your business! For all enquiries, please contact Khalil Pasha</p>
-          <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+          <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p><br>
           <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
         </div>
       </div>
