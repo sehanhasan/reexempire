@@ -206,9 +206,6 @@ export default function ViewQuotation() {
 
           {/* Compact Items Table */}
           <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Items</CardTitle>
-            </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
