@@ -169,7 +169,9 @@ export default function ViewQuotation() {
                 </div>
                <div>
                   <p className="text-sm text-gray-500 font-medium mb-1">Quotation Details</p>
-                  <p className="text-gray-800 font-medium">{formatDate(quotation.issue_date)}</p>
+                  <p className="text-gray-800 font-medium">Quotation #{quotation.reference_number}</p>
+                  <p className="text-gray-800 font-medium">Issue Date: {formatDate(quotation.issue_date)}</p>
+                  <p className="text-gray-800 font-medium">Expiry Date: {formatDate(quotation.expiry_date)}</p>
                 </div> 
               </div>
             </CardContent>
