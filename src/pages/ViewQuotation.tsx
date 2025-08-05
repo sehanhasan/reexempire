@@ -347,7 +347,7 @@ export default function ViewQuotation() {
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm py-6">
           <p>Thank you for your business! For all enquiries, please contact Khalil Pasha</p>
-          <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p><br>
+          <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p><br></br>
           <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
         </div>
       </div>
