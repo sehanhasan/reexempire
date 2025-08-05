@@ -9,7 +9,7 @@ import { Plus, FolderOpen, Wallet } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { InvoiceItem } from "./types";
-import { toast } from "@/hooks/use-bottom-toast";
+import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface InvoiceItemsCardProps {
@@ -122,8 +122,7 @@ export function InvoiceItemsCard({
     });
   };
   
-  return (
-    <>
+  return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-4">
@@ -160,8 +159,7 @@ export function InvoiceItemsCard({
                 <span>RM {calculateSubtotal().toFixed(2)}</span>
               </div>
 
-              {isDepositInvoice && (
-                <div className="space-y-2 border-t pt-2 mt-1">
+              {isDepositInvoice && <div className="space-y-2 border-t pt-2 mt-1">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label htmlFor="depositPercentage" className="text-xs">Deposit (%)</Label>
@@ -182,8 +180,7 @@ export function InvoiceItemsCard({
                     <span>Balance Due (Future Invoice):</span>
                     <span>RM {(calculateSubtotal() - depositAmount).toFixed(2)}</span>
                   </div>
-                </div>
-              )}
+                </div>}
 
               <div className="flex justify-between py-2 border-t mt-1">
                 <span className="font-semibold text-base">Total:</span>
@@ -195,6 +192,5 @@ export function InvoiceItemsCard({
       </Card>
 
       <CategoryItemSelector open={showCategorySelector} onOpenChange={setShowCategorySelector} onSelectItems={handleItemsFromCategories} />
-    </>
-  );
+    </>;
 }
