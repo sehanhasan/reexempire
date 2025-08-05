@@ -149,7 +149,7 @@ export default function ViewQuotation() {
                   Signed
                 </Badge>
               )}
-              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="ml-3 flex items-center gap-1">
+              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="ml-4 flex items-center gap-1">
                 <Download size={16} />
                 <span>Download</span>
               </Button>
@@ -279,12 +279,6 @@ export default function ViewQuotation() {
             signatureData={hasSignature ? signatureData : undefined}
           />
 
-          {/* Contact Info */}
-          <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
-            <p>For all enquiries, please contact Khalil Pasha</p>
-            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
-          </div>
-
           {/* Signature Section */}
           {!isAccepted && (
             <Card className="shadow-sm print:hidden">
@@ -355,6 +349,12 @@ export default function ViewQuotation() {
             </Card>
           )}
 
+          {/* Contact Info */}
+          <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
+            <p>For all enquiries, please contact Khalil Pasha</p>
+            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+          </div>
+          
           {/* Compact Footer */}
           <div className="text-center text-gray-500 text-xs py-3">
             <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
