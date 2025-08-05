@@ -136,18 +136,24 @@ export default function ViewQuotation() {
     <div className="min-h-screen bg-background" id="quotation-view">
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
-        <div className="max-w-4xl mx-auto px-4 py-2">
-          <div className="flex items-center justify-center">
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex flex-col items-center space-y-2">
             <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
-            <Badge variant={isAccepted ? "default" : "secondary"} className="ml-3">
-              {quotation.status}
-            </Badge>
-            {hasSignature && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 ml-2">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Signed
+            <div className="flex items-center justify-center space-x-3">
+              <Badge variant={isAccepted ? "default" : "secondary"}>
+                {quotation.status}
               </Badge>
-            )}
+              {hasSignature && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Signed
+                </Badge>
+              )}
+              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="ml-4 flex items-center gap-1">
+                <Download size={16} />
+                <span>Download</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -190,18 +196,17 @@ export default function ViewQuotation() {
                       <p className="font-semibold">{customer.unit_number}</p>
                       <p>{customer.address}</p>
                     </div>
+                    {/* Subject within customer info */}
+                    {quotation.subject && (
+                      <div className="mt-3 pt-2 border-t">
+                        <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
+                        <p className="text-sm text-gray-800">{quotation.subject}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
-            
-            {/* Subject Section */}
-            {quotation.subject && (
-              <div className="mt-4 pt-3 border-t">
-                <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
-                <p className="text-sm text-gray-800">{quotation.subject}</p>
-              </div>
-            )}
           </div>
 
           {/* Compact Items Table */}
@@ -221,7 +226,7 @@ export default function ViewQuotation() {
                     {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={5} className="p-2 font-semibold text-blue-800 text-sm">
+                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
                             {category}
                           </td>
                         </tr>
@@ -229,8 +234,8 @@ export default function ViewQuotation() {
                           <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
                             <td className="p-2 text-gray-800">{item.description}</td>
                             <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 text-gray-800">{formatCurrency(item.unit_price)}</td>
-                            <td className="text-right p-2 font-semibold text-gray-800">{formatCurrency(item.amount)}</td>
+                            <td className="text-right p-2 text-gray-800">{item.unit_price.toFixed(2)}</td>
+                            <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
                           </tr>
                         ))}
                       </React.Fragment>
@@ -274,6 +279,12 @@ export default function ViewQuotation() {
             terms={quotation.terms}
             signatureData={hasSignature ? signatureData : undefined}
           />
+
+          {/* Contact Info */}
+          <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
+            <p>For all enquiries, please contact Khalil Pasha</p>
+            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+          </div>
 
           {/* Signature Section */}
           {!isAccepted && (
@@ -347,9 +358,7 @@ export default function ViewQuotation() {
 
           {/* Compact Footer */}
           <div className="text-center text-gray-500 text-xs py-3">
-            <p>Thank you for your business! For all enquiries, please contact Khalil Pasha</p>
-            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
-            <p className="mt-1">&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
           </div>
         </div>
       </div>

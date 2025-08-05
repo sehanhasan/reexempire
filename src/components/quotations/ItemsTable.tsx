@@ -21,9 +21,9 @@ export function ItemsTable({
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
 
-  // Format currency
-  const formatRM = (amount: number) => {
-    return `RM ${amount.toFixed(2)}`;
+  // Format currency without RM symbol for items table
+  const formatAmount = (amount: number) => {
+    return amount.toFixed(2);
   };
 
   // Group items by category
@@ -84,7 +84,7 @@ export function ItemsTable({
                         placeholder="Enter item description" 
                         value={item.description} 
                         onChange={e => handleItemChange(item.id, 'description', e.target.value)}
-                        className="h-10"
+                        className="h-10 text-xs"
                       />
                     </div>
                     
@@ -99,24 +99,21 @@ export function ItemsTable({
                       </div>
                       
                       <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price</label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            step="0.01" 
-                            className="pl-8 h-10" 
-                            value={item.unitPrice} 
-                            onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
-                          />
-                        </div>
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01" 
+                          className="h-10" 
+                          value={item.unitPrice} 
+                          onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
+                        />
                       </div>
                       
                       <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Amount</label>
-                        <div className="p-2 h-10 border rounded-md bg-gray-50 text-right">
-                          {formatRM(item.amount)}
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
+                        <div className="p-2 h-10 text-right text-gray-600">
+                          {formatAmount(item.amount)}
                         </div>
                       </div>
                     </div>
@@ -156,7 +153,7 @@ export function ItemsTable({
                         placeholder="Enter item description" 
                         value={item.description} 
                         onChange={e => handleItemChange(item.id, 'description', e.target.value)}
-                        className="h-10"
+                        className="h-10 text-xs"
                       />
                     </td>
                     <td className="py-3 px-2">
@@ -167,20 +164,17 @@ export function ItemsTable({
                       />
                     </td>
                     <td className="py-3 px-2">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">RM</span>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          step="0.01" 
-                          className="pl-10 text-right h-10" 
-                          value={item.unitPrice} 
-                          onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
-                        />
-                      </div>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        step="0.01" 
+                        className="text-right h-10" 
+                        value={item.unitPrice} 
+                        onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
+                      />
                     </td>
-                    <td className="py-3 px-2 text-right">
-                      {formatRM(item.amount)}
+                    <td className="py-3 px-2 text-right text-gray-600">
+                      {formatAmount(item.amount)}
                     </td>
                     <td className="py-3 px-1">
                       <Button 

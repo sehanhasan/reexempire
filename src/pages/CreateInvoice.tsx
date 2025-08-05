@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -54,6 +55,7 @@ export default function CreateInvoice() {
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
 
   const generateReferenceNumber = async () => {
     const currentYear = new Date().getFullYear();
@@ -210,7 +212,40 @@ export default function CreateInvoice() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendWhatsapp = () => {
+    if (!createdInvoiceId || !customer) {
+      toast({
+        title: "Error",
+        description: "Invoice must be saved before sending to WhatsApp.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoiceId}`;
+      
+      const message = `Dear ${customer.name},\n\n` +
+        `Please find your invoice ${documentNumber} for review at the link below: ` +
+        `${invoiceViewUrl}\n\n` +
+        `You can review the invoice details and make payment.\n\n` +
+        `If you have any questions, please don't hesitate to contact us.\n\n` +
+        `Thank you,\nReex Empire Sdn Bhd`;
+      
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent, status: string = "Draft") => {
     e.preventDefault();
     
     if (!customerId) {
@@ -247,7 +282,7 @@ export default function CreateInvoice() {
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
-        status: "Draft",
+        status: status,
         subtotal: subtotal,
         tax_rate: 0,
         tax_amount: 0,
@@ -262,6 +297,7 @@ export default function CreateInvoice() {
       };
       
       const createdInvoice = await invoiceService.create(invoice);
+      setCreatedInvoiceId(createdInvoice.id);
       
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
@@ -289,10 +325,40 @@ export default function CreateInvoice() {
         }
       }
       
-      toast({
-        title: "Invoice Created",
-        description: `Invoice for ${customer?.name} has been created successfully.`,
-      });
+      if (status === "Sent") {
+        toast({
+          title: "Invoice Sent",
+          description: `Invoice for ${customer?.name} has been sent successfully.`,
+        });
+        
+        // Directly open WhatsApp with the newly created invoice
+        try {
+          const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
+          
+          const message = `Dear ${customer.name},\n\n` +
+            `Please find your invoice ${documentNumber} for review at the link below: ` +
+            `${invoiceViewUrl}\n\n` +
+            `You can review the invoice details and make payment.\n\n` +
+            `If you have any questions, please don't hesitate to contact us.\n\n` +
+            `Thank you,\nReex Empire Sdn Bhd`;
+          
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+          window.open(whatsappUrl, '_blank');
+        } catch (error) {
+          console.error("Error opening WhatsApp:", error);
+          toast({
+            title: "WhatsApp Error",
+            description: "Invoice saved successfully, but failed to open WhatsApp. You can share it manually from the invoices list.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Invoice Created",
+          description: `Invoice for ${customer?.name} has been created successfully.`,
+        });
+      }
       
       navigate("/invoices");
     } catch (error) {
@@ -321,7 +387,7 @@ export default function CreateInvoice() {
         }
       />
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      <form className="mt-8 space-y-6">
         <CustomerInfoCard 
           customerId={customerId}
           setCustomer={setCustomerId}
@@ -411,6 +477,8 @@ export default function CreateInvoice() {
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
           isSubmitting={isSubmitting || uploadingImages}
+          showDraft={true}
+          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>
