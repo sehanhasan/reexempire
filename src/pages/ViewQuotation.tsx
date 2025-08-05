@@ -149,7 +149,7 @@ export default function ViewQuotation() {
                   Signed
                 </Badge>
               )}
-              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="h-3 w-3 flex items-center gap-1">
+              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="ml-3 flex items-center gap-1">
                 <Download size={16} />
                 <span>Download</span>
               </Button>
@@ -176,6 +176,13 @@ export default function ViewQuotation() {
                   <p>53300 Setapak Kuala Lumpur</p>
                   <p className="font-semibold">www.reexempire.com</p>
                 </div>
+                  {/* Subject within customer info */}
+                  {quotation.subject && (
+                    <div className="mt-3 pt-2 border-t">
+                      <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
+                      <p className="text-sm text-gray-800">{quotation.subject}</p>
+                    </div>
+                  )}
               </div>
               
               {/* Right Column - Quotation Details and Customer */}
@@ -186,13 +193,6 @@ export default function ViewQuotation() {
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
                   </div>
-                    {/* Subject within customer info */}
-                    {quotation.subject && (
-                      <div className="mt-3 pt-2 border-t">
-                        <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
-                        <p className="text-sm text-gray-800">{quotation.subject}</p>
-                      </div>
-                    )}
                 </div>
                 
                 {customer && (
