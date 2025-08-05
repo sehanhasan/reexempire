@@ -182,15 +182,17 @@ export default function ViewQuotation() {
         {/* Customer Information */}
         {customer && (
           <Card className="shadow-sm">
+            <CardHeader className="bg-gray-50 rounded-t-lg">
+              <CardTitle className="text-lg text-gray-800">Bill To</CardTitle>
+            </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Customer</p>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Attn</p>
                   <p className="font-semibold text-gray-900">{customer.name}</p>
                   <p className="text-gray-800">{customer.unit_number}</p>
                   <p className="text-gray-800">{customer.address}</p>
                 </div>
-                )}
               </div>
             </CardContent>
           </Card>
