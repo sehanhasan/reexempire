@@ -182,9 +182,6 @@ export default function ViewQuotation() {
         {/* Customer Information */}
         {customer && (
           <Card className="shadow-sm">
-            <CardHeader className="bg-gray-50 rounded-t-lg">
-              <CardTitle className="text-lg text-gray-800">Customer Information</CardTitle>
-            </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
