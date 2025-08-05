@@ -160,13 +160,17 @@ export default function ViewQuotation() {
         {customer && (
           <Card className="shadow-sm">
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-gray-500 font-medium mb-1">Attn</p>
                   <p className="font-semibold text-gray-900">{customer.name}</p>
                   <p className="text-gray-800">{customer.unit_number}</p>
                   <p className="text-gray-800">{customer.address}</p>
                 </div>
+               <div>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Quotation Details</p>
+                  <p className="text-gray-800 font-medium">{formatDate(quotation.issue_date)}</p>
+                </div> 
               </div>
             </CardContent>
           </Card>
