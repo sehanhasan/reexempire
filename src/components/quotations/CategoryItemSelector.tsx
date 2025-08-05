@@ -129,9 +129,7 @@ export function CategoryItemSelector({
       <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Select Items from Categories</DialogTitle>
-          <DialogDescription>
-            Choose services from your categories to add to your quotation.
-          </DialogDescription>
+          
         </DialogHeader>
         
         <div className="relative mt-2">
