@@ -167,26 +167,6 @@ export default function ViewQuotation() {
                   <p className="text-gray-800">{customer.unit_number}</p>
                   <p className="text-gray-800">{customer.address}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Email</p>
-                  <p className="text-gray-800">{customer.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Phone</p>
-                  <p className="text-gray-800">{customer.phone || 'N/A'}</p>
-                </div>
-                {customer.unit_number && (
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-1">Unit Number</p>
-                    <p className="text-gray-800">{customer.unit_number}</p>
-                  </div>
-                )}
-                {customer.address && (
-                  <div className="col-span-full">
-                    <p className="text-sm text-gray-500 font-medium mb-1">Address</p>
-                    <p className="text-gray-800">{customer.address}</p>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
