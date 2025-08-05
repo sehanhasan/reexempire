@@ -156,17 +156,61 @@ export default function ViewQuotation() {
           </div>
         </div>
 
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-3 print:hidden">
+          <Button
+            onClick={handleDownloadPDF}
+            disabled={isProcessing}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {isProcessing ? 'Generating...' : 'Download PDF'}
+          </Button>
+          
+          {!isAccepted && (
+            <Button 
+              onClick={() => setIsSigning(true)}
+              variant="default"
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+            >
+              <Pen className="h-4 w-4 mr-2" />
+              Accept & Sign
+            </Button>
+          )}
+        </div>
+
         {/* Customer Information */}
         {customer && (
           <Card className="shadow-sm">
+            <CardHeader className="bg-gray-50 rounded-t-lg">
+              <CardTitle className="text-lg text-gray-800">Customer Information</CardTitle>
+            </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Attn</p>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Customer</p>
                   <p className="font-semibold text-gray-900">{customer.name}</p>
-                  <p className="text-gray-800">{customer.unit_number}</p>
-                  <p className="text-gray-800">{customer.address}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Email</p>
+                  <p className="text-gray-800">{customer.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 font-medium mb-1">Phone</p>
+                  <p className="text-gray-800">{customer.phone || 'N/A'}</p>
+                </div>
+                {customer.unit_number && (
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium mb-1">Unit Number</p>
+                    <p className="text-gray-800">{customer.unit_number}</p>
+                  </div>
+                )}
+                {customer.address && (
+                  <div className="col-span-full">
+                    <p className="text-sm text-gray-500 font-medium mb-1">Address</p>
+                    <p className="text-gray-800">{customer.address}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
