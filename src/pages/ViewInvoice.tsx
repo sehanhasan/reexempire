@@ -126,71 +126,54 @@ export default function ViewInvoice() {
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <img 
-                src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
-                alt="Reex Empire Logo" 
-                className="h-10 w-auto"
-              />
-            </div>
-            <div className="text-center flex-1 px-4">
-              <h1 className="text-lg font-bold text-blue-800">Invoice #{invoice.reference_number}</h1>
-              <div className="flex items-center justify-center gap-2 mt-1">
-                <p className="text-sm text-gray-600">
-                  Issued: {format(new Date(invoice.issue_date), "MMM dd, yyyy")} | Due: {format(dueDate, "MMM dd, yyyy")}
-                </p>
-                <Badge className={getStatusColor(displayPaymentStatus)}>
-                  {displayPaymentStatus}
-                </Badge>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <Button variant="outline" onClick={handlePrintPDF} className="flex items-center gap-1">
-                <Download size={18} />
-                <span>Download PDF</span>
-              </Button>
-            </div>
+        <div className="max-w-4xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-center">
+            <h1 className="text-lg font-bold text-blue-800">Invoice #{invoice.reference_number}</h1>
+            <Badge className={getStatusColor(displayPaymentStatus) + " ml-3"}>
+              {displayPaymentStatus}
+            </Badge>
+            <Button variant="outline" onClick={handlePrintPDF} className="ml-4 flex items-center gap-1">
+              <Download size={18} />
+              <span>Download PDF</span>
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="py-8 px-4">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header with Logo */}
-          <div className="text-center bg-white rounded-lg shadow-sm p-8">
-            <img 
-              src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
-              alt="Reex Empire Logo" 
-              className="h-20 w-auto mx-auto mb-6"
-            />
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Invoice #{invoice.reference_number}</h1>
-            <div className="flex items-center justify-center gap-3 mt-3">
-              <Badge className={getStatusColor(displayPaymentStatus) + " text-sm px-3 py-1"}>
-                {displayPaymentStatus}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Company Info Card */}
-          <Card className="shadow-sm">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 gap-6 mb-4">
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-3 text-lg">From</h3>
-                  <div className="text-gray-700 space-y-1">
-                    <p className="font-medium">Reex Empire Sdn Bhd (1426553-A)</p>
-                    <p>No. 29-1, Jalan 2A/6</p>
-                    <p>Taman Setapak Indah</p>
-                    <p>53300 Setapak Kuala Lumpur</p>
-                    <p>www.reexempire.com</p>
+      <div className="py-4 px-4">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Compact Header with Company and Invoice Info in Columns */}
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column - Company Logo and Details */}
+              <div>
+                <img 
+                  src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+                  alt="Reex Empire Logo" 
+                  className="h-16 w-auto mb-3"
+                />
+                <h2 className="text-lg font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
+                  <p>53300 Setapak Kuala Lumpur</p>
+                  <p className="font-semibold">www.reexempire.com</p>
+                </div>
+              </div>
+              
+              {/* Right Column - Invoice Details and Customer */}
+              <div>
+                <div className="mb-3">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">Invoice #{invoice.reference_number}</h1>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p><strong>Issued:</strong> {format(new Date(invoice.issue_date), "MMM dd, yyyy")}</p>
+                    <p><strong>Due:</strong> {format(dueDate, "MMM dd, yyyy")}</p>
                   </div>
                 </div>
+                
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-3 text-lg">To</h3>
-                  <div className="text-gray-700 space-y-1">
-                    <p className="font-medium">{customer.name}</p>
+                  <p className="text-sm text-gray-500 font-medium mb-1">To</p>
+                  <div className="text-sm text-gray-800 space-y-1">
+                    <p className="font-semibold">{customer.name}</p>
                     {customer.unit_number && <p>Unit {customer.unit_number}</p>}
                     {customer.address && <p>{customer.address}</p>}
                     {customer.city && <p>{customer.city}, {customer.state} {customer.postal_code}</p>}
@@ -199,45 +182,46 @@ export default function ViewInvoice() {
                   </div>
                 </div>
               </div>
-              
-              {invoice.subject && (
-                <div className="mt-6 pt-4 border-t">
-                  <h3 className="font-semibold text-gray-700 mb-2">Subject</h3>
-                  <p className="text-gray-700">{invoice.subject}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+            
+            {/* Subject Section */}
+            {invoice.subject && (
+              <div className="mt-4 pt-3 border-t">
+                <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
+                <p className="text-sm text-gray-800">{invoice.subject}</p>
+              </div>
+            )}
+          </div>
 
+          {/* Compact Items Table */}
           <Card className="shadow-sm">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-gray-700 mb-4 text-lg">Items</h3>
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-gray-700 mb-3 text-lg">Items</h3>
               
-              {/* Items displayed as a clean table without input fields */}
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+                <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="bg-gray-100">
-                      <th className="py-3 px-4 border-b font-semibold text-gray-700 text-left">Description</th>
-                      <th className="py-3 px-4 border-b text-right font-semibold text-gray-700">Price</th>
-                      <th className="py-3 px-4 border-b text-right font-semibold text-gray-700">Qty</th>
-                      <th className="py-3 px-4 border-b text-right font-semibold text-gray-700">Amount</th>
+                      <th className="py-2 px-3 border-b font-semibold text-gray-700 text-left">Description</th>
+                      <th className="py-2 px-3 border-b text-right font-semibold text-gray-700 w-16">Price</th>
+                      <th className="py-2 px-3 border-b text-right font-semibold text-gray-700 w-16">Qty</th>
+                      <th className="py-2 px-3 border-b text-right font-semibold text-gray-700 w-24">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr>
-                          <td colSpan={4} className="py-3 px-4 font-semibold text-blue-800 bg-blue-50 border-b">
+                          <td colSpan={4} className="py-2 px-3 font-semibold text-blue-800 bg-blue-50 border-b">
                             {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (
                           <tr key={idx} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4 text-gray-800">{item.description}</td>
-                            <td className="py-3 px-4 text-right text-gray-800">{formatMoney(item.unit_price)}</td>
-                            <td className="py-3 px-4 text-right text-gray-800">{item.quantity}</td>
-                            <td className="py-3 px-4 text-right font-medium text-gray-800">{formatMoney(item.amount)}</td>
+                            <td className="py-2 px-3 text-gray-800">{item.description}</td>
+                            <td className="py-2 px-3 text-right text-gray-800">{formatMoney(item.unit_price)}</td>
+                            <td className="py-2 px-3 text-right text-gray-800">{item.quantity}</td>
+                            <td className="py-2 px-3 text-right font-medium text-gray-800">{formatMoney(item.amount)}</td>
                           </tr>
                         ))}
                       </React.Fragment>
@@ -246,25 +230,26 @@ export default function ViewInvoice() {
                 </table>
               </div>
               
-              <div className="mt-8 flex justify-end">
-                <div className="w-full max-w-xs bg-gray-50 p-4 rounded-lg">
-                  <div className="flex justify-between py-2">
+              {/* Compact Subtotal and Total Information */}
+              <div className="mt-4 flex justify-end">
+                <div className="w-64 bg-gray-50 p-3 rounded-lg text-sm">
+                  <div className="flex justify-between py-1">
                     <span className="font-medium text-gray-700">Subtotal:</span>
                     <span className="text-gray-800">{formatMoney(invoice.subtotal)}</span>
                   </div>
                   {invoice.tax_rate > 0 && (
-                    <div className="flex justify-between py-2">
+                    <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">Tax ({invoice.tax_rate}%):</span>
                       <span className="text-gray-800">{formatMoney(invoice.tax_amount)}</span>
                     </div>
                   )}
                   {invoice.is_deposit_invoice && (
-                    <div className="flex justify-between py-2">
+                    <div className="flex justify-between py-1">
                       <span className="font-medium text-gray-700">Deposit Amount:</span>
                       <span className="text-gray-800">{formatMoney(invoice.deposit_amount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between py-2 text-lg font-bold border-t border-gray-300 mt-2 pt-2">
+                  <div className="flex justify-between py-1 text-base font-bold border-t border-gray-300 mt-1 pt-1">
                     <span className="text-gray-800">Total:</span>
                     <span className="text-blue-600">{formatMoney(invoice.total)}</span>
                   </div>
@@ -276,15 +261,15 @@ export default function ViewInvoice() {
           {/* Work Photos Card */}
           {images.length > 0 && (
             <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-4 text-lg">Work Photos</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-gray-700 mb-3 text-base">Work Photos</h3>
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                   {images.map((image, index) => (
                     <div key={image.id} className="relative">
                       <img 
                         src={image.image_url} 
                         alt={`Work photo ${index + 1}`} 
-                        className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                        className="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
                         onClick={() => window.open(image.image_url, '_blank')}
                       />
                     </div>
@@ -297,9 +282,9 @@ export default function ViewInvoice() {
           {/* Notes Card */}
           {invoice.notes && (
             <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-3 text-lg">Notes</h3>
-                <div className="whitespace-pre-line text-gray-700 bg-gray-50 p-4 rounded-lg">{invoice.notes}</div>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-gray-700 mb-2 text-base">Notes</h3>
+                <div className="whitespace-pre-line text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">{invoice.notes}</div>
               </CardContent>
             </Card>
           )}
@@ -307,17 +292,18 @@ export default function ViewInvoice() {
           {/* Terms Card */}
           {invoice.terms && (
             <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-700 mb-3 text-lg">Terms & Conditions</h3>
-                <div className="whitespace-pre-line text-gray-700 bg-gray-50 p-4 rounded-lg">{invoice.terms}</div>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-gray-700 mb-2 text-base">Terms & Conditions</h3>
+                <div className="whitespace-pre-line text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">{invoice.terms}</div>
               </CardContent>
             </Card>
           )}
 
-          {/* Footer */}
-          <div className="text-center text-gray-500 text-sm py-6">
-            <p>Thank you for your business!</p>
-            <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+          {/* Compact Footer */}
+          <div className="text-center text-gray-500 text-xs py-3">
+            <p>Thank you for your business! For all enquiries, please contact Khalil Pasha</p>
+            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+            <p className="mt-1">&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
           </div>
         </div>
       </div>

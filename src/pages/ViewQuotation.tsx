@@ -133,222 +133,229 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4" id="quotation-view">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header with Logo and Quotation Details in Two Columns */}
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column - Company Logo and Details */}
-            <div className="text-left">
-              <img 
-                src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
-                alt="Reex Empire Logo" 
-                className="h-20 w-auto mb-4"
-              />
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Reex Empire Sdn Bhd (1426553-A)</h2>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>No. 29-1, Jalan 2A/6</p>
-                <p>Taman Setapak Indah</p>
-                <p>53300 Setapak Kuala Lumpur</p>
-                <p className="font-semibold">www.reexempire.com</p>
+    <div className="min-h-screen bg-background" id="quotation-view">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
+        <div className="max-w-4xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-center">
+            <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
+            <Badge variant={isAccepted ? "default" : "secondary"} className="ml-3">
+              {quotation.status}
+            </Badge>
+            {hasSignature && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 ml-2">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Signed
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="py-4 px-4">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Compact Header with Company and Quotation Info in Columns */}
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column - Company Logo and Details */}
+              <div>
+                <img 
+                  src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
+                  alt="Reex Empire Logo" 
+                  className="h-16 w-auto mb-3"
+                />
+                <h2 className="text-lg font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
+                  <p>53300 Setapak Kuala Lumpur</p>
+                  <p className="font-semibold">www.reexempire.com</p>
+                </div>
               </div>
-            </div>
-            
-            {/* Right Column - Quotation and Status */}
-            <div className="text-left md:text-right">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Quotation #{quotation.reference_number}</h1>
-              <div className="flex items-center justify-start md:justify-end gap-3 mt-3">
-                <Badge variant={isAccepted ? "default" : "secondary"} className="text-sm px-3 py-1">
-                  {quotation.status}
-                </Badge>
-                {hasSignature && (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-sm px-3 py-1">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Signed
-                  </Badge>
+              
+              {/* Right Column - Quotation Details and Customer */}
+              <div>
+                <div className="mb-3">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">Quotation #{quotation.reference_number}</h1>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
+                    <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
+                  </div>
+                </div>
+                
+                {customer && (
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium mb-1">Attn</p>
+                    <div className="text-sm text-gray-800 space-y-1">
+                      <p className="font-semibold">{customer.name}</p>
+                      <p>{customer.unit_number}</p>
+                      <p>{customer.address}</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
+            
+            {/* Subject Section */}
+            {quotation.subject && (
+              <div className="mt-4 pt-3 border-t">
+                <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
+                <p className="text-sm text-gray-800">{quotation.subject}</p>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Customer Information */}
-        {customer && (
+          {/* Compact Items Table */}
           <Card className="shadow-sm">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Attn</p>
-                  <p className="font-semibold text-gray-900">{customer.name}</p>
-                  <p className="text-gray-800">{customer.unit_number}</p>
-                  <p className="text-gray-800">{customer.address}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 font-medium mb-1">Details</p>
-                  <p className="text-gray-800 font-medium">Issue Date: {formatDate(quotation.issue_date)}</p>
-                  <p className="text-gray-800 font-medium">Expiry Date: {formatDate(quotation.expiry_date)}</p>
-                </div> 
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Items</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="text-left p-2 font-semibold text-gray-700">Description</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Unit</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categories.map(category => (
+                      <React.Fragment key={category}>
+                        <tr className="bg-blue-50 border-t border-b">
+                          <td colSpan={5} className="p-2 font-semibold text-blue-800 text-sm">
+                            {category}
+                          </td>
+                        </tr>
+                        {groupedItems[category].map((item, index) => (
+                          <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
+                            <td className="p-2 text-gray-800">{item.description}</td>
+                            <td className="text-right p-2 text-gray-800">{item.quantity}</td>
+                            <td className="text-right p-2 text-gray-800">{item.unit}</td>
+                            <td className="text-right p-2 text-gray-800">{formatCurrency(item.unit_price)}</td>
+                            <td className="text-right p-2 font-semibold text-gray-800">{formatCurrency(item.amount)}</td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
               </div>
               
-              {/* Subject Section */}
-              {quotation.subject && (
-                <div className="mt-6 pt-4 border-t">
-                  <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
-                  <p className="text-gray-800">{quotation.subject}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Items */}
-        <Card className="shadow-sm">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="text-left p-4 font-semibold text-gray-700">Description</th>
-                    <th className="text-right p-4 font-semibold text-gray-700">Quantity</th>
-                    <th className="text-right p-4 font-semibold text-gray-700">Unit</th>
-                    <th className="text-right p-4 font-semibold text-gray-700">Unit Price</th>
-                    <th className="text-right p-4 font-semibold text-gray-700">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categories.map(category => (
-                    <React.Fragment key={category}>
-                      <tr className="bg-blue-50 border-t border-b">
-                        <td colSpan={5} className="p-3 font-semibold text-blue-800 text-sm">
-                          {category}
-                        </td>
-                      </tr>
-                      {groupedItems[category].map((item, index) => (
-                        <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
-                          <td className="p-4 text-gray-800">{item.description}</td>
-                          <td className="text-right p-4 text-gray-800">{item.quantity}</td>
-                          <td className="text-right p-4 text-gray-800">{item.unit}</td>
-                          <td className="text-right p-4 text-gray-800">{formatCurrency(item.unit_price)}</td>
-                          <td className="text-right p-4 font-semibold text-gray-800">{formatCurrency(item.amount)}</td>
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Subtotal, Deposit and Total Information */}
-            <div className="p-6 bg-gray-50 border-t">
-              <div className="flex justify-end">
-                <div className="w-72 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">Subtotal:</span>
-                    <span>{formatCurrency(quotation.subtotal)}</span>
-                  </div>
-                  
-                  {quotation.requires_deposit && (
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium">
-                        Deposit ({quotation.deposit_percentage}%):
-                      </span>
-                      <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
+              {/* Compact Subtotal, Deposit and Total Information */}
+              <div className="p-3 bg-gray-50 border-t">
+                <div className="flex justify-end">
+                  <div className="w-64 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Subtotal:</span>
+                      <span>{formatCurrency(quotation.subtotal)}</span>
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Total:</span>
-                    <span className="text-blue-600">{formatCurrency(quotation.total)}</span>
+                    
+                    {quotation.requires_deposit && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">
+                          Deposit ({quotation.deposit_percentage}%):
+                        </span>
+                        <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between text-base font-bold border-t pt-1">
+                      <span>Total:</span>
+                      <span className="text-blue-600">{formatCurrency(quotation.total)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Additional Information */}
-        <AdditionalInfoCard 
-          subject={quotation.subject}
-          notes={quotation.notes}
-          terms={quotation.terms}
-          signatureData={hasSignature ? signatureData : undefined}
-        />
-
-        {/* Signature Section */}
-        {!isAccepted && (
-          <Card className="shadow-sm print:hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle className="text-lg text-gray-800">Acceptance</CardTitle>
-              {isSigning && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsSigning(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {!isSigning ? (
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
-                  <p className="text-gray-600 mb-6 text-lg">
-                    Click the "Accept & Sign" button above to digitally sign this quotation.
-                  </p>
-                  <Button 
-                    onClick={() => setIsSigning(true)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
-                  >
-                    <Pen className="h-5 w-5 mr-2" />
-                    Start Digital Signature
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                    By signing below, you accept the terms and conditions of this quotation.
-                  </div>
-                  
-                  <div className="signature-container">
-                    <SignatureCanvas
-                      ref={sigCanvasRef}
-                      canvasProps={{
-                        className: 'signature-canvas',
-                      }}
-                      backgroundColor="white"
-                    />
-                    <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
-                      Sign here
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between gap-3">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleClearSignature}
-                      className="px-6"
-                    >
-                      Clear
-                    </Button>
-                    <Button 
-                      onClick={handleAcceptQuotation}
-                      disabled={isProcessing}
-                      className="bg-green-600 hover:bg-green-700 text-white px-8"
-                    >
-                      {isProcessing ? 'Processing...' : 'Accept Quotation'}
-                    </Button>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
-        )}
 
-        {/* Footer */}
-        <div className="text-center text-gray-500 text-sm py-6">
-          <p>Thank you for your business! For all enquiries, please contact Khalil Pasha</p>
-          <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p><br></br>
-          <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+          {/* Compact Additional Information */}
+          <AdditionalInfoCard 
+            subject={quotation.subject}
+            notes={quotation.notes}
+            terms={quotation.terms}
+            signatureData={hasSignature ? signatureData : undefined}
+          />
+
+          {/* Signature Section */}
+          {!isAccepted && (
+            <Card className="shadow-sm print:hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
+                {isSigning && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSigning(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                {!isSigning ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <p className="text-gray-600 mb-4 text-base">
+                      Click the "Accept & Sign" button above to digitally sign this quotation.
+                    </p>
+                    <Button 
+                      onClick={() => setIsSigning(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                    >
+                      <Pen className="h-4 w-4 mr-2" />
+                      Start Digital Signature
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                      By signing below, you accept the terms and conditions of this quotation.
+                    </div>
+                    
+                    <div className="signature-container">
+                      <SignatureCanvas
+                        ref={sigCanvasRef}
+                        canvasProps={{
+                          className: 'signature-canvas',
+                        }}
+                        backgroundColor="white"
+                      />
+                      <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
+                        Sign here
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between gap-3">
+                      <Button 
+                        variant="outline" 
+                        onClick={handleClearSignature}
+                        className="px-4"
+                      >
+                        Clear
+                      </Button>
+                      <Button 
+                        onClick={handleAcceptQuotation}
+                        disabled={isProcessing}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6"
+                      >
+                        {isProcessing ? 'Processing...' : 'Accept Quotation'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Compact Footer */}
+          <div className="text-center text-gray-500 text-xs py-3">
+            <p>Thank you for your business! For all enquiries, please contact Khalil Pasha</p>
+            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+            <p className="mt-1">&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </div>
