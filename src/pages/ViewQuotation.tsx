@@ -179,8 +179,7 @@ export default function ViewQuotation() {
                   {/* Subject within customer info */}
                   {quotation.subject && (
                     <div className="mt-3 pt-2 border-t">
-                      <p className="text-sm text-gray-500 font-medium mb-1">Subject</p>
-                      <p className="text-sm text-gray-800">{quotation.subject}</p>
+                      <p className="text-sm text-gray-500 font-medium mb-1">Subject: {quotation.subject}</p>
                     </div>
                   )}
               </div>
@@ -196,7 +195,7 @@ export default function ViewQuotation() {
                 </div>
                 
                 {customer && (
-                  <div>
+                  <div className="w-64 bg-gray-50 p-3 rounded-lg text-sm">
                     <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
                     <div className="text-sm text-gray-800 space-y-1">
                       <p>Attn: {customer.name}</p>
