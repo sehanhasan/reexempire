@@ -31,17 +31,30 @@ export function QuotationItemsCard({
   const isMobile = useIsMobile();
   
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
-    setItems(prevItems => prevItems.map(item => {
-      if (item.id === id) {
-        const updatedItem = {
-          ...item,
-          [field]: value
-        };
-        updatedItem.amount = calculateItemAmount(updatedItem);
-        return updatedItem;
+    setItems(prevItems => {
+      const updatedItems = prevItems.map(item => {
+        if (item.id === id) {
+          const updatedItem = {
+            ...item,
+            [field]: value
+          };
+          updatedItem.amount = calculateItemAmount(updatedItem);
+          return updatedItem;
+        }
+        return item;
+      });
+      
+      // Recalculate deposit amount if deposit is enabled
+      if (depositInfo.requiresDeposit) {
+        const newTotal = updatedItems.reduce((sum, item) => sum + item.amount, 0);
+        setDepositInfo(prev => ({
+          ...prev,
+          depositAmount: newTotal * (prev.depositPercentage / 100)
+        }));
       }
-      return item;
-    }));
+      
+      return updatedItems;
+    });
   };
   
   const addItem = () => {
@@ -69,7 +82,20 @@ export function QuotationItemsCard({
   
   const removeItem = (id: number) => {
     if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
+      setItems(prevItems => {
+        const updatedItems = prevItems.filter(item => item.id !== id);
+        
+        // Recalculate deposit amount if deposit is enabled
+        if (depositInfo.requiresDeposit) {
+          const newTotal = updatedItems.reduce((sum, item) => sum + item.amount, 0);
+          setDepositInfo(prev => ({
+            ...prev,
+            depositAmount: newTotal * (prev.depositPercentage / 100)
+          }));
+        }
+        
+        return updatedItems;
+      });
     }
   };
   
@@ -78,10 +104,11 @@ export function QuotationItemsCard({
   };
   
   const handleDepositPercentageChange = (value: number) => {
+    const total = calculateTotal();
     setDepositInfo({
       ...depositInfo,
       depositPercentage: value,
-      depositAmount: calculateTotal() * (value / 100)
+      depositAmount: total * (value / 100)
     });
   };
   
@@ -90,7 +117,17 @@ export function QuotationItemsCard({
     setDepositInfo({
       ...depositInfo,
       depositAmount: value,
-      depositPercentage: total > 0 ? value / total * 100 : 0
+      depositPercentage: total > 0 ? (value / total) * 100 : 0
+    });
+  };
+  
+  const handleDepositCheckboxChange = (checked: boolean) => {
+    const total = calculateTotal();
+    setDepositInfo({
+      ...depositInfo,
+      requiresDeposit: checked,
+      depositPercentage: checked ? depositInfo.depositPercentage : 0,
+      depositAmount: checked ? (total * (depositInfo.depositPercentage / 100)) : 0
     });
   };
   
@@ -163,12 +200,7 @@ export function QuotationItemsCard({
                   <Checkbox 
                     id="requiresDeposit" 
                     checked={depositInfo.requiresDeposit} 
-                    onCheckedChange={checked => setDepositInfo({
-                      ...depositInfo,
-                      requiresDeposit: !!checked,
-                      depositPercentage: checked ? depositInfo.depositPercentage : 0,
-                      depositAmount: checked ? depositInfo.depositAmount : 0
-                    })} 
+                    onCheckedChange={handleDepositCheckboxChange} 
                   />
                   <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
                     <Wallet className="h-3.5 w-3.5 mr-1" />
