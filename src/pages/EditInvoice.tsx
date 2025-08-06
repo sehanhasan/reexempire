@@ -166,7 +166,7 @@ export default function EditInvoice() {
 
       await invoiceService.update(id, invoice);
 
-      await invoiceService.deleteAllItems(id);
+      await invoiceService.deleteItemsByInvoiceId(id);
 
       const sortedItems = [...items].sort((a, b) => {
         if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {

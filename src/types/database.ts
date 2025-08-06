@@ -137,9 +137,10 @@ export interface Invoice {
   total: number;
   notes: string | null;
   terms: string | null;
-  is_deposit_invoice: boolean;
+  requires_deposit: boolean;
   deposit_amount: number;
   deposit_percentage: number;
+  is_deposit_invoice: boolean;
   payment_status: string;
   created_at: string;
   updated_at: string;
