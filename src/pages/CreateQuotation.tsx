@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -12,6 +11,7 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { shareViaWhatsApp } from "@/utils/shareUtils";
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
@@ -31,7 +31,6 @@ export default function CreateQuotation() {
   const [validUntil, setValidUntil] = useState(
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
-  const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState("");
   const [subject, setSubject] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,14 +102,14 @@ export default function CreateQuotation() {
     try {
       const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotationId}`;
       
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-        createdQuotationId,
-        documentNumber,
-        customer.name,
-        quotationViewUrl
-      );
+      const message = `Dear ${customer.name},\n\n` +
+        `Please find your quotation ${documentNumber} for review at the link below: ` +
+        `${quotationViewUrl}\n\n` +
+        `You can review the quotation details.\n\n` +
+        `If you have any questions, please don't hesitate to contact us.\n\n` +
+        `Thank you,\nReex Empire Sdn Bhd`;
       
-      window.open(whatsappUrl, '_blank');
+      shareViaWhatsApp(message);
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
@@ -163,7 +162,7 @@ export default function CreateQuotation() {
         status: status,
         subtotal: subtotal,
         total: subtotal,
-        notes: notes || null,
+        notes: null,
         terms: terms || null,
         subject: subject || null,
         requires_deposit: depositInfo.requiresDeposit,
@@ -200,14 +199,14 @@ export default function CreateQuotation() {
         try {
           const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotation.id}`;
           
-          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-            createdQuotation.id,
-            documentNumber,
-            customer.name,
-            quotationViewUrl
-          );
+          const message = `Dear ${customer.name},\n\n` +
+            `Please find your quotation ${documentNumber} for review at the link below: ` +
+            `${quotationViewUrl}\n\n` +
+            `You can review the quotation details.\n\n` +
+            `If you have any questions, please don't hesitate to contact us.\n\n` +
+            `Thank you,\nReex Empire Sdn Bhd`;
           
-          window.open(whatsappUrl, '_blank');
+          shareViaWhatsApp(message);
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -274,16 +273,18 @@ export default function CreateQuotation() {
         />
         
         <AdditionalInfoForm 
-          notes={notes}
-          setNotes={setNotes}
           terms={terms}
-          setTerms={setTerms}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/quotations")}
-          documentType="quotation"
-          isSubmitting={isSubmitting}
-          showDraft={true}
-          onSendWhatsapp={handleSendWhatsapp}
+          onTermsChange={setTerms}
+          requiresDeposit={depositInfo.requiresDeposit}
+          onDepositToggle={(value) => setDepositInfo(prev => ({ ...prev, requiresDeposit: value }))}
+          depositPercentage={depositInfo.depositPercentage}
+          onDepositPercentageChange={(value) => setDepositInfo(prev => ({ ...prev, depositPercentage: value }))}
+          depositAmount={depositInfo.depositAmount}
+          onDepositAmountChange={(value) => setDepositInfo(prev => ({ ...prev, depositAmount: value }))}
+          subtotal={items.reduce((sum, item) => {
+            const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+            return sum + (qty * item.unitPrice);
+          }, 0)}
         />
       </form>
     </div>

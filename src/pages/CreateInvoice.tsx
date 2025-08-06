@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -16,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { shareViaWhatsApp } from "@/utils/shareUtils";
 
 interface ExtendedQuotation {
   id: string;
@@ -232,9 +232,7 @@ export default function CreateInvoice() {
         `If you have any questions, please don't hesitate to contact us.\n\n` +
         `Thank you,\nReex Empire Sdn Bhd`;
       
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      
-      window.open(whatsappUrl, '_blank');
+      shareViaWhatsApp(message);
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
@@ -287,7 +285,7 @@ export default function CreateInvoice() {
         tax_rate: 0,
         tax_amount: 0,
         total: total,
-        notes: notes || null,
+        notes: null,
         subject: subject || null,
         terms: null,
         is_deposit_invoice: isDepositInvoice,
@@ -342,9 +340,7 @@ export default function CreateInvoice() {
             `If you have any questions, please don't hesitate to contact us.\n\n` +
             `Thank you,\nReex Empire Sdn Bhd`;
           
-          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-          
-          window.open(whatsappUrl, '_blank');
+          shareViaWhatsApp(message);
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -471,14 +467,15 @@ export default function CreateInvoice() {
         </Card>
         
         <AdditionalInfoForm 
-          notes={notes}
-          setNotes={setNotes}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/invoices")}
-          documentType="invoice"
-          isSubmitting={isSubmitting || uploadingImages}
-          showDraft={true}
-          onSendWhatsapp={handleSendWhatsapp}
+          terms=""
+          onTermsChange={() => {}}
+          requiresDeposit={false}
+          onDepositToggle={() => {}}
+          depositPercentage={0}
+          onDepositPercentageChange={() => {}}
+          depositAmount={0}
+          onDepositAmountChange={() => {}}
+          subtotal={0}
         />
       </form>
     </div>
