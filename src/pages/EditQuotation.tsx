@@ -1,19 +1,21 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, FileText, Share2, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
-import { quotationService, customerService, invoiceService } from "@/services";
+import { quotationService, customerService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
+  terms?: string | null;
 }
 
 export default function EditQuotation() {
@@ -36,15 +38,15 @@ export default function EditQuotation() {
   const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split("T")[0]);
   const [validUntil, setValidUntil] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
+  const [terms, setTerms] = useState("");
   const [subject, setSubject] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [status, setStatus] = useState("Draft");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [relatedInvoice, setRelatedInvoice] = useState<any>(null);
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
     depositAmount: 0,
-    depositPercentage: 30
+    depositPercentage: 50
   });
   const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
 
@@ -62,6 +64,7 @@ export default function EditQuotation() {
           setQuotationDate(quotation.issue_date);
           setValidUntil(quotation.expiry_date);
           setNotes(quotation.notes || "");
+          setTerms(quotation.terms || "");
           
           setSubject((quotation as ExtendedQuotation).subject || ""); 
           setStatus(quotation.status);
@@ -69,19 +72,8 @@ export default function EditQuotation() {
           setDepositInfo({
             requiresDeposit: quotation.requires_deposit || false,
             depositAmount: quotation.deposit_amount || 0,
-            depositPercentage: quotation.deposit_percentage || 30
+            depositPercentage: quotation.deposit_percentage || 50
           });
-
-          // Check if this quotation has been converted to an invoice
-          try {
-            const invoices = await invoiceService.getAll();
-            const convertedInvoice = invoices.find(invoice => invoice.quotation_id === id);
-            if (convertedInvoice) {
-              setRelatedInvoice(convertedInvoice);
-            }
-          } catch (error) {
-            console.error("Error checking for related invoice:", error);
-          }
 
           if (quotation.customer_id) {
             const customerData = await customerService.getById(quotation.customer_id);
@@ -169,6 +161,7 @@ export default function EditQuotation() {
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
+        terms: terms || null,
         subject: subject || null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
@@ -277,14 +270,6 @@ export default function EditQuotation() {
     }
   };
 
-  const handleConvertToInvoice = () => {
-    navigate("/invoices/create", {
-      state: {
-        quotationId: id
-      }
-    });
-  };
-
   const handleSendWhatsapp = () => {
     if (!quotationData || !customer) {
       toast({
@@ -338,37 +323,6 @@ export default function EditQuotation() {
         } 
       />
 
-      {/* Show converted to invoice message */}
-      {relatedInvoice && (
-        <div className="rounded-md p-4 mt-4 bg-blue-50 border border-blue-200">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h3 className="font-medium text-blue-800">Quotation Already Converted</h3>
-              <p className="text-sm text-blue-700">
-                This quotation has already been converted to an Invoice #{relatedInvoice.reference_number}.
-              </p>
-            </div>
-            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-                onClick={() => navigate(`/invoices/view/${relatedInvoice.id}`)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Invoice
-              </Button>
-              <Button 
-                onClick={() => navigate("/invoices/create", { state: { quotationId: id } })} 
-                className={`${isMobile ? 'w-full' : ''} bg-blue-600 hover:bg-blue-700`}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Create Another Invoice
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col gap-3">
             <div>
@@ -404,32 +358,6 @@ export default function EditQuotation() {
           </div>
         </div>}
 
-      {status === "Accepted" && !relatedInvoice && <div className="rounded-md p-4 mt-4 bg-white">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
-              <p className="text-sm text-muted-foreground">This quotation has been accepted by the customer</p>
-            </div>
-            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
-              <Button 
-                onClick={handleSendWhatsapp} 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share via WhatsApp
-              </Button>
-              <Button 
-                onClick={handleConvertToInvoice} 
-                className={`${isMobile ? 'w-full' : ''} bg-blue-600 hover:bg-blue-700`}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Convert to Invoice
-              </Button>
-            </div>
-          </div>
-        </div>}
-
       <form className="mt-8 space-y-6">
         <CustomerInfoCard 
           customerId={customerId} 
@@ -456,6 +384,8 @@ export default function EditQuotation() {
         <AdditionalInfoForm 
           notes={notes} 
           setNotes={setNotes} 
+          terms={terms}
+          setTerms={setTerms}
           onSubmit={handleSubmit} 
           onCancel={() => navigate("/quotations")} 
           documentType="quotation" 

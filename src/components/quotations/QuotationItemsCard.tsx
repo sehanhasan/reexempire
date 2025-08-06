@@ -78,10 +78,12 @@ export function QuotationItemsCard({
   };
   
   const handleDepositPercentageChange = (value: number) => {
+    const total = calculateTotal();
+    const newDepositAmount = total * (value / 100);
     setDepositInfo({
       ...depositInfo,
       depositPercentage: value,
-      depositAmount: calculateTotal() * (value / 100)
+      depositAmount: newDepositAmount
     });
   };
   
@@ -90,8 +92,28 @@ export function QuotationItemsCard({
     setDepositInfo({
       ...depositInfo,
       depositAmount: value,
-      depositPercentage: total > 0 ? value / total * 100 : 0
+      depositPercentage: total > 0 ? (value / total) * 100 : 0
     });
+  };
+
+  const handleDepositCheckboxChange = (checked: boolean) => {
+    if (checked) {
+      const total = calculateTotal();
+      const defaultDepositAmount = total * 0.5; // 50% default
+      setDepositInfo({
+        ...depositInfo,
+        requiresDeposit: checked,
+        depositPercentage: 50,
+        depositAmount: defaultDepositAmount
+      });
+    } else {
+      setDepositInfo({
+        ...depositInfo,
+        requiresDeposit: checked,
+        depositAmount: 0,
+        depositPercentage: 50
+      });
+    }
   };
   
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
@@ -163,12 +185,7 @@ export function QuotationItemsCard({
                   <Checkbox 
                     id="requiresDeposit" 
                     checked={depositInfo.requiresDeposit} 
-                    onCheckedChange={checked => setDepositInfo({
-                      ...depositInfo,
-                      requiresDeposit: !!checked,
-                      depositPercentage: checked ? depositInfo.depositPercentage : 0,
-                      depositAmount: checked ? depositInfo.depositAmount : 0
-                    })} 
+                    onCheckedChange={handleDepositCheckboxChange} 
                   />
                   <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
                     <Wallet className="h-3.5 w-3.5 mr-1" />
