@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AdditionalInfoFormProps {
-  notes: string;
-  setNotes: (notes: string) => void;
   terms?: string;
   setTerms?: (terms: string) => void;
   onSubmit: (e: React.FormEvent, status?: string) => Promise<void>;
@@ -20,8 +18,6 @@ interface AdditionalInfoFormProps {
 }
 
 export function AdditionalInfoForm({
-  notes,
-  setNotes,
   terms,
   setTerms,
   onSubmit,
@@ -38,18 +34,6 @@ export function AdditionalInfoForm({
         <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
       </CardHeader>
       <CardContent className="py-4 px-4 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            placeholder="Add any additional notes..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={4}
-            className="resize-none"
-          />
-        </div>
-
         {terms !== undefined && setTerms && (
           <div className="space-y-2">
             <Label htmlFor="terms">Terms & Conditions</Label>

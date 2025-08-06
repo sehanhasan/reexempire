@@ -5,13 +5,12 @@ import { Separator } from '@/components/ui/separator';
 
 interface AdditionalInfoCardProps {
   subject?: string;
-  notes?: string;
   terms?: string;
   signatureData?: string;
 }
 
-export function AdditionalInfoCard({ subject, notes, terms, signatureData }: AdditionalInfoCardProps) {
-  const hasAnyContent = subject || notes || terms || signatureData;
+export function AdditionalInfoCard({ subject, terms, signatureData }: AdditionalInfoCardProps) {
+  const hasAnyContent = subject || terms || signatureData;
 
   if (!hasAnyContent) {
     return null;
@@ -19,21 +18,11 @@ export function AdditionalInfoCard({ subject, notes, terms, signatureData }: Add
 
   return (
     <Card>
-      {/* <CardHeader>
-        <CardTitle>Additional Information</CardTitle>
-      </CardHeader> */}
       <CardContent className="space-y-4">
         {subject && (
           <div>
             <h4 className="font-medium text-sm text-muted-foreground mb-2">Subject</h4>
             <p className="text-sm">{subject}</p>
-          </div>
-        )}
-
-        {notes && (
-          <div>
-            <h4 className="font-medium text-sm text-muted-foreground mb-2">Notes</h4>
-            <p className="text-sm whitespace-pre-wrap">{notes}</p>
           </div>
         )}
 
@@ -46,7 +35,7 @@ export function AdditionalInfoCard({ subject, notes, terms, signatureData }: Add
 
         {signatureData && (
           <>
-            {(subject || notes || terms) && <Separator />}
+            {(subject || terms) && <Separator />}
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
               <div className="bg-gray-50 p-4 rounded-lg">
