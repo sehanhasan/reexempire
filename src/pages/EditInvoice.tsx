@@ -66,7 +66,7 @@ export default function EditInvoice() {
           setStatus(invoice.status);
 
           setDepositInfo({
-            requiresDeposit: invoice.requires_deposit || false,
+            requiresDeposit: invoice.is_deposit_invoice || false,
             depositAmount: invoice.deposit_amount || 0,
             depositPercentage: invoice.deposit_percentage || 50
           });
@@ -159,7 +159,7 @@ export default function EditInvoice() {
         notes: null,
         terms: terms || null,
         subject: subject || null,
-        requires_deposit: depositInfo.requiresDeposit,
+        is_deposit_invoice: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
       };

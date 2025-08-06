@@ -1,4 +1,3 @@
-
 // Database Types
 export interface Category {
   id: string;
@@ -137,10 +136,9 @@ export interface Invoice {
   total: number;
   notes: string | null;
   terms: string | null;
-  requires_deposit: boolean;
+  is_deposit_invoice: boolean;
   deposit_amount: number;
   deposit_percentage: number;
-  is_deposit_invoice: boolean;
   payment_status: string;
   created_at: string;
   updated_at: string;
