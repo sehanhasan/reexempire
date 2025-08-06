@@ -1,14 +1,16 @@
+
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import { quotationService, customerService } from '@/services';
 import { Customer, Quotation } from '@/types/database';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { QuotationSignature } from "@/components/quotations/QuotationSignature";
+import { formatDate } from "@/utils/formatters";
 
 interface QuotationItem {
-  id: number;
+  id: string;
   description: string;
   quantity: number;
   unit: string;
@@ -17,21 +19,12 @@ interface QuotationItem {
   category: string;
 }
 
-interface ExtendedQuotation extends Quotation {
+interface ExtendedQuotation extends Omit<Quotation, 'terms'> {
   subject?: string | null;
   terms?: string | null;
   signature_data?: string | null;
   signed_at?: string | null;
 }
-
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-};
 
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
@@ -272,13 +265,6 @@ export default function ViewQuotation() {
           <div>Email: reexsb@gmail.com</div>
           <div>Tel: 011-1665 6525 / 019-999 1024</div>
         </div>
-
-        {/* Signature Section */}
-        {quotation.status === 'Sent' && !quotation.signed_at && (
-          <div className="mt-8 print:hidden">
-            <QuotationSignature quotationId={quotation.id} onSigned={() => window.location.reload()} />
-          </div>
-        )}
 
         {quotation.signature_data && (
           <div className="mt-6 pt-4 border-t">

@@ -1,15 +1,16 @@
+
 import { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { invoiceService, customerService, quotationService, paymentReceiptService } from "@/services";
 import { Customer, Invoice } from "@/types/database";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/utils/formatters";
 import { Card, CardContent } from "@/components/ui/card";
-import { PaymentReceiptUpload } from "@/components/invoices/PaymentReceiptUpload";
-import { PaymentReceiptsList } from "@/components/invoices/PaymentReceiptsList";
+import { PaymentReceiptUpload } from "@/components/payments/PaymentReceiptUpload";
+import { PaymentReceiptsList } from "@/components/payments/PaymentReceiptsList";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ExtendedInvoice extends Invoice {
@@ -58,7 +59,7 @@ export default function ViewInvoice() {
           setImages(invoiceImages || []);
 
           // Fetch payment receipts
-          const receipts = await paymentReceiptService.getByInvoiceId(id);
+          const receipts = await paymentReceiptService.getReceiptsByInvoiceId(id);
           setPaymentReceipts(receipts || []);
 
           // Fetch invoice items and group by category
