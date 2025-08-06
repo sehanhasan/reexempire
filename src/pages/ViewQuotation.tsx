@@ -11,10 +11,9 @@ import { ItemsTable } from '@/components/quotations/ItemsTable';
 import { AdditionalInfoCard } from '@/components/quotations/AdditionalInfoCard';
 import { quotationService } from '@/services/quotationService';
 import { customerService } from '@/services/customerService';
-import { Download, FileText, CheckCircle, X, Pen, Share2 } from 'lucide-react';
+import { Download, FileText, CheckCircle, X, Pen } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { toast } from 'sonner';
-import { shareQuotation } from '@/utils/shareUtils';
 import SignatureCanvas from 'react-signature-canvas';
 import { generateQuotationPDF } from '@/utils/htmlToPdf';
 
@@ -94,25 +93,9 @@ export default function ViewQuotation() {
     }
   };
 
-  const handleShare = async () => {
-    if (!quotation || !customer) return;
-    
-    try {
-      const success = await shareQuotation(quotation, customer);
-      if (success) {
-        toast.success('Quotation shared successfully!');
-      } else {
-        toast.error('Failed to share quotation');
-      }
-    } catch (error) {
-      console.error('Error sharing quotation:', error);
-      toast.error('Failed to share quotation');
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
@@ -123,7 +106,7 @@ export default function ViewQuotation() {
 
   if (!quotation) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -150,7 +133,7 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" id="quotation-view" style={{ minWidth: '1024px' }}>
+    <div className="min-h-screen bg-background" id="quotation-view">
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
         <div className="max-w-4xl mx-auto px-4 py-3">
@@ -166,11 +149,7 @@ export default function ViewQuotation() {
                   Signed
                 </Badge>
               )}
-              <Button variant="outline" onClick={handleShare} className="flex items-center gap-1">
-                <Share2 size={16} />
-                <span>Share</span>
-              </Button>
-              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="flex items-center gap-1">
+              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="ml-4 flex items-center gap-1">
                 <Download size={16} />
                 <span>Download</span>
               </Button>
@@ -292,19 +271,12 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Terms & Conditions only - Notes removed */}
-          {quotation.terms && (
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base text-gray-800">Terms & Conditions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-line text-gray-700 bg-gray-50 p-3 rounded-lg text-sm">
-                  {quotation.terms}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Compact Additional Information */}
+          <AdditionalInfoCard 
+            notes={quotation.notes}
+            terms={quotation.terms}
+            signatureData={hasSignature ? signatureData : undefined}
+          />
 
           {/* Signature Section */}
           {!isAccepted && (
