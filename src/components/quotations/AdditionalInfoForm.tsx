@@ -1,102 +1,93 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Switch } from '@/components/ui/switch';
 
 interface AdditionalInfoFormProps {
-  notes: string;
-  setNotes: (notes: string) => void;
-  terms?: string;
-  setTerms?: (terms: string) => void;
-  onSubmit: (e: React.FormEvent, status?: string) => Promise<void>;
-  onCancel: () => void;
-  documentType: 'quotation' | 'invoice';
-  isSubmitting: boolean;
-  showDraft?: boolean;
-  onSendWhatsapp?: () => void;
+  terms: string;
+  onTermsChange: (value: string) => void;
+  requiresDeposit: boolean;
+  onDepositToggle: (value: boolean) => void;
+  depositPercentage: number;
+  onDepositPercentageChange: (value: number) => void;
+  depositAmount: number;
+  onDepositAmountChange: (value: number) => void;
+  subtotal: number;
 }
 
 export function AdditionalInfoForm({
-  notes,
-  setNotes,
   terms,
-  setTerms,
-  onSubmit,
-  onCancel,
-  documentType,
-  isSubmitting,
-  showDraft = false
+  onTermsChange,
+  requiresDeposit,
+  onDepositToggle,
+  depositPercentage,
+  onDepositPercentageChange,
+  depositAmount,
+  onDepositAmountChange,
+  subtotal
 }: AdditionalInfoFormProps) {
-  const isMobile = useIsMobile();
+  const handleDepositPercentageChange = (value: number) => {
+    onDepositPercentageChange(value);
+    const newAmount = (subtotal * value) / 100;
+    onDepositAmountChange(newAmount);
+  };
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="py-3 px-4">
-        <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
-      </CardHeader>
-      <CardContent className="py-4 px-4 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            placeholder="Add any additional notes..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={4}
-            className="resize-none"
-          />
-        </div>
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="terms">Terms & Conditions</Label>
+        <Textarea
+          id="terms"
+          placeholder="Enter terms and conditions..."
+          value={terms}
+          onChange={(e) => onTermsChange(e.target.value)}
+          className="min-h-[100px] mt-1"
+        />
+      </div>
 
-        {terms !== undefined && setTerms && (
-          <div className="space-y-2">
-            <Label htmlFor="terms">Terms & Conditions</Label>
-            <Textarea
-              id="terms"
-              placeholder="Add terms and conditions..."
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
-              rows={4}
-              className="resize-none"
+      <div className="flex items-center justify-between">
+        <div>
+          <Label htmlFor="deposit-toggle">Require Deposit Payment</Label>
+          <p className="text-sm text-muted-foreground">
+            Require a deposit payment before starting work
+          </p>
+        </div>
+        <Switch
+          id="deposit-toggle"
+          checked={requiresDeposit}
+          onCheckedChange={onDepositToggle}
+        />
+      </div>
+
+      {requiresDeposit && (
+        <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+          <div>
+            <Label htmlFor="deposit-percentage">Deposit Percentage (%)</Label>
+            <input
+              id="deposit-percentage"
+              type="number"
+              min="0"
+              max="100"
+              value={depositPercentage}
+              onChange={(e) => handleDepositPercentageChange(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-input rounded-md bg-background"
             />
           </div>
-        )}
-
-        <div className={`flex gap-2 pt-4 ${isMobile ? "flex-col" : ""}`}>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            className={isMobile ? "w-full" : ""}
-          >
-            Cancel
-          </Button>
-          
-          {showDraft && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={(e) => onSubmit(e, "Draft")}
-              disabled={isSubmitting}
-              className={isMobile ? "w-full" : ""}
-            >
-              {isSubmitting ? "Saving..." : "Save as Draft"}
-            </Button>
-          )}
-
-          <Button
-            type="button"
-            onClick={(e) => onSubmit(e, documentType === "quotation" ? "Sent" : "Sent")}
-            disabled={isSubmitting}
-            className={isMobile ? "w-full" : ""}
-          >
-            {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`}
-          </Button>
+          <div>
+            <Label htmlFor="deposit-amount">Amount (RM)</Label>
+            <input
+              id="deposit-amount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={depositAmount.toFixed(2)}
+              onChange={(e) => onDepositAmountChange(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            />
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

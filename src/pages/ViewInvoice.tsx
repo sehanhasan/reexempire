@@ -107,7 +107,7 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading invoice details...</p>
@@ -118,7 +118,7 @@ export default function ViewInvoice() {
 
   if (!invoice || !customer) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex justify-center items-center">
         <div className="text-center p-8">
           <img 
             src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
@@ -152,13 +152,13 @@ export default function ViewInvoice() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
+    <div className="min-h-screen bg-background">
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex flex-col items-center space-y-2">
             <h1 className="text-lg font-bold text-blue-800">Invoice #{invoice.reference_number}</h1>
-            <div className="flex items-center justify-center space-x-3">
+            <div className="flex items-center justify-center space-x-3 flex-wrap">
               <Badge className={getStatusColor(displayPaymentStatus)}>
                 {displayPaymentStatus}
               </Badge>
@@ -179,7 +179,7 @@ export default function ViewInvoice() {
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               {/* Left Column - Company Logo and Details */}
               <div>
                 <img 
@@ -212,7 +212,7 @@ export default function ViewInvoice() {
                 </div>
                 
                 {customer && (
-                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
+                  <div className="w-full max-w-64 bg-gray-100 p-3 rounded-lg text-sm">
                     <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
                     <div className="text-sm text-gray-800 space-y-1">
                       <p>Attn: {customer.name}</p>

@@ -50,6 +50,43 @@ export const shareContent = async (data: ShareData): Promise<boolean> => {
   }
 };
 
+export const shareViaWhatsApp = (quotation: any, customer: any, type: 'quotation' | 'invoice') => {
+  const isInIframe = window.self !== window.top;
+  const shareData = type === 'quotation' 
+    ? {
+        title: `Quotation #${quotation.reference_number}`,
+        text: `Please review your quotation from Reex Empire Sdn Bhd\n\nCustomer: ${customer?.name || 'N/A'}\nTotal: RM ${quotation.total.toFixed(2)}\nExpiry: ${new Date(quotation.expiry_date).toLocaleDateString()}`,
+        url: window.location.href
+      }
+    : {
+        title: `Invoice #${quotation.reference_number}`,
+        text: `Your invoice from Reex Empire Sdn Bhd\n\nCustomer: ${customer?.name || 'N/A'}\nTotal: RM ${quotation.total.toFixed(2)}\nDue: ${new Date(quotation.due_date).toLocaleDateString()}`,
+        url: window.location.href
+      };
+
+  // If in iframe, use postMessage to parent
+  if (isInIframe) {
+    window.parent.postMessage({
+      type: 'SHARE_VIA_WHATSAPP',
+      data: shareData
+    }, '*');
+    return true;
+  }
+
+  // Try native Web Share API first (works on mobile)
+  if (navigator.share) {
+    navigator.share(shareData);
+    return true;
+  }
+
+  // Fallback to WhatsApp web URL
+  const whatsappText = encodeURIComponent(`${shareData.title}\n\n${shareData.text}${shareData.url ? `\n\n${shareData.url}` : ''}`);
+  const whatsappUrl = `https://wa.me/?text=${whatsappText}`;
+  window.open(whatsappUrl, '_blank');
+  
+  return true;
+};
+
 export const shareQuotation = (quotation: any, customer: any) => {
   const shareData = {
     title: `Quotation #${quotation.reference_number}`,
