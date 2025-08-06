@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -15,7 +14,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
-  terms?: string | null;
 }
 
 export default function EditQuotation() {
