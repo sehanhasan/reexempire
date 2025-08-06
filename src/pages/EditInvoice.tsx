@@ -1,127 +1,264 @@
-import { useState, useEffect, Dispatch, SetStateAction, FormEvent } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
+import { ArrowLeft, Download, Image, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { InvoiceItem, DepositInfo } from "@/components/quotations/types";
+import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
-import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
+import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { invoiceService, customerService } from "@/services";
-import { Customer, Invoice } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { shareViaWhatsApp } from "@/utils/shareUtils";
-
-interface ExtendedInvoice extends Invoice {
-  subject?: string | null;
-}
+import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
+import { Customer, InvoiceImage } from "@/types/database";
+import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
-  const [isLoading, setIsLoading] = useState(true);
-  const [items, setItems] = useState<InvoiceItem[]>([{
-    id: 1,
-    description: "",
-    category: "",
-    quantity: 1,
-    unit: "Unit",
-    unitPrice: 0,
-    amount: 0
-  }]);
-  const [customerId, setCustomerId] = useState("");
+
+  const [invoice, setInvoice] = useState<any>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [invoiceData, setInvoiceData] = useState<Invoice | null>(null);
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
-  const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
-  const [terms, setTerms] = useState("");
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [notes, setNotes] = useState("");
   const [subject, setSubject] = useState("");
+  const [isDepositInvoice, setIsDepositInvoice] = useState(false);
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [depositPercentage, setDepositPercentage] = useState(30);
+  const [quotationReference, setQuotationReference] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
-  const [status, setStatus] = useState("Draft");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [depositInfo, setDepositInfo] = useState<DepositInfo>({
-    requiresDeposit: false,
-    depositAmount: 0,
-    depositPercentage: 50
-  });
-  const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
+  const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<InvoiceImage[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
-    const fetchInvoiceData = async () => {
-      try {
-        setIsLoading(true);
-
-        const invoice = await invoiceService.getById(id);
-        if (invoice) {
-          setInvoiceData(invoice);
-          setCustomerId(invoice.customer_id);
-          setDocumentNumber(invoice.reference_number);
-          setInvoiceDate(invoice.issue_date);
-          setDueDate(invoice.due_date);
-          setTerms(invoice.terms || "");
-          setSubject((invoice as ExtendedInvoice).subject || "");
-          setStatus(invoice.status);
-
-          setDepositInfo({
-            requiresDeposit: invoice.is_deposit_invoice || false,
-            depositAmount: invoice.deposit_amount || 0,
-            depositPercentage: invoice.deposit_percentage || 50
+    if (id) {
+      const fetchInvoice = async () => {
+        try {
+          const invoiceData = await invoiceService.getById(id);
+          setInvoice(invoiceData);
+          setCustomerId(invoiceData.customer_id);
+          setInvoiceDate(invoiceData.issue_date);
+          setDueDate(invoiceData.due_date);
+          setNotes(invoiceData.notes || "");
+          setSubject(invoiceData.subject || "");
+          setIsDepositInvoice(invoiceData.is_deposit_invoice);
+          setDepositAmount(invoiceData.deposit_amount);
+          setDepositPercentage(invoiceData.deposit_percentage);
+          setQuotationReference(invoiceData.quotation_id || "");
+          setDocumentNumber(invoiceData.reference_number);
+        } catch (error) {
+          console.error("Error fetching invoice:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load invoice details. Please try again.",
+            variant: "destructive",
           });
-
-          if (invoice.customer_id) {
-            const customerData = await customerService.getById(invoice.customer_id);
-            setCustomer(customerData);
-          }
-
-          const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
-          if (invoiceItems && invoiceItems.length > 0) {
-            const orderMap: {[key: number]: number} = {};
-            invoiceItems.forEach((item, index) => {
-              orderMap[index + 1] = index;
-            });
-            setOriginalItemOrder(orderMap);
-            
-            setItems(invoiceItems.map((item, index) => ({
-              id: index + 1,
-              description: item.description,
-              category: item.category || "Other Items",
-              quantity: item.quantity,
-              unit: item.unit,
-              unitPrice: item.unit_price,
-              amount: item.amount
-            })));
-          }
         }
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching invoice:", error);
-        setIsLoading(false);
-        toast({
-          title: "Error",
-          description: "Failed to fetch invoice data. Please try again.",
-          variant: "destructive"
-        });
-        navigate("/invoices");
-      }
-    };
-    fetchInvoiceData();
-  }, [id, navigate]);
+      };
+
+      const fetchInvoiceItems = async () => {
+        try {
+          const itemsData = await invoiceService.getItemsByInvoiceId(id);
+          setItems(itemsData.map((item, index) => ({
+            id: index + 1,
+            description: item.description,
+            category: item.category || "Other Items",
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unit_price,
+            amount: item.amount
+          })));
+        } catch (error) {
+          console.error("Error fetching invoice items:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load invoice items. Please try again.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      const fetchExistingImages = async () => {
+        try {
+          const existingImagesData = await invoiceService.getInvoiceImages(id);
+          setExistingImages(existingImagesData);
+        } catch (error) {
+          console.error("Error fetching existing images:", error);
+        }
+      };
+
+      fetchInvoice();
+      fetchInvoiceItems();
+      fetchExistingImages();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (customerId) {
+      const fetchCustomer = async () => {
+        try {
+          const customerData = await customerService.getById(customerId);
+          setCustomer(customerData);
+        } catch (error) {
+          console.error("Error fetching customer:", error);
+        }
+      };
+
+      fetchCustomer();
+    }
+  }, [customerId]);
 
   const calculateItemAmount = (item: InvoiceItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
 
-  const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const validFiles = filesArray.filter(file => 
+        file.type.startsWith('image/')
+      );
+      
+      if (validFiles.length !== filesArray.length) {
+        toast({
+          title: "Invalid Files",
+          description: "Only image files are allowed.",
+          variant: "destructive"
+        });
+      }
+      
+      const newImageUrls = validFiles.map(file => URL.createObjectURL(file));
+      
+      setImages(prev => [...prev, ...validFiles]);
+      setImageUrls(prev => [...prev, ...newImageUrls]);
+    }
+  };
+  
+  const removeImage = (index: number) => {
+    URL.revokeObjectURL(imageUrls[index]);
+    
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingImage = async (imageId: string) => {
+    try {
+      await supabase
+        .from('invoice_images')
+        .delete()
+        .eq('id', imageId);
+      
+      setExistingImages(prev => prev.filter(img => img.id !== imageId));
+      
+      toast({
+        title: "Image Removed",
+        description: "Image has been removed from the invoice.",
+      });
+    } catch (error) {
+      console.error("Error removing image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove image.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Function to sanitize file names for storage
+  const sanitizeFileName = (fileName: string): string => {
+    // Remove or replace problematic characters
+    return fileName
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/[^\w\-_.]/g, '') // Remove special characters except word chars, hyphens, underscores, and dots
+      .replace(/_{2,}/g, '_') // Replace multiple underscores with single underscore
+      .toLowerCase(); // Convert to lowercase for consistency
+  };
+  
+  const uploadImages = async (invoiceId: string): Promise<boolean> => {
+    if (images.length === 0) return true;
+    
+    console.log("Starting image upload for invoice:", invoiceId);
+    console.log("Number of images to upload:", images.length);
+    
+    setUploadingImages(true);
+    
+    try {
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i];
+        console.log(`Uploading image ${i + 1}/${images.length}:`, file.name);
+        
+        // Sanitize the file name
+        const sanitizedFileName = sanitizeFileName(file.name);
+        const fileName = `${invoiceId}/${Date.now()}-${sanitizedFileName}`;
+        
+        console.log("Sanitized file name:", fileName);
+        
+        const { data, error } = await supabase.storage
+          .from('invoice-images')
+          .upload(fileName, file);
+        
+        if (error) {
+          console.error("Error uploading image:", error);
+          throw error;
+        }
+        
+        console.log("Image uploaded successfully:", data.path);
+        
+        const { data: urlData } = supabase.storage
+          .from('invoice-images')
+          .getPublicUrl(data.path);
+        
+        console.log("Public URL generated:", urlData.publicUrl);
+        
+        // Add the image to the database
+        const imageRecord = await invoiceService.addInvoiceImage(invoiceId, urlData.publicUrl);
+        console.log("Image record saved to database:", imageRecord);
+      }
+      
+      console.log("All images uploaded successfully");
+      
+      // Clear the uploaded images and URLs
+      setImages([]);
+      setImageUrls([]);
+      
+      // Refresh existing images to show the newly uploaded ones
+      const updatedImages = await invoiceService.getInvoiceImages(invoiceId);
+      setExistingImages(updatedImages);
+      
+      return true;
+    } catch (error) {
+      console.error("Error in image upload process:", error);
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload some images. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerId || !id) {
+
+    if (!customerId) {
       toast({
         title: "Missing Information",
         description: "Please select a customer before updating the invoice.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -131,53 +268,44 @@ export default function EditInvoice() {
       toast({
         title: "Missing Items",
         description: "Please add at least one item to the invoice.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-      return sum + qty * item.unitPrice;
+      return sum + (qty * item.unitPrice);
     }, 0);
+    const total = isDepositInvoice ? depositAmount : subtotal;
 
     try {
       setIsSubmitting(true);
 
-      const depositPercentageValue = typeof depositInfo.depositPercentage === 'string' 
-        ? parseFloat(depositInfo.depositPercentage) 
-        : depositInfo.depositPercentage;
-
-      const invoice = {
+      const invoiceData = {
         customer_id: customerId,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
-        status: newStatus || status,
+        status: "Draft",
         subtotal: subtotal,
-        total: subtotal,
-        notes: null,
-        terms: terms || null,
+        tax_rate: 0,
+        tax_amount: 0,
+        total: total,
+        notes: notes || null,
         subject: subject || null,
-        is_deposit_invoice: depositInfo.requiresDeposit,
-        deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
+        terms: null,
+        is_deposit_invoice: isDepositInvoice,
+        deposit_amount: isDepositInvoice ? depositAmount : 0,
+        deposit_percentage: isDepositInvoice ? depositPercentage : 0,
+        payment_status: "Unpaid"
       };
 
-      await invoiceService.update(id, invoice);
+      await invoiceService.update(id, invoiceData);
 
       await invoiceService.deleteItemsByInvoiceId(id);
 
-      const sortedItems = [...items].sort((a, b) => {
-        if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
-          return originalItemOrder[a.id] - originalItemOrder[b.id];
-        }
-        if (originalItemOrder[a.id] !== undefined) return -1;
-        if (originalItemOrder[b.id] !== undefined) return 1;
-        return a.id - b.id;
-      });
-
-      for (const item of sortedItems) {
+      for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
           await invoiceService.createItem({
@@ -192,38 +320,23 @@ export default function EditInvoice() {
         }
       }
 
-      if (newStatus === "Sent") {
-        toast({
-          title: "Invoice Update Sent",
-          description: `Invoice for ${customer?.name} has been updated and sent successfully.`
-        });
-        
-        // Open WhatsApp after successful update
-        try {
-          const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
-          
-          const message = `Dear ${customer?.name || ''},\n\n` +
-            `Please find your invoice ${documentNumber} for review at the link below: ` +
-            `${invoiceViewUrl}\n\n` +
-            `You can review the invoice details and make payment.\n\n` +
-            `If you have any questions, please don't hesitate to contact us.\n\n` +
-            `Thank you,\nReex Empire Sdn Bhd`;
-          
-          shareViaWhatsApp(message);
-        } catch (error) {
-          console.error("Error opening WhatsApp:", error);
+      // Upload new images if any
+      if (images.length > 0) {
+        const uploadSuccess = await uploadImages(id!);
+        if (!uploadSuccess) {
           toast({
-            title: "WhatsApp Error",
-            description: "Invoice updated successfully, but failed to open WhatsApp. You can share it manually.",
+            title: "Partial Success",
+            description: "Invoice updated but some images failed to upload.",
             variant: "destructive"
           });
+          return;
         }
-      } else {
-        toast({
-          title: "Invoice Updated",
-          description: `Invoice for ${customer?.name} has been updated successfully.`
-        });
       }
+
+      toast({
+        title: "Invoice Updated",
+        description: `Invoice for ${customer?.name} has been updated successfully.`,
+      });
 
       navigate("/invoices");
     } catch (error) {
@@ -231,83 +344,68 @@ export default function EditInvoice() {
       toast({
         title: "Error",
         description: "There was an error updating the invoice. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
-    if (!id) return;
+  const downloadInvoicePDF = async (invoice: any, customer: any, items: any[]) => {
     try {
-      await invoiceService.update(id, {
-        status: newStatus
+      // Get invoice images from the database
+      const invoiceImages: InvoiceImage[] = await invoiceService.getInvoiceImages(invoice.id);
+      const imageUrls = invoiceImages.map(img => img.image_url);
+      
+      const itemsForPDF = items.map(item => ({
+        id: Number(item.id),
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unit_price || item.unitPrice,
+        amount: item.amount,
+        category: item.category || '',
+        unit: item.unit || ''
+      }));
+      
+      const pdf = generateInvoicePDF({
+        documentNumber: invoice.reference_number,
+        documentDate: invoice.issue_date,
+        customerName: customer.name,
+        unitNumber: customer.unit_number || "",
+        expiryDate: invoice.due_date,
+        dueDate: invoice.due_date,
+        notes: invoice.notes || "",
+        items: itemsForPDF,
+        subject: invoice.subject || "",
+        customerAddress: customer.address || "",
+        customerContact: customer.phone || "",
+        customerEmail: customer.email || "",
+        paymentMethod: invoice.payment_method || "bank_transfer",
+        isDepositInvoice: invoice.is_deposit_invoice,
+        depositAmount: invoice.deposit_amount || 0,
+        depositPercentage: invoice.deposit_percentage || 0,
+        quotationReference: invoice.quotation_reference || "",
+        images: imageUrls
       });
-      setStatus(newStatus);
-      toast({
-        title: "Status Updated",
-        description: `Invoice status has been updated to "${newStatus}".`
-      });
-
-      if (newStatus === "Paid") {
-        toast({
-          title: "Invoice Paid",
-          description: "The invoice has been marked as paid."
-        });
-      }
+      
+      downloadPDF(pdf, `Invoice_${invoice.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.error("Error generating PDF:", error);
       toast({
-        title: "Error",
-        description: "Failed to update invoice status. Please try again.",
+        title: "PDF Generation Failed",
+        description: "There was an error generating the PDF. Please try again.",
         variant: "destructive"
       });
     }
   };
 
-  const handleSendWhatsapp = () => {
-    if (!invoiceData || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Customer information not found.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
-      
-      const message = `Dear ${customer.name},\n\n` +
-        `Please find your invoice ${invoiceData.reference_number} for review at the link below: ` +
-        `${invoiceViewUrl}\n\n` +
-        `You can review the invoice details and make payment.\n\n` +
-        `If you have any questions, please don't hesitate to contact us.\n\n` +
-        `Thank you,\nReex Empire Sdn Bhd`;
-      
-      shareViaWhatsApp(message);
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  if (isLoading) {
-    return <div className="page-container">
-        <PageHeader title="Edit Invoice" />
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
-        </div>
-      </div>;
+  if (!invoice) {
+    return <div className="page-container">Loading...</div>;
   }
 
-  return <div className="page-container">
-      <PageHeader 
+  return (
+    <div className="page-container">
+      <PageHeader
         title="Edit Invoice"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
@@ -315,82 +413,125 @@ export default function EditInvoice() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Invoices
             </Button>
+            <Button variant="default" onClick={() => downloadInvoicePDF(invoice, customer, items)}>
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
           </div>
-        } 
+        }
       />
 
-      {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h3 className="font-medium">Invoice Status: <span className="text-amber-600">Sent</span></h3>
-              <p className="text-sm text-muted-foreground">Update the status of this invoice</p>
-            </div>
-            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
-                onClick={() => handleStatusChange("Rejected")}
-              >
-                <XCircle className="mr-2 h-4 w-4" />
-                Mark as Rejected
-              </Button>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
-                onClick={() => handleStatusChange("Paid")}
-              >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Paid
-              </Button>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-                onClick={handleSendWhatsapp}
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share via WhatsApp
-              </Button>
-            </div>
-          </div>
-        </div>}
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <CustomerInfoCard
+          customerId={customerId}
+          setCustomer={setCustomerId}
+          documentType="invoice"
+          documentNumber={documentNumber}
+          setDocumentNumber={setDocumentNumber}
+          documentDate={invoiceDate}
+          setDocumentDate={setInvoiceDate}
+          expiryDate={dueDate}
+          setExpiryDate={setDueDate}
+          quotationReference={quotationReference}
+          subject={subject}
+          setSubject={setSubject}
+        />
 
-      <form className="mt-8 space-y-6">
-        <CustomerInfoCard 
-          customerId={customerId} 
-          setCustomer={setCustomerId} 
-          documentType="invoice" 
-          documentNumber={documentNumber} 
-          setDocumentNumber={setDocumentNumber} 
-          documentDate={invoiceDate} 
-          setDocumentDate={setInvoiceDate} 
-          expiryDate={dueDate} 
-          setExpiryDate={setDueDate} 
-          subject={subject} 
-          setSubject={setSubject} 
+        <InvoiceItemsCard
+          items={items}
+          setItems={setItems}
+          isDepositInvoice={isDepositInvoice}
+          setIsDepositInvoice={setIsDepositInvoice}
+          depositAmount={depositAmount}
+          setDepositAmount={setDepositAmount}
+          depositPercentage={depositPercentage}
+          setDepositPercentage={setDepositPercentage}
+          calculateItemAmount={calculateItemAmount}
         />
-        
-        <QuotationItemsCard 
-          items={items} 
-          setItems={setItems} 
-          depositInfo={depositInfo} 
-          setDepositInfo={setDepositInfo} 
-          calculateItemAmount={calculateItemAmount} 
-        />
-        
-        <AdditionalInfoForm 
-          terms={terms}
-          onTermsChange={setTerms}
-          requiresDeposit={depositInfo.requiresDeposit}
-          onDepositToggle={(value) => setDepositInfo(prev => ({ ...prev, requiresDeposit: value }))}
-          depositPercentage={Number(depositInfo.depositPercentage)}
-          onDepositPercentageChange={(value) => setDepositInfo(prev => ({ ...prev, depositPercentage: value }))}
-          depositAmount={depositInfo.depositAmount}
-          onDepositAmountChange={(value) => setDepositInfo(prev => ({ ...prev, depositAmount: value }))}
-          subtotal={items.reduce((sum, item) => {
-            const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-            return sum + (qty * item.unitPrice);
-          }, 0)}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Work Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Label htmlFor="image-upload">Upload images to include in the invoice PDF</Label>
+              <div className="flex items-center gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                  disabled={uploadingImages}
+                >
+                  <Image className="mr-2 h-4 w-4" />
+                  {uploadingImages ? 'Uploading...' : 'Add Images'}
+                </Button>
+                <Input 
+                  id="image-upload" 
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleFileChange}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {images.length + existingImages.length} {images.length + existingImages.length === 1 ? 'image' : 'images'} total
+                </p>
+              </div>
+              
+              {(existingImages.length > 0 || imageUrls.length > 0) && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  {existingImages.map((image) => (
+                    <div key={image.id} className="relative">
+                      <img 
+                        src={image.image_url} 
+                        alt="Existing invoice image" 
+                        className="w-full h-32 object-cover rounded-md" 
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeExistingImage(image.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {imageUrls.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={url} 
+                        alt={`Preview ${index + 1}`} 
+                        className="w-full h-32 object-cover rounded-md" 
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <AdditionalInfoForm
+          notes={notes}
+          setNotes={setNotes}
+          onSubmit={handleSubmit}
+          onCancel={() => navigate("/invoices")}
+          documentType="invoice"
+          isSubmitting={isSubmitting || uploadingImages}
         />
       </form>
-    </div>;
+    </div>
+  );
 }

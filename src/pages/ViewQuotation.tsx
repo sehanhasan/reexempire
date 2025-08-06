@@ -112,7 +112,7 @@ export default function ViewQuotation() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
@@ -123,7 +123,7 @@ export default function ViewQuotation() {
 
   if (!quotation) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -150,13 +150,13 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" id="quotation-view">
+    <div className="min-h-screen bg-background" id="quotation-view" style={{ minWidth: '1024px' }}>
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex flex-col items-center space-y-2">
             <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
-            <div className="flex items-center justify-center space-x-3 flex-wrap">
+            <div className="flex items-center justify-center space-x-3">
               <Badge variant={isAccepted ? "default" : "secondary"}>
                 {quotation.status}
               </Badge>
@@ -183,7 +183,7 @@ export default function ViewQuotation() {
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6">
               {/* Left Column - Company Logo and Details */}
               <div>
                 <img 
@@ -216,7 +216,7 @@ export default function ViewQuotation() {
                 </div>
                 
                 {customer && (
-                  <div className="w-full max-w-64 bg-gray-100 p-3 rounded-lg text-sm">
+                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
                     <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
                     <div className="text-sm text-gray-800 space-y-1">
                       <p>Attn: {customer.name}</p>
@@ -292,7 +292,7 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Terms & Conditions only */}
+          {/* Terms & Conditions only - Notes removed */}
           {quotation.terms && (
             <Card className="shadow-sm">
               <CardHeader>

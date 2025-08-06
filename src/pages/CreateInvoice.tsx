@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -15,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { shareViaWhatsApp } from "@/utils/shareUtils";
 
 interface ExtendedQuotation {
   id: string;
@@ -226,13 +226,15 @@ export default function CreateInvoice() {
       const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoiceId}`;
       
       const message = `Dear ${customer.name},\n\n` +
-        `Please find your invoice ${documentNumber} for payment at the link below: ` +
+        `Please find your invoice ${documentNumber} for review at the link below: ` +
         `${invoiceViewUrl}\n\n` +
         `You can review the invoice details and make payment.\n\n` +
         `If you have any questions, please don't hesitate to contact us.\n\n` +
         `Thank you,\nReex Empire Sdn Bhd`;
       
-      shareViaWhatsApp(message);
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
+      window.open(whatsappUrl, '_blank');
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
@@ -285,7 +287,7 @@ export default function CreateInvoice() {
         tax_rate: 0,
         tax_amount: 0,
         total: total,
-        notes: null,
+        notes: notes || null,
         subject: subject || null,
         terms: null,
         is_deposit_invoice: isDepositInvoice,
@@ -334,13 +336,15 @@ export default function CreateInvoice() {
           const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
           
           const message = `Dear ${customer.name},\n\n` +
-            `Please find your invoice ${documentNumber} for payment at the link below: ` +
+            `Please find your invoice ${documentNumber} for review at the link below: ` +
             `${invoiceViewUrl}\n\n` +
             `You can review the invoice details and make payment.\n\n` +
             `If you have any questions, please don't hesitate to contact us.\n\n` +
             `Thank you,\nReex Empire Sdn Bhd`;
           
-          shareViaWhatsApp(message);
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+          window.open(whatsappUrl, '_blank');
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -352,7 +356,7 @@ export default function CreateInvoice() {
       } else {
         toast({
           title: "Invoice Created",
-          description: `Invoice for ${customer?.name} has been created as Draft.`,
+          description: `Invoice for ${customer?.name} has been created successfully.`,
         });
       }
       
@@ -467,15 +471,14 @@ export default function CreateInvoice() {
         </Card>
         
         <AdditionalInfoForm 
-          terms=""
-          onTermsChange={() => {}}
-          requiresDeposit={false}
-          onDepositToggle={() => {}}
-          depositPercentage={0}
-          onDepositPercentageChange={() => {}}
-          depositAmount={0}
-          onDepositAmountChange={() => {}}
-          subtotal={0}
+          notes={notes}
+          setNotes={setNotes}
+          onSubmit={handleSubmit}
+          onCancel={() => navigate("/invoices")}
+          documentType="invoice"
+          isSubmitting={isSubmitting || uploadingImages}
+          showDraft={true}
+          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>

@@ -1,3 +1,4 @@
+
 // Database Types
 export interface Category {
   id: string;

@@ -50,35 +50,6 @@ export const shareContent = async (data: ShareData): Promise<boolean> => {
   }
 };
 
-export const shareViaWhatsApp = (message: string) => {
-  const isInIframe = window.self !== window.top;
-
-  // If in iframe, use postMessage to parent
-  if (isInIframe) {
-    window.parent.postMessage({
-      type: 'SHARE_VIA_WHATSAPP',
-      data: { message }
-    }, '*');
-    return true;
-  }
-
-  // Try native Web Share API first (works on mobile)
-  if (navigator.share) {
-    navigator.share({
-      title: 'Share via WhatsApp',
-      text: message
-    });
-    return true;
-  }
-
-  // Fallback to WhatsApp web URL
-  const whatsappText = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/?text=${whatsappText}`;
-  window.open(whatsappUrl, '_blank');
-  
-  return true;
-};
-
 export const shareQuotation = (quotation: any, customer: any) => {
   const shareData = {
     title: `Quotation #${quotation.reference_number}`,
