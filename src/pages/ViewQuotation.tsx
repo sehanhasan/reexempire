@@ -179,7 +179,7 @@ export default function ViewQuotation() {
                   {/* Subject within customer info */}
                   {quotation.subject && (
                     <div className="mt-3 pt-2 border-t">
-                      <p className="text-sm text-gray-500 font-medium mb-1">Subject: {quotation.subject}</p>
+                      <p className="text-sm text-gray-800 font-medium mb-1">Subject: {quotation.subject}</p>
                     </div>
                   )}
               </div>
