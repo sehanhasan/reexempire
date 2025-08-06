@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
@@ -8,31 +9,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, FolderOpen, Wallet } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
-import { QuotationItem } from "./types";
+import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuotationItemsCardProps {
   items: QuotationItem[];
   setItems: React.Dispatch<React.SetStateAction<QuotationItem[]>>;
-  requiresDeposit: boolean;
-  setRequiresDeposit: React.Dispatch<React.SetStateAction<boolean>>;
-  depositAmount: number;
-  setDepositAmount: React.Dispatch<React.SetStateAction<number>>;
-  depositPercentage: number;
-  setDepositPercentage: React.Dispatch<React.SetStateAction<number>>;
+  depositInfo: DepositInfo;
+  setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
 }
 
 export function QuotationItemsCard({
   items,
   setItems,
-  requiresDeposit,
-  setRequiresDeposit,
-  depositAmount,
-  setDepositAmount,
-  depositPercentage,
-  setDepositPercentage,
+  depositInfo,
+  setDepositInfo,
   calculateItemAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
@@ -54,9 +47,15 @@ export function QuotationItemsCard({
       });
       
       // Recalculate deposit amount if deposit is enabled
-      if (requiresDeposit) {
+      if (depositInfo.requiresDeposit) {
         const newSubtotal = updatedItems.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
-        setDepositAmount(newSubtotal * (Number(depositPercentage) / 100));
+        const percentage = typeof depositInfo.depositPercentage === 'string' 
+          ? parseFloat(depositInfo.depositPercentage) || 0
+          : depositInfo.depositPercentage;
+        setDepositInfo(prev => ({
+          ...prev,
+          depositAmount: newSubtotal * (percentage / 100)
+        }));
       }
       
       return updatedItems;
@@ -82,9 +81,15 @@ export function QuotationItemsCard({
         const updatedItems = prevItems.filter(item => item.id !== id);
         
         // Recalculate deposit amount if deposit is enabled
-        if (requiresDeposit) {
+        if (depositInfo.requiresDeposit) {
           const newSubtotal = updatedItems.reduce((sum, item) => sum + (typeof item.amount === 'number' ? item.amount : 0), 0);
-          setDepositAmount(newSubtotal * (Number(depositPercentage) / 100));
+          const percentage = typeof depositInfo.depositPercentage === 'string' 
+            ? parseFloat(depositInfo.depositPercentage) || 0
+            : depositInfo.depositPercentage;
+          setDepositInfo(prev => ({
+            ...prev,
+            depositAmount: newSubtotal * (percentage / 100)
+          }));
         }
         
         return updatedItems;
@@ -97,34 +102,49 @@ export function QuotationItemsCard({
   };
   
   const calculateTotal = () => {
-    if (requiresDeposit) {
-      return Number(depositAmount);
+    if (depositInfo.requiresDeposit) {
+      return depositInfo.depositAmount;
     }
     return calculateSubtotal();
   };
   
   const handleDepositPercentageChange = (value: number) => {
-    setDepositPercentage(value);
-    setDepositAmount(calculateSubtotal() * (Number(value) / 100));
+    const subtotal = calculateSubtotal();
+    setDepositInfo(prev => ({
+      ...prev,
+      depositPercentage: value,
+      depositAmount: subtotal * (value / 100)
+    }));
   };
   
   const handleDepositAmountChange = (value: number) => {
-    setDepositAmount(value);
     const subtotal = calculateSubtotal();
-    if (subtotal > 0) {
-      setDepositPercentage((Number(value) / subtotal) * 100);
-    }
+    const percentage = subtotal > 0 ? (value / subtotal) * 100 : 0;
+    setDepositInfo(prev => ({
+      ...prev,
+      depositAmount: value,
+      depositPercentage: percentage
+    }));
   };
 
   // Handle deposit checkbox change
   const handleDepositChange = (checked: boolean) => {
-    setRequiresDeposit(checked);
     if (checked) {
-      // Calculate deposit amount based on current subtotal and percentage
       const subtotal = calculateSubtotal();
-      setDepositAmount(subtotal * (Number(depositPercentage) / 100));
+      const percentage = typeof depositInfo.depositPercentage === 'string' 
+        ? parseFloat(depositInfo.depositPercentage) || 50
+        : depositInfo.depositPercentage;
+      setDepositInfo(prev => ({
+        ...prev,
+        requiresDeposit: true,
+        depositAmount: subtotal * (percentage / 100)
+      }));
     } else {
-      setDepositAmount(0);
+      setDepositInfo(prev => ({
+        ...prev,
+        requiresDeposit: false,
+        depositAmount: 0
+      }));
     }
   };
   
@@ -145,13 +165,17 @@ export function QuotationItemsCard({
     });
   };
   
+  const depositPercentage = typeof depositInfo.depositPercentage === 'string' 
+    ? parseFloat(depositInfo.depositPercentage) || 0
+    : depositInfo.depositPercentage;
+
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
           <div className="flex flex-row items-center gap-4">
             <CardTitle className="text-lg text-cyan-600">Quotation Items</CardTitle>
             <div className="flex items-center space-x-2">
-              <Checkbox id="requiresDeposit" checked={requiresDeposit} onCheckedChange={handleDepositChange} />
+              <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={handleDepositChange} />
               <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
                 <Wallet className="h-4 w-4 mr-1" />
                 Require Deposit Payment
@@ -182,12 +206,20 @@ export function QuotationItemsCard({
                 <span>RM {calculateSubtotal().toFixed(2)}</span>
               </div>
 
-              {requiresDeposit && <div className="space-y-2 border-t pt-2 mt-1">
+              {depositInfo.requiresDeposit && <div className="space-y-2 border-t pt-2 mt-1">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label htmlFor="depositPercentage" className="text-xs">Deposit (%)</Label>
                       <div className="relative">
-                        <Input id="depositPercentage" type="number" min="0" max="100" value={depositPercentage.toFixed(0)} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value) || 0)} className="pr-7 h-10 text-sm" />
+                        <Input 
+                          id="depositPercentage" 
+                          type="number" 
+                          min="0" 
+                          max="100" 
+                          value={depositPercentage.toFixed(0)} 
+                          onChange={e => handleDepositPercentageChange(parseFloat(e.target.value) || 0)} 
+                          className="pr-7 h-10 text-sm" 
+                        />
                         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
                       </div>
                     </div>
@@ -195,13 +227,20 @@ export function QuotationItemsCard({
                       <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
                       <div className="relative">
                         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                        <Input id="depositAmount" type="number" min="0" value={depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value) || 0)} className="pl-8 h-10 text-sm" />
+                        <Input 
+                          id="depositAmount" 
+                          type="number" 
+                          min="0" 
+                          value={depositInfo.depositAmount.toFixed(2)} 
+                          onChange={e => handleDepositAmountChange(parseFloat(e.target.value) || 0)} 
+                          className="pl-8 h-10 text-sm" 
+                        />
                       </div>
                     </div>
                   </div>
                   <div className="flex justify-between text-sm py-1">
                     <span>Balance Due:</span>
-                    <span>RM {(calculateSubtotal() - depositAmount).toFixed(2)}</span>
+                    <span>RM {(calculateSubtotal() - depositInfo.depositAmount).toFixed(2)}</span>
                   </div>
                 </div>}
 

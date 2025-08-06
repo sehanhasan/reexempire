@@ -7,7 +7,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { invoiceService, customerService, quotationService, paymentReceiptService } from "@/services";
 import { Customer, Invoice } from "@/types/database";
-import { formatDate } from "@/utils/formatters";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { PaymentReceiptUpload } from "@/components/payments/PaymentReceiptUpload";
 import { PaymentReceiptsList } from "@/components/payments/PaymentReceiptsList";
@@ -30,6 +30,14 @@ export default function ViewInvoice() {
 
   const [groupedItems, setGroupedItems] = useState<{ [key: string]: any[] }>({});
   const [orderedCategories, setOrderedCategories] = useState<string[]>([]);
+
+  const handleReceiptUploaded = (receipt: any) => {
+    setPaymentReceipts(prev => [...prev, receipt]);
+    toast({
+      title: "Receipt Uploaded",
+      description: "Your payment receipt has been uploaded successfully.",
+    });
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -320,7 +328,10 @@ export default function ViewInvoice() {
         {/* Payment Upload Section */}
         {invoice.payment_status !== 'Paid' && (
           <div className="mt-8 print:hidden">
-            <PaymentReceiptUpload invoiceId={invoice.id} />
+            <PaymentReceiptUpload 
+              invoiceId={invoice.id} 
+              onReceiptUploaded={handleReceiptUploaded}
+            />
           </div>
         )}
 
