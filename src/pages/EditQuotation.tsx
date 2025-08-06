@@ -380,8 +380,6 @@ export default function EditQuotation() {
         />
         
         <AdditionalInfoForm 
-          notes={notes} 
-          setNotes={setNotes} 
           terms={terms}
           setTerms={setTerms}
           onSubmit={handleSubmit} 

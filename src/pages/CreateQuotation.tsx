@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -274,8 +273,6 @@ export default function CreateQuotation() {
         />
         
         <AdditionalInfoForm 
-          notes={notes}
-          setNotes={setNotes}
           terms={terms}
           setTerms={setTerms}
           onSubmit={handleSubmit}
