@@ -226,7 +226,7 @@ export default function CreateInvoice() {
       const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoiceId}`;
       
       const message = `Dear ${customer.name},\n\n` +
-        `Please find your invoice ${documentNumber} for review at the link below: ` +
+        `Please find your invoice ${documentNumber} for payment at the link below: ` +
         `${invoiceViewUrl}\n\n` +
         `You can review the invoice details and make payment.\n\n` +
         `If you have any questions, please don't hesitate to contact us.\n\n` +
@@ -334,7 +334,7 @@ export default function CreateInvoice() {
           const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
           
           const message = `Dear ${customer.name},\n\n` +
-            `Please find your invoice ${documentNumber} for review at the link below: ` +
+            `Please find your invoice ${documentNumber} for payment at the link below: ` +
             `${invoiceViewUrl}\n\n` +
             `You can review the invoice details and make payment.\n\n` +
             `If you have any questions, please don't hesitate to contact us.\n\n` +
@@ -352,7 +352,7 @@ export default function CreateInvoice() {
       } else {
         toast({
           title: "Invoice Created",
-          description: `Invoice for ${customer?.name} has been created successfully.`,
+          description: `Invoice for ${customer?.name} has been created as Draft.`,
         });
       }
       

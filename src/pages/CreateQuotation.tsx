@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -277,7 +278,7 @@ export default function CreateQuotation() {
           onTermsChange={setTerms}
           requiresDeposit={depositInfo.requiresDeposit}
           onDepositToggle={(value) => setDepositInfo(prev => ({ ...prev, requiresDeposit: value }))}
-          depositPercentage={depositInfo.depositPercentage}
+          depositPercentage={Number(depositInfo.depositPercentage)}
           onDepositPercentageChange={(value) => setDepositInfo(prev => ({ ...prev, depositPercentage: value }))}
           depositAmount={depositInfo.depositAmount}
           onDepositAmountChange={(value) => setDepositInfo(prev => ({ ...prev, depositAmount: value }))}
