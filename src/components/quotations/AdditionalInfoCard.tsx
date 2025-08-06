@@ -19,9 +19,9 @@ export function AdditionalInfoCard({ subject, notes, terms, signatureData }: Add
 
   return (
     <Card>
-      <CardHeader>
+      {/* <CardHeader>
         <CardTitle>Additional Information</CardTitle>
-      </CardHeader>
+      </CardHeader> */}
       <CardContent className="space-y-4">
         {subject && (
           <div>
