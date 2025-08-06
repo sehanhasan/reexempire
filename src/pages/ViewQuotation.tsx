@@ -170,16 +170,16 @@ export default function ViewQuotation() {
                   alt="Reex Empire Logo" 
                   className="h-16 w-auto mb-3"
                 />
-                <h2 className="text-sm font-bold text-gray-800 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
-                <div className="text-sm text-gray-400 space-y-1">
+                <h2 className="text-sm font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
+                <div className="text-sm text-gray-600 space-y-1">
                   <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
                   <p>53300 Setapak Kuala Lumpur</p>
-                  <p className="font-semibold">www.reexempire.com</p>
+                  <p className="font-semibold text-gray-800">www.reexempire.com</p>
                 </div>
                   {/* Subject within customer info */}
                   {quotation.subject && (
                     <div className="mt-3 pt-2 border-t">
-                      <p className="text-sm text-gray-800 font-medium mb-1">Subject: {quotation.subject}</p>
+                      <p className="text-sm text-gray-500 font-medium mb-1">Subject: {quotation.subject}</p>
                     </div>
                   )}
               </div>
@@ -195,8 +195,8 @@ export default function ViewQuotation() {
                 </div>
                 
                 {customer && (
-                  <div className="w-64 bg-gray-50 p-3 rounded-lg text-sm">
-                    <p className="text-sm font-bold text-gray-500 font-medium mb-1">Bill To</p>
+                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
+                    <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
                     <div className="text-sm text-gray-800 space-y-1">
                       <p>Attn: {customer.name}</p>
                       <p className="font-semibold">{customer.unit_number}</p>
