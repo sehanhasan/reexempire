@@ -34,21 +34,7 @@ export function AdditionalInfoForm({
 
   return (
     <Card className="shadow-sm">
-      <CardHeader className="py-3 px-4">
-        <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
-      </CardHeader>
-      <CardContent className="py-3 px-4 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            placeholder="Add notes..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            className="resize-none"
-          />
-        </div>
+      <CardContent className="py-4 px-4 space-y-4">
 
         {terms !== undefined && setTerms && (
           <div className="space-y-2">

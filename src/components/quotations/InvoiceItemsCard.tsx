@@ -1,12 +1,11 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FolderOpen, Wallet, FileText } from "lucide-react";
+import { Plus, FolderOpen, Wallet } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { InvoiceItem } from "./types";
@@ -23,7 +22,6 @@ interface InvoiceItemsCardProps {
   depositPercentage: number;
   setDepositPercentage: React.Dispatch<React.SetStateAction<number>>;
   calculateItemAmount: (item: InvoiceItem) => number;
-  invoiceId?: string; // For edit mode
 }
 
 export function InvoiceItemsCard({
@@ -35,35 +33,23 @@ export function InvoiceItemsCard({
   setDepositAmount,
   depositPercentage,
   setDepositPercentage,
-  calculateItemAmount,
-  invoiceId
+  calculateItemAmount
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
-    setItems(prevItems => {
-      const updatedItems = prevItems.map(item => {
-        if (item.id === id) {
-          const updatedItem = {
-            ...item,
-            [field]: value
-          };
-          updatedItem.amount = calculateItemAmount(updatedItem);
-          return updatedItem;
-        }
-        return item;
-      });
-      
-      // Recalculate deposit amount if deposit is enabled
-      if (isDepositInvoice) {
-        const newSubtotal = updatedItems.reduce((sum, item) => sum + item.amount, 0);
-        setDepositAmount(newSubtotal * (depositPercentage / 100));
+    setItems(prevItems => prevItems.map(item => {
+      if (item.id === id) {
+        const updatedItem = {
+          ...item,
+          [field]: value
+        };
+        updatedItem.amount = calculateItemAmount(updatedItem);
+        return updatedItem;
       }
-      
-      return updatedItems;
-    });
+      return item;
+    }));
   };
   
   const addItem = () => {
@@ -81,17 +67,7 @@ export function InvoiceItemsCard({
   
   const removeItem = (id: number) => {
     if (items.length > 1) {
-      setItems(prevItems => {
-        const updatedItems = prevItems.filter(item => item.id !== id);
-        
-        // Recalculate deposit amount if deposit is enabled
-        if (isDepositInvoice) {
-          const newSubtotal = updatedItems.reduce((sum, item) => sum + item.amount, 0);
-          setDepositAmount(newSubtotal * (depositPercentage / 100));
-        }
-        
-        return updatedItems;
-      });
+      setItems(items.filter(item => item.id !== id));
     }
   };
   
@@ -115,37 +91,18 @@ export function InvoiceItemsCard({
     setDepositAmount(value);
     const subtotal = calculateSubtotal();
     if (subtotal > 0) {
-      setDepositPercentage((value / subtotal) * 100);
+      setDepositPercentage(value / subtotal * 100);
     }
   };
 
   // Handle deposit invoice checkbox change
   const handleDepositInvoiceChange = (checked: boolean) => {
     setIsDepositInvoice(checked);
-    if (checked) {
-      // Calculate deposit amount based on current subtotal and percentage
-      const subtotal = calculateSubtotal();
-      setDepositAmount(subtotal * (depositPercentage / 100));
-    } else {
-      setDepositAmount(0);
+    if (checked && depositPercentage === 30) {
+      // Set default to 50% if not set already
+      setDepositPercentage(50);
+      setDepositAmount(calculateSubtotal() * 0.5);
     }
-  };
-
-  const handleCreateBalanceDueInvoice = () => {
-    if (!invoiceId) {
-      toast({
-        title: "Error",
-        description: "Invoice ID not found.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    navigate("/invoices/create", {
-      state: {
-        depositInvoiceId: invoiceId
-      }
-    });
   };
   
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
@@ -178,17 +135,6 @@ export function InvoiceItemsCard({
               </label>
             </div>
           </div>
-          {isDepositInvoice && invoiceId && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleCreateBalanceDueInvoice}
-              className="text-sm h-10"
-            >
-              <FileText className="mr-1 h-3.5 w-3.5" />
-              Create Balance Due Invoice
-            </Button>
-          )}
         </CardHeader>
         
         <CardContent className="py-3 px-4">
@@ -218,7 +164,7 @@ export function InvoiceItemsCard({
                     <div className="space-y-1">
                       <Label htmlFor="depositPercentage" className="text-xs">Deposit (%)</Label>
                       <div className="relative">
-                        <Input id="depositPercentage" type="number" min="0" max="100" value={depositPercentage.toFixed(0)} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value) || 0)} className="pr-7 h-10 text-sm" />
+                        <Input id="depositPercentage" type="number" min="0" max="100" value={depositPercentage.toFixed(0)} onChange={e => handleDepositPercentageChange(parseFloat(e.target.value))} className="pr-7 h-10 text-sm" />
                         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
                       </div>
                     </div>
@@ -226,7 +172,7 @@ export function InvoiceItemsCard({
                       <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
                       <div className="relative">
                         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                        <Input id="depositAmount" type="number" min="0" value={depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value) || 0)} className="pl-8 h-10 text-sm" />
+                        <Input id="depositAmount" type="number" min="0" value={depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value))} className="pl-8 h-10 text-sm" />
                       </div>
                     </div>
                   </div>

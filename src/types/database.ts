@@ -101,7 +101,7 @@ export interface Quotation {
   subtotal: number;
   total: number;
   notes: string | null;
-  terms: string | null; // Made optional to match ExtendedQuotation
+  terms: string | null;
   requires_deposit: boolean;
   deposit_amount: number;
   deposit_percentage: number;

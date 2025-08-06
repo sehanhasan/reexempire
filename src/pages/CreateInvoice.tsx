@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -44,11 +45,10 @@ export default function CreateInvoice() {
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
-  const [terms, setTerms] = useState("");
   const [subject, setSubject] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
-  const [depositPercentage, setDepositPercentage] = useState(50);
+  const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
   const [quotationReference, setQuotationReference] = useState("");
   const [quotationId, setQuotationId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,7 +102,6 @@ export default function CreateInvoice() {
   useEffect(() => {
     const fetchQuotationData = async () => {
       const fromQuotationId = location.state?.quotationId;
-      const fromDepositInvoiceId = location.state?.depositInvoiceId;
       
       if (fromQuotationId) {
         try {
@@ -115,7 +114,7 @@ export default function CreateInvoice() {
             
             setIsDepositInvoice(quotation.requires_deposit || false);
             setDepositAmount(quotation.deposit_amount || 0);
-            setDepositPercentage(quotation.deposit_percentage || 50);
+            setDepositPercentage(quotation.deposit_percentage || 30);
             
             const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
             if (quotationItems && quotationItems.length > 0) {
@@ -137,43 +136,6 @@ export default function CreateInvoice() {
           }
         } catch (error) {
           console.error("Error fetching quotation:", error);
-        }
-      } else if (fromDepositInvoiceId) {
-        // Handle creating balance due invoice from deposit invoice
-        try {
-          const depositInvoice = await invoiceService.getById(fromDepositInvoiceId);
-          if (depositInvoice) {
-            setCustomerId(depositInvoice.customer_id);
-            setSubject(`Balance Due - ${depositInvoice.subject || 'Invoice'}`);
-            
-            // Set as non-deposit invoice
-            setIsDepositInvoice(false);
-            
-            // Get original items and calculate balance
-            const invoiceItems = await invoiceService.getItemsByInvoiceId(fromDepositInvoiceId);
-            if (invoiceItems && invoiceItems.length > 0) {
-              const totalSubtotal = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
-              const balanceDue = totalSubtotal - (depositInvoice.deposit_amount || 0);
-              
-              // Create a single "Balance Due" item
-              setItems([{
-                id: 1,
-                description: `Balance Due - Remaining payment after deposit of RM ${(depositInvoice.deposit_amount || 0).toFixed(2)}`,
-                category: "Other Items",
-                quantity: 1,
-                unit: "Unit",
-                unitPrice: balanceDue,
-                amount: balanceDue
-              }]);
-            }
-            
-            toast({
-              title: "Balance Due Invoice Created",
-              description: "Invoice has been created for the remaining balance.",
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching deposit invoice:", error);
         }
       }
     };
@@ -326,8 +288,8 @@ export default function CreateInvoice() {
         tax_amount: 0,
         total: total,
         notes: notes || null,
-        terms: terms || null,
         subject: subject || null,
+        terms: null,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
         deposit_percentage: isDepositInvoice ? depositPercentage : 0,
@@ -370,7 +332,27 @@ export default function CreateInvoice() {
         });
         
         // Directly open WhatsApp with the newly created invoice
-        handleSendWhatsapp();
+        try {
+          const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
+          
+          const message = `Dear ${customer.name},\n\n` +
+            `Please find your invoice ${documentNumber} for review at the link below: ` +
+            `${invoiceViewUrl}\n\n` +
+            `You can review the invoice details and make payment.\n\n` +
+            `If you have any questions, please don't hesitate to contact us.\n\n` +
+            `Thank you,\nReex Empire Sdn Bhd`;
+          
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+          window.open(whatsappUrl, '_blank');
+        } catch (error) {
+          console.error("Error opening WhatsApp:", error);
+          toast({
+            title: "WhatsApp Error",
+            description: "Invoice saved successfully, but failed to open WhatsApp. You can share it manually from the invoices list.",
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
           title: "Invoice Created",
@@ -491,8 +473,6 @@ export default function CreateInvoice() {
         <AdditionalInfoForm 
           notes={notes}
           setNotes={setNotes}
-          terms={terms}
-          setTerms={setTerms}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"

@@ -7,6 +7,7 @@ import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
+import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
@@ -31,7 +32,6 @@ export default function CreateQuotation() {
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
-  const [terms, setTerms] = useState("");
   const [subject, setSubject] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdQuotationId, setCreatedQuotationId] = useState<string | null>(null);
@@ -39,7 +39,7 @@ export default function CreateQuotation() {
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
     depositAmount: 0,
-    depositPercentage: 50
+    depositPercentage: 30
   });
 
   const generateReferenceNumber = async () => {
@@ -163,8 +163,8 @@ export default function CreateQuotation() {
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
-        terms: terms || null,
         subject: subject || null,
+        terms: null,
         requires_deposit: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentage : 0
@@ -275,8 +275,6 @@ export default function CreateQuotation() {
         <AdditionalInfoForm 
           notes={notes}
           setNotes={setNotes}
-          terms={terms}
-          setTerms={setTerms}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/quotations")}
           documentType="quotation"
