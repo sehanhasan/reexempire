@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { shareInvoice } from "@/utils/mobileShare";
 
 interface ExtendedQuotation {
   id: string;
@@ -32,7 +31,6 @@ export default function CreateInvoice() {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: 1, description: "", category: "Other Items", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
@@ -213,27 +211,34 @@ export default function CreateInvoice() {
     }
   };
 
-  const handleShare = async () => {
+  const handleSendWhatsapp = () => {
     if (!createdInvoiceId || !customer) {
       toast({
         title: "Error",
-        description: "Invoice must be saved before sharing.",
+        description: "Invoice must be saved before sending to WhatsApp.",
         variant: "destructive"
       });
       return;
     }
     
     try {
-      await shareInvoice(createdInvoiceId, documentNumber, customer.name);
-      toast({
-        title: "Share Successful",
-        description: "Invoice has been shared successfully.",
-      });
+      const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoiceId}`;
+      
+      const message = `Dear ${customer.name},\n\n` +
+        `Please find your invoice ${documentNumber} for review at the link below: ` +
+        `${invoiceViewUrl}\n\n` +
+        `You can review the invoice details and make payment.\n\n` +
+        `If you have any questions, please don't hesitate to contact us.\n\n` +
+        `Thank you,\nReex Empire Sdn Bhd`;
+      
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
+      window.open(whatsappUrl, '_blank');
     } catch (error) {
-      console.error("Error sharing invoice:", error);
+      console.error("Error sending WhatsApp message:", error);
       toast({
-        title: "Share Failed",
-        description: "Failed to share invoice. Please try again.",
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
         variant: "destructive"
       });
     }
@@ -325,14 +330,25 @@ export default function CreateInvoice() {
           description: `Invoice for ${customer?.name} has been sent successfully.`,
         });
         
-        // Share the invoice after successful creation
+        // Directly open WhatsApp with the newly created invoice
         try {
-          await shareInvoice(createdInvoice.id, documentNumber, customer.name);
+          const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
+          
+          const message = `Dear ${customer.name},\n\n` +
+            `Please find your invoice ${documentNumber} for review at the link below: ` +
+            `${invoiceViewUrl}\n\n` +
+            `You can review the invoice details and make payment.\n\n` +
+            `If you have any questions, please don't hesitate to contact us.\n\n` +
+            `Thank you,\nReex Empire Sdn Bhd`;
+          
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+          window.open(whatsappUrl, '_blank');
         } catch (error) {
-          console.error("Error sharing invoice:", error);
+          console.error("Error opening WhatsApp:", error);
           toast({
-            title: "Share Error",
-            description: "Invoice saved successfully, but failed to share. You can share it manually from the invoices list.",
+            title: "WhatsApp Error",
+            description: "Invoice saved successfully, but failed to open WhatsApp. You can share it manually from the invoices list.",
             variant: "destructive"
           });
         }
@@ -459,7 +475,7 @@ export default function CreateInvoice() {
           documentType="invoice"
           isSubmitting={isSubmitting || uploadingImages}
           showDraft={true}
-          onSendWhatsapp={handleShare}
+          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>

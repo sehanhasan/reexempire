@@ -5,10 +5,7 @@ import { Invoice, InvoiceImage } from "@/types/database";
 const getAll = async (): Promise<Invoice[]> => {
   const { data, error } = await supabase
     .from('invoices')
-    .select(`
-      *,
-      customer:customers(*)
-    `)
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -21,10 +18,7 @@ const getAll = async (): Promise<Invoice[]> => {
 const getById = async (id: string): Promise<Invoice | null> => {
   const { data, error } = await supabase
     .from('invoices')
-    .select(`
-      *,
-      customer:customers(*)
-    `)
+    .select('*')
     .eq('id', id)
     .single();
 
@@ -153,10 +147,6 @@ const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
   return data || [];
 };
 
-const getImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
-  return getInvoiceImages(invoiceId);
-};
-
 const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   const { error } = await supabase
     .from('invoice_items')
@@ -180,7 +170,6 @@ export const invoiceService = {
   deleteItem,
   addInvoiceImage,
   getInvoiceImages,
-  getImages,
   deleteItemsByInvoiceId
 };
 

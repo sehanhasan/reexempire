@@ -2,17 +2,16 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronRight, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Search, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export interface Column<T> {
   header: string;
-  accessorKey?: keyof T | string;
-  id?: string;
-  cell?: ({ row }: { row: { original: T, getValue: (key: string) => any } }) => React.ReactNode;
+  accessorKey: keyof T | string;
+  cell?: ({ row }: { row: { original: T } }) => React.ReactNode;
 }
 
 interface DataTableProps<T> {
@@ -24,9 +23,6 @@ interface DataTableProps<T> {
   renderCustomMobileCard?: (item: T) => React.ReactNode;
   externalSearchTerm?: string;
   onExternalSearchChange?: (value: string) => void;
-  onEdit?: (id: string) => void;
-  onDelete?: (id: string) => void;
-  onSubcategories?: (item: T) => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -37,10 +33,7 @@ export function DataTable<T extends Record<string, any>>({
   emptyMessage = "No data available",
   renderCustomMobileCard,
   externalSearchTerm,
-  onExternalSearchChange,
-  onEdit,
-  onDelete,
-  onSubcategories
+  onExternalSearchChange
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -56,19 +49,6 @@ export function DataTable<T extends Record<string, any>>({
         return false;
       })
     : data;
-
-  // Helper function to get nested property value
-  const getNestedValue = (obj: any, path: string) => {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
-  };
-
-  // Create a row object with getValue function for compatibility
-  const createRowObject = (rowData: T) => {
-    return {
-      original: rowData,
-      getValue: (key: string) => getNestedValue(rowData, key)
-    };
-  };
 
   // Generate labels for mobile view
   const getMobileLabel = (column: Column<T>) => {
@@ -94,59 +74,24 @@ export function DataTable<T extends Record<string, any>>({
     return `card-${row.id || rowIndex}-${rowIndex}`;
   };
 
-  // Process columns for mobile view - filter out Actions column as we'll handle it separately
-  const mobileColumns = columns.filter(column => 
-    shouldShowColumnOnMobile(column) && column.header !== "Actions"
-  );
+  // Process columns for mobile view
+  const mobileColumns = columns.filter(column => shouldShowColumnOnMobile(column));
   
+  // Get the actions column for potential use in card footer
+  const actionsColumn = columns.find(column => column.header === "Actions");
+
   // Get a suitable primary column (name, title, etc.)
   const getPrimaryColumn = () => {
     const nameColumn = columns.find(col => 
       col.header.toLowerCase().includes('name') || 
       col.header.toLowerCase().includes('title') ||
-      col.accessorKey?.toString().toLowerCase().includes('name') ||
-      col.accessorKey?.toString().toLowerCase().includes('title')
+      col.accessorKey.toString().toLowerCase().includes('name') ||
+      col.accessorKey.toString().toLowerCase().includes('title')
     );
     return nameColumn || mobileColumns[0];
   };
 
   const primaryColumn = getPrimaryColumn();
-
-  // Helper function to render mobile action buttons
-  const renderMobileActions = (row: T) => {
-    return (
-      <div className="flex gap-1">
-        {onEdit && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(row.id)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        )}
-        {onSubcategories && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onSubcategories(row)}
-          >
-            Subcategories
-          </Button>
-        )}
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(row.id)}
-            className="text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-4">
@@ -173,100 +118,103 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
       
-      {isLoading ? (
-        <div className="py-8 text-center bg-slate-100">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      ) : filteredData.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-muted-foreground">{emptyMessage}</p>
-        </div>
-      ) : (
-        <>
-          {isMobile ? (
-            <div className="p-2 space-y-3">
-              {renderCustomMobileCard ? (
-                // Use custom mobile card renderer if provided
-                filteredData.map((item) => renderCustomMobileCard(item))
-              ) : (
-                // Default mobile card rendering
-                filteredData.map((row, rowIndex) => (
-                  <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
-                    <CardContent className="p-0">
-                      {/* Card Header with primary information */}
-                      <div className="p-3 border-b bg-blue-50/30">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium text-blue-700">
-                            {primaryColumn.cell 
-                              ? primaryColumn.cell({ row: createRowObject(row) }) 
-                              : String(getNestedValue(row, primaryColumn.accessorKey as string) || '')}
-                          </div>
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
-                        </div>
-                      </div>
-                      
-                      {/* Card Content */}
-                      <div className="px-3 py-2 space-y-1.5">
-                        {mobileColumns
-                          .filter(col => col !== primaryColumn) // Skip the primary column as it's already in the header
-                          .map((column, colIndex) => {
-                            // Skip empty values
-                            const cellValue = column.cell 
-                              ? column.cell({ row: createRowObject(row) }) 
-                              : getNestedValue(row, column.accessorKey as string);
-                            
-                            if (cellValue === null || cellValue === undefined || cellValue === '') {
-                              return null;
-                            }
-                            
-                            return (
-                              <div key={getCellKey(column, colIndex, rowIndex)} className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500 font-medium">{getMobileLabel(column)}</span>
-                                <span className="font-normal">{cellValue}</span>
-                              </div>
-                            );
-                          })}
-                      </div>
-                      
-                      {/* Card Footer with Actions */}
-                      {(onEdit || onDelete || onSubcategories) && (
-                        <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
-                          {renderMobileActions(row)}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+      <Card className="shadow-sm overflow-hidden">
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="py-8 text-center bg-slate-100">
+              <p className="text-muted-foreground">Loading...</p>
+            </div>
+          ) : filteredData.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground">{emptyMessage}</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {columns.map((column, idx) => (
-                    <TableHead key={`header-${idx}-${column.header.replace(/\s+/g, '-')}`}>
-                      {column.header}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredData.map((row, rowIndex) => (
-                  <TableRow key={getRowKey(row, rowIndex)}>
-                    {columns.map((column, colIndex) => (
-                      <TableCell key={getCellKey(column, colIndex, rowIndex)}>
-                        {column.cell 
-                          ? column.cell({ row: createRowObject(row) }) 
-                          : getNestedValue(row, column.accessorKey as string)}
-                      </TableCell>
+            <>
+              {isMobile ? (
+                <div className="p-2 space-y-3">
+                  {renderCustomMobileCard ? (
+                    // Use custom mobile card renderer if provided
+                    filteredData.map((item) => renderCustomMobileCard(item))
+                  ) : (
+                    // Default mobile card rendering
+                    filteredData.map((row, rowIndex) => (
+                      <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
+                        <CardContent className="p-0">
+                          {/* Card Header with primary information */}
+                          <div className="p-3 border-b bg-blue-50/30">
+                            <div className="flex justify-between items-center">
+                              <div className="font-medium text-blue-700">
+                                {primaryColumn.cell 
+                                  ? primaryColumn.cell({ row: { original: row } }) 
+                                  : String(row[primaryColumn.accessorKey] || '')}
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-gray-400" />
+                            </div>
+                          </div>
+                          
+                          {/* Card Content */}
+                          <div className="px-3 py-2 space-y-1.5">
+                            {mobileColumns
+                              .filter(col => col !== primaryColumn) // Skip the primary column as it's already in the header
+                              .map((column, colIndex) => {
+                                // Skip empty values
+                                const cellValue = column.cell 
+                                  ? column.cell({ row: { original: row } }) 
+                                  : row[column.accessorKey];
+                                
+                                if (cellValue === null || cellValue === undefined || cellValue === '') {
+                                  return null;
+                                }
+                                
+                                return (
+                                  <div key={getCellKey(column, colIndex, rowIndex)} className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 font-medium">{getMobileLabel(column)}</span>
+                                    <span className="font-normal">{cellValue}</span>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                          
+                          {/* Card Footer with Actions */}
+                          {actionsColumn && actionsColumn.cell && (
+                            <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
+                              {actionsColumn.cell({ row: { original: row } })}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {columns.map((column, idx) => (
+                        <TableHead key={`header-${idx}-${column.header.replace(/\s+/g, '-')}`}>
+                          {column.header}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredData.map((row, rowIndex) => (
+                      <TableRow key={getRowKey(row, rowIndex)}>
+                        {columns.map((column, colIndex) => (
+                          <TableCell key={getCellKey(column, colIndex, rowIndex)}>
+                            {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
+                          </TableCell>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  </TableBody>
+                </Table>
+              )}
+            </>
           )}
-        </>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
