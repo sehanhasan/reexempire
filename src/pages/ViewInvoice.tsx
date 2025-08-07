@@ -187,12 +187,12 @@ export default function ViewInvoice() {
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
                   <p>53300 Setapak Kuala Lumpur</p>
-                  <p className="font-semibold text-gray-800">www.reexempire.com</p>
+                  <p className="text-gray-800">www.reexempire.com</p>
                 </div>
                 {/* Subject within customer info */}
                 {invoice.subject && (
                   <div className="mt-3 pt-2 border-t">
-                    <p className="text-sm text-gray-800 font-medium mb-1">Subject: {invoice.subject}</p>
+                    <p className="text-sm text-gray-800 font-semibold mb-1">Subject: {invoice.subject}</p>
                   </div>
                 )}
               </div>
