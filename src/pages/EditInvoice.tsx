@@ -11,6 +11,7 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { invoiceService, customerService, quotationService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { shareInvoice } from "@/utils/mobileShare";
 
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
@@ -20,6 +21,7 @@ export default function EditInvoice() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
+  
   const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<QuotationItem[]>([{
     id: 1,
@@ -117,6 +119,32 @@ export default function EditInvoice() {
     return qty * item.unitPrice;
   };
 
+  const handleShare = async () => {
+    if (!quotationData || !customer || !id) {
+      toast({
+        title: "Missing Information",
+        description: "Customer information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      await shareInvoice(id, quotationData.reference_number, customer.name);
+      toast({
+        title: "Share Successful",
+        description: "Invoice has been shared successfully.",
+      });
+    } catch (error) {
+      console.error("Error sharing invoice:", error);
+      toast({
+        title: "Share Failed",
+        description: "Failed to share invoice. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
     e.preventDefault();
     if (!customerId || !id) {
@@ -200,23 +228,14 @@ export default function EditInvoice() {
           description: `Quotation for ${customer?.name} has been updated and sent successfully.`
         });
         
-        // Open WhatsApp after successful update
+        // Share the invoice after successful update
         try {
-          const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-          
-          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-            id,
-            documentNumber,
-            customer?.name || '',
-            quotationViewUrl
-          );
-          
-          window.open(whatsappUrl, '_blank');
+          await shareInvoice(id, documentNumber, customer?.name || '');
         } catch (error) {
-          console.error("Error opening WhatsApp:", error);
+          console.error("Error sharing invoice:", error);
           toast({
-            title: "WhatsApp Error",
-            description: "Quotation updated successfully, but failed to open WhatsApp. You can share it manually.",
+            title: "Share Error",
+            description: "Quotation updated successfully, but failed to share. You can share it manually.",
             variant: "destructive"
           });
         }
@@ -263,37 +282,6 @@ export default function EditInvoice() {
       toast({
         title: "Error",
         description: "Failed to update quotation status. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSendWhatsapp = () => {
-    if (!quotationData || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Customer information not found.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-      
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-        id!,
-        quotationData.reference_number,
-        customer.name,
-        quotationViewUrl
-      );
-      
-      window.open(whatsappUrl, '_blank');
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
         variant: "destructive"
       });
     }
@@ -347,7 +335,7 @@ export default function EditInvoice() {
               <Button 
                 variant="outline" 
                 className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-                onClick={handleSendWhatsapp}
+                onClick={handleShare}
               >
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp

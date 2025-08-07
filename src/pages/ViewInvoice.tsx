@@ -1,328 +1,352 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Download, Share2, FileText } from "lucide-react";
-import { invoiceService, customerService } from "@/services";
-import { format } from "date-fns";
+import { ArrowLeft, Download, Share2, Printer } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { invoiceService } from "@/services";
+import { formatCurrency } from "@/utils/formatters";
+import { generateInvoicePDF } from "@/utils/pdfGenerator";
 import { shareInvoice } from "@/utils/mobileShare";
 
+interface Invoice {
+  id: string;
+  reference_number: string;
+  issue_date: string;
+  due_date: string;
+  status: string;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  notes: string | null;
+  subject: string | null;
+  is_deposit_invoice: boolean;
+  deposit_amount: number;
+  deposit_percentage: number;
+  payment_status: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+}
+
+interface InvoiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  amount: number;
+  category: string;
+}
+
+interface InvoiceImage {
+  id: string;
+  image_url: string;
+  uploaded_at: string;
+}
+
 export default function ViewInvoice() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [invoice, setInvoice] = useState(null);
-  const [customer, setCustomer] = useState(null);
-  const [items, setItems] = useState([]);
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Set viewport to be unresponsive and zoomable
-  useEffect(() => {
-    const viewport = document.querySelector('meta[name=viewport]');
-    if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
-    } else {
-      const newViewport = document.createElement('meta');
-      newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
-      document.head.appendChild(newViewport);
-    }
-
-    // Cleanup on unmount
-    return () => {
-      const viewport = document.querySelector('meta[name=viewport]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-      }
-    };
-  }, []);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [images, setImages] = useState<InvoiceImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!id) return;
+
     const fetchInvoiceData = async () => {
-      if (!id) return;
-      
       try {
-        setLoading(true);
-        const [invoiceData, itemsData, imagesData] = await Promise.all([
-          invoiceService.getById(id),
-          invoiceService.getItemsByInvoiceId(id),
-          invoiceService.getInvoiceImages(id)
-        ]);
-        
-        if (invoiceData) {
-          setInvoice(invoiceData);
-          setItems(itemsData || []);
-          setImages(imagesData || []);
-          
-          // Fetch customer data
-          const customerData = await customerService.getById(invoiceData.customer_id);
-          setCustomer(customerData);
-        }
+        setIsLoading(true);
+        const invoiceData = await invoiceService.getById(id);
+        setInvoice(invoiceData);
+
+        const itemsData = await invoiceService.getItemsByInvoiceId(id);
+        setItems(itemsData || []);
+
+        const imagesData = await invoiceService.getInvoiceImages(id);
+        setImages(imagesData || []);
+
+        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching invoice:", error);
         toast({
           title: "Error",
-          description: "Failed to load invoice",
+          description: "Failed to fetch invoice data. Please try again.",
           variant: "destructive"
         });
-      } finally {
-        setLoading(false);
+        navigate("/invoices");
       }
     };
 
     fetchInvoiceData();
-    
-    // Set up interval to refresh data every 5 minutes to keep the link active
-    const interval = setInterval(fetchInvoiceData, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [id]);
-
-  const formatMoney = (amount) => {
-    return `RM ${parseFloat(amount).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`;
-  };
-
-  const handlePrintPDF = () => {
-    window.print();
-  };
+  }, [id, navigate]);
 
   const handleShare = async () => {
-    if (!invoice || !customer) {
+    if (!invoice) {
       toast({
-        title: "Missing Information",
-        description: "Invoice or customer information not found.",
+        title: "Error",
+        description: "Invoice data not available for sharing.",
         variant: "destructive"
       });
       return;
     }
-
+    
     try {
-      await shareInvoice(invoice.id, invoice.reference_number, customer.name);
+      await shareInvoice(invoice.id, invoice.reference_number, invoice.customer.name);
       toast({
-        title: "Success",
-        description: "Invoice shared successfully!"
+        title: "Share Successful",
+        description: "Invoice has been shared successfully.",
       });
     } catch (error) {
       console.error("Error sharing invoice:", error);
       toast({
-        title: "Error",
-        description: "Failed to share invoice",
+        title: "Share Failed",
+        description: "Failed to share invoice. Please try again.",
         variant: "destructive"
       });
     }
   };
 
-  const getStatusColor = (status) => {
-    if (status === "Paid") return "bg-green-100 text-green-800 hover:bg-green-100";
-    if (status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
-    if (status === "Overdue") return "bg-red-100 text-red-600 hover:bg-red-100";
-    return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+  const handleDownloadPDF = async () => {
+    if (!invoice) return;
+    
+    try {
+      const invoiceData = {
+        ...invoice,
+        items: items,
+        images: images
+      };
+      await generateInvoicePDF(invoiceData);
+      toast({
+        title: "PDF Downloaded",
+        description: "Invoice PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  if (loading) {
+  const handlePrint = () => {
+    window.print();
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading invoice details...</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Invoice not found</h1>
+          <Button onClick={() => navigate("/invoices")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Invoices
+          </Button>
         </div>
       </div>
     );
   }
-
-  if (!invoice || !customer) {
-    return (
-      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
-        <div className="text-center p-8">
-          <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Invoice Not Found</h2>
-          <p className="text-gray-600 mb-6">The requested invoice could not be found. The link may have expired or the invoice may not exist.</p>
-          <Button onClick={() => navigate("/")}>Return Home</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if invoice is overdue
-  const dueDate = new Date(invoice.due_date);
-  const today = new Date();
-  const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
-  const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
-
-  // Group items by category
-  const groupedItems = {};
-  items.forEach(item => {
-    const category = item.category || "Other Items";
-    if (!groupedItems[category]) {
-      groupedItems[category] = [];
-    }
-    groupedItems[category].push(item);
-  });
-  
-  const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
+    <div className="min-w-[800px] bg-gray-50" style={{ minWidth: "800px", zoom: 0.8 }}>
+      {/* Header Actions - Print Hidden */}
+      <div className="bg-white border-b border-gray-200 p-4 print:hidden">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <Button variant="outline" onClick={() => navigate("/invoices")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Invoices
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleShare}>
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+            <Button variant="outline" onClick={handleDownloadPDF}>
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
+            </Button>
+            <Button variant="outline" onClick={handlePrint}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+          </div>
+        </div>
+      </div>
 
-      <div className="py-4 px-4">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {/* Compact Header with Company and Invoice Info in Columns */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Left Column - Company Logo and Details */}
-              <div>
-                <img 
-                  src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
-                  alt="Reex Empire Logo" 
-                  className="h-16 w-auto mb-3"
-                />
-                <h2 className="text-sm font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
-                  <p>53300 Setapak Kuala Lumpur</p>
-                  <p className="text-gray-800">www.reexempire.com</p>
-                </div>
-                {/* Subject within customer info */}
-                {invoice.subject && (
-                  <div className="mt-3 pt-2 border-t">
-                    <p className="text-sm text-gray-800 font-semibold mb-1">Subject: {invoice.subject}</p>
-                  </div>
+      {/* Invoice Content */}
+      <div className="max-w-4xl mx-auto bg-white shadow-sm print:shadow-none print:max-w-none">
+        <div className="p-8 print:p-6">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">INVOICE</h1>
+              <div className="text-sm text-gray-600">
+                <p className="font-medium">Invoice #: {invoice.reference_number}</p>
+                <p>Issue Date: {new Date(invoice.issue_date).toLocaleDateString()}</p>
+                <p>Due Date: {new Date(invoice.due_date).toLocaleDateString()}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-blue-700 mb-1">REEX EMPIRE SDN BHD</div>
+              <div className="text-sm text-gray-600">
+                <p>No. 42A-2, Jalan Kuchai Maju 2</p>
+                <p>Kuchai Entrepreneurs Park</p>
+                <p>58200 Kuala Lumpur, Malaysia</p>
+                <p className="mt-2">
+                  <strong>Tel:</strong> +60 17-292 2496<br />
+                  <strong>Email:</strong> reexempire@gmail.com
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Info */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Bill To:</h3>
+              <div className="text-sm text-gray-700">
+                <p className="font-medium text-base">{invoice.customer.name}</p>
+                <div className="whitespace-pre-line">{invoice.customer.address}</div>
+                <p className="mt-2">
+                  <strong>Phone:</strong> {invoice.customer.phone}<br />
+                  <strong>Email:</strong> {invoice.customer.email}
+                </p>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Invoice Details:</h3>
+              <div className="text-sm text-gray-700">
+                <p><strong>Status:</strong> <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                  invoice.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                  invoice.status === 'Sent' ? 'bg-blue-100 text-blue-800' :
+                  invoice.status === 'Overdue' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {invoice.status}
+                </span></p>
+                <p><strong>Payment Status:</strong> <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                  invoice.payment_status === 'Paid' ? 'bg-green-100 text-green-800' :
+                  invoice.payment_status === 'Partial' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {invoice.payment_status}
+                </span></p>
+                {invoice.subject && <p><strong>Subject:</strong> {invoice.subject}</p>}
+                {invoice.is_deposit_invoice && (
+                  <p><strong>Type:</strong> Deposit Invoice ({invoice.deposit_percentage}%)</p>
                 )}
               </div>
-              
-              {/* Right Column - Invoice Details and Customer */}
-              <div>
-                <div className="mb-3">
-                  <h1 className="text-xl font-bold text-gray-900">Invoice #{invoice.reference_number}</h1>
-                  <Badge className={`mb-1 ${getStatusColor(displayPaymentStatus)}`}>
-                    {displayPaymentStatus}
-                  </Badge>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p><strong>Issued:</strong> {format(new Date(invoice.issue_date), "MMM dd, yyyy")}</p>
-                    <p><strong>Due:</strong> {format(dueDate, "MMM dd, yyyy")}</p>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="mb-8">
+            <div className="overflow-hidden border border-gray-300">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-300">
+                    <th className="text-left py-3 px-4 font-semibold text-sm">Description</th>
+                    <th className="text-right py-3 px-4 font-semibold text-sm w-20">Qty</th>
+                    <th className="text-left py-3 px-4 font-semibold text-sm w-16">Unit</th>
+                    <th className="text-right py-3 px-4 font-semibold text-sm w-24">Unit Price</th>
+                    <th className="text-right py-3 px-4 font-semibold text-sm w-28">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => (
+                    <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="py-3 px-4 text-sm">
+                        <div className="font-medium text-gray-900">{item.description}</div>
+                        {item.category && item.category !== 'Other Items' && (
+                          <div className="text-xs text-gray-500 mt-1">{item.category}</div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-right">{item.quantity}</td>
+                      <td className="py-3 px-4 text-sm">{item.unit}</td>
+                      <td className="py-3 px-4 text-sm text-right">{item.unit_price.toFixed(2)}</td>
+                      <td className="py-3 px-4 text-sm text-right font-medium">{formatCurrency(item.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Images */}
+          {images.length > 0 && (
+            <div className="mb-8">
+              <h3 className="font-semibold text-gray-900 mb-4">Work Photos</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {images.map((image) => (
+                  <div key={image.id} className="border border-gray-300 rounded overflow-hidden">
+                    <img 
+                      src={image.image_url} 
+                      alt="Work photo"
+                      className="w-full h-48 object-cover"
+                    />
                   </div>
-                </div>
-                
-                <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
-                  <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
-                  <div className="text-sm text-gray-800 space-y-1">
-                    <p>Attn: {customer.name}</p>
-                    {customer.unit_number && <p className="font-semibold">{customer.unit_number}</p>}
-                    {customer.address && <p>{customer.address}</p>}
-                    {customer.city && <p>{customer.city}, {customer.state} {customer.postal_code}</p>}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Totals */}
+          <div className="flex justify-end mb-8">
+            <div className="w-64">
+              <div className="bg-gray-50 p-4 border border-gray-300">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+                  </div>
+                  {invoice.is_deposit_invoice && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>Deposit ({invoice.deposit_percentage}%):</span>
+                        <span className="font-medium">{formatCurrency(invoice.deposit_amount)}</span>
+                      </div>
+                      <hr className="border-gray-300" />
+                    </>
+                  )}
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-300">
+                    <span>Total:</span>
+                    <span>{formatCurrency(invoice.total)}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Compact Items Table */}
-          <Card className="shadow-sm">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="text-left p-2 font-semibold text-gray-700">Description</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Price</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map(category => (
-                      <React.Fragment key={category}>
-                        <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
-                          </td>
-                        </tr>
-                        {groupedItems[category].map((item, idx) => (
-                          <tr key={idx} className="border-b hover:bg-gray-50">
-                            <td className="p-2 text-gray-800">{item.description}</td>
-                            <td className="text-right p-2 text-gray-800">{formatMoney(item.unit_price)}</td>
-                            <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 font-semibold text-gray-800">{formatMoney(item.amount)}</td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Notes */}
+          {invoice.notes && (
+            <div className="mb-8">
+              <h3 className="font-semibold text-gray-900 mb-2">Notes:</h3>
+              <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded border border-gray-200">
+                <div className="whitespace-pre-wrap">{invoice.notes}</div>
               </div>
-              
-              {/* Compact Subtotal and Total Information */}
-              <div className="p-3 bg-gray-50 border-t">
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Subtotal:</span>
-                      <span>{formatMoney(invoice.subtotal)}</span>
-                    </div>
-                    {invoice.tax_rate > 0 && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Tax ({invoice.tax_rate}%):</span>
-                        <span>{formatMoney(invoice.tax_amount)}</span>
-                      </div>
-                    )}
-                    {invoice.is_deposit_invoice && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Deposit Amount:</span>
-                        <span>{formatMoney(invoice.deposit_amount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-base font-bold border-t pt-1">
-                      <span>Total:</span>
-                      <span className="text-blue-600">{formatMoney(invoice.total)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Work Photos Card */}
-          {images.length > 0 && (
-            <Card className="shadow-sm">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-gray-700 mb-3 text-base">Work Photos</h3>
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {images.map((image, index) => (
-                    <div key={image.id} className="relative">
-                      <img 
-                        src={image.image_url} 
-                        alt={`Work photo ${index + 1}`} 
-                        className="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
-                        onClick={() => window.open(image.image_url, '_blank')}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            </div>
           )}
 
-          {/* Additional Information */}
-          <AdditionalInfoCard 
-            terms={invoice.terms}
-          />
-
-          {/* Contact Info */}
-          <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
-            <p>For all enquiries, please contact Khalil Pasha</p>
-            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
-          </div>
-
-          {/* Compact Footer */}
-          <div className="text-center text-gray-500 text-xs py-3">
-            <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+          {/* Footer */}
+          <div className="text-center text-xs text-gray-500 mt-8 pt-4 border-t border-gray-200">
+            <p>Thank you for your business!</p>
+            <p className="mt-1">Please make payment by the due date specified above.</p>
           </div>
         </div>
       </div>
