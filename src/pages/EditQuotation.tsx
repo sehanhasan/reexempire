@@ -11,7 +11,6 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { shareQuotation } from "@/utils/mobileShare";
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }

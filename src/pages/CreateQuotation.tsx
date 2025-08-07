@@ -11,7 +11,6 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { shareQuotation } from "@/utils/mobileShare";
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
@@ -90,20 +89,34 @@ export default function CreateQuotation() {
     return qty * item.unitPrice;
   };
 
-  const handleSendWhatsapp = async () => {
+  const handleSendWhatsapp = () => {
     if (!createdQuotationId || !customer) {
       toast({
         title: "Error",
-        description: "Quotation must be saved before sharing.",
+        description: "Quotation must be saved before sending to WhatsApp.",
         variant: "destructive"
       });
       return;
     }
+    
     try {
-      await shareQuotation(createdQuotationId, documentNumber, customer.name);
+      const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotationId}`;
+      
+      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+        createdQuotationId,
+        documentNumber,
+        customer.name,
+        quotationViewUrl
+      );
+      
+      window.open(whatsappUrl, '_blank');
     } catch (error) {
-      console.error("Error sharing:", error);
-      toast({ title: "Error", description: "Failed to share.", variant: "destructive" });
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -181,13 +194,24 @@ export default function CreateQuotation() {
           title: "Quotation Sent",
           description: `Quotation for ${customer?.name} has been sent successfully.`,
         });
+        
+        // Directly open WhatsApp with the newly created quotation
         try {
-          await shareQuotation(createdQuotation.id, documentNumber, customer!.name);
+          const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotation.id}`;
+          
+          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
+            createdQuotation.id,
+            documentNumber,
+            customer.name,
+            quotationViewUrl
+          );
+          
+          window.open(whatsappUrl, '_blank');
         } catch (error) {
-          console.error("Error sharing:", error);
+          console.error("Error opening WhatsApp:", error);
           toast({
-            title: "Share Error",
-            description: "Quotation saved successfully, but sharing failed.",
+            title: "WhatsApp Error",
+            description: "Quotation saved successfully, but failed to open WhatsApp. You can share it manually from the quotations list.",
             variant: "destructive"
           });
         }
