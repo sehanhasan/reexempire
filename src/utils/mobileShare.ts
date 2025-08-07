@@ -87,11 +87,11 @@ const copyToClipboard = async (text: string): Promise<void> => {
 };
 
 const generateWhatsAppUrl = (phoneNumber: string, message: string): string => {
-  // Clean phone number (remove spaces, dashes, etc.)
-  const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
-  
   // Use the mobile app friendly format: wa.me/{phone}?text=
   const encodedMessage = encodeURIComponent(message);
+  
+  // Clean phone number (remove spaces, dashes, etc.)
+  const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
   
   if (cleanPhone) {
     return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
@@ -101,13 +101,13 @@ const generateWhatsAppUrl = (phoneNumber: string, message: string): string => {
   }
 };
 
-export const shareQuotation = async (quotationId: string, referenceNumber: string, customerName: string, customerPhone?: string): Promise<void> => {
+export const shareQuotation = async (quotationId: string, referenceNumber: string, customerName: string): Promise<void> => {
   const quotationUrl = `${window.location.origin}/quotations/view/${quotationId}`;
   
-  const message = `Dear ${customerName},\n\nPlease find your quotation ${referenceNumber} for review at the link below: ${quotationUrl}\n\nYou can review the quotation details and accept it online with your signature.\n\nIf you have any questions, please don't hesitate to contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
+  const message = `Quotation #${referenceNumber} for ${customerName}\n\nView: ${quotationUrl}`;
   
-  // Try to get customer phone number and open WhatsApp directly
-  const whatsappUrl = generateWhatsAppUrl(customerPhone || '', message);
+  // Try to get customer phone number from context or use fallback
+  const whatsappUrl = generateWhatsAppUrl('', message);
   
   // Open WhatsApp directly for mobile apps
   if (isMobileApp()) {
@@ -125,13 +125,13 @@ export const shareQuotation = async (quotationId: string, referenceNumber: strin
   await shareContent(shareData);
 };
 
-export const shareInvoice = async (invoiceId: string, referenceNumber: string, customerName: string, customerPhone?: string): Promise<void> => {
+export const shareInvoice = async (invoiceId: string, referenceNumber: string, customerName: string): Promise<void> => {
   const invoiceUrl = `${window.location.origin}/invoices/view/${invoiceId}`;
   
-  const message = `Dear ${customerName},\n\nPlease find your invoice ${referenceNumber} at the link below: ${invoiceUrl}\n\nIf you have any questions, please don't hesitate to contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
+  const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
   
-  // Try to get customer phone number and open WhatsApp directly
-  const whatsappUrl = generateWhatsAppUrl(customerPhone || '', message);
+  // Try to get customer phone number from context or use fallback
+  const whatsappUrl = generateWhatsAppUrl('', message);
   
   // Open WhatsApp directly for mobile apps
   if (isMobileApp()) {

@@ -106,8 +106,7 @@ export default function CreateQuotation() {
         createdQuotationId,
         documentNumber,
         customer.name,
-        quotationViewUrl,
-        customer.phone
+        quotationViewUrl
       );
       
       window.open(whatsappUrl, '_blank');
@@ -204,8 +203,7 @@ export default function CreateQuotation() {
             createdQuotation.id,
             documentNumber,
             customer.name,
-            quotationViewUrl,
-            customer.phone
+            quotationViewUrl
           );
           
           window.open(whatsappUrl, '_blank');
@@ -283,10 +281,6 @@ export default function CreateQuotation() {
           isSubmitting={isSubmitting}
           showDraft={true}
           onSendWhatsapp={handleSendWhatsapp}
-          documentId={createdQuotationId || undefined}
-          documentNumber={documentNumber}
-          customerName={customer?.name}
-          customerPhone={customer?.phone}
         />
       </form>
     </div>
