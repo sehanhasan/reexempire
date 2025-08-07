@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,17 +47,11 @@ export default function ViewInvoice() {
       
       try {
         setLoading(true);
-        console.log("Fetching invoice data for ID:", id);
-        
         const [invoiceData, itemsData, imagesData] = await Promise.all([
           invoiceService.getById(id),
           invoiceService.getItemsByInvoiceId(id),
           invoiceService.getInvoiceImages(id)
         ]);
-        
-        console.log("Invoice data:", invoiceData);
-        console.log("Items data:", itemsData);
-        console.log("Images data:", imagesData);
         
         if (invoiceData) {
           setInvoice(invoiceData);
@@ -64,17 +59,11 @@ export default function ViewInvoice() {
           setImages(imagesData || []);
           
           // Fetch customer data
-          if (invoiceData.customer_id) {
-            console.log("Fetching customer data for ID:", invoiceData.customer_id);
-            const customerData = await customerService.getById(invoiceData.customer_id);
-            console.log("Customer data:", customerData);
-            setCustomer(customerData);
-          }
-        } else {
-          console.log("No invoice data found");
+          const customerData = await customerService.getById(invoiceData.customer_id);
+          setCustomer(customerData);
         }
       } catch (error) {
-        console.error("Error fetching invoice data:", error);
+        console.error("Error fetching invoice:", error);
         toast({
           title: "Error",
           description: "Failed to load invoice",
@@ -249,10 +238,10 @@ export default function ViewInvoice() {
                   </thead>
                   <tbody>
                     {categories.map(category => (
-                      <React.Fragment key={category}>
+                      <React.Fragment key={category, categoryIndex) =>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
+                            {categoryIndex + 1}- {category)
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (
