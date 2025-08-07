@@ -30,7 +30,7 @@ export default function EditInvoice() {
   }]);
   const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [quotationData, setQuotationData] = useState<Quotation | null>(null);
+  
   const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split("T")[0]);
   const [validUntil, setValidUntil] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
