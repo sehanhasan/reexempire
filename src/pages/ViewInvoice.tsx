@@ -27,27 +27,12 @@ export default function ViewInvoice() {
       try {
         const invoiceData = await invoiceService.getById(invoiceId);
         if (invoiceData) {
-          // Ensure the invoice has the required customer property
-          const enrichedInvoice = {
-            ...invoiceData,
-            customer: invoiceData.customer || {
-              name: '',
-              email: '',
-              phone: '',
-              address: ''
-            }
-          };
-          setInvoice(enrichedInvoice as any);
+          setInvoice(invoiceData);
         }
 
         const imagesData = await invoiceService.getImages(invoiceId);
         if (imagesData) {
-          // Ensure images have the required uploaded_at property
-          const enrichedImages = imagesData.map(img => ({
-            ...img,
-            uploaded_at: img.uploaded_at || img.created_at
-          }));
-          setImages(enrichedImages as any);
+          setImages(imagesData);
         }
       } catch (error) {
         console.error("Error fetching invoice:", error);
@@ -74,25 +59,16 @@ export default function ViewInvoice() {
   };
 
   const handleDownload = async () => {
-    if (!invoice || !invoice.customer) return;
+    if (!invoice) return;
 
     try {
       const invoiceDetails = {
         ...invoice,
         items: items,
         images: images,
-        // Map required properties for the export service
-        dueDate: invoice.due_date,
-        paymentMethod: 'N/A', // Default value
-        isDepositInvoice: invoice.is_deposit_invoice,
-        depositAmount: invoice.deposit_amount,
-        depositPercentage: invoice.deposit_percentage,
-        taxRate: invoice.tax_rate,
-        taxAmount: invoice.tax_amount,
-        paymentStatus: invoice.payment_status
       };
 
-      await exportService.exportInvoiceToPDF(invoiceDetails as any);
+      await exportService.exportInvoiceToPDF(invoiceDetails);
       
       toast({
         title: "Success",
@@ -207,7 +183,7 @@ export default function ViewInvoice() {
         </div>
 
         <div>
-          <CustomerInfo customer={invoice.customer} />
+          <CustomerInfo customer={(invoice as any)?.customer} />
         </div>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -110,26 +109,19 @@ export default function Categories() {
         }
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Categories ({categories.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={categories}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onSubcategories={handleSubcategories}
-            emptyMessage="No categories found. Add your first category to get started."
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={categories}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onSubcategories={handleSubcategories}
+        emptyMessage="No categories found. Add your first category to get started."
+      />
 
       {selectedCategory && (
         <SubcategoriesDialog 
           category={selectedCategory}
-          isOpen={!!selectedCategory}
+          open={!!selectedCategory}
           onClose={() => setSelectedCategory(null)}
         />
       )}

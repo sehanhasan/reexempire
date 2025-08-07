@@ -2,11 +2,11 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Search, ChevronRight, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export interface Column<T> {
   header: string;
@@ -24,6 +24,9 @@ interface DataTableProps<T> {
   renderCustomMobileCard?: (item: T) => React.ReactNode;
   externalSearchTerm?: string;
   onExternalSearchChange?: (value: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onSubcategories?: (item: T) => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -34,7 +37,10 @@ export function DataTable<T extends Record<string, any>>({
   emptyMessage = "No data available",
   renderCustomMobileCard,
   externalSearchTerm,
-  onExternalSearchChange
+  onExternalSearchChange,
+  onEdit,
+  onDelete,
+  onSubcategories
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -88,12 +94,11 @@ export function DataTable<T extends Record<string, any>>({
     return `card-${row.id || rowIndex}-${rowIndex}`;
   };
 
-  // Process columns for mobile view
-  const mobileColumns = columns.filter(column => shouldShowColumnOnMobile(column));
+  // Process columns for mobile view - filter out Actions column as we'll handle it separately
+  const mobileColumns = columns.filter(column => 
+    shouldShowColumnOnMobile(column) && column.header !== "Actions"
+  );
   
-  // Get the actions column for potential use in card footer
-  const actionsColumn = columns.find(column => column.header === "Actions");
-
   // Get a suitable primary column (name, title, etc.)
   const getPrimaryColumn = () => {
     const nameColumn = columns.find(col => 
@@ -106,6 +111,42 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   const primaryColumn = getPrimaryColumn();
+
+  // Helper function to render mobile action buttons
+  const renderMobileActions = (row: T) => {
+    return (
+      <div className="flex gap-1">
+        {onEdit && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(row.id)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
+        {onSubcategories && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onSubcategories(row)}
+          >
+            Subcategories
+          </Button>
+        )}
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(row.id)}
+            className="text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -188,9 +229,9 @@ export function DataTable<T extends Record<string, any>>({
                       </div>
                       
                       {/* Card Footer with Actions */}
-                      {actionsColumn && actionsColumn.cell && (
+                      {(onEdit || onDelete || onSubcategories) && (
                         <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
-                          {actionsColumn.cell({ row: createRowObject(row) })}
+                          {renderMobileActions(row)}
                         </div>
                       )}
                     </CardContent>
