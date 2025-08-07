@@ -171,33 +171,6 @@ export default function ViewQuotation() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex flex-col items-center space-y-2">
-            <h1 className="text-lg font-bold text-blue-800">Quotation #{quotation.reference_number}</h1>
-            <div className="flex items-center justify-center space-x-3">
-              <Badge variant={isAccepted ? "default" : "secondary"}>
-                {quotation.status}
-              </Badge>
-              {hasSignature && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Signed
-                </Badge>
-              )}
-              <Button variant="outline" onClick={handleDownloadPDF} disabled={isProcessing} className="ml-4 flex items-center gap-1">
-                <Download size={16} />
-                <span>Download</span>
-              </Button>
-              <Button variant="outline" onClick={handleShare} className="flex items-center gap-1">
-                <Share2 size={16} />
-                <span>Share</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
@@ -229,6 +202,15 @@ export default function ViewQuotation() {
               <div>
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900 mb-1">Quotation #{quotation.reference_number}</h1>
+                  <Badge variant={isAccepted ? "default" : "secondary"}>
+                    {quotation.status}
+                  </Badge>
+                    {hasSignature && (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Signed
+                      </Badge>
+                    )}
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
