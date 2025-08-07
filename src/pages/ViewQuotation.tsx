@@ -228,7 +228,7 @@ export default function ViewQuotation() {
               {/* Right Column - Quotation Details and Customer */}
               <div>
                 <div className="mb-3">
-                  <h1 className="text-xl font-bold text-gray-900 mb-1">Quotation</h1>
+                  <h1 className="text-xl font-bold text-gray-900 mb-1">Quotation #{quotation.reference_number}</h1>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
