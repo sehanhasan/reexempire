@@ -50,7 +50,7 @@ export function ItemsTable({
       {isMobile ? <div className="space-y-5">
           {orderedCategories.map(category => <div key={category} className="space-y-3">
               <div className="font-medium text-base text-blue-600">{category}</div>
-              {groupedItems[category].map((item, index) => <div key={item.id} className="border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white">
+              {groupedItems[category].map((item, index) => <div key={item.id} className="border rounded-md p-3 space-y-2 relative bg-white">
                   <div className="absolute top-2 right-2">
                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
                       <Trash className="h-4 w-4" />
