@@ -313,8 +313,7 @@ export default function ViewQuotation() {
           </Card>
 
           {/* Compact Additional Information */}
-          <AdditionalInfoCard 
-            subject={quotation.subject}
+          <AdditionalInfoCard
             terms={quotation.terms}
             signatureData={hasSignature ? signatureData : undefined}
           />
