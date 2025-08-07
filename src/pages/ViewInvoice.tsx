@@ -217,8 +217,6 @@ export default function ViewInvoice() {
                     {customer.unit_number && <p className="font-semibold">{customer.unit_number}</p>}
                     {customer.address && <p>{customer.address}</p>}
                     {customer.city && <p>{customer.city}, {customer.state} {customer.postal_code}</p>}
-                    {customer.phone && <p>Phone: {customer.phone}</p>}
-                    {customer.email && <p>Email: {customer.email}</p>}
                   </div>
                 </div>
               </div>
