@@ -28,7 +28,7 @@ export function AdditionalInfoCard({ subject, terms, signatureData }: Additional
 
         {terms && (
           <div>
-            <h4 className="font-medium text-sm text-muted-foreground mt-2 mb-2">Terms & Conditions</h4>
+            <h4 className="font-medium text-sm text-muted-foreground mt-4 mb-2">Terms & Conditions</h4>
             <p className="text-sm whitespace-pre-wrap">{terms}</p>
           </div>
         )}
