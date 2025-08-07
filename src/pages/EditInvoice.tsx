@@ -8,13 +8,10 @@ import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
-import { invoiceService, customerService, quotationService } from "@/services";
-import { Customer, Quotation } from "@/types/database";
+import { invoiceService, customerService } from "@/services";
+import { Customer, Invoice } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface ExtendedQuotation extends Quotation {
-  subject?: string | null;
-}
+import { shareInvoice } from "@/utils/mobileShare";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
@@ -32,9 +29,9 @@ export default function EditInvoice() {
   }]);
   const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [quotationData, setQuotationData] = useState<Quotation | null>(null);
-  const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split("T")[0]);
-  const [validUntil, setValidUntil] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
+  const [invoiceData, setInvoiceData] = useState<Invoice | null>(null);
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState("");
   const [subject, setSubject] = useState("");
@@ -50,43 +47,47 @@ export default function EditInvoice() {
 
   useEffect(() => {
     if (!id) return;
-    const fetchQuotationData = async () => {
+    const fetchInvoiceData = async () => {
       try {
         setIsLoading(true);
+        console.log("Fetching invoice data for ID:", id);
 
-        const quotation = await quotationService.getById(id);
-        if (quotation) {
-          setQuotationData(quotation);
-          setCustomerId(quotation.customer_id);
-          setDocumentNumber(quotation.reference_number);
-          setQuotationDate(quotation.issue_date);
-          setValidUntil(quotation.expiry_date);
-          setNotes(quotation.notes || "");
-          setTerms(quotation.terms || "");
-          
-          setSubject((quotation as ExtendedQuotation).subject || ""); 
-          setStatus(quotation.status);
+        const invoice = await invoiceService.getById(id);
+        if (invoice) {
+          console.log("Invoice data fetched:", invoice);
+          setInvoiceData(invoice);
+          setCustomerId(invoice.customer_id);
+          setDocumentNumber(invoice.reference_number);
+          setInvoiceDate(invoice.issue_date);
+          setDueDate(invoice.due_date);
+          setNotes(invoice.notes || "");
+          setTerms(invoice.terms || "");
+          setSubject(invoice.subject || "");
+          setStatus(invoice.status);
 
+          // For invoices, deposit info might not be as relevant, but keeping for consistency
           setDepositInfo({
-            requiresDeposit: quotation.requires_deposit || false,
-            depositAmount: quotation.deposit_amount || 0,
-            depositPercentage: quotation.deposit_percentage || 50
+            requiresDeposit: false,
+            depositAmount: 0,
+            depositPercentage: 0
           });
 
-          if (quotation.customer_id) {
-            const customerData = await customerService.getById(quotation.customer_id);
+          if (invoice.customer_id) {
+            const customerData = await customerService.getById(invoice.customer_id);
             setCustomer(customerData);
+            console.log("Customer data fetched:", customerData);
           }
 
-          const quotationItems = await quotationService.getItemsByQuotationId(id);
-          if (quotationItems && quotationItems.length > 0) {
+          const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
+          if (invoiceItems && invoiceItems.length > 0) {
+            console.log("Invoice items fetched:", invoiceItems);
             const orderMap: {[key: number]: number} = {};
-            quotationItems.forEach((item, index) => {
+            invoiceItems.forEach((item, index) => {
               orderMap[index + 1] = index;
             });
             setOriginalItemOrder(orderMap);
             
-            setItems(quotationItems.map((item, index) => ({
+            setItems(invoiceItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
               category: item.category || "Other Items",
@@ -96,20 +97,28 @@ export default function EditInvoice() {
               amount: item.amount
             })));
           }
+        } else {
+          console.error("Invoice not found");
+          toast({
+            title: "Error",
+            description: "Invoice not found.",
+            variant: "destructive"
+          });
+          navigate("/invoices");
         }
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching quotation:", error);
+        console.error("Error fetching invoice:", error);
         setIsLoading(false);
         toast({
           title: "Error",
-          description: "Failed to fetch quotation data. Please try again.",
+          description: "Failed to fetch invoice data. Please try again.",
           variant: "destructive"
         });
-        navigate("/quotations");
+        navigate("/invoices");
       }
     };
-    fetchQuotationData();
+    fetchInvoiceData();
   }, [id, navigate]);
 
   const calculateItemAmount = (item: QuotationItem) => {
@@ -122,7 +131,7 @@ export default function EditInvoice() {
     if (!customerId || !id) {
       toast({
         title: "Missing Information",
-        description: "Please select a customer before updating the quotation.",
+        description: "Please select a customer before updating the invoice.",
         variant: "destructive"
       });
       return;
@@ -132,7 +141,7 @@ export default function EditInvoice() {
     if (validItems.length === 0) {
       toast({
         title: "Missing Items",
-        description: "Please add at least one item to the quotation.",
+        description: "Please add at least one item to the invoice.",
         variant: "destructive"
       });
       return;
@@ -146,29 +155,23 @@ export default function EditInvoice() {
     try {
       setIsSubmitting(true);
 
-      const depositPercentageValue = typeof depositInfo.depositPercentage === 'string' 
-        ? parseFloat(depositInfo.depositPercentage) 
-        : depositInfo.depositPercentage;
-
-      const quotation = {
+      const invoice = {
         customer_id: customerId,
         reference_number: documentNumber,
-        issue_date: quotationDate,
-        expiry_date: validUntil,
+        issue_date: invoiceDate,
+        due_date: dueDate,
         status: newStatus || status,
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
         terms: terms || null,
-        subject: subject || null,
-        requires_deposit: depositInfo.requiresDeposit,
-        deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
+        subject: subject || null
       };
 
-      await quotationService.update(id, quotation);
+      await invoiceService.update(id, invoice);
 
-      await quotationService.deleteAllItems(id);
+      // Delete existing items and recreate them
+      await invoiceService.deleteItemsByInvoiceId(id);
 
       const sortedItems = [...items].sort((a, b) => {
         if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
@@ -182,8 +185,8 @@ export default function EditInvoice() {
       for (const item of sortedItems) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-          await quotationService.createItem({
-            quotation_id: id,
+          await invoiceService.createItem({
+            invoice_id: id,
             description: item.description,
             quantity: qty,
             unit: item.unit,
@@ -196,43 +199,34 @@ export default function EditInvoice() {
 
       if (newStatus === "Sent") {
         toast({
-          title: "Quotation Update Sent",
-          description: `Quotation for ${customer?.name} has been updated and sent successfully.`
+          title: "Invoice Update Sent",
+          description: `Invoice for ${customer?.name} has been updated and sent successfully.`
         });
         
-        // Open WhatsApp after successful update
+        // Use mobile-friendly share function
         try {
-          const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-          
-          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-            id,
-            documentNumber,
-            customer?.name || '',
-            quotationViewUrl
-          );
-          
-          window.open(whatsappUrl, '_blank');
+          await shareInvoice(id, documentNumber, customer?.name || '');
         } catch (error) {
-          console.error("Error opening WhatsApp:", error);
+          console.error("Error sharing invoice:", error);
           toast({
-            title: "WhatsApp Error",
-            description: "Quotation updated successfully, but failed to open WhatsApp. You can share it manually.",
+            title: "Share Error",
+            description: "Invoice updated successfully, but failed to share. You can share it manually.",
             variant: "destructive"
           });
         }
       } else {
         toast({
-          title: "Quotation Updated",
-          description: `Quotation for ${customer?.name} has been updated successfully.`
+          title: "Invoice Updated",
+          description: `Invoice for ${customer?.name} has been updated successfully.`
         });
       }
 
-      navigate("/quotations");
+      navigate("/invoices");
     } catch (error) {
-      console.error("Error updating quotation:", error);
+      console.error("Error updating invoice:", error);
       toast({
         title: "Error",
-        description: "There was an error updating the quotation. Please try again.",
+        description: "There was an error updating the invoice. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -243,33 +237,26 @@ export default function EditInvoice() {
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
-      await quotationService.update(id, {
+      await invoiceService.update(id, {
         status: newStatus
       });
       setStatus(newStatus);
       toast({
         title: "Status Updated",
-        description: `Quotation status has been updated to "${newStatus}".`
+        description: `Invoice status has been updated to "${newStatus}".`
       });
-
-      if (newStatus === "Accepted") {
-        toast({
-          title: "Quotation Accepted",
-          description: "You can now convert this quotation to an invoice."
-        });
-      }
     } catch (error) {
       console.error("Error updating status:", error);
       toast({
         title: "Error",
-        description: "Failed to update quotation status. Please try again.",
+        description: "Failed to update invoice status. Please try again.",
         variant: "destructive"
       });
     }
   };
 
-  const handleSendWhatsapp = () => {
-    if (!quotationData || !customer) {
+  const handleSendWhatsapp = async () => {
+    if (!invoiceData || !customer) {
       toast({
         title: "Missing Information",
         description: "Customer information not found.",
@@ -279,21 +266,12 @@ export default function EditInvoice() {
     }
     
     try {
-      const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-      
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-        id!,
-        quotationData.reference_number,
-        customer.name,
-        quotationViewUrl
-      );
-      
-      window.open(whatsappUrl, '_blank');
+      await shareInvoice(id!, invoiceData.reference_number, customer.name);
     } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
+      console.error("Error sharing invoice:", error);
       toast({
         title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
+        description: "Failed to share invoice. Please try again.",
         variant: "destructive"
       });
     }
@@ -310,12 +288,12 @@ export default function EditInvoice() {
 
   return <div className="page-container">
       <PageHeader 
-        title="Edit Quotation"
+        title="Edit Invoice"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/quotations")}>
+            <Button variant="outline" onClick={() => navigate("/invoices")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Quotations
+              Back to Invoices
             </Button>
           </div>
         } 
@@ -324,25 +302,25 @@ export default function EditInvoice() {
       {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col gap-3">
             <div>
-              <h3 className="font-medium">Quotation Status: <span className="text-amber-600">Sent</span></h3>
-              <p className="text-sm text-muted-foreground">Update the status of this quotation</p>
+              <h3 className="font-medium">Invoice Status: <span className="text-amber-600">Sent</span></h3>
+              <p className="text-sm text-muted-foreground">Update the status of this invoice</p>
             </div>
             <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
               <Button 
                 variant="outline" 
                 className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
-                onClick={() => handleStatusChange("Rejected")}
+                onClick={() => handleStatusChange("Overdue")}
               >
                 <XCircle className="mr-2 h-4 w-4" />
-                Mark as Rejected
+                Mark as Overdue
               </Button>
               <Button 
                 variant="outline" 
                 className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
-                onClick={() => handleStatusChange("Accepted")}
+                onClick={() => handleStatusChange("Paid")}
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Accepted
+                Mark as Paid
               </Button>
               <Button 
                 variant="outline" 
@@ -360,13 +338,13 @@ export default function EditInvoice() {
         <CustomerInfoCard 
           customerId={customerId} 
           setCustomer={setCustomerId} 
-          documentType="quotation" 
+          documentType="invoice" 
           documentNumber={documentNumber} 
           setDocumentNumber={setDocumentNumber} 
-          documentDate={quotationDate} 
-          setDocumentDate={setQuotationDate} 
-          expiryDate={validUntil} 
-          setExpiryDate={setValidUntil} 
+          documentDate={invoiceDate} 
+          setDocumentDate={setInvoiceDate} 
+          expiryDate={dueDate} 
+          setExpiryDate={setDueDate} 
           subject={subject} 
           setSubject={setSubject} 
         />
@@ -380,9 +358,11 @@ export default function EditInvoice() {
         />
         
         <AdditionalInfoForm 
+          terms={terms}
+          setTerms={setTerms}
           onSubmit={handleSubmit}
-          onCancel={() => navigate("/quotations")} 
-          documentType="quotation" 
+          onCancel={() => navigate("/invoices")} 
+          documentType="invoice" 
           isSubmitting={isSubmitting}
           showDraft={false}
         />

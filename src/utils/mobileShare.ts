@@ -86,9 +86,36 @@ const copyToClipboard = async (text: string): Promise<void> => {
   }
 };
 
+const generateWhatsAppUrl = (phoneNumber: string, message: string): string => {
+  // Use the mobile app friendly format: wa.me/{phone}?text=
+  const encodedMessage = encodeURIComponent(message);
+  
+  // Clean phone number (remove spaces, dashes, etc.)
+  const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+  
+  if (cleanPhone) {
+    return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+  } else {
+    // Fallback to text-only if no phone number
+    return `https://wa.me/?text=${encodedMessage}`;
+  }
+};
+
 export const shareQuotation = async (quotationId: string, referenceNumber: string, customerName: string): Promise<void> => {
   const quotationUrl = `${window.location.origin}/quotations/view/${quotationId}`;
   
+  const message = `Quotation #${referenceNumber} for ${customerName}\n\nView: ${quotationUrl}`;
+  
+  // Try to get customer phone number from context or use fallback
+  const whatsappUrl = generateWhatsAppUrl('', message);
+  
+  // Open WhatsApp directly for mobile apps
+  if (isMobileApp()) {
+    window.open(whatsappUrl, '_blank');
+    return;
+  }
+
+  // For web, use the share API
   const shareData: ShareData = {
     title: `Quotation #${referenceNumber}`,
     text: `Quotation #${referenceNumber} for ${customerName}`,
@@ -101,6 +128,18 @@ export const shareQuotation = async (quotationId: string, referenceNumber: strin
 export const shareInvoice = async (invoiceId: string, referenceNumber: string, customerName: string): Promise<void> => {
   const invoiceUrl = `${window.location.origin}/invoices/view/${invoiceId}`;
   
+  const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
+  
+  // Try to get customer phone number from context or use fallback
+  const whatsappUrl = generateWhatsAppUrl('', message);
+  
+  // Open WhatsApp directly for mobile apps
+  if (isMobileApp()) {
+    window.open(whatsappUrl, '_blank');
+    return;
+  }
+
+  // For web, use the share API
   const shareData: ShareData = {
     title: `Invoice #${referenceNumber}`,
     text: `Invoice #${referenceNumber} for ${customerName}`,

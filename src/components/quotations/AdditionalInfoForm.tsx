@@ -1,9 +1,12 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { shareQuotation, shareInvoice } from '@/utils/mobileShare';
+
 interface AdditionalInfoFormProps {
   terms?: string;
   setTerms?: (terms: string) => void;
@@ -13,7 +16,11 @@ interface AdditionalInfoFormProps {
   isSubmitting: boolean;
   showDraft?: boolean;
   onSendWhatsapp?: () => void;
+  documentId?: string;
+  documentNumber?: string;
+  customerName?: string;
 }
+
 export function AdditionalInfoForm({
   terms,
   setTerms,
@@ -21,9 +28,35 @@ export function AdditionalInfoForm({
   onCancel,
   documentType,
   isSubmitting,
-  showDraft = false
+  showDraft = false,
+  onSendWhatsapp,
+  documentId,
+  documentNumber,
+  customerName
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
+
+  const handleSendWithShare = async (e: React.FormEvent) => {
+    // First submit the document
+    await onSubmit(e, "Sent");
+    
+    // Then try to share via mobile if we have the required data
+    if (documentId && documentNumber && customerName) {
+      try {
+        if (documentType === 'quotation') {
+          await shareQuotation(documentId, documentNumber, customerName);
+        } else {
+          await shareInvoice(documentId, documentNumber, customerName);
+        }
+      } catch (error) {
+        console.error(`Error sharing ${documentType}:`, error);
+      }
+    } else if (onSendWhatsapp) {
+      // Fallback to the provided WhatsApp handler
+      onSendWhatsapp();
+    }
+  };
+
   return <Card className="shadow-sm">
       
       <CardContent className="py-4 px-4 space-y-4">
@@ -41,7 +74,7 @@ export function AdditionalInfoForm({
               {isSubmitting ? "Saving..." : "Save as Draft"}
             </Button>}
 
-          <Button type="button" onClick={e => onSubmit(e, documentType === "quotation" ? "Sent" : "Sent")} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
+          <Button type="button" onClick={handleSendWithShare} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
             {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`}
           </Button>
         </div>
