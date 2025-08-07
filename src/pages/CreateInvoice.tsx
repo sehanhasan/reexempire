@@ -277,7 +277,7 @@ export default function CreateInvoice() {
       
       const invoice = {
         customer_id: customerId,
-        quotation_id: quotationId,
+        quotation_id: quotationReference,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
