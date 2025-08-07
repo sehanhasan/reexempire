@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice, InvoiceImage } from "@/types/database";
+import { Invoice, InvoiceImage, Customer } from "@/types/database";
 
 const getAll = async (): Promise<Invoice[]> => {
   const { data, error } = await supabase
@@ -15,18 +15,35 @@ const getAll = async (): Promise<Invoice[]> => {
   return data || [];
 };
 
-const getById = async (id: string): Promise<Invoice | null> => {
-  const { data, error } = await supabase
+const getById = async (id: string): Promise<(Invoice & { customer?: Customer }) | null> => {
+  const { data: invoice, error: invoiceError } = await supabase
     .from('invoices')
     .select('*')
     .eq('id', id)
     .single();
 
-  if (error) {
-    throw error;
+  if (invoiceError) {
+    throw invoiceError;
   }
 
-  return data || null;
+  if (!invoice) return null;
+
+  // Fetch customer data
+  const { data: customer, error: customerError } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('id', invoice.customer_id)
+    .single();
+
+  if (customerError) {
+    console.error('Error fetching customer:', customerError);
+    return invoice;
+  }
+
+  return {
+    ...invoice,
+    customer
+  };
 };
 
 const create = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<Invoice> => {
@@ -147,6 +164,11 @@ const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
   return data || [];
 };
 
+const getImages = async (invoiceId: string): Promise<string[]> => {
+  const images = await getInvoiceImages(invoiceId);
+  return images.map(img => img.image_url);
+};
+
 const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   const { error } = await supabase
     .from('invoice_items')
@@ -170,6 +192,7 @@ export const invoiceService = {
   deleteItem,
   addInvoiceImage,
   getInvoiceImages,
+  getImages,
   deleteItemsByInvoiceId
 };
 
