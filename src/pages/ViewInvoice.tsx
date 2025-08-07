@@ -48,6 +48,7 @@ export default function ViewInvoice() {
         setLoading(true);
         console.log("Fetching invoice data for ID:", id);
         
+        // Only fetch invoice-related data
         const [invoiceData, itemsData, imagesData] = await Promise.all([
           invoiceService.getById(id),
           invoiceService.getItemsByInvoiceId(id),
@@ -63,7 +64,7 @@ export default function ViewInvoice() {
           setItems(itemsData || []);
           setImages(imagesData || []);
           
-          // Fetch customer data
+          // Fetch customer data only if invoice exists
           if (invoiceData.customer_id) {
             console.log("Fetching customer data for ID:", invoiceData.customer_id);
             const customerData = await customerService.getById(invoiceData.customer_id);
@@ -181,6 +182,25 @@ export default function ViewInvoice() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
+      {/* Action Buttons - Mobile friendly share */}
+      <div className="fixed top-4 right-4 z-10 flex gap-2 print:hidden">
+        <Button
+          onClick={handleShare}
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <Share2 className="h-4 w-4 mr-1" />
+          Share
+        </Button>
+        <Button
+          onClick={handlePrintPDF}
+          size="sm"
+          variant="outline"
+        >
+          <Download className="h-4 w-4 mr-1" />
+          PDF
+        </Button>
+      </div>
 
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
