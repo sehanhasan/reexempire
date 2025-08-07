@@ -8,13 +8,11 @@ import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
-import { invoiceService, customerService, quotationService } from "@/services";
-import { Customer, Quotation } from "@/types/database";
+import { invoiceService, customerService } from "@/services";
+import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { shareInvoice } from "@/utils/mobileShare";
 
-interface ExtendedQuotation extends Quotation {
-  subject?: string | null;
-}
 
 export default function EditInvoice() {
   const navigate = useNavigate();
@@ -50,43 +48,41 @@ export default function EditInvoice() {
 
   useEffect(() => {
     if (!id) return;
-    const fetchQuotationData = async () => {
+    const fetchInvoiceData = async () => {
       try {
         setIsLoading(true);
 
-        const quotation = await quotationService.getById(id);
-        if (quotation) {
-          setQuotationData(quotation);
-          setCustomerId(quotation.customer_id);
-          setDocumentNumber(quotation.reference_number);
-          setQuotationDate(quotation.issue_date);
-          setValidUntil(quotation.expiry_date);
-          setNotes(quotation.notes || "");
-          setTerms(quotation.terms || "");
-          
-          setSubject((quotation as ExtendedQuotation).subject || ""); 
-          setStatus(quotation.status);
+        const invoice = await invoiceService.getById(id);
+        if (invoice) {
+          setCustomerId(invoice.customer_id);
+          setDocumentNumber(invoice.reference_number);
+          setQuotationDate(invoice.issue_date);
+          setValidUntil(invoice.due_date);
+          setNotes(invoice.notes || "");
+          setTerms(invoice.terms || "");
+          setSubject(invoice.subject || "");
+          setStatus(invoice.status);
 
           setDepositInfo({
-            requiresDeposit: quotation.requires_deposit || false,
-            depositAmount: quotation.deposit_amount || 0,
-            depositPercentage: quotation.deposit_percentage || 50
+            requiresDeposit: invoice.is_deposit_invoice || false,
+            depositAmount: invoice.deposit_amount || 0,
+            depositPercentage: invoice.deposit_percentage || 50
           });
 
-          if (quotation.customer_id) {
-            const customerData = await customerService.getById(quotation.customer_id);
+          if (invoice.customer_id) {
+            const customerData = await customerService.getById(invoice.customer_id);
             setCustomer(customerData);
           }
 
-          const quotationItems = await quotationService.getItemsByQuotationId(id);
-          if (quotationItems && quotationItems.length > 0) {
+          const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
+          if (invoiceItems && invoiceItems.length > 0) {
             const orderMap: {[key: number]: number} = {};
-            quotationItems.forEach((item, index) => {
+            invoiceItems.forEach((item, index) => {
               orderMap[index + 1] = index;
             });
             setOriginalItemOrder(orderMap);
             
-            setItems(quotationItems.map((item, index) => ({
+            setItems(invoiceItems.map((item, index) => ({
               id: index + 1,
               description: item.description,
               category: item.category || "Other Items",
@@ -97,19 +93,19 @@ export default function EditInvoice() {
             })));
           }
         }
-        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching quotation:", error);
-        setIsLoading(false);
+        console.error("Error fetching invoice:", error);
         toast({
           title: "Error",
-          description: "Failed to fetch quotation data. Please try again.",
+          description: "Failed to fetch invoice data. Please try again.",
           variant: "destructive"
         });
-        navigate("/quotations");
+        navigate("/invoices");
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchQuotationData();
+    fetchInvoiceData();
   }, [id, navigate]);
 
   const calculateItemAmount = (item: QuotationItem) => {
@@ -122,7 +118,7 @@ export default function EditInvoice() {
     if (!customerId || !id) {
       toast({
         title: "Missing Information",
-        description: "Please select a customer before updating the quotation.",
+        description: "Please select a customer before updating the invoice.",
         variant: "destructive"
       });
       return;
@@ -132,7 +128,7 @@ export default function EditInvoice() {
     if (validItems.length === 0) {
       toast({
         title: "Missing Items",
-        description: "Please add at least one item to the quotation.",
+        description: "Please add at least one item to the invoice.",
         variant: "destructive"
       });
       return;
@@ -150,25 +146,25 @@ export default function EditInvoice() {
         ? parseFloat(depositInfo.depositPercentage) 
         : depositInfo.depositPercentage;
 
-      const quotation = {
+      const invoiceUpdates = {
         customer_id: customerId,
         reference_number: documentNumber,
         issue_date: quotationDate,
-        expiry_date: validUntil,
+        due_date: validUntil,
         status: newStatus || status,
         subtotal: subtotal,
         total: subtotal,
         notes: notes || null,
         terms: terms || null,
         subject: subject || null,
-        requires_deposit: depositInfo.requiresDeposit,
+        is_deposit_invoice: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
-      };
+      } as const;
 
-      await quotationService.update(id, quotation);
+      await invoiceService.update(id, invoiceUpdates as any);
 
-      await quotationService.deleteAllItems(id);
+      await invoiceService.deleteItemsByInvoiceId(id);
 
       const sortedItems = [...items].sort((a, b) => {
         if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
@@ -182,8 +178,8 @@ export default function EditInvoice() {
       for (const item of sortedItems) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-          await quotationService.createItem({
-            quotation_id: id,
+          await invoiceService.createItem({
+            invoice_id: id,
             description: item.description,
             quantity: qty,
             unit: item.unit,
@@ -194,45 +190,17 @@ export default function EditInvoice() {
         }
       }
 
-      if (newStatus === "Sent") {
-        toast({
-          title: "Quotation Update Sent",
-          description: `Quotation for ${customer?.name} has been updated and sent successfully.`
-        });
-        
-        // Open WhatsApp after successful update
-        try {
-          const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-          
-          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-            id,
-            documentNumber,
-            customer?.name || '',
-            quotationViewUrl
-          );
-          
-          window.open(whatsappUrl, '_blank');
-        } catch (error) {
-          console.error("Error opening WhatsApp:", error);
-          toast({
-            title: "WhatsApp Error",
-            description: "Quotation updated successfully, but failed to open WhatsApp. You can share it manually.",
-            variant: "destructive"
-          });
-        }
-      } else {
-        toast({
-          title: "Quotation Updated",
-          description: `Quotation for ${customer?.name} has been updated successfully.`
-        });
-      }
+      toast({
+        title: "Invoice Updated",
+        description: `Invoice for ${customer?.name} has been updated successfully.`
+      });
 
-      navigate("/quotations");
+      navigate("/invoices");
     } catch (error) {
-      console.error("Error updating quotation:", error);
+      console.error("Error updating invoice:", error);
       toast({
         title: "Error",
-        description: "There was an error updating the quotation. Please try again.",
+        description: "There was an error updating the invoice. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -243,33 +211,26 @@ export default function EditInvoice() {
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
-      await quotationService.update(id, {
+      await invoiceService.update(id, {
         status: newStatus
-      });
+      } as any);
       setStatus(newStatus);
       toast({
         title: "Status Updated",
-        description: `Quotation status has been updated to "${newStatus}".`
+        description: `Invoice status has been updated to "${newStatus}".`
       });
-
-      if (newStatus === "Accepted") {
-        toast({
-          title: "Quotation Accepted",
-          description: "You can now convert this quotation to an invoice."
-        });
-      }
     } catch (error) {
       console.error("Error updating status:", error);
       toast({
         title: "Error",
-        description: "Failed to update quotation status. Please try again.",
+        description: "Failed to update invoice status. Please try again.",
         variant: "destructive"
       });
     }
   };
 
-  const handleSendWhatsapp = () => {
-    if (!quotationData || !customer) {
+  const handleSendWhatsapp = async () => {
+    if (!id || !customer) {
       toast({
         title: "Missing Information",
         description: "Customer information not found.",
@@ -277,23 +238,15 @@ export default function EditInvoice() {
       });
       return;
     }
-    
+
     try {
-      const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-      
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-        id!,
-        quotationData.reference_number,
-        customer.name,
-        quotationViewUrl
-      );
-      
-      window.open(whatsappUrl, '_blank');
+      await shareInvoice(id, documentNumber, customer.name);
+      toast({ title: "Shared", description: "Invoice link shared." });
     } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
+      console.error("Error sharing invoice:", error);
       toast({
         title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
+        description: "Failed to share. Please try again.",
         variant: "destructive"
       });
     }

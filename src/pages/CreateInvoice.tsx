@@ -277,7 +277,7 @@ export default function CreateInvoice() {
       
       const invoice = {
         customer_id: customerId,
-        quotation_id: quotationId,
+        quotation_id: null, // store reference text instead of UUID
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
@@ -286,7 +286,7 @@ export default function CreateInvoice() {
         tax_rate: 0,
         tax_amount: 0,
         total: total,
-        notes: notes || null,
+        notes: [notes || null, quotationReference ? `Quotation Ref: ${quotationReference}` : null].filter(Boolean).join('\n') || null,
         subject: subject || null,
         terms: null,
         is_deposit_invoice: isDepositInvoice,
