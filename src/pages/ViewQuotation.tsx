@@ -171,26 +171,6 @@ export default function ViewQuotation() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-      {/* Action Buttons - Mobile friendly share */}
-      <div className="fixed top-4 right-4 z-10 flex gap-2 print:hidden">
-        <Button
-          onClick={handleShare}
-          size="sm"
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Share2 className="h-4 w-4 mr-1" />
-          Share
-        </Button>
-        <Button
-          onClick={handleDownloadPDF}
-          size="sm"
-          variant="outline"
-          disabled={isProcessing}
-        >
-          <Download className="h-4 w-4 mr-1" />
-          PDF
-        </Button>
-      </div>
 
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
