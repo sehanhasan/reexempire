@@ -244,12 +244,12 @@ export default function ViewQuotation() {
                       <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
                     </tr>
                   </thead>
-                   <tbody>
-                    {categories.map((category, categoryIndex) => (
+                  <tbody>
+                    {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1} - {category}
+                            {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => (
