@@ -11,17 +11,17 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { shareQuotation } from "@/utils/mobileShare";
-
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
-
 export default function EditQuotation() {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const isMobile = useIsMobile();
-  
   const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<QuotationItem[]>([{
     id: 1,
@@ -48,8 +48,9 @@ export default function EditQuotation() {
     depositAmount: 0,
     depositPercentage: 50
   });
-  const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
-
+  const [originalItemOrder, setOriginalItemOrder] = useState<{
+    [key: number]: number;
+  }>({});
   useEffect(() => {
     if (!id) return;
     const fetchQuotationData = async () => {
@@ -77,7 +78,9 @@ export default function EditQuotation() {
           }
           const quotationItems = await quotationService.getItemsByQuotationId(id);
           if (quotationItems && quotationItems.length > 0) {
-            const orderMap: {[key: number]: number} = {};
+            const orderMap: {
+              [key: number]: number;
+            } = {};
             quotationItems.forEach((item, index) => {
               orderMap[index + 1] = index;
             });
@@ -107,34 +110,10 @@ export default function EditQuotation() {
     };
     fetchQuotationData();
   }, [id, navigate]);
-
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
-
-  const handleShare = async () => {
-    if (!quotationData || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Customer information not found.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      await shareQuotation(id!, quotationData.reference_number, customer.name);
-    } catch (error) {
-      console.error("Error sharing quotation:", error);
-      toast({
-        title: "Error",
-        description: "Failed to share quotation. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
     e.preventDefault();
     if (!customerId || !id) {
@@ -145,7 +124,6 @@ export default function EditQuotation() {
       });
       return;
     }
-
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
@@ -155,19 +133,13 @@ export default function EditQuotation() {
       });
       return;
     }
-
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + qty * item.unitPrice;
     }, 0);
-
     try {
       setIsSubmitting(true);
-
-      const depositPercentageValue = typeof depositInfo.depositPercentage === 'string' 
-        ? parseFloat(depositInfo.depositPercentage) 
-        : depositInfo.depositPercentage;
-
+      const depositPercentageValue = typeof depositInfo.depositPercentage === 'string' ? parseFloat(depositInfo.depositPercentage) : depositInfo.depositPercentage;
       const quotation = {
         customer_id: customerId,
         reference_number: documentNumber,
@@ -183,10 +155,8 @@ export default function EditQuotation() {
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
       };
-
       await quotationService.update(id, quotation);
       await quotationService.deleteAllItems(id);
-
       const sortedItems = [...items].sort((a, b) => {
         if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
           return originalItemOrder[a.id] - originalItemOrder[b.id];
@@ -195,7 +165,6 @@ export default function EditQuotation() {
         if (originalItemOrder[b.id] !== undefined) return 1;
         return a.id - b.id;
       });
-
       for (const item of sortedItems) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -210,21 +179,22 @@ export default function EditQuotation() {
           });
         }
       }
-
       if (newStatus === "Sent") {
         toast({
           title: "Quotation Update Sent",
           description: `Quotation for ${customer?.name} has been updated and sent successfully.`
         });
 
-        // Share via mobile share utility
+        // Open WhatsApp after successful update
         try {
-          await shareQuotation(id, documentNumber, customer?.name || '');
+          const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
+          const whatsappUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
+          window.open(whatsappUrl, '_blank');
         } catch (error) {
-          console.error("Error sharing quotation:", error);
+          console.error("Error opening WhatsApp:", error);
           toast({
-            title: "Share Error",
-            description: "Quotation updated successfully, but failed to share. You can share it manually.",
+            title: "WhatsApp Error",
+            description: "Quotation updated successfully, but failed to open WhatsApp. You can share it manually.",
             variant: "destructive"
           });
         }
@@ -234,7 +204,6 @@ export default function EditQuotation() {
           description: `Quotation for ${customer?.name} has been updated successfully.`
         });
       }
-
       navigate("/quotations");
     } catch (error) {
       console.error("Error updating quotation:", error);
@@ -247,7 +216,6 @@ export default function EditQuotation() {
       setIsSubmitting(false);
     }
   };
-
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
@@ -259,7 +227,6 @@ export default function EditQuotation() {
         title: "Status Updated",
         description: `Quotation status has been updated to "${newStatus}".`
       });
-
       if (newStatus === "Accepted") {
         toast({
           title: "Quotation Accepted",
@@ -275,7 +242,28 @@ export default function EditQuotation() {
       });
     }
   };
-
+  const handleSendWhatsapp = () => {
+    if (!quotationData || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Customer information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+    try {
+      const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
+      const whatsappUrl = quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name, quotationViewUrl);
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
   if (isLoading) {
     return <div className="page-container">
         <PageHeader title="Edit Quotation" />
@@ -284,19 +272,13 @@ export default function EditQuotation() {
         </div>
       </div>;
   }
-
   return <div className="page-container">
-      <PageHeader 
-        title="Edit Quotation"
-        actions={
-          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+      <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
-          </div>
-        } 
-      />
+          </div>} />
 
       {status === "Sent" && <div className="rounded-md p-4 mt-1 bg-white">
           <div className="flex flex-col gap-3">
@@ -305,27 +287,15 @@ export default function EditQuotation() {
               <p className="text-sm text-muted-foreground">Update the status of this quotation</p>
             </div>
             <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
-                onClick={() => handleStatusChange("Rejected")}
-              >
+              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} onClick={() => handleStatusChange("Rejected")}>
                 <XCircle className="mr-2 h-4 w-4" />
                 Mark as Rejected
               </Button>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
-                onClick={() => handleStatusChange("Accepted")}
-              >
+              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} onClick={() => handleStatusChange("Accepted")}>
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Mark as Accepted
               </Button>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-                onClick={handleShare}
-              >
+              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} onClick={handleSendWhatsapp}>
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp
               </Button>
@@ -334,37 +304,11 @@ export default function EditQuotation() {
         </div>}
 
       <form className="mt-8 space-y-6">
-        <CustomerInfoCard 
-          customerId={customerId} 
-          setCustomer={setCustomerId} 
-          documentType="quotation" 
-          documentNumber={documentNumber} 
-          setDocumentNumber={setDocumentNumber} 
-          documentDate={quotationDate} 
-          setDocumentDate={setQuotationDate} 
-          expiryDate={validUntil} 
-          setExpiryDate={setValidUntil} 
-          subject={subject} 
-          setSubject={setSubject} 
-        />
+        <CustomerInfoCard customerId={customerId} setCustomer={setCustomerId} documentType="quotation" documentNumber={documentNumber} setDocumentNumber={setDocumentNumber} documentDate={quotationDate} setDocumentDate={setQuotationDate} expiryDate={validUntil} setExpiryDate={setValidUntil} subject={subject} setSubject={setSubject} />
         
-        <QuotationItemsCard 
-          items={items} 
-          setItems={setItems} 
-          depositInfo={depositInfo} 
-          setDepositInfo={setDepositInfo} 
-          calculateItemAmount={calculateItemAmount} 
-        />
+        <QuotationItemsCard items={items} setItems={setItems} depositInfo={depositInfo} setDepositInfo={setDepositInfo} calculateItemAmount={calculateItemAmount} />
         
-        <AdditionalInfoForm 
-          terms={terms}
-          setTerms={setTerms}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/quotations")} 
-          documentType="quotation" 
-          isSubmitting={isSubmitting}
-          showDraft={false}
-        />
+        <AdditionalInfoForm terms={terms} setTerms={setTerms} onSubmit={handleSubmit} onCancel={() => navigate("/quotations")} documentType="quotation" isSubmitting={isSubmitting} showDraft={false} />
       </form>
     </div>;
 }
