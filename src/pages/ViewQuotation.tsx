@@ -201,12 +201,12 @@ export default function ViewQuotation() {
               {/* Right Column - Quotation Details and Customer */}
               <div>
                 <div className="mb-3">
-                  <h1 className="text-xl font-bold text-gray-900 mb-1">Quotation #{quotation.reference_number}</h1>
-                  <Badge variant={isAccepted ? "default" : "secondary"}>
+                  <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
+                  <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
                     {quotation.status}
                   </Badge>
                     {hasSignature && (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Signed
                       </Badge>
