@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
 
@@ -172,7 +171,7 @@ export const quotationService = {
     }
   },
 
-  generateWhatsAppShareUrl(quotationId: string, quotationNumber: string, customerName: string, previewUrl: string): string {
+  generateWhatsAppShareUrl(quotationId: string, quotationNumber: string, customerName: string, previewUrl: string, customerPhone?: string): string {
     const message = `Dear ${customerName},\n\n` +
       `Please find your quotation ${quotationNumber} for review at the link below: ` +
       `${previewUrl}\n\n` +
@@ -180,6 +179,13 @@ export const quotationService = {
       `If you have any questions, please don't hesitate to contact us.\n\n` +
       `Thank you,\nReex Empire Sdn Bhd`;
     
-    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+    // Clean phone number (remove spaces, dashes, etc.)
+    const cleanPhone = customerPhone ? customerPhone.replace(/[^\d+]/g, '') : '';
+    
+    if (cleanPhone) {
+      return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    } else {
+      return `https://wa.me/?text=${encodeURIComponent(message)}`;
+    }
   }
 };

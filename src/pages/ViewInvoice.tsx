@@ -115,7 +115,7 @@ export default function ViewInvoice() {
     }
 
     try {
-      await shareInvoice(invoice.id, invoice.reference_number, customer.name);
+      await shareInvoice(invoice.id, invoice.reference_number, customer.name, customer.phone);
       toast({
         title: "Success",
         description: "Invoice shared successfully!"
@@ -167,7 +167,7 @@ export default function ViewInvoice() {
   const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
   const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
 
-  // Group items by category
+  // Group items by category with number sequence
   const groupedItems = {};
   items.forEach(item => {
     const category = item.category || "Other Items";
@@ -184,6 +184,21 @@ export default function ViewInvoice() {
 
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
+          {/* Header Actions */}
+          <div className="flex justify-between items-center print:hidden">
+            <h1 className="text-2xl font-bold">Invoice #{invoice.reference_number}</h1>
+            <div className="flex gap-2">
+              <Button onClick={handleShare} size="sm" variant="outline">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+              <Button onClick={handlePrintPDF} size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
+            </div>
+          </div>
+
           {/* Compact Header with Company and Invoice Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="grid grid-cols-2 gap-6">
@@ -248,11 +263,11 @@ export default function ViewInvoice() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map(category => (
+                    {categories.map((category, categoryIndex) => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
+                            {categoryIndex + 1} - {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (

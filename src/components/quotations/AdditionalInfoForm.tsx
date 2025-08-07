@@ -19,6 +19,7 @@ interface AdditionalInfoFormProps {
   documentId?: string;
   documentNumber?: string;
   customerName?: string;
+  customerPhone?: string;
 }
 
 export function AdditionalInfoForm({
@@ -32,7 +33,8 @@ export function AdditionalInfoForm({
   onSendWhatsapp,
   documentId,
   documentNumber,
-  customerName
+  customerName,
+  customerPhone
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
 
@@ -44,9 +46,9 @@ export function AdditionalInfoForm({
     if (documentId && documentNumber && customerName) {
       try {
         if (documentType === 'quotation') {
-          await shareQuotation(documentId, documentNumber, customerName);
+          await shareQuotation(documentId, documentNumber, customerName, customerPhone);
         } else {
-          await shareInvoice(documentId, documentNumber, customerName);
+          await shareInvoice(documentId, documentNumber, customerName, customerPhone);
         }
       } catch (error) {
         console.error(`Error sharing ${documentType}:`, error);
@@ -57,27 +59,56 @@ export function AdditionalInfoForm({
     }
   };
 
-  return <Card className="shadow-sm">
-      
+  return (
+    <Card className="shadow-sm">
       <CardContent className="py-4 px-4 space-y-4">
-        {terms !== undefined && setTerms && <div className="space-y-2">
+        {terms !== undefined && setTerms && (
+          <div className="space-y-2">
             <Label htmlFor="terms">Terms & Conditions</Label>
-            <Textarea id="terms" placeholder="Add terms and conditions..." value={terms} onChange={e => setTerms(e.target.value)} rows={4} className="resize-none" />
-          </div>}
+            <Textarea 
+              id="terms" 
+              placeholder="Add terms and conditions..." 
+              value={terms} 
+              onChange={e => setTerms(e.target.value)} 
+              rows={4} 
+              className="resize-none" 
+            />
+          </div>
+        )}
 
         <div className={`flex gap-2 pt-4 ${isMobile ? "flex-col" : ""}`}>
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel} 
+            disabled={isSubmitting} 
+            className={isMobile ? "w-full" : ""}
+          >
             Cancel
           </Button>
           
-          {showDraft && <Button type="button" variant="secondary" onClick={e => onSubmit(e, "Draft")} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
+          {showDraft && (
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={e => onSubmit(e, "Draft")} 
+              disabled={isSubmitting} 
+              className={isMobile ? "w-full" : ""}
+            >
               {isSubmitting ? "Saving..." : "Save as Draft"}
-            </Button>}
+            </Button>
+          )}
 
-          <Button type="button" onClick={handleSendWithShare} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
+          <Button 
+            type="button" 
+            onClick={handleSendWithShare} 
+            disabled={isSubmitting} 
+            className={isMobile ? "w-full" : ""}
+          >
             {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`}
           </Button>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 }
