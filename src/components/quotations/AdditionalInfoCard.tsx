@@ -37,7 +37,7 @@ export function AdditionalInfoCard({ subject, terms, signatureData }: Additional
           <>
             {(subject || terms) && <Separator />}
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3 mt-4">Customer Signature</h4>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <img 
                   src={signatureData} 
