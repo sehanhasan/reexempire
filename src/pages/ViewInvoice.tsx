@@ -200,7 +200,7 @@ export default function ViewInvoice() {
               {/* Right Column - Invoice Details and Customer */}
               <div>
                 <div className="mb-3">
-                  <h1 className="text-xl font-bold text-gray-900 mb-1">Invoice #{invoice.reference_number}</h1>
+                  <h1 className="text-xl font-bold text-gray-900">Invoice #{invoice.reference_number}</h1>
                   <Badge className={`mb-1 ${getStatusColor(displayPaymentStatus)}`}>
                     {displayPaymentStatus}
                   </Badge>
@@ -313,7 +313,6 @@ export default function ViewInvoice() {
 
           {/* Additional Information */}
           <AdditionalInfoCard 
-            subject={invoice.subject}
             terms={invoice.terms}
           />
 
