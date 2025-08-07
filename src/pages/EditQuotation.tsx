@@ -14,6 +14,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
+import { shareQuotation } from "@/utils/mobileShare";
+
 export default function EditQuotation() {
   const navigate = useNavigate();
   const {
@@ -264,6 +266,76 @@ export default function EditQuotation() {
       });
     }
   };
+
+  const handleSendQuotation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerId || !id) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before sending the quotation.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const validItems = items.filter(item => item.description && item.unitPrice > 0);
+    if (validItems.length === 0) {
+      toast({
+        title: "Missing Items",
+        description: "Please add at least one item to the quotation.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // First update the quotation with current data
+      await handleSubmit(e, "Sent");
+      
+      // Then share via mobile share
+      if (customer) {
+        await shareQuotation(id, documentNumber, customer.name);
+        toast({
+          title: "Quotation Shared",
+          description: "Quotation has been shared successfully!"
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing quotation:", error);
+      toast({
+        title: "Share Error",
+        description: "Failed to share quotation, but it was updated successfully.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    if (!quotationData || !customer || !id) {
+      toast({
+        title: "Missing Information",
+        description: "Customer or quotation information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await shareQuotation(id, quotationData.reference_number, customer.name);
+      toast({
+        title: "Success",
+        description: "Quotation shared successfully!"
+      });
+    } catch (error) {
+      console.error("Error sharing quotation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to share quotation",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (isLoading) {
     return <div className="page-container">
         <PageHeader title="Edit Quotation" />
@@ -272,6 +344,7 @@ export default function EditQuotation() {
         </div>
       </div>;
   }
+
   return <div className="page-container">
       <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
@@ -295,9 +368,9 @@ export default function EditQuotation() {
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Mark as Accepted
               </Button>
-              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} onClick={handleSendWhatsapp}>
+              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} onClick={handleShare}>
                 <Share2 className="mr-2 h-4 w-4" />
-                Share via WhatsApp
+                Share Quotation
               </Button>
             </div>
           </div>
@@ -308,7 +381,25 @@ export default function EditQuotation() {
         
         <QuotationItemsCard items={items} setItems={setItems} depositInfo={depositInfo} setDepositInfo={setDepositInfo} calculateItemAmount={calculateItemAmount} />
         
-        <AdditionalInfoForm terms={terms} setTerms={setTerms} onSubmit={handleSubmit} onCancel={() => navigate("/quotations")} documentType="quotation" isSubmitting={isSubmitting} showDraft={false} />
+        <AdditionalInfoForm 
+          terms={terms} 
+          setTerms={setTerms} 
+          onSubmit={(e) => handleSubmit(e)} 
+          onCancel={() => navigate("/quotations")} 
+          documentType="quotation" 
+          isSubmitting={isSubmitting} 
+          showDraft={false}
+          extraActions={
+            <Button 
+              type="button" 
+              onClick={handleSendQuotation}
+              disabled={isSubmitting}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {isSubmitting ? 'Sending...' : 'Send Quotation'}
+            </Button>
+          }
+        />
       </form>
     </div>;
 }

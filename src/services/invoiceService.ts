@@ -30,9 +30,32 @@ const getById = async (id: string): Promise<Invoice | null> => {
 };
 
 const create = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<Invoice> => {
+  // If quotation_id is provided, get the reference number instead of storing the UUID
+  let invoiceData = { ...invoice };
+  
+  if (invoice.quotation_id) {
+    const { data: quotationData, error: quotationError } = await supabase
+      .from('quotations')
+      .select('reference_number')
+      .eq('id', invoice.quotation_id)
+      .single();
+      
+    if (quotationError) {
+      console.error('Error fetching quotation reference:', quotationError);
+    } else {
+      // Store the reference number in a custom field for display purposes
+      invoiceData = {
+        ...invoiceData,
+        notes: invoiceData.notes 
+          ? `${invoiceData.notes}\n\nQuotation Reference: ${quotationData.reference_number}`
+          : `Quotation Reference: ${quotationData.reference_number}`
+      };
+    }
+  }
+
   const { data, error } = await supabase
     .from('invoices')
-    .insert([invoice])
+    .insert([invoiceData])
     .select('*')
     .single();
 
@@ -158,6 +181,36 @@ const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   }
 };
 
+// Helper function to get quotation reference from invoice
+const getQuotationReference = async (invoiceId: string): Promise<string | null> => {
+  try {
+    const { data: invoice, error: invoiceError } = await supabase
+      .from('invoices')
+      .select('quotation_id')
+      .eq('id', invoiceId)
+      .single();
+
+    if (invoiceError || !invoice.quotation_id) {
+      return null;
+    }
+
+    const { data: quotation, error: quotationError } = await supabase
+      .from('quotations')
+      .select('reference_number')
+      .eq('id', invoice.quotation_id)
+      .single();
+
+    if (quotationError) {
+      return null;
+    }
+
+    return quotation.reference_number;
+  } catch (error) {
+    console.error('Error fetching quotation reference:', error);
+    return null;
+  }
+};
+
 export const invoiceService = {
   getAll,
   getById,
@@ -170,7 +223,8 @@ export const invoiceService = {
   deleteItem,
   addInvoiceImage,
   getInvoiceImages,
-  deleteItemsByInvoiceId
+  deleteItemsByInvoiceId,
+  getQuotationReference
 };
 
 export default invoiceService;
