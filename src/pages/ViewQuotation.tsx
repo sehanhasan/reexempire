@@ -319,7 +319,7 @@ export default function ViewQuotation() {
                 {!isSigning ? (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <p className="text-gray-600 mb-4 text-base">
-                      Click the "Accept & Sign" button above to digitally sign this quotation.
+                      Please digitally sign to accept this quotation.
                     </p>
                     <Button 
                       onClick={() => setIsSigning(true)}
