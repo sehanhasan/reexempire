@@ -19,6 +19,27 @@ export default function ViewInvoice() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Set viewport to be unresponsive and zoomable
+  useEffect(() => {
+    const viewport = document.querySelector('meta[name=viewport]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
+    } else {
+      const newViewport = document.createElement('meta');
+      newViewport.name = 'viewport';
+      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
+      document.head.appendChild(newViewport);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!id) return;
@@ -118,7 +139,7 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center">
+      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading invoice details...</p>
@@ -129,7 +150,7 @@ export default function ViewInvoice() {
 
   if (!invoice || !customer) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center">
+      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
         <div className="text-center p-8">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Invoice Not Found</h2>
@@ -159,7 +180,7 @@ export default function ViewInvoice() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
 
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
@@ -227,11 +248,11 @@ export default function ViewInvoice() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category, categoryIndex) => (
+                    {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1}- {category}
+                            {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (
