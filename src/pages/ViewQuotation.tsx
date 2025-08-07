@@ -26,27 +26,6 @@ export default function ViewQuotation() {
   const [isProcessing, setIsProcessing] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to be unresponsive and zoomable
-  useEffect(() => {
-    const viewport = document.querySelector('meta[name=viewport]');
-    if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
-    } else {
-      const newViewport = document.createElement('meta');
-      newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
-      document.head.appendChild(newViewport);
-    }
-
-    // Cleanup on unmount
-    return () => {
-      const viewport = document.querySelector('meta[name=viewport]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-      }
-    };
-  }, []);
-
   const { data: quotation, isLoading, refetch } = useQuery({
     queryKey: ['quotation', id],
     queryFn: () => quotationService.getById(id!),
@@ -132,7 +111,7 @@ export default function ViewQuotation() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
@@ -143,7 +122,7 @@ export default function ViewQuotation() {
 
   if (!quotation) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -170,7 +149,7 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
+    <div className="min-h-screen bg-background" id="quotation-view">
 
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
@@ -245,11 +224,11 @@ export default function ViewQuotation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map(category => (
+                    {categories.map((category, categoryIndex) => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
+                            {categoryIndex + 1}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => (
