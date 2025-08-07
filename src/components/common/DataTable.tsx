@@ -10,8 +10,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/compon
 
 export interface Column<T> {
   header: string;
-  accessorKey: keyof T | string;
-  cell?: ({ row }: { row: { original: T } }) => React.ReactNode;
+  accessorKey?: keyof T | string;
+  id?: string;
+  cell?: ({ row }: { row: { original: T, getValue: (key: string) => any } }) => React.ReactNode;
 }
 
 interface DataTableProps<T> {
@@ -50,6 +51,19 @@ export function DataTable<T extends Record<string, any>>({
       })
     : data;
 
+  // Helper function to get nested property value
+  const getNestedValue = (obj: any, path: string) => {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+  };
+
+  // Create a row object with getValue function for compatibility
+  const createRowObject = (rowData: T) => {
+    return {
+      original: rowData,
+      getValue: (key: string) => getNestedValue(rowData, key)
+    };
+  };
+
   // Generate labels for mobile view
   const getMobileLabel = (column: Column<T>) => {
     return column.header;
@@ -85,8 +99,8 @@ export function DataTable<T extends Record<string, any>>({
     const nameColumn = columns.find(col => 
       col.header.toLowerCase().includes('name') || 
       col.header.toLowerCase().includes('title') ||
-      col.accessorKey.toString().toLowerCase().includes('name') ||
-      col.accessorKey.toString().toLowerCase().includes('title')
+      col.accessorKey?.toString().toLowerCase().includes('name') ||
+      col.accessorKey?.toString().toLowerCase().includes('title')
     );
     return nameColumn || mobileColumns[0];
   };
@@ -118,103 +132,100 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
       
-      <Card className="shadow-sm overflow-hidden">
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="py-8 text-center bg-slate-100">
-              <p className="text-muted-foreground">Loading...</p>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-muted-foreground">{emptyMessage}</p>
+      {isLoading ? (
+        <div className="py-8 text-center bg-slate-100">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      ) : filteredData.length === 0 ? (
+        <div className="py-8 text-center">
+          <p className="text-muted-foreground">{emptyMessage}</p>
+        </div>
+      ) : (
+        <>
+          {isMobile ? (
+            <div className="p-2 space-y-3">
+              {renderCustomMobileCard ? (
+                // Use custom mobile card renderer if provided
+                filteredData.map((item) => renderCustomMobileCard(item))
+              ) : (
+                // Default mobile card rendering
+                filteredData.map((row, rowIndex) => (
+                  <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
+                    <CardContent className="p-0">
+                      {/* Card Header with primary information */}
+                      <div className="p-3 border-b bg-blue-50/30">
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium text-blue-700">
+                            {primaryColumn.cell 
+                              ? primaryColumn.cell({ row: createRowObject(row) }) 
+                              : String(getNestedValue(row, primaryColumn.accessorKey as string) || '')}
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+                      
+                      {/* Card Content */}
+                      <div className="px-3 py-2 space-y-1.5">
+                        {mobileColumns
+                          .filter(col => col !== primaryColumn) // Skip the primary column as it's already in the header
+                          .map((column, colIndex) => {
+                            // Skip empty values
+                            const cellValue = column.cell 
+                              ? column.cell({ row: createRowObject(row) }) 
+                              : getNestedValue(row, column.accessorKey as string);
+                            
+                            if (cellValue === null || cellValue === undefined || cellValue === '') {
+                              return null;
+                            }
+                            
+                            return (
+                              <div key={getCellKey(column, colIndex, rowIndex)} className="flex justify-between items-center text-sm">
+                                <span className="text-gray-500 font-medium">{getMobileLabel(column)}</span>
+                                <span className="font-normal">{cellValue}</span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                      
+                      {/* Card Footer with Actions */}
+                      {actionsColumn && actionsColumn.cell && (
+                        <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
+                          {actionsColumn.cell({ row: createRowObject(row) })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           ) : (
-            <>
-              {isMobile ? (
-                <div className="p-2 space-y-3">
-                  {renderCustomMobileCard ? (
-                    // Use custom mobile card renderer if provided
-                    filteredData.map((item) => renderCustomMobileCard(item))
-                  ) : (
-                    // Default mobile card rendering
-                    filteredData.map((row, rowIndex) => (
-                      <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
-                        <CardContent className="p-0">
-                          {/* Card Header with primary information */}
-                          <div className="p-3 border-b bg-blue-50/30">
-                            <div className="flex justify-between items-center">
-                              <div className="font-medium text-blue-700">
-                                {primaryColumn.cell 
-                                  ? primaryColumn.cell({ row: { original: row } }) 
-                                  : String(row[primaryColumn.accessorKey] || '')}
-                              </div>
-                              <ChevronRight className="h-4 w-4 text-gray-400" />
-                            </div>
-                          </div>
-                          
-                          {/* Card Content */}
-                          <div className="px-3 py-2 space-y-1.5">
-                            {mobileColumns
-                              .filter(col => col !== primaryColumn) // Skip the primary column as it's already in the header
-                              .map((column, colIndex) => {
-                                // Skip empty values
-                                const cellValue = column.cell 
-                                  ? column.cell({ row: { original: row } }) 
-                                  : row[column.accessorKey];
-                                
-                                if (cellValue === null || cellValue === undefined || cellValue === '') {
-                                  return null;
-                                }
-                                
-                                return (
-                                  <div key={getCellKey(column, colIndex, rowIndex)} className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 font-medium">{getMobileLabel(column)}</span>
-                                    <span className="font-normal">{cellValue}</span>
-                                  </div>
-                                );
-                              })}
-                          </div>
-                          
-                          {/* Card Footer with Actions */}
-                          {actionsColumn && actionsColumn.cell && (
-                            <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
-                              {actionsColumn.cell({ row: { original: row } })}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {columns.map((column, idx) => (
-                        <TableHead key={`header-${idx}-${column.header.replace(/\s+/g, '-')}`}>
-                          {column.header}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredData.map((row, rowIndex) => (
-                      <TableRow key={getRowKey(row, rowIndex)}>
-                        {columns.map((column, colIndex) => (
-                          <TableCell key={getCellKey(column, colIndex, rowIndex)}>
-                            {column.cell ? column.cell({ row: { original: row } }) : row[column.accessorKey]}
-                          </TableCell>
-                        ))}
-                      </TableRow>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {columns.map((column, idx) => (
+                    <TableHead key={`header-${idx}-${column.header.replace(/\s+/g, '-')}`}>
+                      {column.header}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredData.map((row, rowIndex) => (
+                  <TableRow key={getRowKey(row, rowIndex)}>
+                    {columns.map((column, colIndex) => (
+                      <TableCell key={getCellKey(column, colIndex, rowIndex)}>
+                        {column.cell 
+                          ? column.cell({ row: createRowObject(row) }) 
+                          : getNestedValue(row, column.accessorKey as string)}
+                      </TableCell>
                     ))}
-                  </TableBody>
-                </Table>
-              )}
-            </>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </CardContent>
-      </Card>
+        </>
+      )}
     </div>
   );
 }
-

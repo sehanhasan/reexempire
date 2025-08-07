@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, FileText, Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
@@ -116,6 +115,7 @@ export default function Quotations() {
     },
     {
       header: "Actions",
+      accessorKey: "actions",
       id: "actions",
       cell: ({ row }) => {
         const quotation = row.original;
@@ -179,18 +179,11 @@ export default function Quotations() {
         }
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Quotations ({quotations.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={quotations}
-            emptyMessage="No quotations found. Create your first quotation to get started."
-          />
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={columns}
+        data={quotations}
+        emptyMessage="No quotations found. Create your first quotation to get started."
+      />
     </div>
   );
 }

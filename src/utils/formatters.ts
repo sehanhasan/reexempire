@@ -57,3 +57,6 @@ export const formatPhoneNumber = (phone?: string): string => {
   // Return as is if it doesn't match expected formats
   return phone;
 };
+
+// Export alias for backward compatibility
+export const formatPhone = formatPhoneNumber;

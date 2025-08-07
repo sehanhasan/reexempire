@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit, Trash2, MoreHorizontal, Receipt } from "lucide-react";
@@ -134,6 +133,7 @@ export default function Invoices() {
     },
     {
       header: "Actions",
+      accessorKey: "actions", // Add accessorKey for compatibility
       id: "actions",
       cell: ({ row }) => {
         const invoice = row.original;
