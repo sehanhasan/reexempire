@@ -179,7 +179,7 @@ export default function ViewInvoice() {
               {/* Left Column - Company Logo and Details */}
               <div>
                 <img 
-                  src="/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png" 
+                  src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
                   alt="Reex Empire Logo" 
                   className="h-16 w-auto mb-3"
                 />
