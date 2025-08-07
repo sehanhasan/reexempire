@@ -131,13 +131,13 @@ export function QuotationItemsCard({
       return;
     }
 
-    const newItems: QuotationItem[] = validSelectedItems.map((selectedItem, index) => {
+    const newItems = validSelectedItems.map((selectedItem, index) => {
       const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1;
       return {
         id: newId,
         description: selectedItem.description,
         category: selectedItem.category || "",
-        quantity: selectedItem.quantity, // This is already a number from SelectedItem
+        quantity: selectedItem.quantity,
         unit: selectedItem.unit,
         unitPrice: selectedItem.price,
         amount: selectedItem.quantity * selectedItem.price

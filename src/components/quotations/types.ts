@@ -5,7 +5,7 @@ export interface ItemBase {
   id: number;
   description: string;
   category: string;
-  quantity: number; // Changed from number | string to just number
+  quantity: number | string;
   unit: string;
   unitPrice: number;
   amount: number;
