@@ -86,6 +86,12 @@ const copyToClipboard = async (text: string): Promise<void> => {
   }
 };
 
+export const shareViaWhatsApp = (message: string): void => {
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+  window.open(whatsappUrl, '_blank');
+};
+
 export const shareQuotation = async (quotationId: string, referenceNumber: string, customerName: string): Promise<void> => {
   const quotationUrl = `${window.location.origin}/quotations/view/${quotationId}`;
   

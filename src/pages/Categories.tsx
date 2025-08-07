@@ -122,7 +122,7 @@ export default function Categories() {
         <SubcategoriesDialog 
           category={selectedCategory}
           open={!!selectedCategory}
-          onClose={() => setSelectedCategory(null)}
+          onOpenChange={(open) => !open && setSelectedCategory(null)}
         />
       )}
     </div>
