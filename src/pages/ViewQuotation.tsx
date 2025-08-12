@@ -27,33 +27,35 @@ export default function ViewQuotation() {
   const [isDownloading, setIsDownloading] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to allow pinch-to-zoom while preserving desktop layout
-  useEffect(() => {
-    const viewport = document.querySelector('meta[name=viewport]');
-    const content = 'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes';
+// Set viewport to allow pinch-to-zoom while preserving desktop layout
+useEffect(() => {
+  const viewport = document.querySelector('meta[name=viewport]');
+  const prevContent = viewport?.getAttribute('content') || null;
+  const content =
+    'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes';
 
-    if (viewport) {
-      viewport.setAttribute('content', content);
-    } else {
-      const newViewport = document.createElement('meta');
-      newViewport.name = 'viewport';
-      newViewport.content = content;
-      document.head.appendChild(newViewport);
+  if (viewport) {
+    viewport.setAttribute('content', content);
+  } else {
+    const newViewport = document.createElement('meta');
+    newViewport.name = 'viewport';
+    newViewport.content = content;
+    document.head.appendChild(newViewport);
+  }
+
+  // Keep desktop-style width on mobile
+  const prevMinWidth = document.body.style.minWidth;
+  document.body.style.minWidth = '1024px';
+
+  // Cleanup on unmount (restore previous values)
+  return () => {
+    if (viewport && prevContent) {
+      viewport.setAttribute('content', prevContent);
     }
-
-    // Optional: Keep desktop-style width on mobile using CSS
-    document.body.style.minWidth = '1024px';
+    document.body.style.minWidth = prevMinWidth;
+   };
   }, []);
 
-
-    // Cleanup on unmount
-    return () => {
-      const viewport = document.querySelector('meta[name=viewport]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-      }
-    };
-  }, []);
 
   const { data: quotation, isLoading, refetch } = useQuery({
     queryKey: ['quotation', id],
