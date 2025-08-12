@@ -272,7 +272,6 @@ export type Database = {
           payment_status: string
           pdf_url: string | null
           quotation_id: string | null
-          quotation_ref_number: string | null
           reference_number: string
           status: string
           subject: string | null
@@ -296,7 +295,6 @@ export type Database = {
           payment_status?: string
           pdf_url?: string | null
           quotation_id?: string | null
-          quotation_ref_number?: string | null
           reference_number: string
           status?: string
           subject?: string | null
@@ -320,7 +318,6 @@ export type Database = {
           payment_status?: string
           pdf_url?: string | null
           quotation_id?: string | null
-          quotation_ref_number?: string | null
           reference_number?: string
           status?: string
           subject?: string | null
