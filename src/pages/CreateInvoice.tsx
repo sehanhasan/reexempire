@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -213,39 +212,6 @@ export default function CreateInvoice() {
     }
   };
 
-  const handleSendWhatsapp = () => {
-    if (!createdInvoiceId || !customer) {
-      toast({
-        title: "Error",
-        description: "Invoice must be saved before sending to WhatsApp.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoiceId}`;
-      
-      const message = `Dear ${customer.name},\n\n` +
-        `Please find your invoice ${documentNumber} for review at the link below: ` +
-        `${invoiceViewUrl}\n\n` +
-        `You can review the invoice details and make payment.\n\n` +
-        `If you have any questions, please don't hesitate to contact us.\n\n` +
-        `Thank you,\nReex Empire Sdn Bhd`;
-      
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      
-      window.open(whatsappUrl, '_blank');
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent, status: string = "Draft") => {
     e.preventDefault();
     
@@ -333,11 +299,11 @@ export default function CreateInvoice() {
           description: `Invoice for ${customer?.name} has been sent successfully.`,
         });
         
-        // Directly open WhatsApp with the newly created invoice
+        // Only try WhatsApp after successful creation
         try {
           const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
           
-          const message = `Dear ${customer.name},\n\n` +
+          const message = `Dear ${customer?.name},\n\n` +
             `Please find your invoice ${documentNumber} for review at the link below: ` +
             `${invoiceViewUrl}\n\n` +
             `You can review the invoice details and make payment.\n\n` +

@@ -89,37 +89,6 @@ export default function CreateQuotation() {
     return qty * item.unitPrice;
   };
 
-  const handleSendWhatsapp = () => {
-    if (!createdQuotationId || !customer) {
-      toast({
-        title: "Error",
-        description: "Quotation must be saved before sending to WhatsApp.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotationId}`;
-      
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(
-        createdQuotationId,
-        documentNumber,
-        customer.name,
-        quotationViewUrl
-      );
-      
-      window.open(whatsappUrl, '_blank');
-    } catch (error) {
-      console.error("Error sending WhatsApp message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to open WhatsApp. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent, status: string = "Draft") => {
     e.preventDefault();
     
@@ -195,14 +164,14 @@ export default function CreateQuotation() {
           description: `Quotation for ${customer?.name} has been sent successfully.`,
         });
         
-        // Directly open WhatsApp with the newly created quotation
+        // Only try WhatsApp after successful creation
         try {
           const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotation.id}`;
           
           const whatsappUrl = quotationService.generateWhatsAppShareUrl(
             createdQuotation.id,
             documentNumber,
-            customer.name,
+            customer?.name || '',
             quotationViewUrl
           );
           
@@ -280,7 +249,6 @@ export default function CreateQuotation() {
           documentType="quotation"
           isSubmitting={isSubmitting}
           showDraft={true}
-          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>
