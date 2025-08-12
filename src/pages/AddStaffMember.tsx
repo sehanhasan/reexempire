@@ -122,7 +122,7 @@ export default function AddStaffMember() {
       
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <Card>
-          <CardContent className="space-y-4 ">
+          <CardContent className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
