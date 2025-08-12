@@ -23,11 +23,11 @@ export default function ViewInvoice() {
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
+      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
       document.head.appendChild(newViewport);
     }
 
@@ -167,7 +167,7 @@ export default function ViewInvoice() {
   const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
   const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
 
-  // Group items by category with index numbers
+  // Group items by category
   const groupedItems = {};
   items.forEach(item => {
     const category = item.category || "Other Items";
@@ -180,9 +180,10 @@ export default function ViewInvoice() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px', margin: '0', padding: '0' }}>
-      <div className="py-2 px-2">
-        <div className="max-w-none mx-auto space-y-4" style={{ width: '100%', maxWidth: 'none' }}>
+    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
+
+      <div className="py-4 px-4">
+        <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="grid grid-cols-2 gap-6">
@@ -247,11 +248,11 @@ export default function ViewInvoice() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category, categoryIndex) => (
+                    {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1}- {category}
+                            {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (

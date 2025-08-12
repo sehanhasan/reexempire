@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Invoice, InvoiceImage } from "@/types/database";
 
@@ -26,27 +27,6 @@ const getById = async (id: string): Promise<Invoice | null> => {
   }
 
   return data || null;
-};
-
-const generateInvoiceNumber = async (): Promise<string> => {
-  const { data, error } = await supabase
-    .from('invoices')
-    .select('reference_number')
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (error) {
-    throw error;
-  }
-
-  const lastInvoice = data?.[0];
-  if (!lastInvoice?.reference_number) {
-    return 'INV-0001';
-  }
-
-  const lastNumber = parseInt(lastInvoice.reference_number.split('-')[1] || '0');
-  const newNumber = (lastNumber + 1).toString().padStart(4, '0');
-  return `INV-${newNumber}`;
 };
 
 const create = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<Invoice> => {
@@ -181,7 +161,6 @@ const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
 export const invoiceService = {
   getAll,
   getById,
-  generateInvoiceNumber,
   create,
   update,
   delete: deleteInvoice,
