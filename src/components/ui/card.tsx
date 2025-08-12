@@ -2,6 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// Removed the wrapping div with default classes
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -9,7 +10,6 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(className)}
-    )}
     {...props}
   />
 ))
