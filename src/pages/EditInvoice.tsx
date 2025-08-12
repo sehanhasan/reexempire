@@ -347,6 +347,7 @@ export default function EditInvoice() {
           setExpiryDate={setDueDate} 
           subject={subject} 
           setSubject={setSubject} 
+          quotationReference={invoiceData?.quotation_ref_number || undefined}
         />
         
         <QuotationItemsCard 
