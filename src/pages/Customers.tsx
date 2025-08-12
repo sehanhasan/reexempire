@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -82,62 +81,57 @@ export default function Customers() {
 
   const columns = [
     {
-      key: "name" as keyof Customer,
+      accessorKey: "name" as keyof Customer,
       header: "Customer",
-      render: (customer: Customer) => (
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
-            {customer.name.includes("Sdn Bhd") || customer.name.includes("Berhad") || customer.name.includes("(M)") ? (
-              <Building2 className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
-            ) : (
-              <User className="h-8 w-8 text-green-600 bg-green-100 rounded-full p-1.5" />
-            )}
+      cell: ({ row }: { row: { original: Customer } }) => {
+        const customer = row.original;
+        return (
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              {customer.name.includes("Sdn Bhd") || customer.name.includes("Berhad") || customer.name.includes("(M)") ? (
+                <Building2 className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
+              ) : (
+                <User className="h-8 w-8 text-green-600 bg-green-100 rounded-full p-1.5" />
+              )}
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+              {customer.email && (
+                <div className="text-sm text-gray-500 flex items-center">
+                  <Mail className="h-3 w-3 mr-1" />
+                  {customer.email}
+                </div>
+              )}
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-            {customer.email && (
-              <div className="text-sm text-gray-500 flex items-center">
-                <Mail className="h-3 w-3 mr-1" />
-                {customer.email}
-              </div>
-            )}
-          </div>
-        </div>
-      )
+        );
+      }
     },
     {
-      key: "unit_number" as keyof Customer,
+      accessorKey: "unit_number" as keyof Customer,
       header: "Unit",
-      render: (customer: Customer) => (
-        <div className="flex items-center text-sm text-gray-900">
-          <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-          {customer.unit_number || "N/A"}
-        </div>
-      )
+      cell: ({ row }: { row: { original: Customer } }) => {
+        const customer = row.original;
+        return (
+          <div className="flex items-center text-sm text-gray-900">
+            <MapPin className="h-4 w-4 mr-1 text-gray-400" />
+            {customer.unit_number || "N/A"}
+          </div>
+        );
+      }
     },
     {
-      key: "phone" as keyof Customer,
+      accessorKey: "phone" as keyof Customer,
       header: "Contact",
-      render: (customer: Customer) => (
-        <div className="flex items-center text-sm text-gray-900">
-          <Phone className="h-4 w-4 mr-1 text-gray-400" />
-          {customer.phone || "N/A"}
-        </div>
-      )
-    }
-  ];
-
-  const actions = [
-    {
-      label: "Edit",
-      icon: Edit,
-      onClick: (customer: Customer) => navigate(`/customers/add?id=${customer.id}`)
-    },
-    {
-      label: "Delete",
-      icon: Trash2,
-      onClick: (customer: Customer) => setDeleteCustomerId(customer.id),
-      variant: "destructive" as const
+      cell: ({ row }: { row: { original: Customer } }) => {
+        const customer = row.original;
+        return (
+          <div className="flex items-center text-sm text-gray-900">
+            <Phone className="h-4 w-4 mr-1 text-gray-400" />
+            {customer.phone || "N/A"}
+          </div>
+        );
+      }
     }
   ];
 
@@ -276,8 +270,7 @@ export default function Customers() {
       <DataTable
         columns={columns}
         data={filteredCustomers}
-        actions={actions}
-        loading={loading}
+        isLoading={loading}
         emptyMessage={searchTerm ? "No customers found matching your search." : "No customers found. Add your first customer!"}
       />
 

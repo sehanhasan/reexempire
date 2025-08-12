@@ -23,10 +23,9 @@ export default function Categories() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showSubcategoriesDialog, setShowSubcategoriesDialog] = useState(false);
   const [showSubcategoryModel, setShowSubcategoryModel] = useState(false);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
   useEffect(() => {
     fetchCategories();
@@ -84,79 +83,55 @@ export default function Categories() {
     }
   };
 
-  const handleViewSubcategories = async (categoryId: string) => {
-    try {
-      const subcategoriesData = await categoryService.getSubcategoriesByCategoryId(categoryId);
-      setSubcategories(subcategoriesData);
-      setSelectedCategoryId(categoryId);
-      setShowSubcategoriesDialog(true);
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load subcategories",
-        variant: "destructive"
-      });
-    }
+  const handleViewSubcategories = async (category: Category) => {
+    setSelectedCategory(category);
+    setShowSubcategoriesDialog(true);
   };
 
-  const handleAddSubcategory = (categoryId: string) => {
-    setSelectedCategoryId(categoryId);
+  const handleAddSubcategory = (category: Category) => {
+    setSelectedCategory(category);
     setShowSubcategoryModel(true);
   };
 
   const handleSubcategorySaved = () => {
-    if (selectedCategoryId) {
-      handleViewSubcategories(selectedCategoryId);
+    if (selectedCategory) {
+      handleViewSubcategories(selectedCategory);
     }
   };
 
   const columns = [
     {
-      key: "name" as keyof Category,
+      accessorKey: "name" as keyof Category,
       header: "Category",
-      render: (category: Category) => (
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
-            <Package className="h-8 w-8 text-purple-600 bg-purple-100 rounded-full p-1.5" />
+      cell: ({ row }: { row: { original: Category } }) => {
+        const category = row.original;
+        return (
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <Package className="h-8 w-8 text-purple-600 bg-purple-100 rounded-full p-1.5" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">{category.name}</div>
+              {category.description && (
+                <div className="text-sm text-gray-500">{category.description}</div>
+              )}
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-medium text-gray-900">{category.name}</div>
-            {category.description && (
-              <div className="text-sm text-gray-500">{category.description}</div>
-            )}
-          </div>
-        </div>
-      )
+        );
+      }
     },
     {
-      key: "subcategories" as keyof Category,
+      accessorKey: "subcategories" as keyof Category,
       header: "Items",
-      render: (category: Category) => (
-        <div className="flex items-center text-sm text-gray-900">
-          <Layers className="h-4 w-4 mr-1 text-gray-400" />
-          {Array.isArray(category.subcategories) ? category.subcategories.length : 0} subcategories
-        </div>
-      )
-    }
-  ];
-
-  const actions = [
-    {
-      label: "View Items",
-      icon: Eye,
-      onClick: (category: Category) => handleViewSubcategories(category.id)
-    },
-    {
-      label: "Edit",
-      icon: Edit,
-      onClick: (category: Category) => navigate(`/categories/add?id=${category.id}`)
-    },
-    {
-      label: "Delete",
-      icon: Trash2,
-      onClick: (category: Category) => setDeleteCategoryId(category.id),
-      variant: "destructive" as const
+      cell: ({ row }: { row: { original: Category } }) => {
+        const category = row.original;
+        return (
+          <div className="flex items-center text-sm text-gray-900">
+            <Layers className="h-4 w-4 mr-1 text-gray-400" />
+            {Array.isArray(category.subcategories) ? category.subcategories.length : 0} subcategories
+          </div>
+        );
+      }
     }
   ];
 
@@ -211,7 +186,7 @@ export default function Categories() {
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => handleViewSubcategories(category.id)}
+                    onClick={() => handleViewSubcategories(category)}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     View
@@ -262,19 +237,18 @@ export default function Categories() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <SubcategoriesDialog
-          open={showSubcategoriesDialog}
-          onOpenChange={setShowSubcategoriesDialog}
-          categoryId={selectedCategoryId}
-          subcategories={subcategories}
-          onAddSubcategory={() => selectedCategoryId && handleAddSubcategory(selectedCategoryId)}
-          onRefresh={() => selectedCategoryId && handleViewSubcategories(selectedCategoryId)}
-        />
+        {selectedCategory && (
+          <SubcategoriesDialog
+            open={showSubcategoriesDialog}
+            onOpenChange={setShowSubcategoriesDialog}
+            category={selectedCategory}
+          />
+        )}
 
         <SubcategoryModel
           open={showSubcategoryModel}
           onOpenChange={setShowSubcategoryModel}
-          parentId={selectedCategoryId || ""}
+          parentId={selectedCategory?.id || ""}
           onSave={handleSubcategorySaved}
         />
       </div>
@@ -308,8 +282,60 @@ export default function Categories() {
       <DataTable
         columns={columns}
         data={filteredCategories}
-        actions={actions}
-        loading={loading}
+        renderCustomMobileCard={(category: Category) => (
+          <div key={category.id} className="bg-white p-4 rounded-lg border mobile-card">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <Package className="h-8 w-8 text-purple-600 bg-purple-100 rounded-full p-1.5" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">{category.name}</h3>
+                  {category.description && (
+                    <p className="text-sm text-gray-500 mt-1">{category.description}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <div className="flex items-center text-sm text-gray-600">
+                <Layers className="h-4 w-4 mr-2 text-gray-400" />
+                {Array.isArray(category.subcategories) ? category.subcategories.length : 0} subcategories
+              </div>
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => handleViewSubcategories(category)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                View
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => navigate(`/categories/add?id=${category.id}`)}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700"
+                onClick={() => setDeleteCategoryId(category.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+        isLoading={loading}
         emptyMessage={searchTerm ? "No categories found matching your search." : "No categories found. Add your first category!"}
       />
 
@@ -330,19 +356,18 @@ export default function Categories() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <SubcategoriesDialog
-        open={showSubcategoriesDialog}
-        onOpenChange={setShowSubcategoriesDialog}
-        categoryId={selectedCategoryId}
-        subcategories={subcategories}
-        onAddSubcategory={() => selectedCategoryId && handleAddSubcategory(selectedCategoryId)}
-        onRefresh={() => selectedCategoryId && handleViewSubcategories(selectedCategoryId)}
-      />
+      {selectedCategory && (
+        <SubcategoriesDialog
+          open={showSubcategoriesDialog}
+          onOpenChange={setShowSubcategoriesDialog}
+          category={selectedCategory}
+        />
+      )}
 
       <SubcategoryModel
         open={showSubcategoryModel}
         onOpenChange={setShowSubcategoryModel}
-        parentId={selectedCategoryId || ""}
+        parentId={selectedCategory?.id || ""}
         onSave={handleSubcategorySaved}
       />
     </div>

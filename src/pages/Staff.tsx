@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -82,44 +81,53 @@ export default function StaffPage() {
 
   const columns = [
     {
-      key: "name" as keyof Staff,
+      accessorKey: "name" as keyof Staff,
       header: "Staff Member",
-      render: (member: Staff) => (
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
-            <User className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
+      cell: ({ row }: { row: { original: Staff } }) => {
+        const member = row.original;
+        return (
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <User className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">{member.name}</div>
+              {member.email && (
+                <div className="text-sm text-gray-500 flex items-center">
+                  <Mail className="h-3 w-3 mr-1" />
+                  {member.email}
+                </div>
+              )}
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-medium text-gray-900">{member.name}</div>
-            {member.email && (
-              <div className="text-sm text-gray-500 flex items-center">
-                <Mail className="h-3 w-3 mr-1" />
-                {member.email}
-              </div>
-            )}
-          </div>
-        </div>
-      )
+        );
+      }
     },
     {
-      key: "role" as keyof Staff,
+      accessorKey: "role" as keyof Staff,
       header: "Role",
-      render: (member: Staff) => (
-        <div className="flex items-center text-sm text-gray-900">
-          <UserCheck className="h-4 w-4 mr-1 text-gray-400" />
-          {member.role || "N/A"}
-        </div>
-      )
+      cell: ({ row }: { row: { original: Staff } }) => {
+        const member = row.original;
+        return (
+          <div className="flex items-center text-sm text-gray-900">
+            <UserCheck className="h-4 w-4 mr-1 text-gray-400" />
+            {member.role || "N/A"}
+          </div>
+        );
+      }
     },
     {
-      key: "phone" as keyof Staff,
+      accessorKey: "phone" as keyof Staff,
       header: "Contact",
-      render: (member: Staff) => (
-        <div className="flex items-center text-sm text-gray-900">
-          <Phone className="h-4 w-4 mr-1 text-gray-400" />
-          {member.phone || "N/A"}
-        </div>
-      )
+      cell: ({ row }: { row: { original: Staff } }) => {
+        const member = row.original;
+        return (
+          <div className="flex items-center text-sm text-gray-900">
+            <Phone className="h-4 w-4 mr-1 text-gray-400" />
+            {member.phone || "N/A"}
+          </div>
+        );
+      }
     }
   ];
 
@@ -268,8 +276,7 @@ export default function StaffPage() {
       <DataTable
         columns={columns}
         data={filteredStaff}
-        actions={actions}
-        loading={loading}
+        isLoading={loading}
         emptyMessage={searchTerm ? "No staff members found matching your search." : "No staff members found. Add your first staff member!"}
       />
 
