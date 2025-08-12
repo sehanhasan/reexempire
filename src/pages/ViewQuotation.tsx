@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -27,15 +25,16 @@ export default function ViewQuotation() {
   const [isProcessing, setIsProcessing] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to allow pinch-to-zoom
+  // Set viewport for mobile viewing without restricting pinch-to-zoom
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
+      // Allow pinch-to-zoom but set appropriate initial scale for mobile
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
+      newViewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
       document.head.appendChild(newViewport);
     }
 
@@ -71,7 +70,6 @@ export default function ViewQuotation() {
     staleTime: 0,
   });
 
-  // Load signature from quotation if it exists (for persistence after reload)
   useEffect(() => {
     if (quotation?.signature_data) {
       setSignatureData(quotation.signature_data);
@@ -95,7 +93,6 @@ export default function ViewQuotation() {
 
     setIsProcessing(true);
     try {
-      // Update quotation with signature data and status
       await quotationService.update(quotation.id, {
         status: 'Accepted',
         signature_data: signatureDataUrl
@@ -144,7 +141,7 @@ export default function ViewQuotation() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
@@ -155,7 +152,7 @@ export default function ViewQuotation() {
 
   if (!quotation) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -169,7 +166,6 @@ export default function ViewQuotation() {
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.signature_data;
 
-  // Group items by category with index numbers
   const groupedItems: { [key: string]: any[] } = {};
   const categoryIndexMap: { [key: string]: number } = {};
   let categoryIndex = 1;
@@ -186,14 +182,11 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-
+    <div className="min-h-screen bg-background" id="quotation-view">
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
-          {/* Compact Header with Company and Quotation Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Left Column - Company Logo and Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <img 
                   src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
@@ -206,27 +199,25 @@ export default function ViewQuotation() {
                   <p>53300 Setapak Kuala Lumpur</p>
                   <p className="text-gray-800">www.reexempire.com</p>
                 </div>
-                  {/* Subject within customer info */}
-                  {quotation.subject && (
-                    <div className="mt-3 pt-2 border-t">
-                      <p className="text-sm text-gray-800 font-semibold mb-1">Subject: {quotation.subject}</p>
-                    </div>
-                  )}
+                {quotation.subject && (
+                  <div className="mt-3 pt-2 border-t">
+                    <p className="text-sm text-gray-800 font-semibold mb-1">Subject: {quotation.subject}</p>
+                  </div>
+                )}
               </div>
               
-              {/* Right Column - Quotation Details and Customer */}
               <div>
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
                   <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
                     {quotation.status}
                   </Badge>
-                    {hasSignature && (
-                      <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Signed
-                      </Badge>
-                    )}
+                  {hasSignature && (
+                    <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Signed
+                    </Badge>
+                  )}
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
@@ -234,7 +225,7 @@ export default function ViewQuotation() {
                 </div>
                 
                 {customer && (
-                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
+                  <div className="w-full max-w-64 bg-gray-100 p-3 rounded-lg text-sm">
                     <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
                     <div className="text-sm text-gray-800 space-y-1">
                       <p>Attn: {customer.name}</p>
@@ -247,7 +238,6 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Compact Items Table with Category Index Numbers */}
           <Card className="shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -282,7 +272,6 @@ export default function ViewQuotation() {
                 </table>
               </div>
               
-              {/* Compact Subtotal, Deposit and Total Information */}
               <div className="p-3 bg-gray-50 border-t">
                 <div className="flex justify-end">
                   <div className="w-64 space-y-1 text-sm">
@@ -310,13 +299,11 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Compact Additional Information with Signature */}
           <AdditionalInfoCard
             terms={quotation.terms}
             signatureData={hasSignature ? (signatureData || quotation.signature_data) : undefined}
           />
 
-          {/* Signature Section - Only show if not accepted */}
           {!isAccepted && (
             <Card className="shadow-sm print:hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -386,7 +373,6 @@ export default function ViewQuotation() {
             </Card>
           )}
 
-          {/* Contact Info */}
           <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
             <p>For all enquiries, please contact Khalil Pasha</p>
             <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>

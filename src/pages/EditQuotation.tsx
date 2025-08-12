@@ -2,25 +2,23 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
-import { quotationService, customerService } from "@/services";
+import { quotationService, customerService, invoiceService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
+
 export default function EditQuotation() {
   const navigate = useNavigate();
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<QuotationItem[]>([{
@@ -48,9 +46,8 @@ export default function EditQuotation() {
     depositAmount: 0,
     depositPercentage: 50
   });
-  const [originalItemOrder, setOriginalItemOrder] = useState<{
-    [key: number]: number;
-  }>({});
+  const [originalItemOrder, setOriginalItemOrder] = useState<{ [key: number]: number }>({});
+
   useEffect(() => {
     if (!id) return;
     const fetchQuotationData = async () => {
@@ -78,9 +75,7 @@ export default function EditQuotation() {
           }
           const quotationItems = await quotationService.getItemsByQuotationId(id);
           if (quotationItems && quotationItems.length > 0) {
-            const orderMap: {
-              [key: number]: number;
-            } = {};
+            const orderMap: { [key: number]: number } = {};
             quotationItems.forEach((item, index) => {
               orderMap[index + 1] = index;
             });
@@ -110,10 +105,12 @@ export default function EditQuotation() {
     };
     fetchQuotationData();
   }, [id, navigate]);
+
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
+
   const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
     e.preventDefault();
     if (!customerId || !id) {
@@ -184,8 +181,6 @@ export default function EditQuotation() {
           title: "Quotation Update Sent",
           description: `Quotation for ${customer?.name} has been updated and sent successfully.`
         });
-
-        // Open WhatsApp after successful update
         try {
           const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
           const whatsappUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
@@ -216,12 +211,11 @@ export default function EditQuotation() {
       setIsSubmitting(false);
     }
   };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
-      await quotationService.update(id, {
-        status: newStatus
-      });
+      await quotationService.update(id, { status: newStatus });
       setStatus(newStatus);
       toast({
         title: "Status Updated",
@@ -242,6 +236,7 @@ export default function EditQuotation() {
       });
     }
   };
+
   const handleSendWhatsapp = () => {
     if (!quotationData || !customer) {
       toast({
@@ -264,51 +259,200 @@ export default function EditQuotation() {
       });
     }
   };
+
+  const handleConvertToInvoice = async () => {
+    if (!quotationData || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Quotation or customer information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Generate invoice reference number
+      const currentYear = new Date().getFullYear();
+      const invoices = await invoiceService.getAll();
+      const currentYearInvoices = invoices?.filter(inv => 
+        inv.reference_number?.startsWith(`INV-${currentYear}`)
+      ) || [];
+      const nextNumber = currentYearInvoices.length + 1;
+      const invoiceRefNumber = `INV-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+
+      // Create invoice from quotation
+      const invoice = {
+        quotation_id: quotationData.id,
+        customer_id: quotationData.customer_id,
+        reference_number: invoiceRefNumber,
+        issue_date: new Date().toISOString().split('T')[0],
+        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        subtotal: quotationData.subtotal,
+        total: quotationData.total,
+        status: 'Draft',
+        payment_status: 'Unpaid',
+        notes: quotationData.notes,
+        terms: quotationData.terms,
+        subject: (quotationData as ExtendedQuotation).subject,
+        quotation_ref_number: quotationData.reference_number,
+        is_deposit_invoice: quotationData.requires_deposit || false,
+        deposit_amount: quotationData.deposit_amount || 0,
+        deposit_percentage: quotationData.deposit_percentage || 0
+      };
+
+      const createdInvoice = await invoiceService.create(invoice);
+
+      // Copy items from quotation to invoice
+      const quotationItems = await quotationService.getItemsByQuotationId(quotationData.id);
+      for (const item of quotationItems) {
+        await invoiceService.createItem({
+          invoice_id: createdInvoice.id,
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unit_price: item.unit_price,
+          amount: item.amount,
+          category: item.category
+        });
+      }
+
+      toast({
+        title: "Invoice Created",
+        description: `Invoice ${invoiceRefNumber} has been created successfully.`
+      });
+
+      navigate(`/invoices/edit/${createdInvoice.id}`);
+    } catch (error) {
+      console.error("Error converting to invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to convert quotation to invoice. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
-    return <div className="page-container">
+    return (
+      <div className="page-container">
         <PageHeader title="Edit Quotation" />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="page-container">
-      <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+
+  return (
+    <div className="page-container">
+      <PageHeader 
+        title="Edit Quotation" 
+        actions={
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
-          </div>} />
-
-      {status === "Sent" && <div className="rounded-md p-4 mt-1 bg-white">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h3 className="font-medium">Quotation Status: <span className="text-amber-600">Sent</span></h3>
-              <p className="text-sm text-muted-foreground">Update the status of this quotation</p>
-            </div>
-            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
-              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} onClick={() => handleStatusChange("Rejected")}>
-                <XCircle className="mr-2 h-4 w-4" />
-                Mark as Rejected
-              </Button>
-              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} onClick={() => handleStatusChange("Accepted")}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Accepted
-              </Button>
-              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} onClick={handleSendWhatsapp}>
-                <Share2 className="mr-2 h-4 w-4" />
-                Share via WhatsApp
-              </Button>
-            </div>
           </div>
-        </div>}
+        } 
+      />
+
+      {/* Quotation Status and Action Buttons */}
+      <div className="rounded-md p-4 mt-1 bg-white">
+        <div className="flex flex-col gap-3">
+          <div>
+            <h3 className="font-medium">
+              Quotation Status: <span className={`${
+                status === 'Accepted' ? 'text-green-600' : 
+                status === 'Rejected' ? 'text-red-600' : 
+                status === 'Sent' ? 'text-amber-600' : 'text-gray-600'
+              }`}>{status}</span>
+            </h3>
+            <p className="text-sm text-muted-foreground">Manage quotation status and actions</p>
+          </div>
+          <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
+            {status === "Sent" && (
+              <>
+                <Button 
+                  variant="outline" 
+                  className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
+                  onClick={() => handleStatusChange("Rejected")}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Mark as Rejected
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                  onClick={() => handleStatusChange("Accepted")}
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Mark as Accepted
+                </Button>
+              </>
+            )}
+            
+            <Button 
+              variant="outline" 
+              className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+              onClick={handleSendWhatsapp}
+            >
+              <Share2 className="mr-2 h-4 w-4" />
+              Send via WhatsApp
+            </Button>
+            
+            {status === "Accepted" && (
+              <Button 
+                variant="outline" 
+                className={`${isMobile ? 'w-full' : ''} border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-600`} 
+                onClick={handleConvertToInvoice}
+                disabled={isSubmitting}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                {isSubmitting ? 'Converting...' : 'Convert to Invoice'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
 
       <form className="mt-8 space-y-6">
-        <CustomerInfoCard customerId={customerId} setCustomer={setCustomerId} documentType="quotation" documentNumber={documentNumber} setDocumentNumber={setDocumentNumber} documentDate={quotationDate} setDocumentDate={setQuotationDate} expiryDate={validUntil} setExpiryDate={setValidUntil} subject={subject} setSubject={setSubject} />
+        <CustomerInfoCard 
+          customerId={customerId} 
+          setCustomer={setCustomerId} 
+          documentType="quotation" 
+          documentNumber={documentNumber} 
+          setDocumentNumber={setDocumentNumber} 
+          documentDate={quotationDate} 
+          setDocumentDate={setQuotationDate} 
+          expiryDate={validUntil} 
+          setExpiryDate={setValidUntil} 
+          subject={subject} 
+          setSubject={setSubject} 
+        />
         
-        <QuotationItemsCard items={items} setItems={setItems} depositInfo={depositInfo} setDepositInfo={setDepositInfo} calculateItemAmount={calculateItemAmount} />
+        <QuotationItemsCard 
+          items={items} 
+          setItems={setItems} 
+          depositInfo={depositInfo} 
+          setDepositInfo={setDepositInfo} 
+          calculateItemAmount={calculateItemAmount} 
+        />
         
-        <AdditionalInfoForm terms={terms} setTerms={setTerms} onSubmit={handleSubmit} onCancel={() => navigate("/quotations")} documentType="quotation" isSubmitting={isSubmitting} showDraft={false} />
+        <AdditionalInfoForm 
+          terms={terms} 
+          setTerms={setTerms} 
+          onSubmit={handleSubmit} 
+          onCancel={() => navigate("/quotations")} 
+          documentType="quotation" 
+          isSubmitting={isSubmitting} 
+          showDraft={false} 
+        />
       </form>
-    </div>;
+    </div>
+  );
 }
