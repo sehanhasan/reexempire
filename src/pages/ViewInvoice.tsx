@@ -100,6 +100,13 @@ export default function ViewInvoice() {
     })}`;
   };
 
+  const formatAmount = (amount) => {
+    return parseFloat(amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
   const handlePrintPDF = () => {
     window.print();
   };
@@ -262,9 +269,9 @@ export default function ViewInvoice() {
                         {groupedItems[category].map((item, idx) => (
                           <tr key={idx} className="border-b hover:bg-gray-50">
                             <td className="p-2 text-gray-800">{item.description}</td>
-                            <td className="text-right p-2 text-gray-800">{formatMoney(item.unit_price)}</td>
+                            <td className="text-right p-2 text-gray-800">{formatAmount(item.unit_price)}</td>
                             <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 font-semibold text-gray-800">{formatMoney(item.amount)}</td>
+                            <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(item.amount)}</td>
                           </tr>
                         ))}
                       </React.Fragment>
@@ -323,6 +330,21 @@ export default function ViewInvoice() {
               </CardContent>
             </Card>
           )}
+
+          {/* Payment Information Card */}
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-gray-700 mb-3 text-base">Payment Details</h3>
+              <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                <div className="space-y-1">
+                  <p><strong>Company Name:</strong> Reex Empire Sdn Bhd</p>
+                  <p><strong>Bank Name:</strong> Maybank</p>
+                  <p><strong>Account No:</strong> 514897120482</p>
+                  <p className="text-blue-700 font-medium mt-2">*Please include the invoice number on payment reference*</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Additional Information */}
           <AdditionalInfoCard 
