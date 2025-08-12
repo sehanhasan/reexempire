@@ -19,7 +19,7 @@ export default function ViewInvoice() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Set viewport to allow pinch-to-zoom
+  // Set viewport to allow pinch-to-zoom on mobile while keeping desktop layout
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
@@ -188,6 +188,18 @@ export default function ViewInvoice() {
 
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
+          {/* Display quotation reference if it exists */}
+          {invoice.quotation_ref_number && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium text-blue-800">
+                  Quotation Reference: <span className="font-normal">{invoice.quotation_ref_number}</span>
+                </h3>
+              </div>
+              <p className="text-sm text-blue-600 mt-1">This invoice was created from quotation {invoice.quotation_ref_number}</p>
+            </div>
+          )}
+
           {/* Compact Header with Company and Invoice Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="grid grid-cols-2 gap-6">
