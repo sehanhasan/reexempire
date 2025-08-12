@@ -26,15 +26,15 @@ export default function ViewQuotation() {
   const [isProcessing, setIsProcessing] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to be zoomable for mobile
+  // Set viewport to be zoomable for mobile with edge-to-edge layout
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0, minimum-scale=0.1');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0';
+      newViewport.content = 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0, minimum-scale=0.1';
       document.head.appendChild(newViewport);
     }
 
@@ -70,6 +70,16 @@ export default function ViewQuotation() {
     staleTime: 0,
   });
 
+  // Load signature data from localStorage on mount
+  useEffect(() => {
+    if (quotation?.id) {
+      const savedSignature = localStorage.getItem(`quotation_signature_${quotation.id}`);
+      if (savedSignature) {
+        setSignatureData(savedSignature);
+      }
+    }
+  }, [quotation?.id]);
+
   const handleClearSignature = () => {
     if (sigCanvasRef.current) {
       sigCanvasRef.current.clear();
@@ -89,6 +99,8 @@ export default function ViewQuotation() {
     try {
       await quotationService.updateStatus(quotation.id, 'Accepted');
       setSignatureData(signatureDataUrl);
+      // Save signature to localStorage
+      localStorage.setItem(`quotation_signature_${quotation.id}`, signatureDataUrl);
       setIsSigning(false);
       toast.success('Quotation accepted successfully!');
       refetch();
@@ -170,10 +182,9 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-
-      <div className="py-4 px-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+    <div className="min-h-screen bg-background" style={{ minWidth: '1024px', margin: '0', padding: '0' }} id="quotation-view">
+      <div className="py-2 px-2">
+        <div className="max-w-5xl mx-auto space-y-3">
           {/* Compact Header with Company and Quotation Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="grid grid-cols-2 gap-6">
@@ -300,97 +311,95 @@ export default function ViewQuotation() {
             signatureData={hasSignature ? signatureData : undefined}
           />
 
-          {/* Digital Signature Section - Always show for non-accepted quotations OR show signed version for accepted */}
-          {(!isAccepted || hasSignature) && (
-            <Card className="shadow-sm print:hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-base text-gray-800">
-                  {isAccepted ? 'Customer Acceptance' : 'Acceptance'}
-                </CardTitle>
-                {isSigning && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSigning(false)}
+          {/* Digital Signature Section - Always show */}
+          <Card className="shadow-sm print:hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-base text-gray-800">
+                {isAccepted && hasSignature ? 'Customer Acceptance' : 'Acceptance'}
+              </CardTitle>
+              {isSigning && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSigning(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {isAccepted && hasSignature ? (
+                <div className="text-center py-8 bg-green-50 rounded-lg border border-green-200">
+                  <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                  <p className="text-green-800 font-semibold text-lg mb-2">
+                    Quotation Accepted
+                  </p>
+                  <p className="text-green-700 text-sm">
+                    This quotation has been digitally signed and accepted by the customer.
+                  </p>
+                  {signatureData && (
+                    <div className="mt-4">
+                      <img 
+                        src={signatureData} 
+                        alt="Customer Signature" 
+                        className="max-w-xs mx-auto border border-gray-300 rounded"
+                      />
+                      <p className="text-xs text-gray-500 mt-2">Customer Digital Signature</p>
+                    </div>
+                  )}
+                </div>
+              ) : !isSigning ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <p className="text-gray-600 mb-4 text-base">
+                    Please digitally sign to accept this quotation.
+                  </p>
+                  <Button 
+                    onClick={() => setIsSigning(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
                   >
-                    <X className="h-4 w-4" />
+                    <Pen className="h-4 w-4 mr-2" />
+                    Start Digital Signature
                   </Button>
-                )}
-              </CardHeader>
-              <CardContent>
-                {isAccepted && hasSignature ? (
-                  <div className="text-center py-8 bg-green-50 rounded-lg border border-green-200">
-                    <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                    <p className="text-green-800 font-semibold text-lg mb-2">
-                      Quotation Accepted
-                    </p>
-                    <p className="text-green-700 text-sm">
-                      This quotation has been digitally signed and accepted by the customer.
-                    </p>
-                    {signatureData && (
-                      <div className="mt-4">
-                        <img 
-                          src={signatureData} 
-                          alt="Customer Signature" 
-                          className="max-w-xs mx-auto border border-gray-300 rounded"
-                        />
-                        <p className="text-xs text-gray-500 mt-2">Customer Digital Signature</p>
-                      </div>
-                    )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                    By signing below, you accept the terms and conditions of this quotation.
                   </div>
-                ) : !isSigning ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 mb-4 text-base">
-                      Please digitally sign to accept this quotation.
-                    </p>
+                  
+                  <div className="signature-container">
+                    <SignatureCanvas
+                      ref={sigCanvasRef}
+                      canvasProps={{
+                        className: 'signature-canvas',
+                      }}
+                      backgroundColor="white"
+                    />
+                    <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
+                      Sign here
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between gap-3">
                     <Button 
-                      onClick={() => setIsSigning(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                      variant="outline" 
+                      onClick={handleClearSignature}
+                      className="px-4"
                     >
-                      <Pen className="h-4 w-4 mr-2" />
-                      Start Digital Signature
+                      Clear
+                    </Button>
+                    <Button 
+                      onClick={handleAcceptQuotation}
+                      disabled={isProcessing}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6"
+                    >
+                      {isProcessing ? 'Processing...' : 'Accept Quotation'}
                     </Button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                      By signing below, you accept the terms and conditions of this quotation.
-                    </div>
-                    
-                    <div className="signature-container">
-                      <SignatureCanvas
-                        ref={sigCanvasRef}
-                        canvasProps={{
-                          className: 'signature-canvas',
-                        }}
-                        backgroundColor="white"
-                      />
-                      <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
-                        Sign here
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between gap-3">
-                      <Button 
-                        variant="outline" 
-                        onClick={handleClearSignature}
-                        className="px-4"
-                      >
-                        Clear
-                      </Button>
-                      <Button 
-                        onClick={handleAcceptQuotation}
-                        disabled={isProcessing}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6"
-                      >
-                        {isProcessing ? 'Processing...' : 'Accept Quotation'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Contact Info */}
           <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">

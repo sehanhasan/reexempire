@@ -19,15 +19,15 @@ export default function ViewInvoice() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Set viewport to be zoomable for mobile
+  // Set viewport to be zoomable for mobile with edge-to-edge layout
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0, minimum-scale=0.1');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0';
+      newViewport.content = 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0, minimum-scale=0.1';
       document.head.appendChild(newViewport);
     }
 
@@ -180,10 +180,9 @@ export default function ViewInvoice() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
-
-      <div className="py-4 px-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+    <div className="min-h-screen bg-background" style={{ minWidth: '1024px', margin: '0', padding: '0' }}>
+      <div className="py-2 px-2">
+        <div className="max-w-5xl mx-auto space-y-3">
           {/* Compact Header with Company and Invoice Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="grid grid-cols-2 gap-6">
