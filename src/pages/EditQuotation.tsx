@@ -333,25 +333,26 @@ export default function EditQuotation() {
   }
 
   return <div className="page-container">
-      <PageHeader title={
-        <div className="flex items-center gap-3">
-          <span>Edit Quotation #{documentNumber}</span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Download PDF
-          </Button>
-        </div>
-      } actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+      <PageHeader 
+        title={`Edit Quotation #${documentNumber}`}
+        actions={
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
-          </div>} />
+          </div>
+        } 
+      />
 
       {status === "Accepted" && <div className="rounded-md p-4 mt-1 bg-white">
           <div className="flex flex-col gap-3">

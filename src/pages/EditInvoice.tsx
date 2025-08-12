@@ -70,7 +70,7 @@ export default function EditInvoice() {
         customerContact: customer.phone || undefined,
         customerEmail: customer.email || undefined,
         dueDate: invoiceData.due_date,
-        paymentMethod: invoiceData.payment_method || "bank_transfer",
+        paymentMethod: "bank_transfer",
         isDepositInvoice: false,
         depositAmount: 0,
         depositPercentage: 0,
@@ -348,9 +348,9 @@ export default function EditInvoice() {
 
   return <div className="page-container">
       <PageHeader 
-        title={
-          <div className="flex items-center gap-3">
-            <span>Edit Invoice #{documentNumber}</span>
+        title={`Edit Invoice #${documentNumber}`}
+        actions={
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button
               variant="outline"
               size="sm"
@@ -360,10 +360,6 @@ export default function EditInvoice() {
               <Download className="h-4 w-4" />
               Download PDF
             </Button>
-          </div>
-        }
-        actions={
-          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/invoices")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Invoices
