@@ -179,7 +179,7 @@ export default function StaffPage() {
       cell: ({ row }: { row: { original: Staff } }) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          <a href={`tel:${row.original.phone}`} className="hover:underline text-blue-600">
+          <a href={`wa.me/:${row.original.phone}`} className="hover:underline text-blue-600">
             {row.original.phone}
           </a>
         </div>
@@ -226,7 +226,7 @@ export default function StaffPage() {
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              {/* <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
               {row.original.status !== "Active" && (
                 <DropdownMenuItem 
                   className="cursor-pointer text-green-600"
@@ -250,7 +250,7 @@ export default function StaffPage() {
                 >
                   Set as Inactive
                 </DropdownMenuItem>
-              )} */}
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
