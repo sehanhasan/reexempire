@@ -175,9 +175,9 @@ export const quotationService = {
     const message = `Dear ${customerName},\n\n` +
       `Please find your quotation ${quotationNumber} for review at the link below: ` +
       `${previewUrl}\n\n` +
-      `You can review the quotation details and accept it online with your signature.\n\n` +
+      `Please review the quotation details and accept it online with your signature.\n\n` +
       `If you have any questions, please don't hesitate to contact us.\n\n` +
-      `Thank you,\nReex Empire Sdn Bhd`;
+      `Thank you,\nReex Empire`;
     
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
