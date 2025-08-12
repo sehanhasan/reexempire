@@ -108,6 +108,7 @@ export interface Quotation {
   created_at: string;
   updated_at: string;
   subject?: string | null; // Added subject field to fix errors
+  signature_data?: string | null; // Added signature_data field for storing digital signatures
 }
 
 export interface QuotationItem {

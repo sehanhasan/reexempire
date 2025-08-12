@@ -523,6 +523,7 @@ export type Database = {
           pdf_url: string | null
           reference_number: string
           requires_deposit: boolean | null
+          signature_data: string | null
           status: string
           subject: string | null
           subtotal: number
@@ -542,6 +543,7 @@ export type Database = {
           pdf_url?: string | null
           reference_number: string
           requires_deposit?: boolean | null
+          signature_data?: string | null
           status?: string
           subject?: string | null
           subtotal?: number
@@ -561,6 +563,7 @@ export type Database = {
           pdf_url?: string | null
           reference_number?: string
           requires_deposit?: boolean | null
+          signature_data?: string | null
           status?: string
           subject?: string | null
           subtotal?: number
