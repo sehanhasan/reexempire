@@ -1,3 +1,4 @@
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
@@ -67,6 +68,11 @@
     @apply bg-background text-foreground;
     font-family: "Inter", sans-serif;
     background-color: #F4F5F9;
+    /* Mobile optimizations */
+    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    overscroll-behavior: contain;
   }
 }
 
@@ -91,33 +97,56 @@
   }
 
   .floating-action-button {
-    @apply fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50;
+    @apply fixed bottom-20 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50;
     @apply flex items-center justify-center;
   }
 
-  /* Print styles for PDF generation */
-  @media print {
-    body {
-      background: white !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    
-    .print:hidden {
-      display: none !important;
-    }
-    
-    #quotation-view {
-      padding: 20mm !important;
-      margin: 0 !important;
-      min-height: auto !important;
-      background: white !important;
-    }
-    
-    .max-w-4xl {
-      max-width: none !important;
-      margin: 0 !important;
-    }
+  /* Mobile card styles */
+  .mobile-card {
+    @apply bg-white border rounded-lg shadow-sm p-4 mb-4;
+    border-left: 4px solid rgb(59, 130, 246);
+  }
+
+  .mobile-card-header {
+    @apply flex justify-between items-center mb-3 pb-2 border-b;
+    font-weight: 600;
+  }
+
+  .mobile-card-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  .mobile-card-content {
+    @apply space-y-3;
+  }
+
+  .mobile-field {
+    @apply flex justify-between items-center py-1;
+  }
+
+  .mobile-field-label {
+    @apply text-sm text-gray-600 font-medium;
+  }
+
+  .mobile-field-value {
+    @apply text-sm text-gray-900;
+  }
+
+  .mobile-actions {
+    @apply flex gap-2 mt-4 pt-3 border-t;
+  }
+
+  /* Mobile-specific form styles */
+  .mobile-form-field {
+    @apply space-y-2 mb-4;
+  }
+
+  .mobile-form-label {
+    @apply text-sm font-medium text-gray-700;
+  }
+
+  .mobile-form-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md text-base;
   }
 }
 
@@ -136,34 +165,13 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-.mobile-card {
-  @apply bg-white border rounded-lg shadow-sm p-4 mb-4;
+/* Ensure proper touch targets on mobile */
+button, .button, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
 }
 
-.mobile-card-header {
-  @apply flex justify-between items-center mb-3 pb-2 border-b;
-}
-
-.mobile-card-title {
-  @apply text-lg font-semibold text-gray-900;
-}
-
-.mobile-card-content {
-  @apply space-y-3;
-}
-
-.mobile-field {
-  @apply flex justify-between items-center;
-}
-
-.mobile-field-label {
-  @apply text-sm text-gray-600 font-medium;
-}
-
-.mobile-field-value {
-  @apply text-sm text-gray-900;
-}
-
-.mobile-actions {
-  @apply flex gap-2 mt-4 pt-3 border-t;
+/* Improve form inputs for mobile */
+input, textarea, select {
+  font-size: 16px; /* Prevents zoom on iOS */
 }

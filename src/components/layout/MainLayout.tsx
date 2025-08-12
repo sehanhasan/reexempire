@@ -1,30 +1,24 @@
 
 import { ReactNode, useState, useEffect } from "react";
-import { AppSidebar } from "./AppSidebar";
 import { MobileHeader } from "./MobileHeader";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileNavigation } from "./MobileNavigation";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/auth/LoadingSpinner";
 
 interface MainLayoutProps {
   children: ReactNode;
-  searchProps?: {
-    searchTerm: string;
-    onSearchChange: (value: string) => void;
-    placeholder?: string;
-  };
 }
 
-export function MainLayout({ children, searchProps }: MainLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+export function MainLayout({ children }: MainLayoutProps) {
+  const [bottomNavOpen, setBottomNavOpen] = useState(false);
   const [mobileActions, setMobileActions] = useState<ReactNode[]>([]);
   const [mobileSearchProps, setMobileSearchProps] = useState<{
     searchTerm: string;
     onSearchChange: (value: string) => void;
     placeholder?: string;
   } | null>(null);
-  const isMobile = useIsMobile();
+  
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isStaff, isLoading, signOut } = useAuth();
@@ -62,7 +56,6 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
       setMobileSearchProps(null);
     };
 
-    // Type assertion for the event handlers
     window.addEventListener('get-mobile-actions', handleGetMobileActions as EventListener);
     window.addEventListener('setup-mobile-search', handleSetupMobileSearch as EventListener);
     window.addEventListener('clear-mobile-search', handleClearMobileSearch as EventListener);
@@ -106,9 +99,8 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
     navigate('/auth/login');
   };
   
-  // Toggle sidebar function - simplified but reliable
-  const toggleSidebar = () => {
-    setSidebarOpen(prevState => !prevState);
+  const toggleBottomNav = () => {
+    setBottomNavOpen(prevState => !prevState);
   };
 
   if (isLoading) {
@@ -120,37 +112,25 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
   }
   
   return (
-    <div className="flex min-h-screen bg-background overflow-hidden">
-      <div 
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
-        onClick={() => setSidebarOpen(false)} 
+    <div className="flex flex-col min-h-screen bg-background">
+      <MobileHeader 
+        title={getPageTitle()} 
+        onMenuClick={toggleBottomNav} 
+        actions={mobileActions}
+        searchProps={mobileSearchProps}
       />
       
-      {/* Fixed sidebar wrapper to prevent scrolling */}
-      <div className="h-screen sticky top-0 z-50 flex-shrink-0">
-        <AppSidebar 
-          open={sidebarOpen} 
-          setOpen={setSidebarOpen} 
-          isAdmin={isAdmin}
-          isStaff={isStaff}
-          onLogout={handleLogout}
-        />
-      </div>
-      
-      <div className="flex-1 flex flex-col overflow-auto relative">
-        {isMobile && (
-          <MobileHeader 
-            title={getPageTitle()} 
-            onMenuClick={toggleSidebar} 
-            actions={mobileActions}
-            searchProps={mobileSearchProps}
-          />
-        )}
-        
-        <main className={`${isMobile ? 'px-0 pt-16 pb-4' : 'p-6 md:px-8 lg:px-10'} flex-1`}>
-          {children}
-        </main>
-      </div>
+      <main className="flex-1 px-4 pt-4 pb-20">
+        {children}
+      </main>
+
+      <MobileNavigation 
+        open={bottomNavOpen}
+        onClose={() => setBottomNavOpen(false)}
+        isAdmin={isAdmin}
+        isStaff={isStaff}
+        onLogout={handleLogout}
+      />
     </div>
   );
 }
