@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +16,7 @@ import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
 import { generateQuotationPDF } from '@/utils/htmlToPdf';
 import { shareQuotation } from '@/utils/mobileShare';
+import html2pdf from 'html2pdf.js';
 
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +24,7 @@ export default function ViewQuotation() {
   const [isSigning, setIsSigning] = useState(false);
   const [signatureData, setSignatureData] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
   // Set viewport to allow pinch-to-zoom
@@ -127,14 +128,46 @@ export default function ViewQuotation() {
     if (!quotation) return;
     
     try {
-      setIsProcessing(true);
-      await generateQuotationPDF(quotation, customer, items);
-      toast.success('PDF downloaded successfully!');
+      setIsDownloading(true);
+      
+      // Get the main content element
+      const element = document.querySelector('.quotation-content');
+      if (!element) {
+        toast.error('Could not find quotation content to download');
+        return;
+      }
+
+      // Configure PDF options for A4 with proper margins
+      const options = {
+        margin: [20, 15, 20, 15], // top, left, bottom, right in mm
+        filename: `quotation-${quotation.reference_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      // Generate and download PDF
+      await html2pdf().set(options).from(element).save();
+      
+      toast.success('Quotation PDF downloaded successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast.error('Failed to generate PDF');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
-      setIsProcessing(false);
+      setIsDownloading(false);
     }
   };
 
@@ -195,8 +228,7 @@ export default function ViewQuotation() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-
-      <div className="py-4 px-4">
+      <div className="py-4 px-4 quotation-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
@@ -400,6 +432,18 @@ export default function ViewQuotation() {
           <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
             <p>For all enquiries, please contact Khalil Pasha</p>
             <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+          </div>
+
+          {/* Download Button */}
+          <div className="text-center py-4">
+            <Button 
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+            </Button>
           </div>
           
           <div className="text-center text-gray-500 text-xs py-3">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { shareInvoice } from "@/utils/mobileShare";
+import html2pdf from 'html2pdf.js';
 
 export default function ViewInvoice() {
   const { id } = useParams();
@@ -19,6 +19,7 @@ export default function ViewInvoice() {
   const [items, setItems] = useState([]);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Set viewport to allow pinch-to-zoom
   useEffect(() => {
@@ -119,6 +120,64 @@ export default function ViewInvoice() {
     window.print();
   };
 
+  const handleDownloadPDF = async () => {
+    if (!invoice) return;
+    
+    try {
+      setIsDownloading(true);
+      
+      // Get the main content element
+      const element = document.querySelector('.invoice-content');
+      if (!element) {
+        toast({
+          title: "Error",
+          description: "Could not find invoice content to download",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Configure PDF options for A4 with proper margins
+      const options = {
+        margin: [20, 15, 20, 15], // top, left, bottom, right in mm
+        filename: `invoice-${invoice.reference_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      // Generate and download PDF
+      await html2pdf().set(options).from(element).save();
+      
+      toast({
+        title: "Success",
+        description: "Invoice PDF downloaded successfully!"
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleShare = async () => {
     if (!invoice || !customer) {
       toast({
@@ -197,8 +256,7 @@ export default function ViewInvoice() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
-
-      <div className="py-4 px-4">
+      <div className="py-4 px-4 invoice-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
@@ -360,6 +418,18 @@ export default function ViewInvoice() {
           <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
             <p>For all enquiries, please contact Khalil Pasha</p>
             <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+          </div>
+
+          {/* Download Button */}
+          <div className="text-center py-4">
+            <Button 
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+            </Button>
           </div>
 
           {/* Compact Footer */}
