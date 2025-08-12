@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2, Download } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -12,7 +12,6 @@ import { invoiceService, customerService } from "@/services";
 import { Customer, Invoice } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { shareInvoice } from "@/utils/mobileShare";
-import { generateInvoicePDF } from "@/utils/pdfGenerator";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
@@ -45,54 +44,6 @@ export default function EditInvoice() {
     depositPercentage: 50
   });
   const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
-
-  const handleDownloadPDF = async () => {
-    if (!invoiceData || !customer || !items || items.length === 0) {
-      toast({
-        title: "Missing Information",
-        description: "Invoice data is not complete yet.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const invoiceDetails = {
-        documentNumber: invoiceData.reference_number,
-        documentDate: invoiceData.issue_date,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || undefined,
-        expiryDate: invoiceData.due_date,
-        notes: invoiceData.notes || "",
-        items: items.filter(item => item.description && item.description.trim() !== ''),
-        subject: invoiceData.subject || undefined,
-        customerAddress: customer.address || undefined,
-        customerContact: customer.phone || undefined,
-        customerEmail: customer.email || undefined,
-        dueDate: invoiceData.due_date,
-        paymentMethod: "bank_transfer",
-        isDepositInvoice: false,
-        depositAmount: 0,
-        depositPercentage: 0,
-        quotationReference: invoiceData.quotation_ref_number || undefined
-      };
-
-      const pdf = generateInvoicePDF(invoiceDetails);
-      pdf.save(`invoice-${invoiceData.reference_number}.pdf`);
-      
-      toast({
-        title: "PDF Downloaded",
-        description: "Invoice PDF has been downloaded successfully."
-      });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
 
   useEffect(() => {
     if (!id) return;
@@ -348,18 +299,9 @@ export default function EditInvoice() {
 
   return <div className="page-container">
       <PageHeader 
-        title={`Edit Invoice #${documentNumber}`}
+        title="Edit Invoice"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadPDF}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Download PDF
-            </Button>
             <Button variant="outline" onClick={() => navigate("/invoices")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Invoices

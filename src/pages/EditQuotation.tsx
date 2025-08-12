@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2, Download } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -11,12 +11,9 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { generateQuotationPDF } from "@/utils/pdfGenerator";
-
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
-
 export default function EditQuotation() {
   const navigate = useNavigate();
   const {
@@ -54,51 +51,6 @@ export default function EditQuotation() {
   const [originalItemOrder, setOriginalItemOrder] = useState<{
     [key: number]: number;
   }>({});
-
-  const handleDownloadPDF = async () => {
-    if (!quotationData || !customer || !items || items.length === 0) {
-      toast({
-        title: "Missing Information",
-        description: "Quotation data is not complete yet.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const quotationDetails = {
-        documentNumber: quotationData.reference_number,
-        documentDate: quotationData.issue_date,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || undefined,
-        expiryDate: quotationData.expiry_date,
-        notes: quotationData.notes || "",
-        items: items.filter(item => item.description && item.description.trim() !== ''),
-        subject: quotationData.subject || undefined,
-        customerAddress: customer.address || undefined,
-        customerContact: customer.phone || undefined,
-        customerEmail: customer.email || undefined,
-        validUntil: quotationData.expiry_date,
-        depositInfo: depositInfo
-      };
-
-      const pdf = generateQuotationPDF(quotationDetails);
-      pdf.save(`quotation-${quotationData.reference_number}.pdf`);
-      
-      toast({
-        title: "PDF Downloaded",
-        description: "Quotation PDF has been downloaded successfully."
-      });
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
   useEffect(() => {
     if (!id) return;
     const fetchQuotationData = async () => {
@@ -158,12 +110,10 @@ export default function EditQuotation() {
     };
     fetchQuotationData();
   }, [id, navigate]);
-
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
-
   const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
     e.preventDefault();
     if (!customerId || !id) {
@@ -174,7 +124,6 @@ export default function EditQuotation() {
       });
       return;
     }
-
     const validItems = items.filter(item => item.description && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
@@ -184,12 +133,10 @@ export default function EditQuotation() {
       });
       return;
     }
-
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + qty * item.unitPrice;
     }, 0);
-
     try {
       setIsSubmitting(true);
       const depositPercentageValue = typeof depositInfo.depositPercentage === 'string' ? parseFloat(depositInfo.depositPercentage) : depositInfo.depositPercentage;
@@ -208,7 +155,6 @@ export default function EditQuotation() {
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
         deposit_percentage: depositInfo.requiresDeposit ? depositPercentageValue : 0
       };
-
       await quotationService.update(id, quotation);
       await quotationService.deleteAllItems(id);
       const sortedItems = [...items].sort((a, b) => {
@@ -219,7 +165,6 @@ export default function EditQuotation() {
         if (originalItemOrder[b.id] !== undefined) return 1;
         return a.id - b.id;
       });
-
       for (const item of sortedItems) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -234,7 +179,6 @@ export default function EditQuotation() {
           });
         }
       }
-
       if (newStatus === "Sent") {
         toast({
           title: "Quotation Update Sent",
@@ -272,7 +216,6 @@ export default function EditQuotation() {
       setIsSubmitting(false);
     }
   };
-
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
@@ -299,7 +242,6 @@ export default function EditQuotation() {
       });
     }
   };
-
   const handleSendWhatsapp = () => {
     if (!quotationData || !customer) {
       toast({
@@ -322,7 +264,6 @@ export default function EditQuotation() {
       });
     }
   };
-
   if (isLoading) {
     return <div className="page-container">
         <PageHeader title="Edit Quotation" />
@@ -331,37 +272,13 @@ export default function EditQuotation() {
         </div>
       </div>;
   }
-
   return <div className="page-container">
-      <PageHeader 
-        title={`Edit Quotation #${documentNumber}`}
-        actions={
-          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadPDF}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Download PDF
-            </Button>
+      <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
-          </div>
-        } 
-      />
-
-      {status === "Accepted" && <div className="rounded-md p-4 mt-1 bg-white">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
-              <p className="text-sm text-muted-foreground">This quotation has been accepted by the customer</p>
-            </div>
-          </div>
-        </div>}
+          </div>} />
 
       {status === "Sent" && <div className="rounded-md p-4 mt-1 bg-white">
           <div className="flex flex-col gap-3">
