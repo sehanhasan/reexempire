@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -69,18 +70,6 @@ export default function ViewQuotation() {
     enabled: !!id,
     staleTime: 0,
   });
-
-  // Set page title when quotation data is loaded
-  useEffect(() => {
-    if (quotation) {
-      document.title = `Quotation #${quotation.reference_number} - Reex Empire`;
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      document.title = 'Reex Empire';
-    };
-  }, [quotation]);
 
   // Load signature from quotation if it exists (for persistence after reload)
   useEffect(() => {
@@ -180,13 +169,16 @@ export default function ViewQuotation() {
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.signature_data;
 
-  // Group items by category with sequential indexing
+  // Group items by category with index numbers
   const groupedItems: { [key: string]: any[] } = {};
+  const categoryIndexMap: { [key: string]: number } = {};
+  let categoryIndex = 1;
   
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
+      categoryIndexMap[category] = categoryIndex++;
     }
     groupedItems[category].push(item);
   });
@@ -257,7 +249,7 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Compact Items Table with Sequential Category Indexing */}
+          {/* Compact Items Table with Category Index Numbers */}
           <Card className="shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -271,11 +263,11 @@ export default function ViewQuotation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category, categoryIndex) => (
+                    {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1}- {category}
+                            {categoryIndexMap[category]}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => (

@@ -41,6 +41,8 @@ export default function ViewInvoice() {
     };
   }, []);
 
+  // ... keep existing code (useEffect for fetching data)
+
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!id) return;
@@ -63,9 +65,6 @@ export default function ViewInvoice() {
           setInvoice(invoiceData);
           setItems(itemsData || []);
           setImages(imagesData || []);
-          
-          // Set page title
-          document.title = `Invoice #${invoiceData.reference_number} - Reex Empire`;
           
           // Fetch customer data
           if (invoiceData.customer_id) {
@@ -94,11 +93,7 @@ export default function ViewInvoice() {
     // Set up interval to refresh data every 5 minutes to keep the link active
     const interval = setInterval(fetchInvoiceData, 5 * 60 * 1000);
     
-    // Cleanup on unmount
-    return () => {
-      clearInterval(interval);
-      document.title = 'Reex Empire';
-    };
+    return () => clearInterval(interval);
   }, [id]);
 
   const formatMoney = (amount) => {
@@ -114,6 +109,8 @@ export default function ViewInvoice() {
       maximumFractionDigits: 2
     });
   };
+
+  // ... keep existing code (handlePrintPDF, handleShare, getStatusColor functions)
 
   const handlePrintPDF = () => {
     window.print();
@@ -182,13 +179,16 @@ export default function ViewInvoice() {
   const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
   const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
 
-  // Group items by category with sequential indexing
+  // Group items by category with index numbers
   const groupedItems = {};
+  const categoryIndexMap = {};
+  let categoryIndex = 1;
   
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
+      categoryIndexMap[category] = categoryIndex++;
     }
     groupedItems[category].push(item);
   });
@@ -250,7 +250,7 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          {/* Compact Items Table with Sequential Category Indexing */}
+          {/* Compact Items Table with Category Index Numbers */}
           <Card className="shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -264,11 +264,11 @@ export default function ViewInvoice() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category, categoryIndex) => (
+                    {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1}- {category}
+                            {categoryIndexMap[category]}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (
