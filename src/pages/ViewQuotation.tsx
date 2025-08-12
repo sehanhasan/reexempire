@@ -26,15 +26,15 @@ export default function ViewQuotation() {
   const [isProcessing, setIsProcessing] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to be unresponsive and zoomable
+  // Set viewport to be zoomable for mobile
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
+      newViewport.content = 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0';
       document.head.appendChild(newViewport);
     }
 
@@ -245,11 +245,11 @@ export default function ViewQuotation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map(category => (
+                    {categories.map((category, categoryIndex) => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
+                            {categoryIndex + 1}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => (
@@ -300,11 +300,13 @@ export default function ViewQuotation() {
             signatureData={hasSignature ? signatureData : undefined}
           />
 
-          {/* Signature Section */}
-          {!isAccepted && (
+          {/* Digital Signature Section - Always show for non-accepted quotations OR show signed version for accepted */}
+          {(!isAccepted || hasSignature) && (
             <Card className="shadow-sm print:hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
+                <CardTitle className="text-base text-gray-800">
+                  {isAccepted ? 'Customer Acceptance' : 'Acceptance'}
+                </CardTitle>
                 {isSigning && (
                   <Button
                     variant="ghost"
@@ -316,7 +318,27 @@ export default function ViewQuotation() {
                 )}
               </CardHeader>
               <CardContent>
-                {!isSigning ? (
+                {isAccepted && hasSignature ? (
+                  <div className="text-center py-8 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                    <p className="text-green-800 font-semibold text-lg mb-2">
+                      Quotation Accepted
+                    </p>
+                    <p className="text-green-700 text-sm">
+                      This quotation has been digitally signed and accepted by the customer.
+                    </p>
+                    {signatureData && (
+                      <div className="mt-4">
+                        <img 
+                          src={signatureData} 
+                          alt="Customer Signature" 
+                          className="max-w-xs mx-auto border border-gray-300 rounded"
+                        />
+                        <p className="text-xs text-gray-500 mt-2">Customer Digital Signature</p>
+                      </div>
+                    )}
+                  </div>
+                ) : !isSigning ? (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <p className="text-gray-600 mb-4 text-base">
                       Please digitally sign to accept this quotation.
