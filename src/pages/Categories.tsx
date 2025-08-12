@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { toast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, closeAlertDialog } from "@/components/ui/alert-dialog";
 import "../styles/mobile-card.css";
-import { Card } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Category, Subcategory } from "@/types/database";
 import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
 export default function Categories() {
@@ -159,7 +159,7 @@ export default function Categories() {
   }];
 
   // Custom render function for mobile view to match the design
-  const renderCustomMobileCard = (category: Category) => <Card key={category.id} className="mobile-card border-l-blue-500 overflow-visible">
+  const renderCustomMobileCard = (category: Category) => <CardContent key={category.id} className="mobile-card border-l-blue-500 overflow-visible">
       <div className="flex justify-between items-center px-1 py-2 border-b border-gray-100">
         <div className="text-blue-600 font-medium cursor-pointer" onClick={() => handleEditCategory(category)}>
           {category.name}
@@ -190,7 +190,7 @@ export default function Categories() {
           <ChevronRight className="h-4 w-4 text-blue-600" />
         </div>
       </div>
-    </Card>;
+    </CardContent>;
   return <div className="page-container">
       <PageHeader title="Service Categories" />
       
