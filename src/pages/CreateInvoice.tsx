@@ -446,10 +446,6 @@ export default function CreateInvoice() {
           documentType="invoice"
           isSubmitting={isSubmitting || uploadingImages}
           showDraft={true}
-          onSendWhatsapp={handleSendWhatsapp}
-          documentId={createdInvoiceId || undefined}
-          documentNumber={documentNumber}
-          customerName={customer?.name}
         />
       </form>
     </div>
