@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
 
@@ -51,7 +50,7 @@ export const quotationService = {
     return data;
   },
 
-  async update(id: string, quotation: Partial<Omit<Quotation, "id" | "created_at" | "updated_at">>): Promise<Quotation> {
+  async update(id: string, quotation: Partial<Omit<Quotation, "id" | "created_at" | "updated_at"> & { signature_data?: string }>): Promise<Quotation> {
     console.log(`QuotationService: Updating quotation ${id} with data:`, quotation);
     
     const { data, error } = await supabase

@@ -19,15 +19,15 @@ export default function ViewInvoice() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Set viewport to be unresponsive and zoomable
+  // Set viewport to allow pinch-to-zoom
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
+      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
       document.head.appendChild(newViewport);
     }
 
@@ -167,12 +167,16 @@ export default function ViewInvoice() {
   const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
   const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
 
-  // Group items by category
+  // Group items by category with index numbers
   const groupedItems = {};
+  const categoryIndexMap = {};
+  let categoryIndex = 1;
+  
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
+      categoryIndexMap[category] = categoryIndex++;
     }
     groupedItems[category].push(item);
   });
@@ -234,7 +238,7 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          {/* Compact Items Table */}
+          {/* Compact Items Table with Category Index Numbers */}
           <Card className="shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -252,7 +256,7 @@ export default function ViewInvoice() {
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
+                            {categoryIndexMap[category]}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (

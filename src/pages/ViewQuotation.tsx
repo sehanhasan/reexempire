@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -26,15 +27,15 @@ export default function ViewQuotation() {
   const [isProcessing, setIsProcessing] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to be unresponsive and zoomable
+  // Set viewport to allow pinch-to-zoom
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
+      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
       document.head.appendChild(newViewport);
     }
 
@@ -70,6 +71,13 @@ export default function ViewQuotation() {
     staleTime: 0,
   });
 
+  // Load signature from quotation if it exists (for persistence after reload)
+  useEffect(() => {
+    if (quotation?.signature_data) {
+      setSignatureData(quotation.signature_data);
+    }
+  }, [quotation]);
+
   const handleClearSignature = () => {
     if (sigCanvasRef.current) {
       sigCanvasRef.current.clear();
@@ -87,7 +95,11 @@ export default function ViewQuotation() {
 
     setIsProcessing(true);
     try {
-      await quotationService.updateStatus(quotation.id, 'Accepted');
+      // Update quotation with signature data and status
+      await quotationService.update(quotation.id, {
+        status: 'Accepted',
+        signature_data: signatureDataUrl
+      });
       setSignatureData(signatureDataUrl);
       setIsSigning(false);
       toast.success('Quotation accepted successfully!');
@@ -155,14 +167,18 @@ export default function ViewQuotation() {
   }
 
   const isAccepted = quotation.status === 'Accepted';
-  const hasSignature = signatureData || quotation.status === 'Accepted';
+  const hasSignature = signatureData || quotation.signature_data;
 
-  // Group items by category
+  // Group items by category with index numbers
   const groupedItems: { [key: string]: any[] } = {};
+  const categoryIndexMap: { [key: string]: number } = {};
+  let categoryIndex = 1;
+  
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
+      categoryIndexMap[category] = categoryIndex++;
     }
     groupedItems[category].push(item);
   });
@@ -231,7 +247,7 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Compact Items Table */}
+          {/* Compact Items Table with Category Index Numbers */}
           <Card className="shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -249,7 +265,7 @@ export default function ViewQuotation() {
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
+                            {categoryIndexMap[category]}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => (
@@ -294,13 +310,13 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Compact Additional Information */}
+          {/* Compact Additional Information with Signature */}
           <AdditionalInfoCard
             terms={quotation.terms}
-            signatureData={hasSignature ? signatureData : undefined}
+            signatureData={hasSignature ? (signatureData || quotation.signature_data) : undefined}
           />
 
-          {/* Signature Section */}
+          {/* Signature Section - Only show if not accepted */}
           {!isAccepted && (
             <Card className="shadow-sm print:hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -376,7 +392,6 @@ export default function ViewQuotation() {
             <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
           </div>
           
-          {/* Compact Footer */}
           <div className="text-center text-gray-500 text-xs py-3">
             <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
           </div>
