@@ -27,17 +27,24 @@ export default function ViewQuotation() {
   const [isDownloading, setIsDownloading] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to allow pinch-to-zoom
+  // Set viewport to allow pinch-to-zoom while preserving desktop layout
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
+    const content = 'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes';
+
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
+      viewport.setAttribute('content', content);
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
+      newViewport.content = content;
       document.head.appendChild(newViewport);
     }
+
+    // Optional: Keep desktop-style width on mobile using CSS
+    document.body.style.minWidth = '1024px';
+  }, []);
+
 
     // Cleanup on unmount
     return () => {
