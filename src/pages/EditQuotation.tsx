@@ -2,18 +2,20 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2, FileText, Receipt } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
-import { quotationService, customerService } from "@/services";
+import { quotationService, customerService, invoiceService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
+
 export default function EditQuotation() {
   const navigate = useNavigate();
   const {
@@ -51,6 +53,7 @@ export default function EditQuotation() {
   const [originalItemOrder, setOriginalItemOrder] = useState<{
     [key: number]: number;
   }>({});
+
   useEffect(() => {
     if (!id) return;
     const fetchQuotationData = async () => {
@@ -110,10 +113,12 @@ export default function EditQuotation() {
     };
     fetchQuotationData();
   }, [id, navigate]);
+
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
+
   const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
     e.preventDefault();
     if (!customerId || !id) {
@@ -216,6 +221,7 @@ export default function EditQuotation() {
       setIsSubmitting(false);
     }
   };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
@@ -242,6 +248,7 @@ export default function EditQuotation() {
       });
     }
   };
+
   const handleSendWhatsapp = () => {
     if (!quotationData || !customer) {
       toast({
@@ -264,6 +271,78 @@ export default function EditQuotation() {
       });
     }
   };
+
+  const handleConvertToInvoice = async () => {
+    if (!quotationData || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Customer information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Generate invoice reference number
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const timestamp = Date.now().toString().slice(-6);
+      const invoiceRefNumber = `INV-${year}-${timestamp}`;
+
+      // Create invoice with current items
+      const invoice = {
+        customer_id: quotationData.customer_id,
+        reference_number: invoiceRefNumber,
+        issue_date: new Date().toISOString().split('T')[0],
+        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: "Draft",
+        payment_status: "Unpaid",
+        subtotal: quotationData.subtotal,
+        total: quotationData.total,
+        notes: quotationData.notes,
+        terms: quotationData.terms,
+        subject: quotationData.subject,
+        quotation_ref_number: quotationData.reference_number
+      };
+
+      const createdInvoice = await invoiceService.create(invoice);
+
+      // Copy quotation items to invoice items
+      for (const item of items) {
+        if (item.description && item.unitPrice > 0) {
+          const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+          await invoiceService.createItem({
+            invoice_id: createdInvoice.id,
+            description: item.description,
+            quantity: qty,
+            unit: item.unit,
+            unit_price: item.unitPrice,
+            amount: qty * item.unitPrice,
+            category: item.category
+          });
+        }
+      }
+
+      toast({
+        title: "Invoice Created",
+        description: `Invoice ${invoiceRefNumber} has been created successfully from quotation ${quotationData.reference_number}.`
+      });
+
+      navigate(`/invoices/edit/${createdInvoice.id}`);
+    } catch (error) {
+      console.error("Error converting quotation to invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to convert quotation to invoice. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="page-container">
         <PageHeader title="Edit Quotation" />
@@ -272,6 +351,7 @@ export default function EditQuotation() {
         </div>
       </div>;
   }
+
   return <div className="page-container">
       <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
@@ -298,6 +378,34 @@ export default function EditQuotation() {
               <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} onClick={handleSendWhatsapp}>
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp
+              </Button>
+            </div>
+          </div>
+        </div>}
+
+      {status === "Accepted" && <div className="rounded-md p-4 mt-1 bg-white">
+          <div className="flex flex-col gap-3">
+            <div>
+              <h3 className="font-medium">Quotation Status: <span className="text-green-600">Accepted</span></h3>
+              <p className="text-sm text-muted-foreground">Your quotation has been accepted. You can now share it or convert it to an invoice.</p>
+            </div>
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
+              <Button 
+                variant="outline" 
+                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                onClick={handleSendWhatsapp}
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share via WhatsApp
+              </Button>
+              <Button 
+                variant="outline" 
+                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                onClick={handleConvertToInvoice}
+                disabled={isSubmitting}
+              >
+                <Receipt className="mr-2 h-4 w-4" />
+                {isSubmitting ? 'Converting...' : 'Convert to Invoice'}
               </Button>
             </div>
           </div>
