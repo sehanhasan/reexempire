@@ -299,18 +299,6 @@ export default function EditInvoice() {
         } 
       />
 
-      {/* Display quotation reference if it exists */}
-      {invoiceData?.quotation_ref_number && (
-        <div className="rounded-md p-4 mt-4 bg-blue-50 border border-blue-200">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-blue-800">
-              Quotation Reference: <span className="font-normal">{invoiceData.quotation_ref_number}</span>
-            </h3>
-          </div>
-          <p className="text-sm text-blue-600 mt-1">This invoice was created from quotation {invoiceData.quotation_ref_number}</p>
-        </div>
-      )}
-
       {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col gap-3">
             <div>
@@ -358,8 +346,7 @@ export default function EditInvoice() {
           expiryDate={dueDate} 
           setExpiryDate={setDueDate} 
           subject={subject} 
-          setSubject={setSubject}
-          quotationReference={invoiceData?.quotation_ref_number || undefined}
+          setSubject={setSubject} 
         />
         
         <QuotationItemsCard 

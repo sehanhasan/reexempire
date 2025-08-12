@@ -1,3 +1,4 @@
+
 // Database Types
 export interface Category {
   id: string;
@@ -144,7 +145,6 @@ export interface Invoice {
   created_at: string;
   updated_at: string;
   subject?: string | null; // Added subject field to fix errors
-  quotation_ref_number?: string | null; // Added quotation reference number field
 }
 
 export interface InvoiceItem {
