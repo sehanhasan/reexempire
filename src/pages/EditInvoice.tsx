@@ -203,14 +203,25 @@ export default function EditInvoice() {
           description: `Invoice for ${customer?.name} has been updated and sent successfully.`
         });
         
-        // Use mobile-friendly share function
+        // Open WhatsApp directly for sending
         try {
-          await shareInvoice(id, documentNumber, customer?.name || '');
+          const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
+          
+          const message = `Dear ${customer?.name},\n\n` +
+            `Please find your updated invoice ${documentNumber} for review at the link below: ` +
+            `${invoiceViewUrl}\n\n` +
+            `You can review the invoice details and make payment.\n\n` +
+            `If you have any questions, please don't hesitate to contact us.\n\n` +
+            `Thank you,\nReex Empire Sdn Bhd`;
+          
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+          window.open(whatsappUrl, '_blank');
         } catch (error) {
-          console.error("Error sharing invoice:", error);
+          console.error("Error opening WhatsApp:", error);
           toast({
             title: "Share Error",
-            description: "Invoice updated successfully, but failed to share. You can share it manually.",
+            description: "Invoice updated successfully, but failed to open WhatsApp. You can share it manually.",
             variant: "destructive"
           });
         }
@@ -366,6 +377,9 @@ export default function EditInvoice() {
           documentType="invoice" 
           isSubmitting={isSubmitting}
           showDraft={false}
+          documentId={id}
+          documentNumber={documentNumber}
+          customerName={customer?.name}
         />
       </form>
     </div>;

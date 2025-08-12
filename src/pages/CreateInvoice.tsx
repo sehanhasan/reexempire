@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -44,6 +45,7 @@ export default function CreateInvoice() {
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
+  const [terms, setTerms] = useState("Payment is due within 3 days from the date of this invoice");
   const [subject, setSubject] = useState("");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
@@ -288,7 +290,7 @@ export default function CreateInvoice() {
         total: total,
         notes: notes || null,
         subject: subject || null,
-        terms: "Payment is due within 3 days from the date of this invoice",
+        terms: terms,
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
         deposit_percentage: isDepositInvoice ? depositPercentage : 0,
@@ -471,12 +473,17 @@ export default function CreateInvoice() {
         </Card>
         
         <AdditionalInfoForm 
+          terms={terms}
+          setTerms={setTerms}
           onSubmit={handleSubmit}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
           isSubmitting={isSubmitting || uploadingImages}
           showDraft={true}
           onSendWhatsapp={handleSendWhatsapp}
+          documentId={createdInvoiceId || undefined}
+          documentNumber={documentNumber}
+          customerName={customer?.name}
         />
       </form>
     </div>
