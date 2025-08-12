@@ -291,8 +291,9 @@ export default function EditQuotation() {
       const timestamp = Date.now().toString().slice(-6);
       const invoiceRefNumber = `INV-${year}-${timestamp}`;
 
-      // Create invoice with current items
+      // Create invoice with all required properties
       const invoice = {
+        quotation_id: quotationData.id,
         customer_id: quotationData.customer_id,
         reference_number: invoiceRefNumber,
         issue_date: new Date().toISOString().split('T')[0],
@@ -300,7 +301,12 @@ export default function EditQuotation() {
         status: "Draft",
         payment_status: "Unpaid",
         subtotal: quotationData.subtotal,
+        tax_rate: 6.00,
+        tax_amount: 0,
         total: quotationData.total,
+        is_deposit_invoice: false,
+        deposit_amount: 0,
+        deposit_percentage: 0,
         notes: quotationData.notes,
         terms: quotationData.terms,
         subject: quotationData.subject,
