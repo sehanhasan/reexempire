@@ -139,7 +139,7 @@ export default function ViewInvoice() {
 
       // Configure PDF options for A4 with proper margins
       const options = {
-        margin: [10, 10, 10, 10], // top, left, bottom, right in mm
+        margin: [20, 15, 20, 15], // top, left, bottom, right in mm
         filename: `invoice-${invoice.reference_number}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
