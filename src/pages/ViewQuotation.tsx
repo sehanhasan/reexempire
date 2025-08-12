@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -70,6 +68,16 @@ export default function ViewQuotation() {
     enabled: !!id,
     staleTime: 0,
   });
+
+  // Set page title with quotation number
+  useEffect(() => {
+    if (quotation) {
+      document.title = `Quotation #${quotation.reference_number} - Reex Empire`;
+    }
+    return () => {
+      document.title = 'Reex Empire';
+    };
+  }, [quotation]);
 
   // Load signature from quotation if it exists (for persistence after reload)
   useEffect(() => {
@@ -169,25 +177,21 @@ export default function ViewQuotation() {
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.signature_data;
 
-  // Group items by category with index numbers
+  // Group items by category with sequential index numbers
   const groupedItems: { [key: string]: any[] } = {};
-  const categoryIndexMap: { [key: string]: number } = {};
-  let categoryIndex = 1;
+  const categoryOrder: string[] = [];
   
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
-      categoryIndexMap[category] = categoryIndex++;
+      categoryOrder.push(category);
     }
     groupedItems[category].push(item);
   });
-  
-  const categories = Object.keys(groupedItems).sort();
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}
@@ -249,9 +253,9 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Compact Items Table with Category Index Numbers */}
-          <Card className="shadow-sm">
-            <CardContent className="p-0">
+          {/* Compact Items Table with Sequential Category Index Numbers */}
+          <div className="bg-white rounded-lg shadow-sm">
+            <div className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-100">
@@ -263,11 +267,11 @@ export default function ViewQuotation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map(category => (
+                    {categoryOrder.map((category, categoryIndex) => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndexMap[category]}- {category}
+                            {categoryIndex + 1}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => (
@@ -309,8 +313,8 @@ export default function ViewQuotation() {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Compact Additional Information with Signature */}
           <AdditionalInfoCard
@@ -320,9 +324,9 @@ export default function ViewQuotation() {
 
           {/* Signature Section - Only show if not accepted */}
           {!isAccepted && (
-            <Card className="shadow-sm print:hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
+            <div className="bg-white rounded-lg shadow-sm print:hidden">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-3 p-4">
+                <h3 className="text-base text-gray-800 font-semibold">Acceptance</h3>
                 {isSigning && (
                   <Button
                     variant="ghost"
@@ -332,8 +336,8 @@ export default function ViewQuotation() {
                     <X className="h-4 w-4" />
                   </Button>
                 )}
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="p-4 pt-0">
                 {!isSigning ? (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <p className="text-gray-600 mb-4 text-base">
@@ -384,8 +388,8 @@ export default function ViewQuotation() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Contact Info */}

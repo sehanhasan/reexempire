@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 interface AdditionalInfoCardProps {
@@ -17,42 +16,40 @@ export function AdditionalInfoCard({ subject, terms, signatureData }: Additional
   }
 
   return (
-    <Card>
-      <CardContent className="space-y-4">
-        {subject && (
-          <div>
-            <h4 className="font-medium text-sm text-muted-foreground mb-2">Subject</h4>
-            <p className="text-sm">{subject}</p>
-          </div>
-        )}
+    <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+      {subject && (
+        <div>
+          <h4 className="font-medium text-sm text-muted-foreground mb-2">Subject</h4>
+          <p className="text-sm">{subject}</p>
+        </div>
+      )}
 
-        {terms && (
-          <div>
-            <h4 className="font-medium text-sm text-muted-foreground mt-4 mb-2">Terms & Conditions</h4>
-            <p className="text-sm whitespace-pre-wrap">{terms}</p>
-          </div>
-        )}
+      {terms && (
+        <div>
+          <h4 className="font-medium text-sm text-muted-foreground mt-4 mb-2">Terms & Conditions</h4>
+          <p className="text-sm whitespace-pre-wrap">{terms}</p>
+        </div>
+      )}
 
-        {signatureData && (
-          <>
-            {(subject || terms) && <Separator />}
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-3 mt-4">Customer Signature</h4>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <img 
-                  src={signatureData} 
-                  alt="Customer Signature" 
-                  className="max-w-full h-auto border border-gray-200 rounded bg-white"
-                  style={{ maxHeight: '150px' }}
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Signed digitally on {new Date().toLocaleDateString()}
-                </p>
-              </div>
+      {signatureData && (
+        <>
+          {(subject || terms) && <Separator />}
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground mb-3 mt-4">Customer Signature</h4>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <img 
+                src={signatureData} 
+                alt="Customer Signature" 
+                className="max-w-full h-auto border border-gray-200 rounded bg-white"
+                style={{ maxHeight: '150px' }}
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Signed digitally on {new Date().toLocaleDateString()}
+              </p>
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
