@@ -288,11 +288,12 @@ export default function CreateInvoice() {
         total: total,
         notes: notes || null,
         subject: subject || null,
-        terms: null,
+        terms: "Payment is due within 3 days from the date of this invoice",
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
         deposit_percentage: isDepositInvoice ? depositPercentage : 0,
-        payment_status: "Unpaid"
+        payment_status: "Unpaid",
+        quotation_ref_number: quotationReference || null
       };
       
       const createdInvoice = await invoiceService.create(invoice);
