@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -254,7 +254,6 @@ export default function Quotations() {
   return <div className="page-container">
       <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
 
-      <Card className="mt-1">
         <CardContent className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
             <div className="relative flex-1 hidden md:block">
@@ -455,7 +454,6 @@ export default function Quotations() {
                 </Table>}
             </div>}
         </CardContent>
-      </Card>
 
       <FloatingActionButton onClick={() => navigate("/quotations/create")} />
 
