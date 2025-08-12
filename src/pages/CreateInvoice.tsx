@@ -153,24 +153,31 @@ export default function CreateInvoice() {
       return sum + qty * item.unitPrice;
     }, 0);
 
+    const taxRate = 6.00; // Default tax rate
+    const taxAmount = subtotal * (taxRate / 100);
+    const total = subtotal + taxAmount;
+
     try {
       setIsSubmitting(true);
 
       const invoice = {
-        quotation_id: quotationReference || null, // Store the reference number instead of UUID
+        quotation_id: quotationReference || null,
         customer_id: customerId,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
         status: newStatus || status,
         subtotal: subtotal,
-        total: subtotal,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        total: total,
         notes: notes || null,
         terms: terms || null,
         subject: subject || null,
         is_deposit_invoice: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
+        deposit_percentage: depositInfo.requiresDeposit ? (typeof depositInfo.depositPercentage === 'string' ? parseFloat(depositInfo.depositPercentage) : depositInfo.depositPercentage) : 0,
+        payment_status: 'Unpaid'
       };
 
       console.log("Creating invoice with data:", invoice);
