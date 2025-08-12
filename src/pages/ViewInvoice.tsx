@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,8 +40,6 @@ export default function ViewInvoice() {
     };
   }, []);
 
-  // ... keep existing code (useEffect for fetching data)
-
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!id) return;
@@ -65,6 +62,9 @@ export default function ViewInvoice() {
           setInvoice(invoiceData);
           setItems(itemsData || []);
           setImages(imagesData || []);
+          
+          // Set document title
+          document.title = `Invoice #${invoiceData.reference_number} - Reex Empire`;
           
           // Fetch customer data
           if (invoiceData.customer_id) {
@@ -93,7 +93,11 @@ export default function ViewInvoice() {
     // Set up interval to refresh data every 5 minutes to keep the link active
     const interval = setInterval(fetchInvoiceData, 5 * 60 * 1000);
     
-    return () => clearInterval(interval);
+    // Cleanup document title and interval on unmount
+    return () => {
+      clearInterval(interval);
+      document.title = 'Reex Empire';
+    };
   }, [id]);
 
   const formatMoney = (amount) => {
@@ -109,8 +113,6 @@ export default function ViewInvoice() {
       maximumFractionDigits: 2
     });
   };
-
-  // ... keep existing code (handlePrintPDF, handleShare, getStatusColor functions)
 
   const handlePrintPDF = () => {
     window.print();
@@ -179,16 +181,14 @@ export default function ViewInvoice() {
   const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
   const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
 
-  // Group items by category with index numbers
+  // Group items by category with sequential indexing
   const groupedItems = {};
-  const categoryIndexMap = {};
   let categoryIndex = 1;
   
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
-      categoryIndexMap[category] = categoryIndex++;
     }
     groupedItems[category].push(item);
   });
@@ -197,7 +197,6 @@ export default function ViewInvoice() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
-
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
@@ -250,106 +249,100 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          {/* Compact Items Table with Category Index Numbers */}
-          <Card className="shadow-sm">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="text-left p-2 font-semibold text-gray-700">Description</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Price</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map(category => (
-                      <React.Fragment key={category}>
-                        <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndexMap[category]}- {category}
-                          </td>
+          {/* Compact Items Table with Sequential Category Indexing */}
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="text-left p-2 font-semibold text-gray-700">Description</th>
+                    <th className="text-right p-2 font-semibold text-gray-700 w-16">Price</th>
+                    <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
+                    <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map((category, categoryIdx) => (
+                    <React.Fragment key={category}>
+                      <tr className="bg-blue-50 border-t border-b">
+                        <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
+                          {categoryIdx + 1}- {category}
+                        </td>
+                      </tr>
+                      {groupedItems[category].map((item, idx) => (
+                        <tr key={idx} className="border-b hover:bg-gray-50">
+                          <td className="p-2 text-gray-800">{item.description}</td>
+                          <td className="text-right p-2 text-gray-800">{formatAmount(item.unit_price)}</td>
+                          <td className="text-right p-2 text-gray-800">{item.quantity}</td>
+                          <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(item.amount)}</td>
                         </tr>
-                        {groupedItems[category].map((item, idx) => (
-                          <tr key={idx} className="border-b hover:bg-gray-50">
-                            <td className="p-2 text-gray-800">{item.description}</td>
-                            <td className="text-right p-2 text-gray-800">{formatAmount(item.unit_price)}</td>
-                            <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(item.amount)}</td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Compact Subtotal and Total Information */}
-              <div className="p-3 bg-gray-50 border-t">
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-1 text-sm">
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Compact Subtotal and Total Information */}
+            <div className="p-3 bg-gray-50 border-t">
+              <div className="flex justify-end">
+                <div className="w-64 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Subtotal:</span>
+                    <span>{formatMoney(invoice.subtotal)}</span>
+                  </div>
+                  {invoice.tax_rate > 0 && (
                     <div className="flex justify-between">
-                      <span className="font-medium">Subtotal:</span>
-                      <span>{formatMoney(invoice.subtotal)}</span>
+                      <span className="font-medium">Tax ({invoice.tax_rate}%):</span>
+                      <span>{formatMoney(invoice.tax_amount)}</span>
                     </div>
-                    {invoice.tax_rate > 0 && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Tax ({invoice.tax_rate}%):</span>
-                        <span>{formatMoney(invoice.tax_amount)}</span>
-                      </div>
-                    )}
-                    {invoice.is_deposit_invoice && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Deposit Amount:</span>
-                        <span>{formatMoney(invoice.deposit_amount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-base font-bold border-t pt-1">
-                      <span>Total:</span>
-                      <span className="text-blue-600">{formatMoney(invoice.total)}</span>
+                  )}
+                  {invoice.is_deposit_invoice && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Deposit Amount:</span>
+                      <span>{formatMoney(invoice.deposit_amount)}</span>
                     </div>
+                  )}
+                  <div className="flex justify-between text-base font-bold border-t pt-1">
+                    <span>Total:</span>
+                    <span className="text-blue-600">{formatMoney(invoice.total)}</span>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Work Photos Card */}
           {images.length > 0 && (
-            <Card className="shadow-sm">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-gray-700 mb-3 text-base">Work Photos</h3>
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {images.map((image, index) => (
-                    <div key={image.id} className="relative">
-                      <img 
-                        src={image.image_url} 
-                        alt={`Work photo ${index + 1}`} 
-                        className="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
-                        onClick={() => window.open(image.image_url, '_blank')}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h3 className="font-semibold text-gray-700 mb-3 text-base">Work Photos</h3>
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {images.map((image, index) => (
+                  <div key={image.id} className="relative">
+                    <img 
+                      src={image.image_url} 
+                      alt={`Work photo ${index + 1}`} 
+                      className="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                      onClick={() => window.open(image.image_url, '_blank')}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Payment Information Card */}
-          <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-gray-700 mb-3 text-base">Payment Details</h3>
-              <div className="bg-blue-50 p-3 rounded-lg text-sm">
-                <div className="space-y-1">
-                  <p><strong>Company Name:</strong> Reex Empire Sdn Bhd</p>
-                  <p><strong>Bank Name:</strong> Maybank</p>
-                  <p><strong>Account No:</strong> 514897120482</p>
-                  <p className="text-blue-700 font-medium mt-2">*Please include the invoice number on payment reference*</p>
-                </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="font-semibold text-gray-700 mb-3 text-base">Payment Details</h3>
+            <div className="bg-blue-50 p-3 rounded-lg text-sm">
+              <div className="space-y-1">
+                <p><strong>Company Name:</strong> Reex Empire Sdn Bhd</p>
+                <p><strong>Bank Name:</strong> Maybank</p>
+                <p><strong>Account No:</strong> 514897120482</p>
+                <p className="text-blue-700 font-medium mt-2">*Please include the invoice number on payment reference*</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Additional Information */}
           <AdditionalInfoCard 

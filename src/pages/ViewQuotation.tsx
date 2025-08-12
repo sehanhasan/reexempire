@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -70,6 +69,18 @@ export default function ViewQuotation() {
     enabled: !!id,
     staleTime: 0,
   });
+
+  // Set document title when quotation data is loaded
+  useEffect(() => {
+    if (quotation) {
+      document.title = `Quotation #${quotation.reference_number} - Reex Empire`;
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.title = 'Reex Empire';
+    };
+  }, [quotation]);
 
   // Load signature from quotation if it exists (for persistence after reload)
   useEffect(() => {
@@ -169,16 +180,14 @@ export default function ViewQuotation() {
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.signature_data;
 
-  // Group items by category with index numbers
+  // Group items by category with sequential indexing
   const groupedItems: { [key: string]: any[] } = {};
-  const categoryIndexMap: { [key: string]: number } = {};
   let categoryIndex = 1;
   
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
-      categoryIndexMap[category] = categoryIndex++;
     }
     groupedItems[category].push(item);
   });
@@ -187,7 +196,6 @@ export default function ViewQuotation() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}
@@ -249,70 +257,68 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Compact Items Table with Category Index Numbers */}
-          <Card className="shadow-sm">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="text-left p-2 font-semibold text-gray-700">Description</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map(category => (
-                      <React.Fragment key={category}>
-                        <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndexMap[category]}- {category}
-                          </td>
+          {/* Compact Items Table with Sequential Category Indexing */}
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="text-left p-2 font-semibold text-gray-700">Description</th>
+                    <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
+                    <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
+                    <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.map((category, categoryIdx) => (
+                    <React.Fragment key={category}>
+                      <tr className="bg-blue-50 border-t border-b">
+                        <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
+                          {categoryIdx + 1}- {category}
+                        </td>
+                      </tr>
+                      {groupedItems[category].map((item, index) => (
+                        <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
+                          <td className="p-2 text-gray-800">{item.description}</td>
+                          <td className="text-right p-2 text-gray-800">{item.quantity}</td>
+                          <td className="text-right p-2 text-gray-800">{item.unit_price.toFixed(2)}</td>
+                          <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
                         </tr>
-                        {groupedItems[category].map((item, index) => (
-                          <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
-                            <td className="p-2 text-gray-800">{item.description}</td>
-                            <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 text-gray-800">{item.unit_price.toFixed(2)}</td>
-                            <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Compact Subtotal, Deposit and Total Information */}
-              <div className="p-3 bg-gray-50 border-t">
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-1 text-sm">
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Compact Subtotal, Deposit and Total Information */}
+            <div className="p-3 bg-gray-50 border-t">
+              <div className="flex justify-end">
+                <div className="w-64 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Subtotal:</span>
+                    <span>{formatCurrency(quotation.subtotal)}</span>
+                  </div>
+                  
+                  {quotation.requires_deposit && (
                     <div className="flex justify-between">
-                      <span className="font-medium">Subtotal:</span>
-                      <span>{formatCurrency(quotation.subtotal)}</span>
+                      <span className="font-medium">
+                        Deposit ({quotation.deposit_percentage}%):
+                      </span>
+                      <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
                     </div>
-                    
-                    {quotation.requires_deposit && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">
-                          Deposit ({quotation.deposit_percentage}%):
-                        </span>
-                        <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between text-base font-bold border-t pt-1">
-                      <span>Total:</span>
-                      <span className="text-blue-600">{formatCurrency(quotation.total)}</span>
-                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-base font-bold border-t pt-1">
+                    <span>Total:</span>
+                    <span className="text-blue-600">{formatCurrency(quotation.total)}</span>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Compact Additional Information with Signature */}
+          {/* Additional Information with Signature */}
           <AdditionalInfoCard
             terms={quotation.terms}
             signatureData={hasSignature ? (signatureData || quotation.signature_data) : undefined}
@@ -320,9 +326,9 @@ export default function ViewQuotation() {
 
           {/* Signature Section - Only show if not accepted */}
           {!isAccepted && (
-            <Card className="shadow-sm print:hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
+            <div className="bg-white rounded-lg shadow-sm print:hidden">
+              <div className="flex flex-row items-center justify-between space-y-0 pb-3 p-4 border-b">
+                <h3 className="text-base font-semibold text-gray-800">Acceptance</h3>
                 {isSigning && (
                   <Button
                     variant="ghost"
@@ -332,8 +338,8 @@ export default function ViewQuotation() {
                     <X className="h-4 w-4" />
                   </Button>
                 )}
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="p-4">
                 {!isSigning ? (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <p className="text-gray-600 mb-4 text-base">
@@ -384,8 +390,8 @@ export default function ViewQuotation() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Contact Info */}
