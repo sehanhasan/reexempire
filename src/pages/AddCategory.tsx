@@ -9,13 +9,13 @@ import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SubcategoryForm {
   id?: string;
   tempId: number | string;
   price: string;
   description: string;
-  deleted?: boolean;
 }
 
 export default function AddCategory() {
@@ -81,20 +81,19 @@ export default function AddCategory() {
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value
+    } = e.target;
     setCategory(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  const handleSubcategoryChange = (index: number, field: keyof SubcategoryForm, value: string | boolean) => {
+  const handleSubcategoryChange = (index: number, field: keyof SubcategoryForm, value: string) => {
     const updatedSubcategories = [...subcategories];
-    if (field === 'deleted' && typeof value === 'boolean') {
-      updatedSubcategories[index].deleted = value;
-    } else if (typeof value === 'string') {
-      (updatedSubcategories[index] as any)[field] = value;
-    }
+    updatedSubcategories[index][field] = value;
     setSubcategories(updatedSubcategories);
   };
 
@@ -108,30 +107,14 @@ export default function AddCategory() {
 
   const removeSubcategory = (index: number) => {
     if (subcategories.length === 1) {
-      // If it's the only subcategory, clear it but don't remove
-      const updatedSubcategories = [...subcategories];
-      if (updatedSubcategories[0].id) {
-        // Mark existing subcategory as deleted
-        updatedSubcategories[0].deleted = true;
-      } else {
-        // Reset new subcategory
-        updatedSubcategories[0] = {
-          tempId: Date.now(),
-          price: "",
-          description: ""
-        };
-      }
-      setSubcategories(updatedSubcategories);
+      setSubcategories([{
+        tempId: Date.now(),
+        price: "",
+        description: ""
+      }]);
     } else {
-      const updatedSubcategories = [...subcategories];
-      if (updatedSubcategories[index].id) {
-        // Mark existing subcategory as deleted instead of removing
-        updatedSubcategories[index].deleted = true;
-      } else {
-        // Remove new subcategory completely
-        updatedSubcategories.splice(index, 1);
-      }
-      setSubcategories(updatedSubcategories);
+      const updated = subcategories.filter((_, i) => i !== index);
+      setSubcategories(updated);
     }
   };
 
@@ -174,19 +157,15 @@ export default function AddCategory() {
       const formattedData = {
         name: category.name,
         description: category.description,
-        subcategories: subcategories
-          .filter(sub => !sub.deleted && sub.description.trim()) // Filter out deleted and empty subcategories
-          .map(sub => ({
-            ...(sub.id ? { id: sub.id } : {}),
-            description: sub.description,
-            price: sub.price ? parseFloat(sub.price) : 0,
-            name: sub.description
-          })),
-        deletedSubcategories: subcategories
-          .filter(sub => sub.deleted && sub.id)
-          .map(sub => sub.id)
+        subcategories: subcategories.map(sub => ({
+          ...(sub.id ? {
+            id: sub.id
+          } : {}),
+          description: sub.description,
+          price: sub.price ? parseFloat(sub.price) : 0,
+          name: sub.description
+        }))
       };
-      
       if (edit && categoryId) {
         await categoryService.update(categoryId, formattedData);
         toast({
@@ -213,17 +192,11 @@ export default function AddCategory() {
     }
   };
 
-  return (
-    <div className="page-container">
-      <PageHeader 
-        title={edit ? "Edit Category" : "Add Category"} 
-        actions={
-          <Button variant="outline" onClick={() => navigate("/categories")}>
+  return <div className="page-container">
+      <PageHeader title={edit ? "Edit Category" : "Add Category"} actions={<Button variant="outline" onClick={() => navigate("/categories")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
-          </Button>
-        } 
-      />
+          </Button>} />
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mt-6">
@@ -237,14 +210,7 @@ export default function AddCategory() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="name">Category Name*</Label>
-                <Input 
-                  id="name" 
-                  name="name" 
-                  placeholder="e.g. Bathroom Renovation" 
-                  value={category.name} 
-                  onChange={handleCategoryChange} 
-                  required 
-                />
+                <Input id="name" name="name" placeholder="e.g. Bathroom Renovation" value={category.name} onChange={handleCategoryChange} required />
               </div>
             </CardContent>
           </Card>
@@ -257,62 +223,26 @@ export default function AddCategory() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {subcategories
-                .filter(sub => !sub.deleted) // Only show non-deleted subcategories
-                .map((subcategory, index) => (
-                  <div 
-                    key={typeof subcategory.tempId === 'string' ? subcategory.tempId : subcategory.tempId.toString()} 
-                    className="space-y-4 pb-4 border-b last:border-b-0"
-                  >
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-medium text-base">Subcategory {index + 1}</h3>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          const originalIndex = subcategories.findIndex(s => s.tempId === subcategory.tempId);
-                          removeSubcategory(originalIndex);
-                        }}
-                      >
-                        <Trash className="h-4 w-4 text-red-500" />
-                      </Button>
+              {subcategories.map((subcategory, index) => <div key={typeof subcategory.tempId === 'string' ? subcategory.tempId : subcategory.tempId.toString()} className="space-y-4 pb-4 border-b last:border-b-0">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium text-base">Subcategory {index + 1}</h3>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeSubcategory(index)} disabled={subcategories.length === 1 && !edit}>
+                      <Trash className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor={`subcategory-description-${index}`}>Description*</Label>
+                      <Textarea id={`subcategory-description-${index}`} placeholder="e.g. Complete bathroom renovation" value={subcategory.description} onChange={e => handleSubcategoryChange(index, 'description', e.target.value)} rows={3} required />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor={`subcategory-description-${index}`}>Description*</Label>
-                        <Textarea 
-                          id={`subcategory-description-${index}`} 
-                          placeholder="e.g. Complete bathroom renovation" 
-                          value={subcategory.description} 
-                          onChange={(e) => {
-                            const originalIndex = subcategories.findIndex(s => s.tempId === subcategory.tempId);
-                            handleSubcategoryChange(originalIndex, 'description', e.target.value);
-                          }} 
-                          rows={3} 
-                          required 
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
-                        <Input 
-                          id={`subcategory-price-${index}`} 
-                          type="number" 
-                          min="0" 
-                          step="0.01" 
-                          placeholder="Enter price" 
-                          value={subcategory.price} 
-                          onChange={(e) => {
-                            const originalIndex = subcategories.findIndex(s => s.tempId === subcategory.tempId);
-                            handleSubcategoryChange(originalIndex, 'price', e.target.value);
-                          }} 
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
+                      <Input id={`subcategory-price-${index}`} type="number" min="0" step="0.01" placeholder="Enter price" value={subcategory.price} onChange={e => handleSubcategoryChange(index, 'price', e.target.value)} />
                     </div>
                   </div>
-                ))}
+                </div>)}
               
               <Button type="button" variant="outline" onClick={addSubcategory} className="w-full">
                 <Plus className="mr-2 h-4 w-4" />
@@ -332,6 +262,5 @@ export default function AddCategory() {
           </Card>
         </div>
       </form>
-    </div>
-  );
+    </div>;
 }
