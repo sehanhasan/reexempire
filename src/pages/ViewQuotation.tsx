@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -30,11 +29,11 @@ export default function ViewQuotation() {
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
+      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
       document.head.appendChild(newViewport);
     }
 
@@ -70,6 +69,16 @@ export default function ViewQuotation() {
     staleTime: 0,
   });
 
+  // Load stored signature if quotation is accepted
+  useEffect(() => {
+    if (quotation?.status === 'Accepted') {
+      const storedSignature = localStorage.getItem(`quotation-signature-${id}`);
+      if (storedSignature) {
+        setSignatureData(storedSignature);
+      }
+    }
+  }, [quotation, id]);
+
   const handleClearSignature = () => {
     if (sigCanvasRef.current) {
       sigCanvasRef.current.clear();
@@ -88,8 +97,12 @@ export default function ViewQuotation() {
     setIsProcessing(true);
     try {
       await quotationService.updateStatus(quotation.id, 'Accepted');
+      
+      // Store signature locally
+      localStorage.setItem(`quotation-signature-${id}`, signatureDataUrl);
       setSignatureData(signatureDataUrl);
       setIsSigning(false);
+      
       toast.success('Quotation accepted successfully!');
       refetch();
     } catch (error) {
@@ -157,7 +170,7 @@ export default function ViewQuotation() {
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.status === 'Accepted';
 
-  // Group items by category
+  // Group items by category with index numbers
   const groupedItems: { [key: string]: any[] } = {};
   items.forEach(item => {
     const category = item.category || "Other Items";
@@ -170,10 +183,9 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-
-      <div className="py-4 px-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+    <div className="min-h-screen bg-background" style={{ minWidth: '1024px', margin: '0', padding: '0' }} id="quotation-view">
+      <div className="py-2 px-2">
+        <div className="max-w-none mx-auto space-y-4" style={{ width: '100%', maxWidth: 'none' }}>
           {/* Compact Header with Company and Quotation Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="grid grid-cols-2 gap-6">
@@ -245,11 +257,11 @@ export default function ViewQuotation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map(category => (
+                    {categories.map((category, categoryIndex) => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {category}
+                            {categoryIndex + 1}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => (
@@ -294,13 +306,13 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Compact Additional Information */}
+          {/* Compact Additional Information with Signature */}
           <AdditionalInfoCard
             terms={quotation.terms}
-            signatureData={hasSignature ? signatureData : undefined}
+            signatureData={signatureData}
           />
 
-          {/* Signature Section */}
+          {/* Signature Section - Always show if not accepted yet */}
           {!isAccepted && (
             <Card className="shadow-sm print:hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -366,6 +378,21 @@ export default function ViewQuotation() {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Acceptance Confirmation Message - Show after signature */}
+          {isAccepted && signatureData && (
+            <Card className="shadow-sm bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-center space-x-2 text-green-800">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-semibold">Quotation Accepted Successfully!</span>
+                </div>
+                <p className="text-center text-green-700 text-sm mt-2">
+                  Thank you for accepting our quotation. We will contact you shortly to proceed with the project.
+                </p>
               </CardContent>
             </Card>
           )}
