@@ -1,375 +1,230 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
-import { SubcategoryModel } from "@/components/categories/SubcategoryModel";
-import { toast } from "@/components/ui/use-toast";
-import { Plus, Search, Edit, Trash2, Eye, Package, Layers } from "lucide-react";
-import { categoryService } from "@/services";
-import { Category, Subcategory } from "@/types/database";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { useIsMobile } from "@/hooks/use-mobile";
-
+import { Button } from "@/components/ui/button";
+import { Edit, MoreHorizontal, Trash, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { categoryService } from "@/services/categoryService";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, closeDropdown } from "@/components/ui/dropdown-menu";
+import { toast } from "@/components/ui/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, closeAlertDialog } from "@/components/ui/alert-dialog";
+import "../styles/mobile-card.css";
+import { Card } from "@/components/ui/card";
+import { Category, Subcategory } from "@/types/database";
+import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
 export default function Categories() {
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [showSubcategories, setShowSubcategories] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [showSubcategoriesDialog, setShowSubcategoriesDialog] = useState(false);
-  const [showSubcategoryModel, setShowSubcategoryModel] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  // Fetch categories from the API - using queryKey with proper caching
+  const {
+    data: categories = [],
+    refetch
+  } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const categories = await categoryService.getAll();
 
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = categories.filter(category =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredCategories(filtered);
-    } else {
-      setFilteredCategories(categories);
+      // Fetch subcategories for each category - using Map to avoid duplicates
+      const processedCategories = new Map();
+      for (const category of categories) {
+        if (!processedCategories.has(category.id)) {
+          const subcategories = await categoryService.getSubcategoriesByCategoryId(category.id);
+          processedCategories.set(category.id, {
+            ...category,
+            subcategories: subcategories || []
+          });
+        }
+      }
+      return Array.from(processedCategories.values());
     }
-  }, [searchTerm, categories]);
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const data = await categoryService.getAll();
-      setCategories(data);
-      setFilteredCategories(data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load categories",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+  });
+  const handleEditCategory = (category: Category) => {
+    navigate(`/categories/add?id=${category.id}`);
   };
+  const handleDeleteCategory = (category: Category) => {
+    // Close dropdown first to prevent UI freeze
+    closeDropdown();
 
-  const handleDelete = async () => {
-    if (!deleteCategoryId) return;
-
+    // Set a small timeout before showing alert dialog
+    setTimeout(() => {
+      setCategoryToDelete(category);
+      setShowConfirmDelete(true);
+    }, 50);
+  };
+  const handleViewSubcategories = (category: Category) => {
+    setSelectedCategory(category);
+    setShowSubcategories(true);
+  };
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
     try {
-      await categoryService.delete(deleteCategoryId);
-      toast({
-        title: "Category Deleted",
-        description: "The category has been deleted successfully."
-      });
-      fetchCategories();
+      // Close dialog first
+      closeAlertDialog();
+
+      // Set a small timeout before performing the delete
+      setTimeout(async () => {
+        await categoryService.delete(categoryToDelete.id);
+        toast({
+          title: "Category Deleted",
+          description: `${categoryToDelete.name} has been deleted.`,
+          variant: "destructive"
+        });
+        setCategoryToDelete(null);
+        setShowConfirmDelete(false);
+
+        // Refresh the categories data
+        refetch();
+      }, 100);
     } catch (error) {
       console.error("Error deleting category:", error);
       toast({
         title: "Error",
-        description: "Failed to delete category",
+        description: "There was an error deleting the category.",
         variant: "destructive"
       });
-    } finally {
-      setDeleteCategoryId(null);
     }
   };
+  const handleCancelDelete = () => {
+    // Close dialog
+    closeAlertDialog();
 
-  const handleViewSubcategories = async (category: Category) => {
-    setSelectedCategory(category);
-    setShowSubcategoriesDialog(true);
+    // Set a small timeout before updating state
+    setTimeout(() => {
+      setShowConfirmDelete(false);
+      setCategoryToDelete(null);
+    }, 100);
   };
-
-  const handleAddSubcategory = (category: Category) => {
-    setSelectedCategory(category);
-    setShowSubcategoryModel(true);
-  };
-
-  const handleSubcategorySaved = () => {
-    if (selectedCategory) {
-      handleViewSubcategories(selectedCategory);
-    }
-  };
-
-  const columns = [
-    {
-      accessorKey: "name" as keyof Category,
-      header: "Category",
-      cell: ({ row }: { row: { original: Category } }) => {
-        const category = row.original;
-        return (
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0">
-              <Package className="h-8 w-8 text-purple-600 bg-purple-100 rounded-full p-1.5" />
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-900">{category.name}</div>
-              {category.description && (
-                <div className="text-sm text-gray-500">{category.description}</div>
-              )}
-            </div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "subcategories" as keyof Category,
-      header: "Items",
-      cell: ({ row }: { row: { original: Category } }) => {
-        const category = row.original;
-        return (
-          <div className="flex items-center text-sm text-gray-900">
-            <Layers className="h-4 w-4 mr-1 text-gray-400" />
-            {Array.isArray(category.subcategories) ? category.subcategories.length : 0} subcategories
-          </div>
-        );
-      }
-    }
-  ];
-
-  if (isMobile) {
-    return (
-      <div className="page-container pb-20">
-        <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search categories..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+  const columns = [{
+    header: "Name",
+    accessorKey: "name" as keyof Category,
+    cell: ({
+      row
+    }: {
+      row: {
+        original: Category;
+      };
+    }) => <div className="flex items-center font-medium text-blue-600 cursor-pointer" onClick={() => handleEditCategory(row.original)}>
+          {row.original.name}
         </div>
-
-        <div className="space-y-3">
-          {loading ? (
-            <div className="text-center py-8">Loading categories...</div>
-          ) : filteredCategories.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              {searchTerm ? "No categories found matching your search." : "No categories found. Add your first category!"}
-            </div>
-          ) : (
-            filteredCategories.map((category) => (
-              <div key={category.id} className="bg-white p-4 rounded-lg border mobile-card">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <Package className="h-8 w-8 text-purple-600 bg-purple-100 rounded-full p-1.5" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{category.name}</h3>
-                      {category.description && (
-                        <p className="text-sm text-gray-500 mt-1">{category.description}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Layers className="h-4 w-4 mr-2 text-gray-400" />
-                    {Array.isArray(category.subcategories) ? category.subcategories.length : 0} subcategories
-                  </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleViewSubcategories(category)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => navigate(`/categories/add?id=${category.id}`)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => setDeleteCategoryId(category.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
+  }, {
+    header: "Subcategories",
+    accessorKey: "subcategories" as keyof Category,
+    cell: ({
+      row
+    }: {
+      row: {
+        original: Category;
+      };
+    }) => <div className="flex items-center">
+          <span className="mr-2">{row.original.subcategories?.length || 0}</span>
+          {(row.original.subcategories?.length || 0) > 0 && <Button variant="ghost" size="sm" className="text-blue-600" onClick={() => handleViewSubcategories(row.original)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>}
         </div>
-
-        <FloatingActionButton
-          onClick={() => navigate("/categories/add")}
-          icon={<Plus className="h-4 w-4" />}
-          label="Add Category"
-        />
-
-        <AlertDialog open={!!deleteCategoryId} onOpenChange={() => setDeleteCategoryId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Category</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this category? This action cannot be undone and will also delete all subcategories.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {selectedCategory && (
-          <SubcategoriesDialog
-            open={showSubcategoriesDialog}
-            onOpenChange={setShowSubcategoriesDialog}
-            category={selectedCategory}
-          />
-        )}
-
-        <SubcategoryModel
-          open={showSubcategoryModel}
-          onOpenChange={setShowSubcategoryModel}
-          parentId={selectedCategory?.id || ""}
-          onSave={handleSubcategorySaved}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="page-container">
-      <PageHeader
-        title="Categories"
-        actions={
-          <Button onClick={() => navigate("/categories/add")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Category
-          </Button>
-        }
-      />
-
-      <div className="mb-6">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search categories..."
-            className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={filteredCategories}
-        renderCustomMobileCard={(category: Category) => (
-          <div key={category.id} className="bg-white p-4 rounded-lg border mobile-card">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <Package className="h-8 w-8 text-purple-600 bg-purple-100 rounded-full p-1.5" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">{category.name}</h3>
-                  {category.description && (
-                    <p className="text-sm text-gray-500 mt-1">{category.description}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <div className="flex items-center text-sm text-gray-600">
-                <Layers className="h-4 w-4 mr-2 text-gray-400" />
-                {Array.isArray(category.subcategories) ? category.subcategories.length : 0} subcategories
-              </div>
-            </div>
-
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => handleViewSubcategories(category)}
-              >
-                <Eye className="h-4 w-4 mr-1" />
-                View
+  }, {
+    header: "Actions",
+    accessorKey: "id" as keyof Category,
+    cell: ({
+      row
+    }: {
+      row: {
+        original: Category;
+      };
+    }) => {
+      return <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => navigate(`/categories/add?id=${category.id}`)}
-              >
-                <Edit className="h-4 w-4 mr-1" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[160px]">
+              <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditCategory(row.original)}>
+                <Edit className="mr-2 h-4 w-4" />
                 Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-red-600 hover:text-red-700"
-                onClick={() => setDeleteCategoryId(category.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-        isLoading={loading}
-        emptyMessage={searchTerm ? "No categories found matching your search." : "No categories found. Add your first category!"}
-      />
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDeleteCategory(row.original)}>
+                <Trash className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>;
+    }
+  }];
 
-      <AlertDialog open={!!deleteCategoryId} onOpenChange={() => setDeleteCategoryId(null)}>
+  // Custom render function for mobile view to match the design
+  const renderCustomMobileCard = (category: Category) => <Card key={category.id} className="mobile-card border-l-blue-500 overflow-visible">
+      <div className="flex justify-between items-center px-1 py-2 border-b border-gray-100">
+        <div className="text-blue-600 font-medium cursor-pointer" onClick={() => handleEditCategory(category)}>
+          {category.name}
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditCategory(category)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDeleteCategory(category)}>
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div onClick={() => handleViewSubcategories(category)} className="flex justify-between items-center px-1 py-3 cursor-pointer">
+        <div className="text-gray-600">Subcategories</div>
+        <div className="flex items-center">
+          <span className="mr-2">{category.subcategories?.length || 0}</span>
+          <ChevronRight className="h-4 w-4 text-blue-600" />
+        </div>
+      </div>
+    </Card>;
+  return <div className="page-container">
+      <PageHeader title="Service Categories" />
+      
+      <div className="mt-6">
+        <DataTable columns={columns} data={categories} searchKey="name" renderCustomMobileCard={renderCustomMobileCard} />
+      </div>
+
+      <AlertDialog open={showConfirmDelete} onOpenChange={open => {
+      if (!open) {
+        handleCancelDelete();
+      }
+    }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this category? This action cannot be undone and will also delete all subcategories.
+              This will permanently delete the category
+              {categoryToDelete ? ` "${categoryToDelete.name}"` : ''} and all its subcategories.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel onClick={handleCancelDelete}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteCategory} className="bg-red-600 hover:bg-red-700">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {selectedCategory && (
-        <SubcategoriesDialog
-          open={showSubcategoriesDialog}
-          onOpenChange={setShowSubcategoriesDialog}
-          category={selectedCategory}
-        />
-      )}
+      {selectedCategory && <SubcategoriesDialog open={showSubcategories} onOpenChange={setShowSubcategories} category={selectedCategory} />}
 
-      <SubcategoryModel
-        open={showSubcategoryModel}
-        onOpenChange={setShowSubcategoryModel}
-        parentId={selectedCategory?.id || ""}
-        onSave={handleSubcategorySaved}
-      />
-    </div>
-  );
+      <FloatingActionButton onClick={() => navigate("/categories/add")} />
+    </div>;
 }
