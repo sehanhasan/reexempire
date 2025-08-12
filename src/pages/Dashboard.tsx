@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { Chart } from "@/components/dashboard/Chart";
+import { Chart, RecentQuotations, RecentInvoices } from "@/components/dashboard/Chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, DollarSign, FileText, Users, TrendingUp, Clock } from "lucide-react";
@@ -93,7 +92,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Dashboard</h1>
         </div>
@@ -103,137 +102,153 @@ export default function Dashboard() {
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
+        </Tabs>
+      </div>
         
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                title="Total Quotations"
-                value={stats.totalQuotations.toString()}
-                description={`${stats.pendingQuotations} pending`}
-                icon={FileText}
-                loading={loading}
-              />
-              <StatCard
-                title="Total Invoices"
-                value={stats.totalInvoices.toString()}
-                description="This month"
-                icon={DollarSign}
-                loading={loading}
-              />
-              <StatCard
-                title="Total Customers"
-                value={stats.totalCustomers.toString()}
-                description="Active customers"
-                icon={Users}
-                loading={loading}
-              />
-              <StatCard
-                title="Appointments"
-                value={stats.totalAppointments.toString()}
-                description="Scheduled"
-                icon={Calendar}
-                loading={loading}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              title="Total Quotations"
+              value={stats.totalQuotations.toString()}
+              description={`${stats.pendingQuotations} pending`}
+              icon={<FileText className="h-4 w-4" />}
+              loading={loading}
+            />
+            <StatCard
+              title="Total Invoices"
+              value={stats.totalInvoices.toString()}
+              description="This month"
+              icon={<DollarSign className="h-4 w-4" />}
+              loading={loading}
+            />
+            <StatCard
+              title="Total Customers"
+              value={stats.totalCustomers.toString()}
+              description="Active customers"
+              icon={<Users className="h-4 w-4" />}
+              loading={loading}
+            />
+            <StatCard
+              title="Appointments"
+              value={stats.totalAppointments.toString()}
+              description="Scheduled"
+              icon={<Calendar className="h-4 w-4" />}
+              loading={loading}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <div className="col-span-4">
+              <Chart 
+                title="Business Overview"
+                chartData={chartData}
+                categories={['revenue', 'quotations']}
+                index="name"
+                colors={['#3b82f6', '#10b981']}
+                valueFormatter={(value) => `${value.toLocaleString()}`}
               />
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <div className="col-span-4">
-                <Chart />
-              </div>
-              <Card className="col-span-3">
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>
-                    Latest updates from your business
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {activity.action}
-                          </p>
-                          <p className="text-sm text-gray-500 truncate">
-                            {activity.customer}
-                          </p>
-                        </div>
-                        <div className="flex-shrink-0 text-xs text-gray-400">
-                          {activity.time}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="revenue" className="space-y-6 mt-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <StatCard
-                title="Monthly Revenue"
-                value={`RM ${stats.monthlyRevenue.toLocaleString()}`}
-                description="Current month"
-                icon={TrendingUp}
-                loading={loading}
-              />
-              <StatCard
-                title="Average Invoice"
-                value={`RM ${stats.totalInvoices > 0 ? (stats.monthlyRevenue / stats.totalInvoices).toFixed(2) : '0'}`}
-                description="This month"
-                icon={DollarSign}
-                loading={loading}
-              />
-              <StatCard
-                title="Pending Amount"
-                value="RM 0"
-                description="Awaiting payment"
-                icon={Clock}
-                loading={loading}
-              />
-            </div>
-            <Chart />
-          </TabsContent>
-
-          <TabsContent value="activity" className="space-y-6 mt-6">
-            <Card>
+            <Card className="col-span-3">
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>
-                  Detailed view of recent business activities
+                  Latest updates from your business
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b last:border-b-0">
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <div key={activity.id} className="flex items-center space-x-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
                           {activity.action}
                         </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Customer: {activity.customer}
+                        <p className="text-sm text-gray-500 truncate">
+                          {activity.customer}
                         </p>
-                        <p className="text-xs text-gray-400 mt-2">
-                          {activity.time}
-                        </p>
+                      </div>
+                      <div className="flex-shrink-0 text-xs text-gray-400">
+                        {activity.time}
                       </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="revenue" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <StatCard
+              title="Monthly Revenue"
+              value={`RM ${stats.monthlyRevenue.toLocaleString()}`}
+              description="Current month"
+              icon={<TrendingUp className="h-4 w-4" />}
+              loading={loading}
+            />
+            <StatCard
+              title="Average Invoice"
+              value={`RM ${stats.totalInvoices > 0 ? (stats.monthlyRevenue / stats.totalInvoices).toFixed(2) : '0'}`}
+              description="This month"
+              icon={<DollarSign className="h-4 w-4" />}
+              loading={loading}
+            />
+            <StatCard
+              title="Pending Amount"
+              value="RM 0"
+              description="Awaiting payment"
+              icon={<Clock className="h-4 w-4" />}
+              loading={loading}
+            />
+          </div>
+          <Chart 
+            title="Revenue Trend"
+            chartData={chartData}
+            categories={['revenue']}
+            index="name"
+            colors={['#3b82f6']}
+            valueFormatter={(value) => `RM ${value.toLocaleString()}`}
+          />
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>
+                Detailed view of recent business activities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-4 pb-4 border-b last:border-b-0">
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {activity.action}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Customer: {activity.customer}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {activity.time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

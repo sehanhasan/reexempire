@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { Plus, Search, Edit, Trash2, User, Building2, MapPin, Phone, Mail } from "lucide-react";
+import { Plus, Search, Edit, Trash2, User, Mail, Phone } from "lucide-react";
 import { customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -29,9 +30,9 @@ export default function Customers() {
     if (searchTerm) {
       const filtered = customers.filter(customer =>
         customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.unit_number?.toLowerCase().includes(searchTerm.toLowerCase())
+        customer.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredCustomers(filtered);
     } else {
@@ -88,19 +89,12 @@ export default function Customers() {
         return (
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
-              {customer.name.includes("Sdn Bhd") || customer.name.includes("Berhad") || customer.name.includes("(M)") ? (
-                <Building2 className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
-              ) : (
-                <User className="h-8 w-8 text-green-600 bg-green-100 rounded-full p-1.5" />
-              )}
+              <User className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
             </div>
             <div>
               <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-              {customer.email && (
-                <div className="text-sm text-gray-500 flex items-center">
-                  <Mail className="h-3 w-3 mr-1" />
-                  {customer.email}
-                </div>
+              {customer.company_name && (
+                <div className="text-sm text-gray-500">{customer.company_name}</div>
               )}
             </div>
           </div>
@@ -108,27 +102,24 @@ export default function Customers() {
       }
     },
     {
-      accessorKey: "unit_number" as keyof Customer,
-      header: "Unit",
-      cell: ({ row }: { row: { original: Customer } }) => {
-        const customer = row.original;
-        return (
-          <div className="flex items-center text-sm text-gray-900">
-            <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-            {customer.unit_number || "N/A"}
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "phone" as keyof Customer,
+      accessorKey: "email" as keyof Customer,
       header: "Contact",
       cell: ({ row }: { row: { original: Customer } }) => {
         const customer = row.original;
         return (
-          <div className="flex items-center text-sm text-gray-900">
-            <Phone className="h-4 w-4 mr-1 text-gray-400" />
-            {customer.phone || "N/A"}
+          <div className="space-y-1">
+            {customer.email && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                {customer.email}
+              </div>
+            )}
+            {customer.phone && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                {customer.phone}
+              </div>
+            )}
           </div>
         );
       }
@@ -163,33 +154,30 @@ export default function Customers() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
-                      {customer.name.includes("Sdn Bhd") || customer.name.includes("Berhad") || customer.name.includes("(M)") ? (
-                        <Building2 className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
-                      ) : (
-                        <User className="h-8 w-8 text-green-600 bg-green-100 rounded-full p-1.5" />
-                      )}
+                      <User className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900">{customer.name}</h3>
-                      {customer.email && (
-                        <p className="text-sm text-gray-500 flex items-center mt-1">
-                          <Mail className="h-3 w-3 mr-1" />
-                          {customer.email}
-                        </p>
+                      {customer.company_name && (
+                        <p className="text-sm text-gray-500">{customer.company_name}</p>
                       )}
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2 mb-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                    {customer.unit_number || "N/A"}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                    {customer.phone || "N/A"}
-                  </div>
+                  {customer.email && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                      {customer.email}
+                    </div>
+                  )}
+                  {customer.phone && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                      {customer.phone}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-2">
@@ -205,11 +193,10 @@ export default function Customers() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700"
                     onClick={() => setDeleteCustomerId(customer.id)}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -219,7 +206,7 @@ export default function Customers() {
 
         <FloatingActionButton
           onClick={() => navigate("/customers/add")}
-          icon={Plus}
+          icon={<Plus className="h-4 w-4" />}
           label="Add Customer"
         />
 
@@ -270,6 +257,58 @@ export default function Customers() {
       <DataTable
         columns={columns}
         data={filteredCustomers}
+        renderCustomMobileCard={(customer: Customer) => (
+          <div key={customer.id} className="bg-white p-4 rounded-lg border mobile-card">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <User className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">{customer.name}</h3>
+                  {customer.company_name && (
+                    <p className="text-sm text-gray-500">{customer.company_name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-3">
+              {customer.email && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                  {customer.email}
+                </div>
+              )}
+              {customer.phone && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                  {customer.phone}
+                </div>
+              )}
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => navigate(`/customers/add?id=${customer.id}`)}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700"
+                onClick={() => setDeleteCustomerId(customer.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
         isLoading={loading}
         emptyMessage={searchTerm ? "No customers found matching your search." : "No customers found. Add your first customer!"}
       />

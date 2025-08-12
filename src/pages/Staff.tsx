@@ -1,12 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { Plus, Search, Edit, Trash2, User, Mail, Phone, UserCheck } from "lucide-react";
+import { Plus, Search, Edit, Trash2, User, Mail, Phone } from "lucide-react";
 import { staffService } from "@/services";
 import { Staff } from "@/types/database";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -28,10 +30,11 @@ export default function StaffPage() {
   useEffect(() => {
     if (searchTerm) {
       const filtered = staff.filter(member =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.role?.toLowerCase().includes(searchTerm.toLowerCase())
+        member.position?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredStaff(filtered);
     } else {
@@ -79,24 +82,31 @@ export default function StaffPage() {
     }
   };
 
+  const getStatusBadge = (isActive: boolean) => {
+    return (
+      <Badge variant={isActive ? "default" : "secondary"}>
+        {isActive ? "Active" : "Inactive"}
+      </Badge>
+    );
+  };
+
   const columns = [
     {
-      accessorKey: "name" as keyof Staff,
+      accessorKey: "first_name" as keyof Staff,
       header: "Staff Member",
       cell: ({ row }: { row: { original: Staff } }) => {
         const member = row.original;
         return (
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
-              <User className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
+              <User className="h-8 w-8 text-green-600 bg-green-100 rounded-full p-1.5" />
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-900">{member.name}</div>
-              {member.email && (
-                <div className="text-sm text-gray-500 flex items-center">
-                  <Mail className="h-3 w-3 mr-1" />
-                  {member.email}
-                </div>
+              <div className="text-sm font-medium text-gray-900">
+                {member.first_name} {member.last_name}
+              </div>
+              {member.position && (
+                <div className="text-sm text-gray-500">{member.position}</div>
               )}
             </div>
           </div>
@@ -104,44 +114,35 @@ export default function StaffPage() {
       }
     },
     {
-      accessorKey: "role" as keyof Staff,
-      header: "Role",
-      cell: ({ row }: { row: { original: Staff } }) => {
-        const member = row.original;
-        return (
-          <div className="flex items-center text-sm text-gray-900">
-            <UserCheck className="h-4 w-4 mr-1 text-gray-400" />
-            {member.role || "N/A"}
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "phone" as keyof Staff,
+      accessorKey: "email" as keyof Staff,
       header: "Contact",
       cell: ({ row }: { row: { original: Staff } }) => {
         const member = row.original;
         return (
-          <div className="flex items-center text-sm text-gray-900">
-            <Phone className="h-4 w-4 mr-1 text-gray-400" />
-            {member.phone || "N/A"}
+          <div className="space-y-1">
+            {member.email && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                {member.email}
+              </div>
+            )}
+            {member.phone && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                {member.phone}
+              </div>
+            )}
           </div>
         );
       }
-    }
-  ];
-
-  const actions = [
-    {
-      label: "Edit",
-      icon: Edit,
-      onClick: (member: Staff) => navigate(`/staff/edit/${member.id}`)
     },
     {
-      label: "Delete",
-      icon: Trash2,
-      onClick: (member: Staff) => setDeleteStaffId(member.id),
-      variant: "destructive" as const
+      accessorKey: "is_active" as keyof Staff,
+      header: "Status",
+      cell: ({ row }: { row: { original: Staff } }) => {
+        const member = row.original;
+        return getStatusBadge(member.is_active);
+      }
     }
   ];
 
@@ -162,7 +163,7 @@ export default function StaffPage() {
 
         <div className="space-y-3">
           {loading ? (
-            <div className="text-center py-8">Loading staff...</div>
+            <div className="text-center py-8">Loading staff members...</div>
           ) : filteredStaff.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               {searchTerm ? "No staff members found matching your search." : "No staff members found. Add your first staff member!"}
@@ -173,29 +174,33 @@ export default function StaffPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="flex-shrink-0">
-                      <User className="h-8 w-8 text-blue-600 bg-blue-100 rounded-full p-1.5" />
+                      <User className="h-8 w-8 text-green-600 bg-green-100 rounded-full p-1.5" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{member.name}</h3>
-                      {member.email && (
-                        <p className="text-sm text-gray-500 flex items-center mt-1">
-                          <Mail className="h-3 w-3 mr-1" />
-                          {member.email}
-                        </p>
+                      <h3 className="font-medium text-gray-900">
+                        {member.first_name} {member.last_name}
+                      </h3>
+                      {member.position && (
+                        <p className="text-sm text-gray-500">{member.position}</p>
                       )}
                     </div>
                   </div>
+                  {getStatusBadge(member.is_active)}
                 </div>
 
                 <div className="space-y-2 mb-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <UserCheck className="h-4 w-4 mr-2 text-gray-400" />
-                    {member.role || "N/A"}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                    {member.phone || "N/A"}
-                  </div>
+                  {member.email && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                      {member.email}
+                    </div>
+                  )}
+                  {member.phone && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                      {member.phone}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-2">
@@ -211,11 +216,10 @@ export default function StaffPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700"
                     onClick={() => setDeleteStaffId(member.id)}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -225,7 +229,7 @@ export default function StaffPage() {
 
         <FloatingActionButton
           onClick={() => navigate("/staff/add")}
-          icon={Plus}
+          icon={<Plus className="h-4 w-4" />}
           label="Add Staff"
         />
 
@@ -252,11 +256,11 @@ export default function StaffPage() {
   return (
     <div className="page-container">
       <PageHeader
-        title="Staff"
+        title="Staff Members"
         actions={
           <Button onClick={() => navigate("/staff/add")}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Staff
+            Add Staff Member
           </Button>
         }
       />
@@ -276,6 +280,61 @@ export default function StaffPage() {
       <DataTable
         columns={columns}
         data={filteredStaff}
+        renderCustomMobileCard={(member: Staff) => (
+          <div key={member.id} className="bg-white p-4 rounded-lg border mobile-card">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <User className="h-8 w-8 text-green-600 bg-green-100 rounded-full p-1.5" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">
+                    {member.first_name} {member.last_name}
+                  </h3>
+                  {member.position && (
+                    <p className="text-sm text-gray-500">{member.position}</p>
+                  )}
+                </div>
+              </div>
+              {getStatusBadge(member.is_active)}
+            </div>
+
+            <div className="space-y-2 mb-3">
+              {member.email && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                  {member.email}
+                </div>
+              )}
+              {member.phone && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                  {member.phone}
+                </div>
+              )}
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => navigate(`/staff/edit/${member.id}`)}
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700"
+                onClick={() => setDeleteStaffId(member.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
         isLoading={loading}
         emptyMessage={searchTerm ? "No staff members found matching your search." : "No staff members found. Add your first staff member!"}
       />
