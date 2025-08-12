@@ -342,13 +342,13 @@ export default function Quotations() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={e => {
+                              {/* <DropdownMenuItem onClick={e => {
                         e.stopPropagation();
                         navigate(`/quotations/edit/${quotation.id}`);
                       }}>
                                 <FileEdit className="mr-2 h-4 w-4" />
                                 Edit
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               <DropdownMenuItem onClick={e => {
                         e.stopPropagation();
                         handleSendWhatsapp(quotation);
@@ -356,13 +356,13 @@ export default function Quotations() {
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={e => {
+                              {/* <DropdownMenuItem onClick={e => {
                         e.stopPropagation();
                         handleDownloadPDF(quotation);
                       }}>
                                 <Download className="mr-2 h-4 w-4" />
                                 Download PDF
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               <DropdownMenuItem onClick={e => {
                         e.stopPropagation();
                         handleConvertToInvoice(quotation);
