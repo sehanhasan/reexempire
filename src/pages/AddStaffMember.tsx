@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -17,16 +18,12 @@ export default function AddStaffMember() {
   const staffId = searchParams.get("id");
   const [isLoading, setIsLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  const [showPassword, setShowPassword] = useState(!staffId); // Show password field for new staff
   const [staffData, setStaffData] = useState<Partial<Staff>>({
     first_name: "",
     last_name: "",
     passport: "",
-    email: "",
     phone: "",
-    role: "Staff" as "Staff" | "Manager" | "Admin",
     join_date: new Date().toISOString().split("T")[0],
-    password: "",
     status: "Active"
   });
   
@@ -46,11 +43,8 @@ export default function AddStaffMember() {
           first_name: data.first_name || "",
           last_name: data.last_name || "",
           passport: data.passport || "",
-          email: data.email || "",
           phone: data.phone || "",
-          role: data.role || "Staff",
           join_date: data.join_date || new Date().toISOString().split("T")[0],
-          password: "",
           status: data.status || "Active"
         });
       }
@@ -79,20 +73,10 @@ export default function AddStaffMember() {
       setIsLoading(true);
 
       // Validate required fields
-      if (!staffData.email) {
+      if (!staffData.first_name || !staffData.last_name) {
         toast({
           title: "Error",
-          description: "Email is required",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      if (!isEdit && !staffData.password) {
-        toast({
-          title: "Error",
-          description: "Password is required for new staff members",
+          description: "First name and last name are required",
           variant: "destructive"
         });
         setIsLoading(false);
@@ -105,17 +89,11 @@ export default function AddStaffMember() {
         first_name: staffData.first_name,
         last_name: staffData.last_name,
         passport: staffData.passport,
-        role: staffData.role as "Staff" | "Manager" | "Admin",
+        role: "Staff", // Default role
         join_date: staffData.join_date,
-        email: staffData.email,
         phone: staffData.phone,
         status: staffData.status
       };
-
-      // Add password only if it's provided
-      if (staffData.password) {
-        formattedData.password = staffData.password;
-      }
       
       if (isEdit) {
         await staffService.update(staffId!, formattedData);
@@ -143,7 +121,8 @@ export default function AddStaffMember() {
     }
   };
   
-  return <div className="page-container">
+  return (
+    <div className="page-container">
       <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={
         <Button variant="outline" onClick={() => navigate("/staff")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -173,28 +152,12 @@ export default function AddStaffMember() {
                 <Input id="passport" placeholder="e.g. A12345678" value={staffData.passport} onChange={e => handleChange("passport", e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={staffData.role} onValueChange={(value: "Staff" | "Manager" | "Admin") => handleChange("role", value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Staff">Staff</SelectItem>
-                    <SelectItem value="Manager">Manager</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Staff: Limited access | Manager: Schedule management | Admin: Full access
-                </p>
+                <Label htmlFor="joinDate">Join Date</Label>
+                <Input id="joinDate" type="date" value={staffData.join_date} onChange={e => handleChange("join_date", e.target.value)} required />
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="joinDate">Join Date</Label>
-                <Input id="joinDate" type="date" value={staffData.join_date} onChange={e => handleChange("join_date", e.target.value)} required />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select value={staffData.status} onValueChange={value => handleChange("status", value)}>
@@ -209,41 +172,12 @@ export default function AddStaffMember() {
                 </Select>
                 <p className="text-xs text-muted-foreground">Setting status to Inactive will ban user from logging in</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" value={staffData.email} onChange={e => handleChange("email", e.target.value)} required />
-                <p className="text-xs text-muted-foreground">Will be used for login</p>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input id="phone" placeholder="e.g. 012-3456789" value={staffData.phone} onChange={e => handleChange("phone", e.target.value)} />
                 <p className="text-xs text-muted-foreground">Malaysian phone format: 01X-XXXXXXX</p>
               </div>
             </div>
-            
-            {(showPassword || !isEdit) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" value={staffData.password} onChange={e => handleChange("password", e.target.value)} required={!isEdit} />
-                  <p className="text-xs text-muted-foreground">
-                    {isEdit ? "Leave empty to keep current password" : "Must be at least 6 characters"}
-                  </p>
-                </div>
-                {isEdit && <div className="flex items-end">
-                    <Button type="button" variant="outline" className="mb-2" onClick={() => setShowPassword(false)}>
-                      Cancel Password Change
-                    </Button>
-                  </div>}
-              </div>}
-            
-            {isEdit && !showPassword && <div>
-                <Button type="button" variant="outline" onClick={() => setShowPassword(true)}>
-                  Reset Password
-                </Button>
-              </div>}
           </CardContent>
           <CardFooter className="flex justify-end space-x-4">
             <Button variant="outline" type="button" onClick={() => navigate("/staff")}>
@@ -256,5 +190,6 @@ export default function AddStaffMember() {
           </CardFooter>
         </Card>
       </form>
-    </div>;
+    </div>
+  );
 }

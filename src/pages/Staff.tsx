@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -179,7 +180,7 @@ export default function StaffPage() {
       cell: ({ row }: { row: { original: Staff } }) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          <a href={`tel:${row.original.phone}`} className="hover:underline text-blue-600">
+          <a href={`https://wa.me/${row.original.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600">
             {row.original.phone}
           </a>
         </div>
@@ -226,31 +227,6 @@ export default function StaffPage() {
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              {/* <DropdownMenuSeparator />
-              {row.original.status !== "Active" && (
-                <DropdownMenuItem 
-                  className="cursor-pointer text-green-600"
-                  onClick={() => handleStatusChange(row.original, "Active")}
-                >
-                  Set as Active
-                </DropdownMenuItem>
-              )}
-              {row.original.status !== "On Leave" && (
-                <DropdownMenuItem 
-                  className="cursor-pointer text-amber-600"
-                  onClick={() => handleStatusChange(row.original, "On Leave")}
-                >
-                  Set as On Leave
-                </DropdownMenuItem>
-              )}
-              {row.original.status !== "Inactive" && (
-                <DropdownMenuItem 
-                  className="cursor-pointer text-gray-600"
-                  onClick={() => handleStatusChange(row.original, "Inactive")}
-                >
-                  Set as Inactive
-                </DropdownMenuItem>
-              )} */}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
@@ -365,7 +341,7 @@ export default function StaffPage() {
                 {selectedStaff.phone && (
                   <div className="flex items-center mt-1">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <a href={`tel:${selectedStaff.phone}`} className="text-blue-600 hover:underline">
+                    <a href={`https://wa.me/${selectedStaff.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                       {selectedStaff.phone}
                     </a>
                   </div>
