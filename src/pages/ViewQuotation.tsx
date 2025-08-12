@@ -218,15 +218,17 @@ export default function ViewQuotation() {
               <div>
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
-                  <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
-                    {quotation.status}
-                  </Badge>
-                    {hasSignature && (
-                      <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Signed
-                      </Badge>
-                    )}
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
+                      {quotation.status}
+                    </Badge>
+                      {hasSignature && (
+                        <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200 flex items-center">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Signed
+                        </Badge>
+                      )}
+                  </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
