@@ -15,7 +15,7 @@ export default function Categories() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
@@ -47,6 +47,7 @@ export default function Categories() {
     },
     {
       header: "Actions",
+      accessorKey: "actions",
       cell: ({ row }: any) => (
         <div className="flex gap-2">
           <Button
@@ -54,7 +55,7 @@ export default function Categories() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedCategoryId(row.original.id);
+              setSelectedCategory(row.original);
             }}
           >
             <List className="h-4 w-4" />
@@ -91,17 +92,19 @@ export default function Categories() {
       <DataTable
         data={filteredCategories}
         columns={columns}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchPlaceholder="Search categories..."
+        searchKey="name"
+        externalSearchTerm={searchTerm}
+        onExternalSearchChange={setSearchTerm}
         isLoading={isLoading}
-        onRowClick={(category) => navigate(`/categories/edit/${category.id}`)}
       />
 
-      <SubcategoriesDialog
-        categoryId={selectedCategoryId}
-        onClose={() => setSelectedCategoryId(null)}
-      />
+      {selectedCategory && (
+        <SubcategoriesDialog
+          open={!!selectedCategory}
+          onOpenChange={(open) => !open && setSelectedCategory(null)}
+          category={selectedCategory}
+        />
+      )}
     </div>
   );
 }

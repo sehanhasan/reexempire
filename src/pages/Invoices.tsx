@@ -86,6 +86,7 @@ export default function Invoices() {
     },
     {
       header: "Actions",
+      accessorKey: "actions",
       cell: ({ row }: any) => (
         <div className="flex gap-2">
           <Button
@@ -130,11 +131,10 @@ export default function Invoices() {
       <DataTable
         data={filteredInvoices}
         columns={columns}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchPlaceholder="Search invoices..."
+        searchKey="reference_number"
+        externalSearchTerm={searchTerm}
+        onExternalSearchChange={setSearchTerm}
         isLoading={isLoading}
-        onRowClick={(invoice) => navigate(`/invoices/view/${invoice.id}`)}
       />
     </div>
   );

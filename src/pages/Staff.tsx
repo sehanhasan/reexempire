@@ -54,6 +54,7 @@ export default function Staff() {
     },
     {
       header: "Actions",
+      accessorKey: "actions",
       cell: ({ row }: any) => (
         <Button
           variant="ghost"
@@ -86,11 +87,10 @@ export default function Staff() {
       <DataTable
         data={filteredStaff}
         columns={columns}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchPlaceholder="Search staff..."
+        searchKey="name"
+        externalSearchTerm={searchTerm}
+        onExternalSearchChange={setSearchTerm}
         isLoading={isLoading}
-        onRowClick={(member) => navigate(`/staff/edit/${member.id}`)}
       />
     </div>
   );

@@ -86,6 +86,7 @@ export default function Quotations() {
     },
     {
       header: "Actions",
+      accessorKey: "actions",
       cell: ({ row }: any) => (
         <div className="flex gap-2">
           <Button
@@ -142,11 +143,10 @@ export default function Quotations() {
       <DataTable
         data={filteredQuotations}
         columns={columns}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchPlaceholder="Search quotations..."
+        searchKey="reference_number"
+        externalSearchTerm={searchTerm}
+        onExternalSearchChange={setSearchTerm}
         isLoading={isLoading}
-        onRowClick={(quotation) => navigate(`/quotations/view/${quotation.id}`)}
       />
     </div>
   );

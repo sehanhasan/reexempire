@@ -61,11 +61,10 @@ export default function Customers() {
       <DataTable
         data={filteredCustomers}
         columns={columns}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchPlaceholder="Search customers..."
+        searchKey="name"
+        externalSearchTerm={searchTerm}
+        onExternalSearchChange={setSearchTerm}
         isLoading={isLoading}
-        onRowClick={(customer) => navigate(`/customers/edit/${customer.id}`)}
       />
     </div>
   );
