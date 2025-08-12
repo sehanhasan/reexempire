@@ -290,6 +290,8 @@ export default function EditQuotation() {
         issue_date: new Date().toISOString().split('T')[0],
         due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         subtotal: quotationData.subtotal,
+        tax_rate: 0,
+        tax_amount: 0,
         total: quotationData.total,
         status: 'Draft',
         payment_status: 'Unpaid',
