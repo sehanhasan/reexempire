@@ -1,20 +1,24 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { invoiceService } from '@/services/invoiceService';
-import { customerService } from '@/services/customerService';
-import { FileText, Download, Share2 } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/utils/formatters';
-import { toast } from 'sonner';
-import { shareInvoice } from '@/utils/mobileShare';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Download, Share2, FileText } from "lucide-react";
+import { invoiceService, customerService } from "@/services";
+import { format } from "date-fns";
+import { toast } from "@/components/ui/use-toast";
+import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { shareInvoice } from "@/utils/mobileShare";
 
 export default function ViewInvoice() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [invoice, setInvoice] = useState(null);
+  const [customer, setCustomer] = useState(null);
+  const [items, setItems] = useState([]);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Set viewport to allow pinch-to-zoom
   useEffect(() => {
@@ -37,93 +41,163 @@ export default function ViewInvoice() {
     };
   }, []);
 
-  const { data: invoice, isLoading, refetch } = useQuery({
-    queryKey: ['invoice', id],
-    queryFn: () => invoiceService.getById(id!),
-    enabled: !!id,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
+  // ... keep existing code (useEffect for fetching data)
 
-  const { data: customer } = useQuery({
-    queryKey: ['customer', invoice?.customer_id],
-    queryFn: () => customerService.getById(invoice!.customer_id),
-    enabled: !!invoice?.customer_id,
-    staleTime: 0,
-  });
-
-  const { data: items = [] } = useQuery({
-    queryKey: ['invoice-items', id],
-    queryFn: () => invoiceService.getItemsByInvoiceId(id!),
-    enabled: !!id,
-    staleTime: 0,
-  });
-
-  // Set page title with invoice number
   useEffect(() => {
-    if (invoice) {
-      document.title = `Invoice #${invoice.reference_number} - Reex Empire`;
-    }
-    return () => {
-      document.title = 'Reex Empire';
+    const fetchInvoiceData = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        console.log("Fetching invoice data for ID:", id);
+        
+        const [invoiceData, itemsData, imagesData] = await Promise.all([
+          invoiceService.getById(id),
+          invoiceService.getItemsByInvoiceId(id),
+          invoiceService.getInvoiceImages(id)
+        ]);
+        
+        console.log("Invoice data:", invoiceData);
+        console.log("Items data:", itemsData);
+        console.log("Images data:", imagesData);
+        
+        if (invoiceData) {
+          setInvoice(invoiceData);
+          setItems(itemsData || []);
+          setImages(imagesData || []);
+          
+          // Fetch customer data
+          if (invoiceData.customer_id) {
+            console.log("Fetching customer data for ID:", invoiceData.customer_id);
+            const customerData = await customerService.getById(invoiceData.customer_id);
+            console.log("Customer data:", customerData);
+            setCustomer(customerData);
+          }
+        } else {
+          console.log("No invoice data found");
+        }
+      } catch (error) {
+        console.error("Error fetching invoice data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load invoice",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [invoice]);
+
+    fetchInvoiceData();
+    
+    // Set up interval to refresh data every 5 minutes to keep the link active
+    const interval = setInterval(fetchInvoiceData, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [id]);
+
+  const formatMoney = (amount) => {
+    return `RM ${parseFloat(amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
+
+  const formatAmount = (amount) => {
+    return parseFloat(amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // ... keep existing code (handlePrintPDF, handleShare, getStatusColor functions)
+
+  const handlePrintPDF = () => {
+    window.print();
+  };
 
   const handleShare = async () => {
     if (!invoice || !customer) {
-      toast.error('Missing invoice or customer information');
+      toast({
+        title: "Missing Information",
+        description: "Invoice or customer information not found.",
+        variant: "destructive"
+      });
       return;
     }
 
     try {
       await shareInvoice(invoice.id, invoice.reference_number, customer.name);
-      toast.success('Invoice shared successfully!');
+      toast({
+        title: "Success",
+        description: "Invoice shared successfully!"
+      });
     } catch (error) {
-      console.error('Error sharing invoice:', error);
-      toast.error('Failed to share invoice');
+      console.error("Error sharing invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to share invoice",
+        variant: "destructive"
+      });
     }
   };
 
-  if (isLoading) {
+  const getStatusColor = (status) => {
+    if (status === "Paid") return "bg-green-100 text-green-800 hover:bg-green-100";
+    if (status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+    if (status === "Overdue") return "bg-red-100 text-red-600 hover:bg-red-100";
+    return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
+      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading invoice...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading invoice details...</p>
         </div>
       </div>
     );
   }
 
-  if (!invoice) {
+  if (!invoice || !customer) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
-        <div className="text-center">
+      <div className="min-h-screen bg-background flex justify-center items-center" style={{ minWidth: '1024px' }}>
+        <div className="text-center p-8">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Invoice Not Found</h2>
-          <p className="text-muted-foreground">The invoice you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate('/')} className="mt-4">Return Home</Button>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Invoice Not Found</h2>
+          <p className="text-gray-600 mb-6">The requested invoice could not be found. The link may have expired or the invoice may not exist.</p>
+          <Button onClick={() => navigate("/")}>Return Home</Button>
         </div>
       </div>
     );
   }
 
-  // Group items by category with sequential index numbers
-  const groupedItems: { [key: string]: any[] } = {};
-  const categoryOrder: string[] = [];
+  // Check if invoice is overdue
+  const dueDate = new Date(invoice.due_date);
+  const today = new Date();
+  const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
+  const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
+
+  // Group items by category with index numbers
+  const groupedItems = {};
+  const categoryIndexMap = {};
+  let categoryIndex = 1;
   
   items.forEach(item => {
     const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
-      categoryOrder.push(category);
+      categoryIndexMap[category] = categoryIndex++;
     }
     groupedItems[category].push(item);
   });
+  
+  const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="invoice-view">
+    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }}>
+
       <div className="py-4 px-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
@@ -154,63 +228,55 @@ export default function ViewInvoice() {
               <div>
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900">Invoice #{invoice.reference_number}</h1>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge className="mb-1" variant={invoice.status === 'Paid' ? "default" : "secondary"}>
-                      {invoice.status}
-                    </Badge>
-                    {invoice.quotation_ref_number && (
-                      <Badge variant="outline" className="mb-1 bg-blue-50 text-blue-700 border-blue-200">
-                        From Quotation #{invoice.quotation_ref_number}
-                      </Badge>
-                    )}
-                  </div>
+                  <Badge className={`mb-1 ${getStatusColor(displayPaymentStatus)}`}>
+                    {displayPaymentStatus}
+                  </Badge>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p><strong>Issue Date:</strong> {formatDate(invoice.issue_date)}</p>
-                    <p><strong>Due Date:</strong> {formatDate(invoice.due_date)}</p>
+                    <p><strong>Issued:</strong> {format(new Date(invoice.issue_date), "MMM dd, yyyy")}</p>
+                    <p><strong>Due:</strong> {format(dueDate, "MMM dd, yyyy")}</p>
                   </div>
                 </div>
                 
-                {customer && (
-                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
-                    <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
-                    <div className="text-sm text-gray-800 space-y-1">
-                      <p>Attn: {customer.name}</p>
-                      <p className="font-semibold">{customer.unit_number}</p>
-                      <p>{customer.address}</p>
-                    </div>
+                <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
+                  <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
+                  <div className="text-sm text-gray-800 space-y-1">
+                    <p>Attn: {customer.name}</p>
+                    {customer.unit_number && <p className="font-semibold">{customer.unit_number}</p>}
+                    {customer.address && <p>{customer.address}</p>}
+                    {customer.city && <p>{customer.city}, {customer.state} {customer.postal_code}</p>}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Compact Items Table with Sequential Category Index Numbers */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-0">
+          {/* Compact Items Table with Category Index Numbers */}
+          <Card className="shadow-sm">
+            <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="text-left p-2 font-semibold text-gray-700">Description</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Price</th>
                       <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
                       <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {categoryOrder.map((category, categoryIndex) => (
+                    {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1}- {category}
+                            {categoryIndexMap[category]}- {category}
                           </td>
                         </tr>
-                        {groupedItems[category].map((item, index) => (
-                          <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
+                        {groupedItems[category].map((item, idx) => (
+                          <tr key={idx} className="border-b hover:bg-gray-50">
                             <td className="p-2 text-gray-800">{item.description}</td>
+                            <td className="text-right p-2 text-gray-800">{formatAmount(item.unit_price)}</td>
                             <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 text-gray-800">{item.unit_price.toFixed(2)}</td>
-                            <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
+                            <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(item.amount)}</td>
                           </tr>
                         ))}
                       </React.Fragment>
@@ -225,34 +291,78 @@ export default function ViewInvoice() {
                   <div className="w-64 space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="font-medium">Subtotal:</span>
-                      <span>{formatCurrency(invoice.subtotal)}</span>
+                      <span>{formatMoney(invoice.subtotal)}</span>
                     </div>
-                    
                     {invoice.tax_rate > 0 && (
                       <div className="flex justify-between">
-                        <span className="font-medium">
-                          Tax ({invoice.tax_rate}%):
-                        </span>
-                        <span>{formatCurrency(invoice.tax_amount)}</span>
+                        <span className="font-medium">Tax ({invoice.tax_rate}%):</span>
+                        <span>{formatMoney(invoice.tax_amount)}</span>
                       </div>
                     )}
-                    
+                    {invoice.is_deposit_invoice && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Deposit Amount:</span>
+                        <span>{formatMoney(invoice.deposit_amount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-base font-bold border-t pt-1">
                       <span>Total:</span>
-                      <span className="text-blue-600">{formatCurrency(invoice.total)}</span>
+                      <span className="text-blue-600">{formatMoney(invoice.total)}</span>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+
+          {/* Work Photos Card */}
+          {images.length > 0 && (
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-gray-700 mb-3 text-base">Work Photos</h3>
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {images.map((image, index) => (
+                    <div key={image.id} className="relative">
+                      <img 
+                        src={image.image_url} 
+                        alt={`Work photo ${index + 1}`} 
+                        className="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-sm"
+                        onClick={() => window.open(image.image_url, '_blank')}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Information Card */}
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-gray-700 mb-3 text-base">Payment Details</h3>
+              <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                <div className="space-y-1">
+                  <p><strong>Company Name:</strong> Reex Empire Sdn Bhd</p>
+                  <p><strong>Bank Name:</strong> Maybank</p>
+                  <p><strong>Account No:</strong> 514897120482</p>
+                  <p className="text-blue-700 font-medium mt-2">*Please include the invoice number on payment reference*</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Additional Information */}
+          <AdditionalInfoCard 
+            terms={invoice.terms}
+          />
 
           {/* Contact Info */}
           <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
             <p>For all enquiries, please contact Khalil Pasha</p>
             <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
           </div>
-          
+
+          {/* Compact Footer */}
           <div className="text-center text-gray-500 text-xs py-3">
             <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
           </div>
