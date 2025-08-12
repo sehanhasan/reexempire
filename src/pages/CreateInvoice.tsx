@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -120,6 +121,11 @@ export default function CreateInvoice() {
     try {
       setIsSubmitting(true);
 
+      // Ensure deposit_percentage is a number
+      const depositPercentage = typeof depositInfo.depositPercentage === 'string' 
+        ? parseFloat(depositInfo.depositPercentage) 
+        : depositInfo.depositPercentage;
+
       const invoice = {
         customer_id: customerId,
         reference_number: documentNumber,
@@ -137,7 +143,7 @@ export default function CreateInvoice() {
         tax_amount: 0,
         is_deposit_invoice: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0,
+        deposit_percentage: depositInfo.requiresDeposit ? depositPercentage : 0,
         payment_status: "Unpaid"
       };
 
