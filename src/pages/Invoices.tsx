@@ -219,7 +219,7 @@ export default function Invoices() {
             Export to CSV
           </Button>} />
       
-      <div className="mt-6">
+      <div className="mt-1">
         <Card className="">
           <CardContent className="p-0">
             <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
