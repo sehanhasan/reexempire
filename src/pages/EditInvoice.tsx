@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -148,16 +147,6 @@ export default function EditInvoice() {
       return;
     }
 
-    // Check if trying to send via WhatsApp without saving first
-    if (newStatus === "Sent" && status === "Draft") {
-      toast({
-        title: "Error",
-        description: "Invoice must be saved before sending to WhatsApp.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     const subtotal = items.reduce((sum, item) => {
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
       return sum + qty * item.unitPrice;
@@ -176,8 +165,7 @@ export default function EditInvoice() {
         total: subtotal,
         notes: notes || null,
         terms: terms || null,
-        subject: subject || null,
-        quotation_ref_number: invoiceData?.quotation_ref_number || null
+        subject: subject || null
       };
 
       await invoiceService.update(id, invoice);
