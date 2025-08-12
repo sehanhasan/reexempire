@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -182,7 +181,6 @@ export default function Customers() {
       </div>
     );
   }
-
 
   return (
     <div className="page-container">
