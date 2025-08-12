@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -11,7 +10,6 @@ import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { staffService } from "@/services";
 import { Staff } from "@/types/database";
-
 export default function AddStaffMember() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -26,14 +24,12 @@ export default function AddStaffMember() {
     join_date: new Date().toISOString().split("T")[0],
     status: "Active"
   });
-  
   useEffect(() => {
     if (staffId) {
       setIsEdit(true);
       fetchStaffMember(staffId);
     }
   }, [staffId]);
-  
   const fetchStaffMember = async (id: string) => {
     try {
       setIsLoading(true);
@@ -59,14 +55,12 @@ export default function AddStaffMember() {
       setIsLoading(false);
     }
   };
-  
   const handleChange = (field: string, value: string) => {
     setStaffData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -89,12 +83,12 @@ export default function AddStaffMember() {
         first_name: staffData.first_name,
         last_name: staffData.last_name,
         passport: staffData.passport,
-        role: "Staff", // Default role
+        role: "Staff",
+        // Default role
         join_date: staffData.join_date,
         phone: staffData.phone,
         status: staffData.status
       };
-      
       if (isEdit) {
         await staffService.update(staffId!, formattedData);
         toast({
@@ -120,19 +114,15 @@ export default function AddStaffMember() {
       setIsLoading(false);
     }
   };
-  
-  return (
-    <div className="page-container">
-      <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={
-        <Button variant="outline" onClick={() => navigate("/staff")}>
+  return <div className="page-container">
+      <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={<Button variant="outline" onClick={() => navigate("/staff")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Staff
-        </Button>
-      } />
+        </Button>} />
       
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <Card>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 ">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
@@ -188,6 +178,5 @@ export default function AddStaffMember() {
           </CardFooter>
         </Card>
       </form>
-    </div>
-  );
+    </div>;
 }
