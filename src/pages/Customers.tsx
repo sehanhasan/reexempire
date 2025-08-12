@@ -183,7 +183,6 @@ export default function Customers() {
     );
   }
 
-
   return (
     <div className="page-container">
       <PageHeader 

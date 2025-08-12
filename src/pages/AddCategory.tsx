@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -9,13 +10,13 @@ import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface SubcategoryForm {
   id?: string;
   tempId: number | string;
   price: string;
   description: string;
+  deleted?: boolean;
 }
 
 export default function AddCategory() {
@@ -81,10 +82,7 @@ export default function AddCategory() {
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
+    const { name, value } = e.target;
     setCategory(prev => ({
       ...prev,
       [name]: value
@@ -93,7 +91,10 @@ export default function AddCategory() {
 
   const handleSubcategoryChange = (index: number, field: keyof SubcategoryForm, value: string) => {
     const updatedSubcategories = [...subcategories];
-    updatedSubcategories[index][field] = value;
+    updatedSubcategories[index] = {
+      ...updatedSubcategories[index],
+      [field]: value
+    };
     setSubcategories(updatedSubcategories);
   };
 
@@ -106,15 +107,26 @@ export default function AddCategory() {
   };
 
   const removeSubcategory = (index: number) => {
+    const subcategory = subcategories[index];
+    
     if (subcategories.length === 1) {
+      // If it's the only subcategory, reset it instead of removing
       setSubcategories([{
         tempId: Date.now(),
         price: "",
         description: ""
       }]);
     } else {
-      const updated = subcategories.filter((_, i) => i !== index);
-      setSubcategories(updated);
+      if (subcategory.id && edit) {
+        // Mark existing subcategory for deletion
+        const updated = [...subcategories];
+        updated[index] = { ...updated[index], deleted: true };
+        setSubcategories(updated);
+      } else {
+        // Remove new subcategory immediately
+        const updated = subcategories.filter((_, i) => i !== index);
+        setSubcategories(updated);
+      }
     }
   };
 
@@ -127,8 +139,10 @@ export default function AddCategory() {
       });
       return false;
     }
-    for (let i = 0; i < subcategories.length; i++) {
-      const sub = subcategories[i];
+    
+    const activeSubcategories = subcategories.filter(sub => !sub.deleted);
+    for (let i = 0; i < activeSubcategories.length; i++) {
+      const sub = activeSubcategories[i];
       if (!sub.description) {
         toast({
           title: "Validation Error",
@@ -152,33 +166,56 @@ export default function AddCategory() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    
     try {
       setLoading(true);
-      const formattedData = {
-        name: category.name,
-        description: category.description,
-        subcategories: subcategories.map(sub => ({
-          ...(sub.id ? {
-            id: sub.id
-          } : {}),
-          description: sub.description,
-          price: sub.price ? parseFloat(sub.price) : 0,
-          name: sub.description
-        }))
-      };
+      
       if (edit && categoryId) {
+        // Handle deletions first
+        const subcategoriesToDelete = subcategories.filter(sub => sub.deleted && sub.id);
+        for (const sub of subcategoriesToDelete) {
+          if (sub.id) {
+            await categoryService.deleteSubcategory(sub.id);
+          }
+        }
+        
+        // Update category and remaining subcategories
+        const activeSubcategories = subcategories.filter(sub => !sub.deleted);
+        const formattedData = {
+          name: category.name,
+          description: category.description,
+          subcategories: activeSubcategories.map(sub => ({
+            ...(sub.id ? { id: sub.id } : {}),
+            description: sub.description,
+            price: sub.price ? parseFloat(sub.price) : 0,
+            name: sub.description
+          }))
+        };
+        
         await categoryService.update(categoryId, formattedData);
         toast({
           title: "Success",
           description: "Category updated successfully"
         });
       } else {
+        // Create new category
+        const formattedData = {
+          name: category.name,
+          description: category.description,
+          subcategories: subcategories.map(sub => ({
+            description: sub.description,
+            price: sub.price ? parseFloat(sub.price) : 0,
+            name: sub.description
+          }))
+        };
+        
         await categoryService.create(formattedData);
         toast({
           title: "Success",
           description: "New category created successfully"
         });
       }
+      
       setLoading(false);
       navigate("/categories");
     } catch (error) {
@@ -192,11 +229,16 @@ export default function AddCategory() {
     }
   };
 
-  return <div className="page-container">
-      <PageHeader title={edit ? "Edit Category" : "Add Category"} actions={<Button variant="outline" onClick={() => navigate("/categories")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>} />
+  const visibleSubcategories = subcategories.filter(sub => !sub.deleted);
+
+  return (
+    <div className="page-container">
+      <PageHeader title={edit ? "Edit Category" : "Add Category"} actions={
+        <Button variant="outline" onClick={() => navigate("/categories")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+      } />
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mt-6">
@@ -210,7 +252,14 @@ export default function AddCategory() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="name">Category Name*</Label>
-                <Input id="name" name="name" placeholder="e.g. Bathroom Renovation" value={category.name} onChange={handleCategoryChange} required />
+                <Input 
+                  id="name" 
+                  name="name" 
+                  placeholder="e.g. Bathroom Renovation" 
+                  value={category.name} 
+                  onChange={handleCategoryChange} 
+                  required 
+                />
               </div>
             </CardContent>
           </Card>
@@ -223,26 +272,52 @@ export default function AddCategory() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {subcategories.map((subcategory, index) => <div key={typeof subcategory.tempId === 'string' ? subcategory.tempId : subcategory.tempId.toString()} className="space-y-4 pb-4 border-b last:border-b-0">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium text-base">Subcategory {index + 1}</h3>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeSubcategory(index)} disabled={subcategories.length === 1 && !edit}>
-                      <Trash className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor={`subcategory-description-${index}`}>Description*</Label>
-                      <Textarea id={`subcategory-description-${index}`} placeholder="e.g. Complete bathroom renovation" value={subcategory.description} onChange={e => handleSubcategoryChange(index, 'description', e.target.value)} rows={3} required />
+              {visibleSubcategories.map((subcategory, index) => {
+                const originalIndex = subcategories.findIndex(sub => sub.tempId === subcategory.tempId);
+                return (
+                  <div key={typeof subcategory.tempId === 'string' ? subcategory.tempId : subcategory.tempId.toString()} className="space-y-4 pb-4 border-b last:border-b-0">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium text-base">Subcategory {index + 1}</h3>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => removeSubcategory(originalIndex)} 
+                        disabled={visibleSubcategories.length === 1 && !edit}
+                      >
+                        <Trash className="h-4 w-4 text-red-500" />
+                      </Button>
                     </div>
                     
-                    <div>
-                      <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
-                      <Input id={`subcategory-price-${index}`} type="number" min="0" step="0.01" placeholder="Enter price" value={subcategory.price} onChange={e => handleSubcategoryChange(index, 'price', e.target.value)} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`subcategory-description-${index}`}>Description*</Label>
+                        <Textarea 
+                          id={`subcategory-description-${index}`} 
+                          placeholder="e.g. Complete bathroom renovation" 
+                          value={subcategory.description} 
+                          onChange={e => handleSubcategoryChange(originalIndex, 'description', e.target.value)} 
+                          rows={3} 
+                          required 
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
+                        <Input 
+                          id={`subcategory-price-${index}`} 
+                          type="number" 
+                          min="0" 
+                          step="0.01" 
+                          placeholder="Enter price" 
+                          value={subcategory.price} 
+                          onChange={e => handleSubcategoryChange(originalIndex, 'price', e.target.value)} 
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>)}
+                );
+              })}
               
               <Button type="button" variant="outline" onClick={addSubcategory} className="w-full">
                 <Plus className="mr-2 h-4 w-4" />
@@ -262,5 +337,6 @@ export default function AddCategory() {
           </Card>
         </div>
       </form>
-    </div>;
+    </div>
+  );
 }
