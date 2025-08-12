@@ -226,7 +226,7 @@ export default function StaffPage() {
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {/* <DropdownMenuSeparator />
               {row.original.status !== "Active" && (
                 <DropdownMenuItem 
                   className="cursor-pointer text-green-600"
@@ -250,7 +250,7 @@ export default function StaffPage() {
                 >
                   Set as Inactive
                 </DropdownMenuItem>
-              )}
+              )} */}
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600"
