@@ -19,15 +19,15 @@ export default function ViewInvoice() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Set viewport to be zoomable for mobile
+  // Set viewport to be unresponsive and zoomable
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0');
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.5, user-scalable=yes');
     } else {
       const newViewport = document.createElement('meta');
       newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.3, user-scalable=yes, maximum-scale=5.0';
+      newViewport.content = 'width=1024, initial-scale=0.5, user-scalable=yes';
       document.head.appendChild(newViewport);
     }
 
@@ -248,11 +248,11 @@ export default function ViewInvoice() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category, categoryIndex) => (
+                    {categories.map(category => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1}- {category}
+                            {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => (

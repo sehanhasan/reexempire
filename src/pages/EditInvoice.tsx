@@ -38,7 +38,6 @@ export default function EditInvoice() {
   const [documentNumber, setDocumentNumber] = useState("");
   const [status, setStatus] = useState("Draft");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [quotationReference, setQuotationReference] = useState("");
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
     depositAmount: 0,
@@ -65,7 +64,6 @@ export default function EditInvoice() {
           setTerms(invoice.terms || "");
           setSubject(invoice.subject || "");
           setStatus(invoice.status);
-          setQuotationReference(invoice.quotation_id || "");
 
           // For invoices, deposit info might not be as relevant, but keeping for consistency
           setDepositInfo({
@@ -159,7 +157,6 @@ export default function EditInvoice() {
 
       const invoice = {
         customer_id: customerId,
-        quotation_id: quotationReference || null,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
@@ -349,8 +346,7 @@ export default function EditInvoice() {
           expiryDate={dueDate} 
           setExpiryDate={setDueDate} 
           subject={subject} 
-          setSubject={setSubject}
-          quotationReference={quotationReference}
+          setSubject={setSubject} 
         />
         
         <QuotationItemsCard 

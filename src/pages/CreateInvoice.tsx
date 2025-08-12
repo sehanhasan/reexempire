@@ -54,6 +54,7 @@ export default function CreateInvoice() {
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
 
   const generateReferenceNumber = async () => {
     const currentYear = new Date().getFullYear();
@@ -210,6 +211,39 @@ export default function CreateInvoice() {
     }
   };
 
+  const handleSendWhatsapp = () => {
+    if (!createdInvoiceId || !customer) {
+      toast({
+        title: "Error",
+        description: "Invoice must be saved before sending to WhatsApp.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoiceId}`;
+      
+      const message = `Dear ${customer.name},\n\n` +
+        `Please find your invoice ${documentNumber} for review at the link below: ` +
+        `${invoiceViewUrl}\n\n` +
+        `You can review the invoice details and make payment.\n\n` +
+        `If you have any questions, please don't hesitate to contact us.\n\n` +
+        `Thank you,\nReex Empire Sdn Bhd`;
+      
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent, status: string = "Draft") => {
     e.preventDefault();
     
@@ -243,7 +277,7 @@ export default function CreateInvoice() {
       
       const invoice = {
         customer_id: customerId,
-        quotation_id: quotationReference || null,
+        quotation_id: quotationId,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
@@ -262,6 +296,7 @@ export default function CreateInvoice() {
       };
       
       const createdInvoice = await invoiceService.create(invoice);
+      setCreatedInvoiceId(createdInvoice.id);
       
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
@@ -440,6 +475,7 @@ export default function CreateInvoice() {
           documentType="invoice"
           isSubmitting={isSubmitting || uploadingImages}
           showDraft={true}
+          onSendWhatsapp={handleSendWhatsapp}
         />
       </form>
     </div>
