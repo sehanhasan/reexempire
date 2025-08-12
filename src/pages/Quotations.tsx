@@ -422,18 +422,18 @@ export default function Quotations() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                                {/* <DropdownMenuItem onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                                   <FileEdit className="mr-2 h-4 w-4" />
                                   Edit
-                                </DropdownMenuItem>
+                                </DropdownMenuItem> */}
                                 <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
                                   <Send className="mr-2 h-4 w-4" />
                                   Send via WhatsApp
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDownloadPDF(quotation)}>
+                                {/* <DropdownMenuItem onClick={() => handleDownloadPDF(quotation)}>
                                   <Download className="mr-2 h-4 w-4" />
                                   Download PDF
-                                </DropdownMenuItem>
+                                </DropdownMenuItem> */}
                                 <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
                                   <FileText className="mr-2 h-4 w-4" />
                                   Convert to Invoice
