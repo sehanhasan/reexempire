@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -227,6 +227,11 @@ export default function Invoices() {
       const pdf = generateInvoicePDF({
         documentNumber: invoice.reference_number,
         documentDate: invoice.issue_date,
+        dueDate: invoice.due_date,
+        paymentMethod: 'bank_transfer',
+        isDepositInvoice: invoice.is_deposit_invoice,
+        depositAmount: invoice.deposit_amount,
+        depositPercentage: invoice.deposit_percentage,
         customerName: customer.name,
         unitNumber: customer.unit_number || "",
         items: itemsForPDF,
@@ -235,6 +240,7 @@ export default function Invoices() {
         customerContact: customer.phone || "",
         customerEmail: customer.email || "",
         notes: invoice.notes || "",
+        expiryDate: invoice.due_date,
       });
 
       downloadPDF(pdf, `Invoice_${invoice.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
@@ -276,8 +282,8 @@ export default function Invoices() {
     <div className="page-container">
       <PageHeader title="Invoices" actions={<div className="hidden md:block"></div>} />
 
-      <Card className="mt-1">
-        <CardContent className="p-0">
+      <div className="mt-1">
+        <div className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
             <div className="relative flex-1 hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -394,13 +400,6 @@ export default function Invoices() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {/* <DropdownMenuItem onClick={e => {
-                                e.stopPropagation();
-                                navigate(`/invoices/edit/${invoice.id}`);
-                              }}>
-                                <FileEdit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem> */}
                               <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 handleSendWhatsapp(invoice);
@@ -408,13 +407,6 @@ export default function Invoices() {
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
                               </DropdownMenuItem>
-                              {/* <DropdownMenuItem onClick={e => {
-                                e.stopPropagation();
-                                handleDownloadPDF(invoice);
-                              }}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download PDF
-                              </DropdownMenuItem> */}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600" onClick={e => {
                                 e.stopPropagation();
@@ -471,18 +463,10 @@ export default function Invoices() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                {/* <DropdownMenuItem onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
-                                  <FileEdit className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem> */}
                                 <DropdownMenuItem onClick={() => handleSendWhatsapp(invoice)}>
                                   <Send className="mr-2 h-4 w-4" />
                                   Send via WhatsApp
                                 </DropdownMenuItem>
-                                {/* <DropdownMenuItem onClick={() => handleDownloadPDF(invoice)}>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  Download PDF
-                                </DropdownMenuItem> */}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-red-600" onClick={() => {
                                   setInvoiceToDelete(invoice);
@@ -502,8 +486,8 @@ export default function Invoices() {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <FloatingActionButton onClick={() => navigate("/invoices/create")} />
 
