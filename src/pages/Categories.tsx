@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -15,7 +14,6 @@ import "../styles/mobile-card.css";
 import { Card } from "@/components/ui/card";
 import { Category, Subcategory } from "@/types/database";
 import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
-
 export default function Categories() {
   const navigate = useNavigate();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -46,11 +44,9 @@ export default function Categories() {
       return Array.from(processedCategories.values());
     }
   });
-
   const handleEditCategory = (category: Category) => {
     navigate(`/categories/add?id=${category.id}`);
   };
-
   const handleDeleteCategory = (category: Category) => {
     // Close dropdown first to prevent UI freeze
     closeDropdown();
@@ -61,12 +57,10 @@ export default function Categories() {
       setShowConfirmDelete(true);
     }, 50);
   };
-
   const handleViewSubcategories = (category: Category) => {
     setSelectedCategory(category);
     setShowSubcategories(true);
   };
-
   const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
     try {
@@ -96,7 +90,6 @@ export default function Categories() {
       });
     }
   };
-
   const handleCancelDelete = () => {
     // Close dialog
     closeAlertDialog();
@@ -107,7 +100,6 @@ export default function Categories() {
       setCategoryToDelete(null);
     }, 100);
   };
-
   const columns = [{
     header: "Name",
     accessorKey: "name" as keyof Category,
@@ -199,9 +191,7 @@ export default function Categories() {
         </div>
       </div>
     </Card>;
-
-  return (
-    <div className="page-container">
+  return <div className="page-container">
       <PageHeader title="Service Categories" />
       
       <div className="mt-6">
@@ -209,10 +199,10 @@ export default function Categories() {
       </div>
 
       <AlertDialog open={showConfirmDelete} onOpenChange={open => {
-        if (!open) {
-          handleCancelDelete();
-        }
-      }}>
+      if (!open) {
+        handleCancelDelete();
+      }
+    }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -236,6 +226,5 @@ export default function Categories() {
       {selectedCategory && <SubcategoriesDialog open={showSubcategories} onOpenChange={setShowSubcategories} category={selectedCategory} />}
 
       <FloatingActionButton onClick={() => navigate("/categories/add")} />
-    </div>
-  );
+    </div>;
 }

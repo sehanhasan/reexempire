@@ -1,4 +1,4 @@
-
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,7 +11,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
@@ -19,23 +19,18 @@
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 210 40% 96%;
     --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72.22% 50.59%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 221.2 83.2% 53.3%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    
-    /* Custom background colors */
-    --primary-bg: 0 0% 97%;
-    --tabs-bg: 210 22% 91%;
+    --radius: 0.75rem;
   }
-
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -43,8 +38,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -55,16 +50,12 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 224.3 76.3% 94.1%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    
-    /* Custom background colors for dark mode */
-    --primary-bg: 222.2 84% 4.9%;
-    --tabs-bg: 217.2 32.6% 17.5%;
   }
 }
 
@@ -73,15 +64,106 @@
     @apply border-border;
   }
   body {
-    @apply bg-[hsl(var(--primary-bg))] text-foreground;
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+    background-color: #F4F5F9;
   }
 }
 
-.page-container {
-  @apply min-h-screen bg-[hsl(var(--primary-bg))] p-6;
+@layer components {
+  .signature-canvas {
+    width: 100% !important;
+    height: 192px !important;
+    touch-action: none;
+    cursor: crosshair;
+    border: none !important;
+    background: white !important;
+  }
+
+  .signature-container {
+    position: relative;
+    width: 100%;
+    height: 192px;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    background: white;
+    overflow: hidden;
+  }
+
+  .floating-action-button {
+    @apply fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50;
+    @apply flex items-center justify-center;
+  }
+
+  /* Print styles for PDF generation */
+  @media print {
+    body {
+      background: white !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    .print:hidden {
+      display: none !important;
+    }
+    
+    #quotation-view {
+      padding: 20mm !important;
+      margin: 0 !important;
+      min-height: auto !important;
+      background: white !important;
+    }
+    
+    .max-w-4xl {
+      max-width: none !important;
+      margin: 0 !important;
+    }
+  }
 }
 
-/* Tab styling */
-.tabs-list {
-  @apply bg-[hsl(var(--tabs-bg))];
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.mobile-card {
+  @apply bg-white border rounded-lg shadow-sm p-4 mb-4;
+}
+
+.mobile-card-header {
+  @apply flex justify-between items-center mb-3 pb-2 border-b;
+}
+
+.mobile-card-title {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+.mobile-card-content {
+  @apply space-y-3;
+}
+
+.mobile-field {
+  @apply flex justify-between items-center;
+}
+
+.mobile-field-label {
+  @apply text-sm text-gray-600 font-medium;
+}
+
+.mobile-field-value {
+  @apply text-sm text-gray-900;
+}
+
+.mobile-actions {
+  @apply flex gap-2 mt-4 pt-3 border-t;
 }
