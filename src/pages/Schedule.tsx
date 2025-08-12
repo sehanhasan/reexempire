@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
@@ -10,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Appointment, Staff } from "@/types/database";
+
 export default function Schedule() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -18,24 +20,29 @@ export default function Schedule() {
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("upcoming");
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [appointmentsData, customersData, staffData] = await Promise.all([appointmentService.getAll(), customerService.getAll(), staffService.getAll()]);
-
+        const [appointmentsData, customersData, staffData] = await Promise.all([
+          appointmentService.getAll(),
+          customerService.getAll(),
+          staffService.getAll()
+        ]);
+        
         // Create a customer lookup map for quick access
         const customersMap = {};
         customersData.forEach(customer => {
           customersMap[customer.id] = customer;
         });
-
+        
         // Create a staff lookup map for quick access
         const staffMap = {};
         staffData.forEach(staff => {
           staffMap[staff.id] = staff;
         });
-
+        
         // Enhance appointments with customer data
         const enhancedAppointments = appointmentsData.map(appointment => {
           const customer = customersMap[appointment.customer_id] || null;
@@ -46,6 +53,7 @@ export default function Schedule() {
             staff
           };
         });
+        
         setAppointments(enhancedAppointments);
         setCustomers(customersMap);
         setStaffMembers(staffMap);
@@ -60,25 +68,31 @@ export default function Schedule() {
         });
       }
     };
+    
     fetchData();
   }, []);
-  const handleEdit = appointment => {
+  
+  const handleEdit = (appointment) => {
     navigate(`/schedule/edit/${appointment.id}`);
   };
+  
   const handleMarkAsCompleted = async (appointment: Appointment) => {
     try {
       await appointmentService.update(appointment.id, {
         status: 'Completed'
       });
-
+      
       // Update local state
-      setAppointments(prev => prev.map(app => app.id === appointment.id ? {
-        ...app,
-        status: 'Completed'
-      } : app));
+      setAppointments(prev => 
+        prev.map(app => app.id === appointment.id 
+          ? { ...app, status: 'Completed' } 
+          : app
+        )
+      );
+      
       toast({
         title: "Appointment Completed",
-        description: "Appointment has been marked as completed."
+        description: "Appointment has been marked as completed.",
       });
     } catch (error) {
       console.error("Error marking appointment as completed:", error);
@@ -89,20 +103,24 @@ export default function Schedule() {
       });
     }
   };
+
   const handleMarkAsInProgress = async (appointment: Appointment) => {
     try {
       await appointmentService.update(appointment.id, {
         status: 'In Progress'
       });
-
+      
       // Update local state
-      setAppointments(prev => prev.map(app => app.id === appointment.id ? {
-        ...app,
-        status: 'In Progress'
-      } : app));
+      setAppointments(prev => 
+        prev.map(app => app.id === appointment.id 
+          ? { ...app, status: 'In Progress' } 
+          : app
+        )
+      );
+      
       toast({
         title: "Appointment In Progress",
-        description: "Appointment has been marked as in progress."
+        description: "Appointment has been marked as in progress.",
       });
     } catch (error) {
       console.error("Error marking appointment as in progress:", error);
@@ -117,33 +135,56 @@ export default function Schedule() {
   // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
     if (activeTab === "upcoming") {
-      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status) && appointment.status !== "Cancelled";
+      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status) &&
+             appointment.status !== "Cancelled";
     } else if (activeTab === "completed") {
       return appointment.status === "Completed" || appointment.status === "Cancelled";
     }
     return true;
   });
-  return <div className="page-container">
-      <PageHeader title="Schedule" description="" actions={<Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
+
+  return (
+    <div className="page-container">
+      <PageHeader 
+        title="Schedule" 
+        description=""
+        actions={
+          <Button 
+            className="flex items-center" 
+            onClick={() => navigate("/schedule/add")}
+          >
             <PlusCircle className="mr-2 h-4 w-4" />
             New Appointment
-          </Button>} />
+          </Button>
+        }
+      />
       
       <div className="mt-6">
         <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full bg-white">
+          <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
           </TabsList>
           <TabsContent value="upcoming" className="mt-4">
-            <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} />
+            <ListView 
+              appointments={filteredAppointments} 
+              onEdit={handleEdit}
+              onMarkAsCompleted={handleMarkAsCompleted}
+              onMarkAsInProgress={handleMarkAsInProgress}
+            />
           </TabsContent>
           <TabsContent value="completed" className="mt-4">
-            <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} />
+            <ListView 
+              appointments={filteredAppointments} 
+              onEdit={handleEdit}
+              onMarkAsCompleted={handleMarkAsCompleted}
+              onMarkAsInProgress={handleMarkAsInProgress}
+            />
           </TabsContent>
         </Tabs>
       </div>
       
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />
-    </div>;
+    </div>
+  );
 }
