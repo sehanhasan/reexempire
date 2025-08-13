@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
@@ -28,7 +27,6 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     fetchNotifications();
@@ -43,32 +41,7 @@ export function NotificationBell() {
           schema: 'public',
           table: 'notifications'
         },
-        (payload) => {
-          console.log('New notification received:', payload);
-          const newNotification = payload.new as Notification;
-          
-          // Add the new notification to the list
-          setNotifications(prev => [newNotification, ...prev]);
-          
-          // Show a toast notification for quotation status changes
-          if (newNotification.type.startsWith('quotation_')) {
-            toast({
-              title: newNotification.title,
-              description: newNotification.message,
-              duration: 5000,
-            });
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications'
-        },
         () => {
-          // Refresh notifications when any notification is updated
           fetchNotifications();
         }
       )
@@ -77,7 +50,7 @@ export function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast]);
+  }, []);
 
   const fetchNotifications = async () => {
     try {
@@ -114,7 +87,7 @@ export function NotificationBell() {
     setIsOpen(false);
 
     // Navigate based on notification type
-    if (notification.type === 'quotation_accepted' || notification.type === 'quotation_rejected') {
+    if (notification.type === 'quotation_approved' && notification.reference_id) {
       navigate(`/quotations`);
     } else if (notification.type === 'appointment_completed' && notification.reference_id) {
       navigate(`/schedule`);
