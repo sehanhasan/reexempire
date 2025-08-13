@@ -240,7 +240,7 @@ export default function Dashboard() {
               <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-2" />
               <p className="text-sm text-slate-600">No upcoming appointments</p>
             </div> : <div className="space-y-3">
-              {upcomingAppointments.map(appointment => <div key={appointment.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer shadow-sm hover:shadow-md" onClick={() => showAppointmentDetails(appointment)}>
+              {upcomingAppointments.map(appointment => <div key={appointment.id} onClick={() => showAppointmentDetails(appointment)} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-semibold text-slate-900 text-sm">
@@ -252,7 +252,7 @@ export default function Dashboard() {
                       </Badge>
                     </div>
                     <p className="text-xs text-slate-600">
-                      <span className="text-indigo-600 font-medium">
+                      <span className="font-medium text-slate-500">
                         {new Date(appointment.appointment_date).toLocaleDateString()}
                       </span>
                       {' • '}
@@ -305,7 +305,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-sm text-blue-700">{formatMoney(quotation.total)}</p>
+                        <p className="font-bold text-sm text-slate-800">{formatMoney(quotation.total)}</p>
                         <Badge className={quotation.status === 'Approved' ? "bg-green-100 text-green-700 hover:bg-green-100" : quotation.status === 'Sent' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} variant="secondary">
                           {quotation.status}
                         </Badge>
@@ -353,7 +353,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-sm text-blue-700">{formatMoney(invoice.total)}</p>
+                        <p className="font-bold text-sm text-slate-800">{formatMoney(invoice.total)}</p>
                         <Badge className={invoice.payment_status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-100" : invoice.payment_status === 'Unpaid' ? "bg-red-100 text-red-700 hover:bg-red-100" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"} variant="secondary">
                           {invoice.payment_status}
                         </Badge>
