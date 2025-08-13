@@ -199,6 +199,6 @@ export const appointmentService = {
       }
     }
     
-    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   }
 };

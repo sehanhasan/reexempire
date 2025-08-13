@@ -87,17 +87,17 @@ const copyToClipboard = async (text: string): Promise<void> => {
 };
 
 const generateWhatsAppUrl = (phoneNumber: string, message: string): string => {
-  // Use the mobile app friendly format: wa.me/{phone}?text=
+  // Use the iframe-friendly format: https://api.whatsapp.com/send?text=
   const encodedMessage = encodeURIComponent(message);
   
   // Clean phone number (remove spaces, dashes, etc.)
   const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
   
   if (cleanPhone) {
-    return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+    return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMessage}`;
   } else {
     // Fallback to text-only if no phone number
-    return `https://wa.me/?text=${encodedMessage}`;
+    return `https://api.whatsapp.com/send?text=${encodedMessage}`;
   }
 };
 
@@ -106,11 +106,11 @@ export const shareQuotation = async (quotationId: string, referenceNumber: strin
   
   const message = `Quotation #${referenceNumber} for ${customerName}\n\nView: ${quotationUrl}`;
   
-  // Try to get customer phone number from context or use fallback
-  const whatsappUrl = generateWhatsAppUrl('', message);
+  // Use iframe-friendly WhatsApp URL
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   
-  // Open WhatsApp directly for mobile apps
-  if (isMobileApp()) {
+  // For iframes and mobile apps, open directly
+  if (isMobileApp() || isIframe()) {
     window.open(whatsappUrl, '_blank');
     return;
   }
@@ -130,11 +130,11 @@ export const shareInvoice = async (invoiceId: string, referenceNumber: string, c
   
   const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
   
-  // Try to get customer phone number from context or use fallback
-  const whatsappUrl = generateWhatsAppUrl('', message);
+  // Use iframe-friendly WhatsApp URL
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   
-  // Open WhatsApp directly for mobile apps
-  if (isMobileApp()) {
+  // For iframes and mobile apps, open directly
+  if (isMobileApp() || isIframe()) {
     window.open(whatsappUrl, '_blank');
     return;
   }

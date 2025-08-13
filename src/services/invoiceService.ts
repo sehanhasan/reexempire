@@ -161,7 +161,7 @@ const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
 const generateWhatsAppShareUrl = (invoiceId: string, referenceNumber: string, customerName: string, invoiceUrl: string): string => {
   const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/?text=${encodedMessage}`;
+  return `https://api.whatsapp.com/send?text=${encodedMessage}`;
 };
 
 export const invoiceService = {

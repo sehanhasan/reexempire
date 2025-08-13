@@ -179,6 +179,6 @@ export const quotationService = {
       `If you have any questions, please don't hesitate to contact us.\n\n` +
       `Thank you,\nReex Empire`;
     
-    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   }
 };
