@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Receipt, Calendar } from "lucide-react";
-import { dashboardService, quotationService, invoiceService, appointmentService, customerService } from "@/services";
+import { quotationService, invoiceService, appointmentService, customerService } from "@/services";
 import { formatDate, formatCurrency } from "@/utils/formatters";
 import { Quotation, Invoice, Appointment, Customer } from "@/types/database";
 
