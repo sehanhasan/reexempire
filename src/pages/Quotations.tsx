@@ -156,7 +156,7 @@ export default function Quotations() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [customers]);
   useEffect(() => {
     let filtered = [...quotations];
     if (statusFilter !== "all") {
