@@ -382,33 +382,83 @@ export default function Dashboard() {
 
       {isMobile ? (
         <div className="mt-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 w-full">
-              <TabsTrigger value="activity" className="text-xs">Activity</TabsTrigger>
-              <TabsTrigger value="revenue" className="text-xs">Revenue</TabsTrigger>
-              <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-            </TabsList>
-            <TabsContent value="activity" className="mt-4">
-              {renderActivityTab()}
-            </TabsContent>
-            <TabsContent value="revenue" className="mt-4">
-              {renderRevenueTab()}
-            </TabsContent>
-            <TabsContent value="overview" className="mt-4">
-              {renderOverviewTab()}
-            </TabsContent>
-          </Tabs>
+          <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
+            <button
+              onClick={() => setActiveTab("activity")}
+              className={`flex-1 py-3 px-1 text-center text-sm font-medium transition-colors duration-200 ${
+                activeTab === "activity"
+                  ? "text-cyan-600 border-b-2 border-cyan-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Activity
+            </button>
+            <button
+              onClick={() => setActiveTab("revenue")}
+              className={`flex-1 py-3 px-1 text-center text-sm font-medium transition-colors duration-200 ${
+                activeTab === "revenue"
+                  ? "text-cyan-600 border-b-2 border-cyan-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Revenue
+            </button>
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex-1 py-3 px-1 text-center text-sm font-medium transition-colors duration-200 ${
+                activeTab === "overview"
+                  ? "text-cyan-600 border-b-2 border-cyan-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Overview
+            </button>
+          </div>
+          
+          <div className="mt-4">
+            {activeTab === "activity" && renderActivityTab()}
+            {activeTab === "revenue" && renderRevenueTab()}
+            {activeTab === "overview" && renderOverviewTab()}
+          </div>
         </div>
       ) : (
         <>
           <div className="mt-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-                <TabsTrigger value="activity">Activity</TabsTrigger>
-                <TabsTrigger value="revenue">Revenue</TabsTrigger>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-              </TabsList>
-              <TabsContent value="activity" className="mt-6">
+            <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
+              <button
+                onClick={() => setActiveTab("activity")}
+                className={`py-4 px-6 text-base font-medium transition-colors duration-200 ${
+                  activeTab === "activity"
+                    ? "text-cyan-600 border-b-2 border-cyan-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Activity
+              </button>
+              <button
+                onClick={() => setActiveTab("revenue")}
+                className={`py-4 px-6 text-base font-medium transition-colors duration-200 ${
+                  activeTab === "revenue"
+                    ? "text-cyan-600 border-b-2 border-cyan-600"  
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Revenue
+              </button>
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`py-4 px-6 text-base font-medium transition-colors duration-200 ${
+                  activeTab === "overview"
+                    ? "text-cyan-600 border-b-2 border-cyan-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Overview
+              </button>
+            </div>
+            
+            <div className="mt-6">
+              {activeTab === "activity" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -484,7 +534,7 @@ export default function Dashboard() {
                                 <div 
                                   key={quotation.id} 
                                   className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" 
-                                  onClick={() => navigateToQuotation(quotation.id)}
+                                  onClick={()={() => navigateToQuotation(quotation.id)}}
                                 >
                                   <div>
                                     <h3 className="font-medium">
@@ -563,11 +613,9 @@ export default function Dashboard() {
                     </Card>
                   </div>
                 </div>
-              </TabsContent>
-              <TabsContent value="revenue" className="mt-6">
-                {renderRevenueTab()}
-              </TabsContent>
-              <TabsContent value="overview" className="mt-6">
+              )}
+              {activeTab === "revenue" && renderRevenueTab()}
+              {activeTab === "overview" && (
                 <div className="grid grid-cols-3 gap-4">
                   <StatCard 
                     title="Total Customers" 
@@ -596,8 +644,8 @@ export default function Dashboard() {
                     onClick={() => navigate("/invoices")} 
                   />
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
+            </div>
           </div>
         </>
       )}

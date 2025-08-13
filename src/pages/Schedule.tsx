@@ -8,7 +8,6 @@ import { appointmentService, customerService, staffService } from "@/services";
 import { ListView } from "@/components/schedule/ListView";
 import { PlusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Appointment, Staff } from "@/types/database";
 
@@ -160,28 +159,37 @@ export default function Schedule() {
       />
       
       <div className="mt-6">
-        <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-          </TabsList>
-          <TabsContent value="upcoming" className="mt-4">
-            <ListView 
-              appointments={filteredAppointments} 
-              onEdit={handleEdit}
-              onMarkAsCompleted={handleMarkAsCompleted}
-              onMarkAsInProgress={handleMarkAsInProgress}
-            />
-          </TabsContent>
-          <TabsContent value="completed" className="mt-4">
-            <ListView 
-              appointments={filteredAppointments} 
-              onEdit={handleEdit}
-              onMarkAsCompleted={handleMarkAsCompleted}
-              onMarkAsInProgress={handleMarkAsInProgress}
-            />
-          </TabsContent>
-        </Tabs>
+        <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
+          <button
+            onClick={() => setActiveTab("upcoming")}
+            className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${
+              activeTab === "upcoming"
+                ? "text-cyan-600 border-b-2 border-cyan-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Upcoming
+          </button>
+          <button
+            onClick={() => setActiveTab("completed")}
+            className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${
+              activeTab === "completed"
+                ? "text-cyan-600 border-b-2 border-cyan-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Completed
+          </button>
+        </div>
+        
+        <div className="mt-4">
+          <ListView 
+            appointments={filteredAppointments} 
+            onEdit={handleEdit}
+            onMarkAsCompleted={handleMarkAsCompleted}
+            onMarkAsInProgress={handleMarkAsInProgress}
+          />
+        </div>
       </div>
       
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />
