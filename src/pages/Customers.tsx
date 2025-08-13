@@ -188,9 +188,10 @@ export default function Customers() {
     <div className="page-container">
       <PageHeader 
         title="Customers" 
+        description="Manage your customer database."
       />
       
-      <div className="mt-8">
+      <div className="mt-2">
         <DataTable 
           columns={columns} 
           data={customers} 
@@ -208,6 +209,9 @@ export default function Customers() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Customer Details</DialogTitle>
+              <DialogDescription>
+                Complete information about this customer.
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
@@ -275,14 +279,10 @@ export default function Customers() {
             <DialogFooter className="sm:justify-end">
               <div className="flex flex-wrap gap-2">
                 <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setShowDetails(false);
-                    if (selectedCustomer) handleEdit(selectedCustomer);
-                  }}
+                  variant="outline" 
+                  onClick={() => setShowDetails(false)}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  Close
                 </Button>
                 <Button 
                   onClick={() => {
@@ -297,10 +297,14 @@ export default function Customers() {
                   Create Quotation
                 </Button>
                 <Button 
-                  variant="outline" 
-                  onClick={() => setShowDetails(false)}
+                  variant="outline"
+                  onClick={() => {
+                    setShowDetails(false);
+                    if (selectedCustomer) handleEdit(selectedCustomer);
+                  }}
                 >
-                  Close
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
                 </Button>
                 <Button 
                   variant="destructive"
