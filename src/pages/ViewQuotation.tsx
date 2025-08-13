@@ -102,17 +102,26 @@ export default function ViewQuotation() {
 
     setIsProcessing(true);
     try {
+      console.log('Accepting quotation with ID:', quotation.id);
+      console.log('Updating quotation status to Accepted...');
+      
       await quotationService.update(quotation.id, {
         status: 'Accepted',
         signature_data: signatureDataUrl,
       });
+      
+      console.log('Quotation update successful');
       setSignatureData(signatureDataUrl);
       setIsSigning(false);
       toast.success('Quotation accepted successfully!');
       refetch();
     } catch (error) {
       console.error('Error accepting quotation:', error);
-      toast.error('Failed to accept quotation');
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      // More specific error message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to accept quotation: ${errorMessage}`);
     } finally {
       setIsProcessing(false);
     }

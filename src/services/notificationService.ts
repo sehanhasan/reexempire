@@ -20,6 +20,8 @@ export const notificationService = {
     type: string;
     reference_id?: string;
   }): Promise<Notification> {
+    console.log('Creating notification:', notification);
+    
     const { data, error } = await supabase
       .from("notifications")
       .insert([{
@@ -34,6 +36,7 @@ export const notificationService = {
       throw error;
     }
 
+    console.log('Notification created successfully:', data);
     return data;
   },
 

@@ -53,21 +53,36 @@ export const quotationService = {
   async update(id: string, quotation: Partial<Omit<Quotation, "id" | "created_at" | "updated_at"> & { signature_data?: string }>): Promise<Quotation> {
     console.log(`QuotationService: Updating quotation ${id} with data:`, quotation);
     
-    const { data, error } = await supabase
-      .from("quotations")
-      .update(quotation)
-      .eq("id", id)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("quotations")
+        .update(quotation)
+        .eq("id", id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error(`QuotationService: Error updating quotation with id ${id}:`, error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      if (error) {
+        console.error(`QuotationService: Error updating quotation with id ${id}:`, error);
+        console.error("Error details:", JSON.stringify(error, null, 2));
+        
+        // Provide more specific error information
+        if (error.code === 'PGRST301') {
+          throw new Error('Quotation not found or access denied');
+        } else if (error.code === '23505') {
+          throw new Error('Duplicate data constraint violation');
+        } else if (error.code === '23503') {
+          throw new Error('Foreign key constraint violation');
+        } else {
+          throw new Error(`Database error: ${error.message || 'Unknown error'}`);
+        }
+      }
+
+      console.log(`QuotationService: Successfully updated quotation:`, data);
+      return data;
+    } catch (error) {
+      console.error(`QuotationService: Caught error in update function:`, error);
       throw error;
     }
-
-    console.log(`QuotationService: Successfully updated quotation:`, data);
-    return data;
   },
 
   async updateStatus(id: string, status: string): Promise<Quotation> {
