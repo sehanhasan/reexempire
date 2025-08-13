@@ -273,7 +273,7 @@ export default function Customers() {
               )}
             </div>
             
-            <DialogFooter className="justify-end">
+            <DialogFooter className="justify-center">
               <div className="flex flex-wrap gap-2">
                 <Button 
                   variant="outline"
