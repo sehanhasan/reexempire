@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
@@ -123,7 +123,6 @@ export default function AddCustomerForm({
       </div>;
   }
   return <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
         <CardContent className="pt-6 space-y-4">
           {/* <div className="space-y-2">
             
@@ -205,6 +204,5 @@ export default function AddCustomerForm({
             {isEditing ? 'Update Customer' : 'Save Customer'}
           </Button>
         </CardFooter>
-      </Card>
     </form>;
 }
