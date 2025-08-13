@@ -401,16 +401,6 @@ export default function ViewInvoice() {
           <div className="grid grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-4">
-              {/* Terms & Conditions */}
-              {invoice.terms && (
-                <Card className="shadow-sm">
-                  <CardContent className="p-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
-                    <p className="text-sm whitespace-pre-wrap">{invoice.terms}</p>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Payment Information Card */}
               <Card className="shadow-sm">
                 <CardContent className="p-4">
@@ -441,6 +431,15 @@ export default function ViewInvoice() {
 
             {/* Right Column */}
             <div className="space-y-4">
+              {/* Terms & Conditions */}
+                {invoice.terms && (
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
+                      <p className="text-sm whitespace-pre-wrap">{invoice.terms}</p>
+                    </CardContent>
+                  </Card>
+                )}
               {/* Contact Info */}
               <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
                 <p>For all enquiries, please contact Khalil Pasha</p>
