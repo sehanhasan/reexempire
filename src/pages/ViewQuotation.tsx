@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
 import { shareQuotation } from '@/utils/mobileShare';
 import html2pdf from 'html2pdf.js';
-import '@/styles/zoom.css';
 
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
@@ -23,22 +22,23 @@ export default function ViewQuotation() {
   const [isDownloading, setIsDownloading] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Pinch-to-zoom effect for this page only
+  // Set viewport to allow pinch-to-zoom
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
-    let original = '';
-
     if (viewport) {
-      original = viewport.getAttribute('content') || '';
-      viewport.setAttribute(
-        'content',
-        'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes'
-      );
+      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
+    } else {
+      const newViewport = document.createElement('meta');
+      newViewport.name = 'viewport';
+      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
+      document.head.appendChild(newViewport);
     }
 
+    // Cleanup on unmount
     return () => {
-      if (viewport && original) {
-        viewport.setAttribute('content', original);
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
       }
     };
   }, []);
@@ -66,15 +66,19 @@ export default function ViewQuotation() {
     staleTime: 0,
   });
 
+  // Set page title when quotation data is loaded
   useEffect(() => {
     if (quotation) {
       document.title = `Quotation #${quotation.reference_number} - Reex Empire`;
     }
+    
+    // Cleanup on unmount
     return () => {
       document.title = 'Reex Empire';
     };
   }, [quotation]);
 
+  // Load signature from quotation if it exists (for persistence after reload)
   useEffect(() => {
     if (quotation?.signature_data) {
       setSignatureData(quotation.signature_data);
@@ -91,20 +95,17 @@ export default function ViewQuotation() {
     if (!sigCanvasRef.current || !quotation) return;
 
     const signatureDataUrl = sigCanvasRef.current.toDataURL();
-    if (
-      !signatureDataUrl ||
-      signatureDataUrl ===
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-    ) {
+    if (!signatureDataUrl || signatureDataUrl === 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==') {
       toast.error('Please provide a signature before accepting');
       return;
     }
 
     setIsProcessing(true);
     try {
+      // Update quotation with signature data and status
       await quotationService.update(quotation.id, {
         status: 'Accepted',
-        signature_data: signatureDataUrl,
+        signature_data: signatureDataUrl
       });
       setSignatureData(signatureDataUrl);
       setIsSigning(false);
@@ -120,39 +121,44 @@ export default function ViewQuotation() {
 
   const handleDownloadPDF = async () => {
     if (!quotation) return;
-
+    
     try {
       setIsDownloading(true);
+      
+      // Get the main content element
       const element = document.querySelector('.quotation-content');
       if (!element) {
         toast.error('Could not find quotation content to download');
         return;
       }
 
+      // Configure PDF options to force single A4 page
       const options = {
-        margin: [5, 5, 5, 5],
+        margin: [5, 5, 5, 5], // Reduced margins
         filename: `quotation-${quotation.reference_number}.pdf`,
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: {
-          scale: 1.5,
+        html2canvas: { 
+          scale: 1.5, // Reduced scale to fit more content
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
           height: element.scrollHeight,
-          width: element.scrollWidth,
+          width: element.scrollWidth
         },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
           orientation: 'portrait',
-          compress: true,
+          compress: true
         },
-        pagebreak: { mode: 'avoid-all' },
+        pagebreak: { mode: 'avoid-all' } // Force everything on one page
       };
 
+      // Generate and download PDF
       await html2pdf().set(options).from(element).save();
+      
       toast.success('Quotation PDF downloaded successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -169,11 +175,7 @@ export default function ViewQuotation() {
     }
 
     try {
-      await shareQuotation(
-        quotation.id,
-        quotation.reference_number,
-        customer.name
-      );
+      await shareQuotation(quotation.id, quotation.reference_number, customer.name);
       toast.success('Quotation shared successfully!');
     } catch (error) {
       console.error('Error sharing quotation:', error);
@@ -183,10 +185,7 @@ export default function ViewQuotation() {
 
   if (isLoading) {
     return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
+      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
@@ -197,19 +196,12 @@ export default function ViewQuotation() {
 
   if (!quotation) {
     return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
+      <div className="min-h-screen bg-background flex items-center justify-center" style={{ minWidth: '1024px' }}>
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
-          <p className="text-muted-foreground">
-            The quotation you're looking for doesn't exist or may have expired.
-          </p>
-          <Button onClick={() => navigate('/')} className="mt-4">
-            Return Home
-          </Button>
+          <p className="text-muted-foreground">The quotation you're looking for doesn't exist or may have expired.</p>
+          <Button onClick={() => navigate('/')} className="mt-4">Return Home</Button>
         </div>
       </div>
     );
@@ -218,15 +210,17 @@ export default function ViewQuotation() {
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.signature_data;
 
+  // Group items by category with sequential indexing
   const groupedItems: { [key: string]: any[] } = {};
-  items.forEach((item) => {
-    const category = item.category || 'Other Items';
+  
+  items.forEach(item => {
+    const category = item.category || "Other Items";
     if (!groupedItems[category]) {
       groupedItems[category] = [];
     }
     groupedItems[category].push(item);
   });
-
+  
   const categories = Object.keys(groupedItems).sort();
 
   return (
