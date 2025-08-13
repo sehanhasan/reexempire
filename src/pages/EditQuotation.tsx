@@ -17,7 +17,8 @@ interface ExtendedQuotation extends Quotation {
 }
 
 interface QuotationWithCustomer extends Quotation {
-  customer?: Customer;
+  customer_name: string;
+  unit_number?: string;
 }
 
 export default function EditQuotation() {
