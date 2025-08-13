@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [revenueData, setRevenueData] = useState([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("activity");
 
   useEffect(() => {
     const fetchDashboardData = async () => {
