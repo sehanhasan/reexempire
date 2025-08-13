@@ -230,7 +230,7 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
+    <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }} id="quotation-view">
       <div className="py-4 px-4 quotation-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}
