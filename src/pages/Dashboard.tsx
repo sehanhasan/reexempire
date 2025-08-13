@@ -180,7 +180,7 @@ export default function Dashboard() {
             {recentQuotations.length === 0 ? <p className="text-center py-10 text-muted-foreground">No quotations found</p> : <div className="space-y-4">
                 {recentQuotations.map(quotation => {
               const customer = customersMap[quotation.customer_id] || {};
-              return <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between pb-2 border-b cursor-pointer bg-gray-50 p-2 rounded-md">
+              return <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between pb-2 border-b cursor-pointer bg-gray-100 hover:bg-gray-50 p-3 rounded-md">
                       <div>
                         <h3 className="font-medium">
                           {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
