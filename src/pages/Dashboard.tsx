@@ -246,8 +246,7 @@ export default function Dashboard() {
               <Calendar className="h-4 w-4 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold text-slate-800">Upcoming Appointments</CardTitle>
-              <CardDescription className="text-sm text-slate-600">Your scheduled activities</CardDescription>
+              <CardTitle className="text-lg font-semibold text-slate-800">Appointments</CardTitle>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate("/schedule")} className="text-blue-600 hover:text-blue-700">
@@ -318,8 +317,7 @@ export default function Dashboard() {
                 <ReceiptText className="h-4 w-4 text-purple-600" />
               </div>
               <div>
-                <CardTitle className="text-lg font-semibold text-slate-800">Recent Quotations</CardTitle>
-                <CardDescription className="text-sm text-slate-600">Latest quotes created</CardDescription>
+                <CardTitle className="text-lg font-semibold text-slate-800">Quotations</CardTitle>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => navigate("/quotations")} className="text-purple-600 hover:text-purple-700">
@@ -382,8 +380,7 @@ export default function Dashboard() {
                 <Receipt className="h-4 w-4 text-emerald-600" />
               </div>
               <div>
-                <CardTitle className="text-lg font-semibold text-slate-800">Recent Invoices</CardTitle>
-                <CardDescription className="text-sm text-slate-600">Latest invoices issued</CardDescription>
+                <CardTitle className="text-lg font-semibold text-slate-800">Invoices</CardTitle>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => navigate("/invoices")} className="text-emerald-600 hover:text-emerald-700">
@@ -445,38 +442,38 @@ export default function Dashboard() {
     <div className="page-container min-h-screen bg-slate-50">
       <div className="p-2">
 
-        {/* Modern Tab Navigation */}
-        <div className="mb-6">
-          <div className="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-                activeTab === "overview"
-                  ? "bg-blue-500 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("activity")}
-              className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-                activeTab === "activity"
-                  ? "bg-blue-500 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              Activity
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="animate-fade-in">
-          {activeTab === "overview" && renderOverviewTab()}
-          {activeTab === "activity" && renderActivityTab()}
+      {/* Modern Tab Navigation */}
+      <div className="mb-3">
+        <div className="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200">
+          <button
+            onClick={() => setActiveTab("activity")}
+            className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
+              activeTab === "activity"
+                ? "bg-blue-500 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
+            }`}
+          >
+            Activity
+          </button>
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
+              activeTab === "overview"
+                ? "bg-blue-500 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
+            }`}
+          >
+            Overview
+          </button>
         </div>
       </div>
+
+      {/* Tab Content */}
+      <div className="animate-fade-in">
+        {activeTab === "activity" && renderActivityTab()}
+        {activeTab === "overview" && renderOverviewTab()}
+      </div>
+
 
       {/* Keep existing AppointmentDetailsDialog */}
       <AppointmentDetailsDialog 
