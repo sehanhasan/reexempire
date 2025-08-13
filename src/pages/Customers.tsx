@@ -198,7 +198,6 @@ export default function Customers() {
           searchKey="name" 
           externalSearchTerm={searchTerm}
           onExternalSearchChange={setSearchTerm}
-          cardClassName="border-l-2 border-l-blue-500"
         />
       </div>
 
