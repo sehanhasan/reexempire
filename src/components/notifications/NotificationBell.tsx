@@ -12,11 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
-  user_id: string;
   title: string;
   message: string;
   type: string;
@@ -29,7 +27,6 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     fetchNotifications();
@@ -44,38 +41,7 @@ export function NotificationBell() {
           schema: 'public',
           table: 'notifications'
         },
-        async (payload) => {
-          console.log('New notification received:', payload);
-          const newNotification = payload.new as Notification;
-          
-          // Only add notifications for the current user
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && newNotification.user_id === user.id) {
-            console.log('Adding notification for current user:', newNotification);
-            setNotifications(prev => [newNotification, ...prev]);
-            
-            // Show a toast notification for quotation status changes
-            if (newNotification.type.startsWith('quotation_')) {
-              toast({
-                title: newNotification.title,
-                description: newNotification.message,
-                duration: 5000,
-              });
-            }
-          } else {
-            console.log('Notification not for current user or no user authenticated');
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications'
-        },
         () => {
-          // Refresh notifications when any notification is updated
           fetchNotifications();
         }
       )
@@ -84,30 +50,17 @@ export function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast]);
+  }, []);
 
   const fetchNotifications = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log('No authenticated user found');
-        return;
-      }
-
-      console.log('Fetching notifications for user:', user.id);
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) {
-        console.error('Error fetching notifications:', error);
-        throw error;
-      }
-      
-      console.log('Fetched notifications:', data);
+      if (error) throw error;
       setNotifications(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -134,7 +87,7 @@ export function NotificationBell() {
     setIsOpen(false);
 
     // Navigate based on notification type
-    if (notification.type === 'quotation_accepted' || notification.type === 'quotation_rejected') {
+    if (notification.type === 'quotation_approved' && notification.reference_id) {
       navigate(`/quotations`);
     } else if (notification.type === 'appointment_completed' && notification.reference_id) {
       navigate(`/schedule`);

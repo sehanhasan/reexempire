@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { quotationService, customerService } from "@/services";
-import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/utils/formatters";
 import { Quotation, Customer } from "@/types/database";
 import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
@@ -116,50 +115,6 @@ export default function Quotations() {
   };
   useEffect(() => {
     fetchData();
-    
-    // Set up real-time subscription for quotation updates
-    const channel = supabase
-      .channel('quotations-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quotations'
-        },
-        (payload) => {
-          console.log('Quotation update received:', payload);
-          if (payload.eventType === 'UPDATE') {
-            setQuotations(prev => 
-              prev.map(q => {
-                if (q.id === payload.new.id) {
-                  // Get customer data from the current customers state
-                  setCustomers(currentCustomers => {
-                    const customer = currentCustomers[payload.new.customer_id];
-                    return currentCustomers;
-                  });
-                  return {
-                    ...q,
-                    ...payload.new,
-                    customer_name: q.customer_name, // Keep existing customer name
-                    unit_number: q.unit_number // Keep existing unit number
-                  } as QuotationWithCustomer;
-                }
-                return q;
-              })
-            );
-          } else if (payload.eventType === 'INSERT') {
-            fetchData(); // Refetch to get customer names properly
-          } else if (payload.eventType === 'DELETE') {
-            setQuotations(prev => prev.filter(q => q.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
   useEffect(() => {
     let filtered = [...quotations];
