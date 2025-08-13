@@ -14,8 +14,9 @@ import { Download, FileText, CheckCircle, X, Pen, Share2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
-import { generateQuotationPDF } from '@/utils/pdfGenerator';
+import { generateQuotationPDF } from '@/utils/htmlToPdf';
 import { shareQuotation } from '@/utils/mobileShare';
+import html2pdf from 'html2pdf.js';
 
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
@@ -26,26 +27,35 @@ export default function ViewQuotation() {
   const [isDownloading, setIsDownloading] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
 
-  // Set viewport to allow pinch-to-zoom
-  useEffect(() => {
-    const viewport = document.querySelector('meta[name=viewport]');
-    if (viewport) {
-      viewport.setAttribute('content', 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes');
-    } else {
-      const newViewport = document.createElement('meta');
-      newViewport.name = 'viewport';
-      newViewport.content = 'width=1024, initial-scale=0.3, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes';
-      document.head.appendChild(newViewport);
-    }
+// Set viewport to allow pinch-to-zoom while preserving desktop layout
+useEffect(() => {
+  const viewport = document.querySelector('meta[name=viewport]');
+  const prevContent = viewport?.getAttribute('content') || null;
+  const content =
+    'width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes';
 
-    // Cleanup on unmount
-    return () => {
-      const viewport = document.querySelector('meta[name=viewport]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-      }
-    };
+  if (viewport) {
+    viewport.setAttribute('content', content);
+  } else {
+    const newViewport = document.createElement('meta');
+    newViewport.name = 'viewport';
+    newViewport.content = content;
+    document.head.appendChild(newViewport);
+  }
+
+  // Keep desktop-style width on mobile
+  const prevMinWidth = document.body.style.minWidth;
+  document.body.style.minWidth = '1024px';
+
+  // Cleanup on unmount (restore previous values)
+  return () => {
+    if (viewport && prevContent) {
+      viewport.setAttribute('content', prevContent);
+    }
+    document.body.style.minWidth = prevMinWidth;
+   };
   }, []);
+
 
   const { data: quotation, isLoading, refetch } = useQuery({
     queryKey: ['quotation', id],
@@ -124,51 +134,42 @@ export default function ViewQuotation() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!quotation || !customer || !items) {
-      toast.error('Missing data for PDF generation');
-      return;
-    }
+    if (!quotation) return;
     
     try {
       setIsDownloading(true);
       
-      // Transform items to match ItemBase interface
-      const transformedItems = items.map((item, index) => ({
-        id: index + 1,
-        description: item.description,
-        category: item.category || 'General',
-        quantity: item.quantity,
-        unit: item.unit,
-        unitPrice: item.unit_price, // Transform snake_case to camelCase
-        amount: item.amount
-      }));
-      
-      // Prepare quotation details for PDF generation
-      const quotationDetails = {
-        documentNumber: quotation.reference_number,
-        documentDate: formatDate(quotation.issue_date),
-        customerName: customer.name,
-        unitNumber: customer.unit_number || '',
-        expiryDate: formatDate(quotation.expiry_date),
-        notes: quotation.notes || '',
-        items: transformedItems,
-        subject: quotation.subject || '',
-        customerAddress: customer.address || '',
-        customerContact: customer.phone || '',
-        customerEmail: customer.email || '',
-        validUntil: formatDate(quotation.expiry_date),
-        depositInfo: {
-          requiresDeposit: quotation.requires_deposit,
-          depositAmount: quotation.deposit_amount || 0,
-          depositPercentage: quotation.deposit_percentage || 0
-        }
+      // Get the main content element
+      const element = document.querySelector('.quotation-content');
+      if (!element) {
+        toast.error('Could not find quotation content to download');
+        return;
+      }
+
+      // Configure PDF options for A4 with proper margins
+      const options = {
+        margin: [20, 15, 20, 15], // top, left, bottom, right in mm
+        filename: `quotation-${quotation.reference_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
-      
-      // Generate PDF using the custom generator
-      const pdf = generateQuotationPDF(quotationDetails);
-      
-      // Download the PDF
-      pdf.save(`quotation-${quotation.reference_number}.pdf`);
+
+      // Generate and download PDF
+      await html2pdf().set(options).from(element).save();
       
       toast.success('Quotation PDF downloaded successfully!');
     } catch (error) {

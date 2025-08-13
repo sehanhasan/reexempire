@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { shareInvoice } from "@/utils/mobileShare";
-import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import html2pdf from 'html2pdf.js';
 
 export default function ViewInvoice() {
   const { id } = useParams();
@@ -121,45 +121,46 @@ export default function ViewInvoice() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!invoice || !customer || !items) {
-      toast({
-        title: "Error",
-        description: "Missing data for PDF generation",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!invoice) return;
     
     try {
       setIsDownloading(true);
       
-      // Prepare invoice details for PDF generation
-      const invoiceDetails = {
-        documentNumber: invoice.reference_number,
-        documentDate: format(new Date(invoice.issue_date), "MMM dd, yyyy"),
-        customerName: customer.name,
-        unitNumber: customer.unit_number,
-        expiryDate: format(new Date(invoice.due_date), "MMM dd, yyyy"),
-        notes: invoice.notes || '',
-        items: items,
-        subject: invoice.subject,
-        customerAddress: customer.address,
-        customerContact: customer.phone,
-        customerEmail: customer.email,
-        dueDate: format(new Date(invoice.due_date), "MMM dd, yyyy"),
-        paymentMethod: invoice.payment_method || 'bank_transfer',
-        isDepositInvoice: invoice.is_deposit_invoice || false,
-        depositAmount: invoice.deposit_amount || 0,
-        depositPercentage: invoice.deposit_percentage || 0,
-        quotationReference: invoice.quotation_reference,
-        images: images.map(img => img.image_url)
+      // Get the main content element
+      const element = document.querySelector('.invoice-content');
+      if (!element) {
+        toast({
+          title: "Error",
+          description: "Could not find invoice content to download",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Configure PDF options for A4 with proper margins
+      const options = {
+        margin: [20, 15, 20, 15], // top, left, bottom, right in mm
+        filename: `invoice-${invoice.reference_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
-      
-      // Generate PDF using the custom generator
-      const pdf = generateInvoicePDF(invoiceDetails);
-      
-      // Download the PDF
-      pdf.save(`invoice-${invoice.reference_number}.pdf`);
+
+      // Generate and download PDF
+      await html2pdf().set(options).from(element).save();
       
       toast({
         title: "Success",
