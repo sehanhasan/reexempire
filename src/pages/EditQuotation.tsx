@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle, XCircle, Share2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -222,6 +222,14 @@ export default function EditQuotation() {
     }
   };
 
+  const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
+    navigate("/invoices/create", {
+      state: {
+        quotationId: quotation.id
+      }
+    });
+  };
+  
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
