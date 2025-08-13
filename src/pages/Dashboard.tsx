@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -13,7 +12,6 @@ import { formatCurrency } from "@/utils/formatters";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -32,7 +30,6 @@ export default function Dashboard() {
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [revenueData, setRevenueData] = useState([]);
   const [activeTab, setActiveTab] = useState("activity");
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -90,21 +87,18 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, []);
-
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
-
   const formatTime = time => {
     if (!time) return "";
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
-
   const generateRevenueByMonth = paidInvoices => {
     const data = [];
     for (let i = 5; i >= 0; i--) {
@@ -122,26 +116,20 @@ export default function Dashboard() {
     }
     return data;
   };
-
   const navigateToQuotation = id => {
     navigate(`/quotations/edit/${id}`);
   };
-
   const navigateToInvoice = id => {
     navigate(`/invoices/edit/${id}`);
   };
-
   const showAppointmentDetails = appointment => {
     setSelectedAppointment(appointment);
     setIsAppointmentDetailOpen(true);
   };
-
   const navigateToEditAppointment = id => {
     navigate(`/schedule/edit/${id}`);
   };
-
-  const renderOverviewTab = () => (
-    <div className="space-y-4">
+  const renderOverviewTab = () => <div className="space-y-4">
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
@@ -223,22 +211,11 @@ export default function Dashboard() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <Chart 
-            chartData={revenueData} 
-            categories={["revenue"]} 
-            index="month" 
-            colors={["#3b82f6"]} 
-            valueFormatter={value => `RM ${value.toLocaleString()}`} 
-            height={200} 
-            title="" 
-          />
+          <Chart chartData={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={200} title="" />
         </CardContent>
       </Card>
-    </div>
-  );
-
-  const renderActivityTab = () => (
-    <div className="space-y-4">
+    </div>;
+  const renderActivityTab = () => <div className="space-y-4">
       {/* Upcoming Appointments */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -256,44 +233,21 @@ export default function Dashboard() {
           </Button>
         </CardHeader>
         <CardContent className="pt-0">
-          {loading ? (
-            <div className="py-8 text-center">
+          {loading ? <div className="py-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-sm text-slate-600 mt-2">Loading appointments...</p>
-            </div>
-          ) : upcomingAppointments.length === 0 ? (
-            <div className="py-8 text-center">
+            </div> : upcomingAppointments.length === 0 ? <div className="py-8 text-center">
               <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-2" />
               <p className="text-sm text-slate-600">No upcoming appointments</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {upcomingAppointments.map(appointment => (
-                <div 
-                  key={appointment.id} 
-                  className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer shadow-sm hover:shadow-md"
-                  onClick={() => showAppointmentDetails(appointment)}
-                >
+            </div> : <div className="space-y-3">
+              {upcomingAppointments.map(appointment => <div key={appointment.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer shadow-sm hover:shadow-md" onClick={() => showAppointmentDetails(appointment)}>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-semibold text-slate-900 text-sm">
-                        {appointment.customer?.unit_number ? (
-                          <span className="text-blue-700">#{appointment.customer.unit_number}</span>
-                        ) : ""}{appointment.customer?.unit_number ? " - " : ""}
+                        {appointment.customer?.unit_number ? <span className="text-blue-700">#{appointment.customer.unit_number}</span> : ""}{appointment.customer?.unit_number ? " - " : ""}
                         <span className="text-slate-800">{appointment.title}</span>
                       </h3>
-                      <Badge 
-                        className={
-                          appointment.status.toLowerCase() === "confirmed" || appointment.status.toLowerCase() === "scheduled" 
-                            ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
-                            : appointment.status.toLowerCase() === "completed" 
-                            ? "bg-green-100 text-green-700 hover:bg-green-100" 
-                            : appointment.status.toLowerCase() === "in progress" 
-                            ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" 
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-100"
-                        }
-                        variant="secondary"
-                      >
+                      <Badge className={appointment.status.toLowerCase() === "confirmed" || appointment.status.toLowerCase() === "scheduled" ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : appointment.status.toLowerCase() === "completed" ? "bg-green-100 text-green-700 hover:bg-green-100" : appointment.status.toLowerCase() === "in progress" ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} variant="secondary">
                         {appointment.status}
                       </Badge>
                     </div>
@@ -307,10 +261,8 @@ export default function Dashboard() {
                       </span>
                     </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                </div>)}
+            </div>}
         </CardContent>
       </Card>
 
@@ -333,21 +285,13 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
-            {recentQuotations.length === 0 ? (
-              <div className="py-8 text-center">
+            {recentQuotations.length === 0 ? <div className="py-8 text-center">
                 <ReceiptText className="h-12 w-12 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-600">No quotations found</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
+              </div> : <div className="space-y-3">
                 {recentQuotations.slice(0, 3).map(quotation => {
-                  const customer = customersMap[quotation.customer_id] || {};
-                  return (
-                    <div 
-                      key={quotation.id} 
-                      onClick={() => navigateToQuotation(quotation.id)} 
-                      className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer shadow-sm hover:shadow-md"
-                    >
+              const customer = customersMap[quotation.customer_id] || {};
+              return <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer ">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-purple-700">
@@ -355,31 +299,20 @@ export default function Dashboard() {
                           </span>
                         </h3>
                         <p className="text-xs text-slate-600">
-                          <span className="text-indigo-600 font-medium">{quotation.reference_number}</span>
+                          <span className="font-medium text-slate-500">{quotation.reference_number}</span>
                           {' • '}
                           <span className="text-slate-500">{new Date(quotation.created_at).toLocaleDateString()}</span>
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-emerald-700 text-sm">{formatMoney(quotation.total)}</p>
-                        <Badge 
-                          className={
-                            quotation.status === 'Approved' 
-                              ? "bg-green-100 text-green-700 hover:bg-green-100" 
-                              : quotation.status === 'Sent' 
-                              ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-100"
-                          }
-                          variant="secondary"
-                        >
+                        <p className="font-bold text-sm text-blue-700">{formatMoney(quotation.total)}</p>
+                        <Badge className={quotation.status === 'Approved' ? "bg-green-100 text-green-700 hover:bg-green-100" : quotation.status === 'Sent' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} variant="secondary">
                           {quotation.status}
                         </Badge>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    </div>;
+            })}
+              </div>}
           </CardContent>
         </Card>
 
@@ -400,21 +333,13 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
-            {recentInvoices.length === 0 ? (
-              <div className="py-8 text-center">
+            {recentInvoices.length === 0 ? <div className="py-8 text-center">
                 <Receipt className="h-12 w-12 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-600">No invoices found</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
+              </div> : <div className="space-y-3">
                 {recentInvoices.slice(0, 3).map(invoice => {
-                  const customer = customersMap[invoice.customer_id] || {};
-                  return (
-                    <div 
-                      key={invoice.id} 
-                      className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all cursor-pointer shadow-sm hover:shadow-md" 
-                      onClick={() => navigateToInvoice(invoice.id)}
-                    >
+              const customer = customersMap[invoice.customer_id] || {};
+              return <div key={invoice.id} onClick={() => navigateToInvoice(invoice.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all cursor-pointer">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-emerald-700">
@@ -422,62 +347,34 @@ export default function Dashboard() {
                           </span>
                         </h3>
                         <p className="text-xs text-slate-600">
-                          <span className="text-indigo-600 font-medium">{invoice.reference_number}</span>
+                          <span className="font-medium text-slate-500">{invoice.reference_number}</span>
                           {' • '}
                           <span className="text-slate-500">{new Date(invoice.created_at).toLocaleDateString()}</span>
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-emerald-700 text-sm">{formatMoney(invoice.total)}</p>
-                        <Badge 
-                          className={
-                            invoice.payment_status === 'Paid' 
-                              ? "bg-green-100 text-green-700 hover:bg-green-100" 
-                              : invoice.payment_status === 'Unpaid' 
-                              ? "bg-red-100 text-red-700 hover:bg-red-100" 
-                              : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
-                          }
-                          variant="secondary"
-                        >
+                        <p className="font-bold text-sm text-blue-700">{formatMoney(invoice.total)}</p>
+                        <Badge className={invoice.payment_status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-100" : invoice.payment_status === 'Unpaid' ? "bg-red-100 text-red-700 hover:bg-red-100" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"} variant="secondary">
                           {invoice.payment_status}
                         </Badge>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    </div>;
+            })}
+              </div>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-
-  return (
-    <div className="page-container min-h-screen bg-slate-50">
+    </div>;
+  return <div className="page-container min-h-screen bg-slate-50">
       <div className="p-2">
 
         {/* Modern Tab Navigation */}
         <div className="mb-2">
           <div className="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200">
-            <button
-              onClick={() => setActiveTab("activity")}
-              className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-                activeTab === "activity"
-                  ? "bg-blue-500 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-              }`}
-            >
+            <button onClick={() => setActiveTab("activity")} className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab === "activity" ? "bg-blue-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"}`}>
               Activity
             </button>
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${
-                activeTab === "overview"
-                  ? "bg-blue-500 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
-              }`}
-            >
+            <button onClick={() => setActiveTab("overview")} className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab === "overview" ? "bg-blue-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"}`}>
               Overview
             </button>
           </div>
@@ -491,41 +388,34 @@ export default function Dashboard() {
       </div>
 
       {/* Keep existing AppointmentDetailsDialog */}
-      <AppointmentDetailsDialog 
-        open={isAppointmentDetailOpen} 
-        onClose={() => setIsAppointmentDetailOpen(false)} 
-        appointment={selectedAppointment} 
-        customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null} 
-        assignedStaff={null} 
-        onMarkAsCompleted={async appointment => {
-          try {
-            await appointmentService.update(appointment.id, {
-              ...appointment,
-              status: 'Completed'
-            });
-            setUpcomingAppointments(prev => prev.map(app => 
-              app.id === appointment.id ? { ...app, status: 'Completed' } : app
-            ));
-            setIsAppointmentDetailOpen(false);
-          } catch (error) {
-            console.error("Error marking appointment as completed:", error);
-          }
-        }} 
-        onMarkAsInProgress={async appointment => {
-          try {
-            await appointmentService.update(appointment.id, {
-              ...appointment,
-              status: 'In Progress'
-            });
-            setUpcomingAppointments(prev => prev.map(app => 
-              app.id === appointment.id ? { ...app, status: 'In Progress' } : app
-            ));
-            setIsAppointmentDetailOpen(false);
-          } catch (error) {
-            console.error("Error marking appointment as in progress:", error);
-          }
-        }} 
-      />
-    </div>
-  );
+      <AppointmentDetailsDialog open={isAppointmentDetailOpen} onClose={() => setIsAppointmentDetailOpen(false)} appointment={selectedAppointment} customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null} assignedStaff={null} onMarkAsCompleted={async appointment => {
+      try {
+        await appointmentService.update(appointment.id, {
+          ...appointment,
+          status: 'Completed'
+        });
+        setUpcomingAppointments(prev => prev.map(app => app.id === appointment.id ? {
+          ...app,
+          status: 'Completed'
+        } : app));
+        setIsAppointmentDetailOpen(false);
+      } catch (error) {
+        console.error("Error marking appointment as completed:", error);
+      }
+    }} onMarkAsInProgress={async appointment => {
+      try {
+        await appointmentService.update(appointment.id, {
+          ...appointment,
+          status: 'In Progress'
+        });
+        setUpcomingAppointments(prev => prev.map(app => app.id === appointment.id ? {
+          ...app,
+          status: 'In Progress'
+        } : app));
+        setIsAppointmentDetailOpen(false);
+      } catch (error) {
+        console.error("Error marking appointment as in progress:", error);
+      }
+    }} />
+    </div>;
 }
