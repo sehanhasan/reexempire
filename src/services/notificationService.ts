@@ -22,10 +22,18 @@ export const notificationService = {
   }): Promise<Notification> {
     console.log('Creating notification:', notification);
     
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log('No authenticated user found, skipping notification creation');
+      throw new Error('User must be authenticated to create notifications');
+    }
+    
     const { data, error } = await supabase
       .from("notifications")
       .insert([{
-        user_id: '00000000-0000-0000-0000-000000000000', // Public notifications for now
+        user_id: user.id, // Use actual authenticated user ID
         ...notification
       }])
       .select()
