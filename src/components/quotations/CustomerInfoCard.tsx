@@ -89,9 +89,6 @@ export function CustomerInfoCard({
   };
   return <>
       <Card className="shadow-sm">
-        <CardHeader className="py-3 px-4">
-          <CardTitle className="text-lg text-cyan-600">Customer Information</CardTitle>
-        </CardHeader>
         <CardContent className="py-4 px-4">
           <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-3"} gap-4`}>
             <div className="space-y-2">
