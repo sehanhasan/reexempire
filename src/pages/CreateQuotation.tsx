@@ -51,11 +51,23 @@ export default function CreateQuotation() {
         q.reference_number?.startsWith(`QT-${currentYear}`)
       ) || [];
       
-      const nextNumber = currentYearQuotations.length + 1;
+      // Extract numbers and find the highest one
+      const numbers = currentYearQuotations
+        .map(q => {
+          const match = q.reference_number?.match(new RegExp(`^QT-${currentYear}-(\\d+)$`));
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(n => !isNaN(n));
+      
+      const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+      const nextNumber = maxNumber + 1;
+      
       return `QT-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
     } catch (error) {
       console.error('Error generating reference number:', error);
-      return `QT-${currentYear}-0001`;
+      // Fallback with timestamp to ensure uniqueness
+      const timestamp = Date.now().toString().slice(-4);
+      return `QT-${currentYear}-${timestamp}`;
     }
   };
 
