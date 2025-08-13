@@ -187,8 +187,7 @@ export default function EditQuotation() {
 
         // Open WhatsApp after successful update
         try {
-          const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-          const whatsappUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
+          const whatsappUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '');
           window.open(whatsappUrl, '_blank');
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
@@ -252,8 +251,7 @@ export default function EditQuotation() {
       return;
     }
     try {
-      const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name, quotationViewUrl);
+      const whatsappUrl = quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name);
       window.open(whatsappUrl, '_blank');
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);

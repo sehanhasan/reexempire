@@ -166,13 +166,10 @@ export default function CreateQuotation() {
         
         // Only try WhatsApp after successful creation
         try {
-          const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotation.id}`;
-          
           const whatsappUrl = quotationService.generateWhatsAppShareUrl(
             createdQuotation.id,
             documentNumber,
-            customer?.name || '',
-            quotationViewUrl
+            customer?.name || ''
           );
           
           window.open(whatsappUrl, '_blank');
