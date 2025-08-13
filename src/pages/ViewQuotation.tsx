@@ -110,6 +110,7 @@ export default function ViewQuotation() {
       console.log('Accepting quotation with ID:', quotation.id);
       console.log('Updating quotation status to Accepted...');
       
+      // Simple update without creating notifications to avoid foreign key errors
       await quotationService.update(quotation.id, {
         status: 'Accepted',
         signature_data: signatureDataUrl,

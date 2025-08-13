@@ -19,33 +19,39 @@ export const notificationService = {
     message: string;
     type: string;
     reference_id?: string;
-  }): Promise<Notification> {
+  }): Promise<Notification | null> {
     console.log('Creating notification:', notification);
     
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.log('No authenticated user found, skipping notification creation');
-      throw new Error('User must be authenticated to create notifications');
-    }
-    
-    const { data, error } = await supabase
-      .from("notifications")
-      .insert([{
-        user_id: user.id, // Use actual authenticated user ID
-        ...notification
-      }])
-      .select()
-      .single();
+    try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log('No authenticated user found, skipping notification creation');
+        return null; // Return null instead of throwing error
+      }
+      
+      const { data, error } = await supabase
+        .from("notifications")
+        .insert([{
+          user_id: user.id, // Use actual authenticated user ID
+          ...notification
+        }])
+        .select()
+        .single();
 
-    if (error) {
-      console.error("Error creating notification:", error);
-      throw error;
-    }
+      if (error) {
+        console.error("Error creating notification:", error);
+        // Don't throw error, just log it and return null
+        return null;
+      }
 
-    console.log('Notification created successfully:', data);
-    return data;
+      console.log('Notification created successfully:', data);
+      return data;
+    } catch (error) {
+      console.error("Unexpected error creating notification:", error);
+      return null; // Return null on any error
+    }
   },
 
   async getAll(): Promise<Notification[]> {
@@ -56,7 +62,7 @@ export const notificationService = {
 
     if (error) {
       console.error("Error fetching notifications:", error);
-      throw error;
+      return []; // Return empty array instead of throwing
     }
 
     return data || [];
@@ -70,7 +76,7 @@ export const notificationService = {
 
     if (error) {
       console.error("Error marking notification as read:", error);
-      throw error;
+      // Don't throw error for this operation
     }
   }
 };
