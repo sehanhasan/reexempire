@@ -193,7 +193,7 @@ export default function Categories() {
   return <div className="page-container">
       <PageHeader title="Service Categories" />
       
-      <div>
+      <div className="mt-6">
         <DataTable columns={columns} data={categories} searchKey="name" renderCustomMobileCard={renderCustomMobileCard} />
       </div>
 

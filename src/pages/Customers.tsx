@@ -190,7 +190,7 @@ export default function Customers() {
         title="Customers" 
       />
       
-      <div>
+      <div className="mt-8">
         <DataTable 
           columns={columns} 
           data={customers} 
