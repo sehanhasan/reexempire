@@ -12,8 +12,8 @@ interface Subcategory {
   id?: string;
   category_id: string;
   name: string;
-  description: string;
-  price: number;
+  description: string; // Changed from optional to required to match the API expectations
+  price?: number;
 }
 
 interface SubcategoryModelProps {
@@ -36,7 +36,7 @@ export function SubcategoryModel({
   const [formData, setFormData] = useState<Subcategory>({
     category_id: parentId,
     name: '',
-    description: '',
+    description: '', // Initialize with empty string since it's required
     price: 0,
   });
   const [submitting, setSubmitting] = useState(false);
@@ -51,7 +51,7 @@ export function SubcategoryModel({
       setFormData({
         category_id: parentId,
         name: '',
-        description: '',
+        description: '', // Initialize with empty string
         price: 0,
       });
     }
@@ -61,6 +61,7 @@ export function SubcategoryModel({
     const { name, value } = e.target;
     
     if (name === 'price') {
+      // Only allow numbers and decimals for price
       const numValue = parseFloat(value);
       setFormData({
         ...formData,
@@ -84,7 +85,6 @@ export function SubcategoryModel({
         await categoryService.updateSubcategory(categoryId, {
           ...formData,
           category_id: parentId,
-          price: formData.price || 0,
         });
         toast({
           title: 'Subcategory Updated',
@@ -95,7 +95,6 @@ export function SubcategoryModel({
         await categoryService.createSubcategory({
           ...formData,
           category_id: parentId,
-          price: formData.price || 0,
         });
         toast({
           title: 'Subcategory Created',
@@ -150,7 +149,7 @@ export function SubcategoryModel({
                 value={formData.description || ''}
                 onChange={handleChange}
                 rows={3}
-                required
+                required // Added required attribute to match type requirement
               />
             </div>
             
@@ -164,7 +163,6 @@ export function SubcategoryModel({
                 min="0"
                 value={formData.price || ''}
                 onChange={handleChange}
-                required
               />
             </div>
           </div>
