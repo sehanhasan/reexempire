@@ -415,6 +415,7 @@ export default function ViewInvoice() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
 
             {/* Right Column */}
             <div className="space-y-4">
