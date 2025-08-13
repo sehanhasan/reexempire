@@ -209,9 +209,6 @@ export default function Customers() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Customer Details</DialogTitle>
-              <DialogDescription>
-                Complete information about this customer.
-              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
@@ -276,7 +273,7 @@ export default function Customers() {
               )}
             </div>
             
-            <DialogFooter className="sm:justify-center">
+            <DialogFooter className="justify-end">
               <div className="flex flex-wrap gap-2">
                 <Button 
                   variant="outline"
