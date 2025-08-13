@@ -16,6 +16,10 @@ interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
 
+interface QuotationWithCustomer extends Quotation {
+  customer?: Customer;
+}
+
 export default function EditQuotation() {
   const navigate = useNavigate();
   const {
@@ -193,8 +197,8 @@ export default function EditQuotation() {
         // Use window.location.href for better WebView/APK compatibility
         try {
           const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-          const whatsappUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
-          window.location.href = whatsappUrl;
+          const whatsAppUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
+          window.location.href = whatsAppUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -268,8 +272,8 @@ export default function EditQuotation() {
     }
     try {
       const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name, quotationViewUrl);
-      window.location.href = whatsappUrl;
+      const whatsAppUrl = quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name, quotationViewUrl);
+      window.location.href = whatsAppUrl;
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
@@ -322,7 +326,7 @@ export default function EditQuotation() {
                 className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleConvertToInvoice(quotation);
+                  handleConvertToInvoice(quotationData as QuotationWithCustomer);
                 }}
               >
                 <FileText className="mr-2 h-4 w-4" />

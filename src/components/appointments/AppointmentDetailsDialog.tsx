@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -100,8 +101,8 @@ export function AppointmentDetailsDialog({
     const customerName = customer?.name || null;
     const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(appointment, customerName, staffInfo);
     
-    // Open in a new tab
-    window.location.href = whatsappUrl;
+    // Open using window.location.href for better WebView/APK compatibility
+    window.location.href = whatsAppUrl;
   };
   
   const checkForImagesInNotes = (notes: string) => {

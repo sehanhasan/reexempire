@@ -274,8 +274,8 @@ export default function AddAppointment() {
           selectedStaffMembers
         );
         
-        // Open in a new tab
-        window.location.href = whatsappUrl;
+        // Use window.location.href for better WebView/APK compatibility
+        window.location.href = whatsAppUrl;
       }
       
       setIsLoading(false);
