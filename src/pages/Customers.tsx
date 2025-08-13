@@ -276,13 +276,17 @@ export default function Customers() {
               )}
             </div>
             
-            <DialogFooter className="sm:justify-end">
+            <DialogFooter className="sm:justify-center">
               <div className="flex flex-wrap gap-2">
                 <Button 
-                  variant="outline" 
-                  onClick={() => setShowDetails(false)}
+                  variant="outline"
+                  onClick={() => {
+                    setShowDetails(false);
+                    if (selectedCustomer) handleEdit(selectedCustomer);
+                  }}
                 >
-                  Close
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
                 </Button>
                 <Button 
                   onClick={() => {
@@ -297,14 +301,10 @@ export default function Customers() {
                   Create Quotation
                 </Button>
                 <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setShowDetails(false);
-                    if (selectedCustomer) handleEdit(selectedCustomer);
-                  }}
+                  variant="outline" 
+                  onClick={() => setShowDetails(false)}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
+                  Close
                 </Button>
                 <Button 
                   variant="destructive"
