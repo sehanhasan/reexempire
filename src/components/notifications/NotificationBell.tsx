@@ -16,7 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
-  user_id: string;
   title: string;
   message: string;
   type: string;
@@ -44,23 +43,20 @@ export function NotificationBell() {
           schema: 'public',
           table: 'notifications'
         },
-        async (payload) => {
+        (payload) => {
           console.log('New notification received:', payload);
           const newNotification = payload.new as Notification;
           
-          // Only add notifications for the current user
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && newNotification.user_id === user.id) {
-            setNotifications(prev => [newNotification, ...prev]);
-            
-            // Show a toast notification for quotation status changes
-            if (newNotification.type.startsWith('quotation_')) {
-              toast({
-                title: newNotification.title,
-                description: newNotification.message,
-                duration: 5000,
-              });
-            }
+          // Add the new notification to the list
+          setNotifications(prev => [newNotification, ...prev]);
+          
+          // Show a toast notification for quotation status changes
+          if (newNotification.type.startsWith('quotation_')) {
+            toast({
+              title: newNotification.title,
+              description: newNotification.message,
+              duration: 5000,
+            });
           }
         }
       )
@@ -85,13 +81,9 @@ export function NotificationBell() {
 
   const fetchNotifications = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
