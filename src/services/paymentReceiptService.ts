@@ -48,7 +48,7 @@ const uploadReceipt = async (
     throw uploadError;
   }
 
-  // Get public URL
+  // Get permanent public URL instead of signed URL
   const { data: urlData } = supabase.storage
     .from('payment-receipts')
     .getPublicUrl(uploadData.path);

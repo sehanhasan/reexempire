@@ -1,11 +1,54 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice, InvoiceImage } from "@/types/database";
+import { Invoice, InvoiceItem as DBInvoiceItem } from "@/types/database";
+
+interface InvoiceItemInput {
+  invoice_id: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  amount: number;
+  category?: string;
+}
+
+interface InvoiceInput {
+  customer_id: string;
+  quotation_id?: string;
+  reference_number: string;
+  issue_date: string;
+  due_date: string;
+  status: string;
+  subtotal: number;
+  tax_rate?: number;
+  tax_amount?: number;
+  total: number;
+  is_deposit_invoice?: boolean;
+  deposit_amount?: number;
+  deposit_percentage?: number;
+  notes?: string | null;
+  terms?: string | null;
+  subject?: string | null;
+  quotation_ref_number?: string | null;
+}
 
 const getAll = async (): Promise<Invoice[]> => {
   const { data, error } = await supabase
     .from('invoices')
-    .select('*')
+    .select(`
+      *,
+      customers (
+        id,
+        name,
+        email,
+        phone,
+        address,
+        unit_number,
+        city,
+        state,
+        postal_code
+      )
+    `)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -18,22 +61,38 @@ const getAll = async (): Promise<Invoice[]> => {
 const getById = async (id: string): Promise<Invoice | null> => {
   const { data, error } = await supabase
     .from('invoices')
-    .select('*')
+    .select(`
+      *,
+      customers (
+        id,
+        name,
+        email,
+        phone,
+        address,
+        unit_number,
+        city,
+        state,
+        postal_code
+      )
+    `)
     .eq('id', id)
     .single();
 
   if (error) {
+    if (error.code === 'PGRST116') {
+      return null;
+    }
     throw error;
   }
 
-  return data || null;
+  return data;
 };
 
-const create = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<Invoice> => {
+const create = async (invoice: InvoiceInput): Promise<Invoice> => {
   const { data, error } = await supabase
     .from('invoices')
     .insert([invoice])
-    .select('*')
+    .select()
     .single();
 
   if (error) {
@@ -43,22 +102,22 @@ const create = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>
   return data;
 };
 
-const update = async (id: string, updates: Partial<Invoice>): Promise<Invoice | null> => {
+const update = async (id: string, invoice: Partial<InvoiceInput>): Promise<Invoice> => {
   const { data, error } = await supabase
     .from('invoices')
-    .update(updates)
+    .update(invoice)
     .eq('id', id)
-    .select('*')
+    .select()
     .single();
 
   if (error) {
     throw error;
   }
 
-  return data || null;
+  return data;
 };
 
-const deleteInvoice = async (id: string): Promise<void> => {
+const remove = async (id: string): Promise<void> => {
   const { error } = await supabase
     .from('invoices')
     .delete()
@@ -69,24 +128,25 @@ const deleteInvoice = async (id: string): Promise<void> => {
   }
 };
 
-const getItemsByInvoiceId = async (invoiceId: string) => {
+const getItemsByInvoiceId = async (invoiceId: string): Promise<DBInvoiceItem[]> => {
   const { data, error } = await supabase
     .from('invoice_items')
     .select('*')
-    .eq('invoice_id', invoiceId);
+    .eq('invoice_id', invoiceId)
+    .order('display_order', { ascending: true });
 
   if (error) {
     throw error;
   }
 
-  return data;
+  return data || [];
 };
 
-const createItem = async (item: any) => {
+const createItem = async (item: InvoiceItemInput): Promise<DBInvoiceItem> => {
   const { data, error } = await supabase
     .from('invoice_items')
     .insert([item])
-    .select('*')
+    .select()
     .single();
 
   if (error) {
@@ -94,57 +154,6 @@ const createItem = async (item: any) => {
   }
 
   return data;
-};
-
-const updateItem = async (id: string, updates: any) => {
-  const { data, error } = await supabase
-    .from('invoice_items')
-    .update(updates)
-    .eq('id', id)
-    .select('*')
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
-};
-
-const deleteItem = async (id: string) => {
-  const { error } = await supabase
-    .from('invoice_items')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    throw error;
-  }
-};
-
-const addInvoiceImage = async (invoiceId: string, imageUrl: string) => {
-  const { data, error } = await supabase
-    .from('invoice_images')
-    .insert([{
-      invoice_id: invoiceId,
-      image_url: imageUrl
-    }])
-    .select('*')
-    .single();
-  
-  if (error) throw error;
-  return data;
-};
-
-const getInvoiceImages = async (invoiceId: string): Promise<InvoiceImage[]> => {
-  const { data, error } = await supabase
-    .from('invoice_images')
-    .select('*')
-    .eq('invoice_id', invoiceId)
-    .order('created_at', { ascending: true });
-  
-  if (error) throw error;
-  return data || [];
 };
 
 const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
@@ -158,10 +167,58 @@ const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   }
 };
 
-const generateWhatsAppShareUrl = (invoiceId: string, referenceNumber: string, customerName: string, invoiceUrl: string): string => {
-  const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
-  const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/?text=${encodedMessage}`;
+const generateNextReferenceNumber = async (): Promise<string> => {
+  const currentYear = new Date().getFullYear();
+  const prefix = `INV${currentYear}`;
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('reference_number')
+    .like('reference_number', `${prefix}%`)
+    .order('reference_number', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+
+  let nextNumber = 1;
+  if (data && data.length > 0) {
+    const lastRef = data[0].reference_number;
+    const lastNumber = parseInt(lastRef.replace(prefix, ''));
+    nextNumber = lastNumber + 1;
+  }
+
+  return `${prefix}${nextNumber.toString().padStart(4, '0')}`;
+};
+
+const storePDFUrl = async (invoiceId: string, pdfUrl: string): Promise<void> => {
+  const { error } = await supabase
+    .from('invoices')
+    .update({ pdf_url: pdfUrl })
+    .eq('id', invoiceId);
+
+  if (error) {
+    throw error;
+  }
+};
+
+const generateWhatsAppShareUrl = (invoiceId: string, invoiceNumber: string, customerName: string): string => {
+  // Use permanent public URLs based on environment
+  const baseUrl = window.location.hostname.includes('lovable.app') 
+    ? 'https://reexempire.lovable.app'
+    : window.location.origin;
+  
+  const invoiceUrl = `${baseUrl}/invoices/view/${invoiceId}`;
+  
+  const message = `Dear ${customerName},\n\n` +
+    `Please find your invoice ${invoiceNumber} for review at the link below: ` +
+    `${invoiceUrl}\n\n` +
+    `You can review the invoice details and make payment.\n\n` +
+    `If you have any questions, please don't hesitate to contact us.\n\n` +
+    `Thank you,\nReex Empire Sdn Bhd`;
+  
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 };
 
 export const invoiceService = {
@@ -169,15 +226,11 @@ export const invoiceService = {
   getById,
   create,
   update,
-  delete: deleteInvoice,
+  remove,
   getItemsByInvoiceId,
   createItem,
-  updateItem,
-  deleteItem,
-  addInvoiceImage,
-  getInvoiceImages,
   deleteItemsByInvoiceId,
+  generateNextReferenceNumber,
+  storePDFUrl,
   generateWhatsAppShareUrl
 };
-
-export default invoiceService;
