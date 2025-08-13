@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -137,18 +138,20 @@ export default function ViewInvoice() {
         return;
       }
 
-      // Configure PDF options for A4 with proper margins
+      // Configure PDF options to force single A4 page
       const options = {
-        margin: [10, 10, 10, 10], // top, left, bottom, right in mm
+        margin: [5, 5, 5, 5], // Reduced margins
         filename: `invoice-${invoice.reference_number}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { 
-          scale: 2,
+          scale: 1.5, // Reduced scale to fit more content
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           scrollX: 0,
-          scrollY: 0
+          scrollY: 0,
+          height: element.scrollHeight,
+          width: element.scrollWidth
         },
         jsPDF: { 
           unit: 'mm', 
@@ -156,7 +159,7 @@ export default function ViewInvoice() {
           orientation: 'portrait',
           compress: true
         },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: 'avoid-all' } // Force everything on one page
       };
 
       // Generate and download PDF
@@ -394,42 +397,56 @@ export default function ViewInvoice() {
             </Card>
           )}
 
-          {/* Payment Information Card */}
-          <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-gray-700 mb-3 text-base">Payment Details</h3>
-              <div className="bg-blue-50 p-3 rounded-lg text-sm">
-                <div className="space-y-1">
-                  <p><strong>Company Name:</strong> Reex Empire Sdn Bhd</p>
-                  <p><strong>Bank Name:</strong> Maybank</p>
-                  <p><strong>Account No:</strong> 514897120482</p>
-                  <p className="text-blue-700 font-medium mt-2">*Please include the invoice number on payment reference*</p>
-                </div>
+          {/* Two-Column Bottom Section */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-4">
+              {/* Terms & Conditions */}
+              {invoice.terms && (
+                <Card className="shadow-sm">
+                  <CardContent className="p-4">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
+                    <p className="text-sm whitespace-pre-wrap">{invoice.terms}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Payment Information Card */}
+              <Card className="shadow-sm">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-gray-700 mb-3 text-base">Payment Details</h3>
+                  <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                    <div className="space-y-1">
+                      <p><strong>Company Name:</strong> Reex Empire Sdn Bhd</p>
+                      <p><strong>Bank Name:</strong> Maybank</p>
+                      <p><strong>Account No:</strong> 514897120482</p>
+                      <p className="text-blue-700 font-medium mt-2">*Please include the invoice number on payment reference*</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Download Button */}
+              <div className="text-center">
+                <Button 
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Additional Information */}
-          <AdditionalInfoCard 
-            terms={invoice.terms}
-          />
-
-          {/* Contact Info */}
-          <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
-            <p>For all enquiries, please contact Khalil Pasha</p>
-            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
-          </div>
-
-          {/* Download Button */}
-          <div className="text-center py-4">
-            <Button 
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Generating PDF...' : 'Download PDF'}
-            </Button>
+            {/* Right Column */}
+            <div className="space-y-4">
+              {/* Contact Info */}
+              <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
+                <p>For all enquiries, please contact Khalil Pasha</p>
+                <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+              </div>
+            </div>
           </div>
 
           {/* Compact Footer */}

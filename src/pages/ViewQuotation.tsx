@@ -137,18 +137,20 @@ export default function ViewQuotation() {
         return;
       }
 
-      // Configure PDF options for A4 with proper margins
+      // Configure PDF options to force single A4 page
       const options = {
-        margin: [10, 10, 10, 10], // top, left, bottom, right in mm
+        margin: [5, 5, 5, 5], // Reduced margins
         filename: `quotation-${quotation.reference_number}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { 
-          scale: 2,
+          scale: 1.5, // Reduced scale to fit more content
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           scrollX: 0,
-          scrollY: 0
+          scrollY: 0,
+          height: element.scrollHeight,
+          width: element.scrollWidth
         },
         jsPDF: { 
           unit: 'mm', 
@@ -156,7 +158,7 @@ export default function ViewQuotation() {
           orientation: 'portrait',
           compress: true
         },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: 'avoid-all' } // Force everything on one page
       };
 
       // Generate and download PDF
@@ -352,98 +354,130 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Compact Additional Information with Signature */}
-          <AdditionalInfoCard
-            terms={quotation.terms}
-            signatureData={hasSignature ? (signatureData || quotation.signature_data) : undefined}
-          />
+          {/* Two-Column Bottom Section */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-4">
+              {/* Terms & Conditions */}
+              {quotation.terms && (
+                <Card className="shadow-sm">
+                  <CardContent className="p-4">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
+                    <p className="text-sm whitespace-pre-wrap">{quotation.terms}</p>
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Signature Section - Only show if not accepted */}
-          {!isAccepted && (
-            <Card className="shadow-sm print:hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
-                {isSigning && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSigning(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent>
-                {!isSigning ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 mb-4 text-base">
-                      Please digitally sign to accept this quotation.
-                    </p>
-                    <Button 
-                      onClick={() => setIsSigning(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-                    >
-                      <Pen className="h-4 w-4 mr-2" />
-                      Start Digital Signature
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                      By signing below, you accept the terms and conditions of this quotation.
-                    </div>
-                    
-                    <div className="signature-container">
-                      <SignatureCanvas
-                        ref={sigCanvasRef}
-                        canvasProps={{
-                          className: 'signature-canvas',
-                        }}
-                        backgroundColor="white"
-                      />
-                      <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
-                        Sign here
+              {/* Contact Info */}
+              <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
+                <p>For all enquiries, please contact Khalil Pasha</p>
+                <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+              </div>
+
+              {/* Download Button */}
+              <div className="text-center">
+                <Button 
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Column - Acceptance Section */}
+            <div>
+              {!isAccepted && (
+                <Card className="shadow-sm print:hidden">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                    <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
+                    {isSigning && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsSigning(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {!isSigning ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <p className="text-gray-600 mb-4 text-base">
+                          Please digitally sign to accept this quotation.
+                        </p>
+                        <Button 
+                          onClick={() => setIsSigning(true)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                        >
+                          <Pen className="h-4 w-4 mr-2" />
+                          Start Digital Signature
+                        </Button>
                       </div>
-                    </div>
-                    
-                    <div className="flex justify-between gap-3">
-                      <Button 
-                        variant="outline" 
-                        onClick={handleClearSignature}
-                        className="px-4"
-                      >
-                        Clear
-                      </Button>
-                      <Button 
-                        onClick={handleAcceptQuotation}
-                        disabled={isProcessing}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6"
-                      >
-                        {isProcessing ? 'Processing...' : 'Accept Quotation'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                          By signing below, you accept the terms and conditions of this quotation.
+                        </div>
+                        
+                        <div className="signature-container">
+                          <SignatureCanvas
+                            ref={sigCanvasRef}
+                            canvasProps={{
+                              className: 'signature-canvas',
+                            }}
+                            backgroundColor="white"
+                          />
+                          <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
+                            Sign here
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between gap-3">
+                          <Button 
+                            variant="outline" 
+                            onClick={handleClearSignature}
+                            className="px-4"
+                          >
+                            Clear
+                          </Button>
+                          <Button 
+                            onClick={handleAcceptQuotation}
+                            disabled={isProcessing}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6"
+                          >
+                            {isProcessing ? 'Processing...' : 'Accept Quotation'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Contact Info */}
-          <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
-            <p>For all enquiries, please contact Khalil Pasha</p>
-            <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
-          </div>
-
-          {/* Download Button */}
-          <div className="text-center py-4">
-            <Button 
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Generating PDF...' : 'Download PDF'}
-            </Button>
+              {/* Show signature if accepted */}
+              {hasSignature && (
+                <Card className="shadow-sm">
+                  <CardContent className="p-4">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <img 
+                        src={signatureData || quotation.signature_data} 
+                        alt="Customer Signature" 
+                        className="max-w-full h-auto border border-gray-200 rounded bg-white"
+                        style={{ maxHeight: '150px' }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Signed digitally on {new Date().toLocaleDateString()}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
           
           <div className="text-center text-gray-500 text-xs py-3">
