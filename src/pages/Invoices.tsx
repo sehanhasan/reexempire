@@ -190,7 +190,7 @@ export default function Invoices() {
     try {
       const invoiceViewUrl = `${window.location.origin}/invoices/view/${invoice.id}`;
       const whatsappUrl = invoiceService.generateWhatsAppShareUrl(invoice.id, invoice.reference_number, customer.name, invoiceViewUrl);
-      window.open(whatsappUrl, '_blank');
+      window.location.href = whatsappUrl;
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({

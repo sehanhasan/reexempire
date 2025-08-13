@@ -11,7 +11,6 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { invoiceService, customerService } from "@/services";
 import { Customer, Invoice } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { shareInvoice } from "@/utils/mobileShare";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
@@ -203,11 +202,11 @@ export default function EditInvoice() {
           description: `Invoice for ${customer?.name} has been updated and sent successfully.`
         });
         
-        // Use the service function for consistent WhatsApp URL generation
+        // Use window.location.href for better WebView/APK compatibility
         try {
           const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
           const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', invoiceViewUrl);
-          window.open(whatsappUrl, '_blank');
+          window.location.href = whatsappUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -270,7 +269,7 @@ export default function EditInvoice() {
     try {
       const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
       const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id!, invoiceData.reference_number, customer.name, invoiceViewUrl);
-      window.open(whatsappUrl, '_blank');
+      window.location.href = whatsappUrl;
     } catch (error) {
       console.error("Error sharing invoice:", error);
       toast({

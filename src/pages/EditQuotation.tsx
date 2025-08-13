@@ -11,9 +11,11 @@ import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { quotationService, customerService } from "@/services";
 import { Customer, Quotation } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface ExtendedQuotation extends Quotation {
   subject?: string | null;
 }
+
 export default function EditQuotation() {
   const navigate = useNavigate();
   const {
@@ -51,6 +53,7 @@ export default function EditQuotation() {
   const [originalItemOrder, setOriginalItemOrder] = useState<{
     [key: number]: number;
   }>({});
+
   useEffect(() => {
     if (!id) return;
     const fetchQuotationData = async () => {
@@ -110,10 +113,12 @@ export default function EditQuotation() {
     };
     fetchQuotationData();
   }, [id, navigate]);
+
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
   };
+
   const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
     e.preventDefault();
     if (!customerId || !id) {
@@ -185,11 +190,11 @@ export default function EditQuotation() {
           description: `Quotation for ${customer?.name} has been updated and sent successfully.`
         });
 
-        // Open WhatsApp after successful update
+        // Use window.location.href for better WebView/APK compatibility
         try {
           const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
           const whatsappUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
-          window.open(whatsappUrl, '_blank');
+          window.location.href = whatsappUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -216,6 +221,7 @@ export default function EditQuotation() {
       setIsSubmitting(false);
     }
   };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
@@ -242,6 +248,7 @@ export default function EditQuotation() {
       });
     }
   };
+
   const handleSendWhatsapp = () => {
     if (!quotationData || !customer) {
       toast({
@@ -254,7 +261,7 @@ export default function EditQuotation() {
     try {
       const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
       const whatsappUrl = quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name, quotationViewUrl);
-      window.open(whatsappUrl, '_blank');
+      window.location.href = whatsappUrl;
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
@@ -264,6 +271,7 @@ export default function EditQuotation() {
       });
     }
   };
+
   if (isLoading) {
     return <div className="page-container">
         <PageHeader title="Edit Quotation" />
@@ -272,6 +280,7 @@ export default function EditQuotation() {
         </div>
       </div>;
   }
+
   return <div className="page-container">
       <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
