@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -308,19 +308,6 @@ export default function EditQuotation() {
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp
               </Button>
-              
-              <Button
-                variant="outline"
-                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleConvertToInvoice(quotation);
-                }}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Convert to Invoice
-              </Button>
-              
             </div>
           </div>
         </div>}

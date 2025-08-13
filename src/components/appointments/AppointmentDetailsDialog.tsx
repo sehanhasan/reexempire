@@ -90,18 +90,33 @@ export function AppointmentDetailsDialog({
     }
   };
 
-  const handleShareWhatsApp = () => {
-    const staffInfo = assignedStaff ? [{ 
-      id: assignedStaff.id, 
-      name: assignedStaff.name,
-      phone: assignedStaff.phone 
-    }] : [];
-    
-    const customerName = customer?.name || null;
-    const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(appointment, customerName, staffInfo);
-    
-    // Open in a new tab
-    window.location.href = whatsappUrl;
+  const handleSendWhatsapp = () => {
+    if (!appointment || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Appointment or customer information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(
+        appointment.id,
+        appointment.title,
+        customer.name,
+        appointment.appointment_date,
+        appointment.appointment_time
+      );
+      window.location.href = whatsAppUrl;
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open WhatsApp. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const checkForImagesInNotes = (notes: string) => {
@@ -227,7 +242,7 @@ export function AppointmentDetailsDialog({
 
         <DialogFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-4">
           <Button 
-            onClick={handleShareWhatsApp} 
+            onClick={handleSendWhatsapp} 
             variant="outline" 
             className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
           >
