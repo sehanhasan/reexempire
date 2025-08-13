@@ -4,11 +4,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Share2, FileText } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { invoiceService, customerService } from "@/services";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
-import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { shareInvoice } from "@/utils/mobileShare";
 import html2pdf from 'html2pdf.js';
 

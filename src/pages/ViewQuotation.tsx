@@ -4,17 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { CustomerInfoCard } from '@/components/quotations/CustomerInfoCard';
-import { ItemsTable } from '@/components/quotations/ItemsTable';
-import { AdditionalInfoCard } from '@/components/quotations/AdditionalInfoCard';
 import { quotationService } from '@/services/quotationService';
 import { customerService } from '@/services/customerService';
-import { Download, FileText, CheckCircle, X, Pen, Share2 } from 'lucide-react';
+import { Download, FileText, CheckCircle, X, Pen } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
-import { generateQuotationPDF } from '@/utils/htmlToPdf';
 import { shareQuotation } from '@/utils/mobileShare';
 import html2pdf from 'html2pdf.js';
 
