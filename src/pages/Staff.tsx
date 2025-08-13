@@ -6,6 +6,7 @@ import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Edit,
@@ -13,7 +14,12 @@ import {
   Trash,
   Eye,
   Phone,
-  Plus
+  Plus,
+  Users,
+  UserPlus,
+  Shield,
+  User,
+  Clock
 } from "lucide-react";
 
 import {
@@ -122,28 +128,38 @@ export default function StaffPage() {
     }
   };
 
-  const handleStatusChange = (staff: Staff, newStatus: "Active" | "On Leave" | "Inactive") => {
-    // Update the staff status
-    const updateStaff = async () => {
-      try {
-        await staffService.update(staff.id, { status: newStatus });
-        fetchStaff(); // Refresh the list
-        
-        toast({
-          title: "Status Updated",
-          description: `${staff.name}'s status changed to ${newStatus}`,
-        });
-      } catch (error) {
-        console.error("Error updating staff status:", error);
-        toast({
-          title: "Error",
-          description: "Failed to update staff status. Please try again.",
-          variant: "destructive",
-        });
-      }
+  const getRoleBadge = (role: string) => {
+    const roleConfig = {
+      "Admin": { bg: "bg-purple-100", text: "text-purple-800", icon: Shield },
+      "Manager": { bg: "bg-blue-100", text: "text-blue-800", icon: Users },
+      "Staff": { bg: "bg-gray-100", text: "text-gray-800", icon: User }
     };
     
-    updateStaff();
+    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.Staff;
+    const IconComponent = config.icon;
+    
+    return (
+      <Badge className={`${config.bg} ${config.text} hover:${config.bg}`}>
+        <IconComponent className="mr-1 h-3 w-3" />
+        {role}
+      </Badge>
+    );
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      "Active": { bg: "bg-green-100", text: "text-green-800", border: "border-green-200" },
+      "On Leave": { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-200" },
+      "Inactive": { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-200" }
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.Inactive;
+    
+    return (
+      <Badge className={`${config.bg} ${config.text} ${config.border} border hover:${config.bg}`}>
+        {status}
+      </Badge>
+    );
   };
 
   const columns = [
@@ -152,7 +168,7 @@ export default function StaffPage() {
       accessorKey: "name" as keyof Staff,
       cell: ({ row }: { row: { original: Staff } }) => (
         <div 
-          className="font-medium text-blue-600 cursor-pointer"
+          className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => handleView(row.original)}
         >
           {row.original.name}
@@ -162,25 +178,20 @@ export default function StaffPage() {
     {
       header: "Role",
       accessorKey: "role" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <Badge className={
-            row.original.role === "Admin" ? "bg-purple-100 text-purple-800 hover:bg-purple-200" :
-            row.original.role === "Manager" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-200"
-          }>
-            {row.original.role}
-          </Badge>
-        );
-      },
+      cell: ({ row }: { row: { original: Staff } }) => getRoleBadge(row.original.role),
     },
     {
       header: "Phone",
       accessorKey: "phone" as keyof Staff,
       cell: ({ row }: { row: { original: Staff } }) => (
         <div className="flex items-center">
-          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          <a href={`https://wa.me/${row.original.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600">
+          <Phone className="mr-2 h-4 w-4 text-green-500" />
+          <a 
+            href={`https://wa.me/${row.original.phone?.replace(/[^0-9]/g, '')}`} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="hover:underline text-green-600 hover:text-green-700 transition-colors font-medium"
+          >
             {row.original.phone}
           </a>
         </div>
@@ -189,17 +200,7 @@ export default function StaffPage() {
     {
       header: "Status",
       accessorKey: "status" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <Badge className={
-            row.original.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
-            row.original.status === "On Leave" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-200"
-          }>
-            {row.original.status}
-          </Badge>
-        );
-      },
+      cell: ({ row }: { row: { original: Staff } }) => getStatusBadge(row.original.status),
     },
     {
       header: "Actions",
@@ -208,7 +209,7 @@ export default function StaffPage() {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:bg-gray-100">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -258,22 +259,45 @@ export default function StaffPage() {
     };
   }, [searchTerm]);
 
+  // Count stats
+  const activeStaff = staffMembers.filter(s => s.status === "Active").length;
+  const onLeaveStaff = staffMembers.filter(s => s.status === "On Leave").length;
+
   return (
     <div className="page-container">
       <PageHeader 
-        title="Staff" 
-        description="Manage your team members."
+        title="Staff Management" 
+        description="Manage your team members and their information."
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+              <Users className="mr-1 h-3 w-3" />
+              {activeStaff} Active
+            </Badge>
+            {onLeaveStaff > 0 && (
+              <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">
+                <Clock className="mr-1 h-3 w-3" />
+                {onLeaveStaff} On Leave
+              </Badge>
+            )}
+          </div>
+        }
       />
       
-      <div className="mt-8">
-        <DataTable 
-          columns={columns} 
-          data={staffMembers} 
-          searchKey="name" 
-          isLoading={isLoading}
-          externalSearchTerm={searchTerm}
-          onExternalSearchChange={setSearchTerm}
-        />
+      <div className="mt-6">
+        <Card className="shadow-sm border-0 bg-white">
+          <CardContent className="p-0">
+            <DataTable 
+              columns={columns} 
+              data={staffMembers} 
+              searchKey="name" 
+              isLoading={isLoading}
+              externalSearchTerm={searchTerm}
+              onExternalSearchChange={setSearchTerm}
+              emptyMessage="No staff members found. Add your first team member to get started."
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {selectedStaff && (
@@ -283,81 +307,93 @@ export default function StaffPage() {
         }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Staff Details</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Staff Details
+              </DialogTitle>
               <DialogDescription>
-                Complete information about this staff member.
+                Complete information about this team member.
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Name</p>
-                <p className="text-lg font-medium">{selectedStaff.name}</p>
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm font-medium text-blue-700 mb-1">Staff Member</p>
+                <p className="text-xl font-bold text-blue-900">{selectedStaff.name}</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Role</p>
+                  {getRoleBadge(selectedStaff.role || "Staff")}
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Status</p>
+                  {getStatusBadge(selectedStaff.status)}
+                </div>
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Role</p>
-                <Badge className={
-                  selectedStaff.role === "Admin" ? "bg-purple-100 text-purple-800" :
-                  selectedStaff.role === "Manager" ? "bg-blue-100 text-blue-800" :
-                  "bg-gray-100 text-gray-800"
-                }>
-                  {selectedStaff.role || "Staff"}
-                </Badge>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <Badge className={
-                  selectedStaff.status === "Active" ? "bg-green-100 text-green-800" :
-                  selectedStaff.status === "On Leave" ? "bg-amber-100 text-amber-800" :
-                  "bg-gray-100 text-gray-800"
-                }>
-                  {selectedStaff.status}
-                </Badge>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Join Date</p>
-                <p>{selectedStaff.join_date ? format(new Date(selectedStaff.join_date), "MMMM dd, yyyy") : "N/A"}</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Join Date</p>
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <Clock className="h-5 w-5 mr-3 text-gray-600" />
+                  <span className="text-gray-700">
+                    {selectedStaff.join_date ? format(new Date(selectedStaff.join_date), "MMMM dd, yyyy") : "N/A"}
+                  </span>
+                </div>
               </div>
               
               {selectedStaff.position && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Position</p>
-                  <p>{selectedStaff.position}</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Position</p>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-blue-800">{selectedStaff.position}</p>
+                  </div>
                 </div>
               )}
               
               {selectedStaff.passport && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Passport #</p>
-                  <p>{selectedStaff.passport}</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Passport #</p>
+                  <div className="p-3 bg-gray-50 rounded-lg font-mono text-sm">
+                    <p className="text-gray-700">{selectedStaff.passport}</p>
+                  </div>
                 </div>
               )}
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
-                {selectedStaff.phone && (
-                  <div className="flex items-center mt-1">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <a href={`https://wa.me/${selectedStaff.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      {selectedStaff.phone}
-                    </a>
-                  </div>
-                )}
-                {selectedStaff.email && (
-                  <div className="flex items-center mt-1">
-                    <div className="h-4 w-4 mr-2 text-muted-foreground">@</div>
-                    <a href={`mailto:${selectedStaff.email}`} className="text-blue-600 hover:underline">
-                      {selectedStaff.email}
-                    </a>
-                  </div>
-                )}
+                <p className="text-sm font-medium text-muted-foreground mb-3">Contact Information</p>
+                <div className="space-y-3">
+                  {selectedStaff.phone && (
+                    <div className="flex items-center p-3 bg-green-50 rounded-lg">
+                      <Phone className="h-5 w-5 mr-3 text-green-600" />
+                      <a 
+                        href={`https://wa.me/${selectedStaff.phone.replace(/[^0-9]/g, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-green-700 hover:text-green-800 font-medium hover:underline"
+                      >
+                        {selectedStaff.phone}
+                      </a>
+                    </div>
+                  )}
+                  {selectedStaff.email && (
+                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                      <div className="h-5 w-5 mr-3 text-gray-600 flex items-center justify-center text-sm font-bold">@</div>
+                      <a 
+                        href={`mailto:${selectedStaff.email}`} 
+                        className="text-gray-700 hover:text-gray-800 font-medium hover:underline"
+                      >
+                        {selectedStaff.email}
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
-            <DialogFooter className="sm:justify-end">
+            <DialogFooter className="sm:justify-end pt-6">
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
@@ -370,6 +406,7 @@ export default function StaffPage() {
                     setShowDetails(false);
                     if (selectedStaff) handleEdit(selectedStaff);
                   }}
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
@@ -403,7 +440,10 @@ export default function StaffPage() {
 
       <FloatingActionButton 
         onClick={() => navigate("/staff/add")}
-      />
+        className="bg-blue-600 hover:bg-blue-700 shadow-lg"
+      >
+        <UserPlus className="h-6 w-6" />
+      </FloatingActionButton>
     </div>
   );
 }
