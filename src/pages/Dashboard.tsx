@@ -443,11 +443,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container min-h-screen bg-slate-50">
-      <div className="p-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">Dashboard</h1>
-          <p className="text-sm text-slate-600">Welcome back! Here's what's happening.</p>
-        </div>
+      <div className="p-2">
 
         {/* Modern Tab Navigation */}
         <div className="mb-6">
