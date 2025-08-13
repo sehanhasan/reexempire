@@ -372,6 +372,9 @@ export default function ViewQuotation() {
               <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
                 <p>For all enquiries, please contact Khalil Pasha</p>
                 <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
+                <div className="text-center text-gray-500 text-xs py-3">
+                  <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+                </div>
               </div>
 
               {/* Download Button */}
@@ -479,9 +482,16 @@ export default function ViewQuotation() {
               )}
             </div>
           </div>
-          
-          <div className="text-center text-gray-500 text-xs py-3">
-            <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+          {/* Download Button */}
+          <div className="text-center">
+            <Button 
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+              >
+              <Download className="h-4 w-4 mr-2" />
+                {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+            </Button>
           </div>
         </div>
       </div>
