@@ -4,9 +4,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Edit, MoreHorizontal, Trash, ChevronRight, FolderOpen, Plus, Tag } from "lucide-react";
+import { Edit, MoreHorizontal, Trash, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "@/services/categoryService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, closeDropdown } from "@/components/ui/dropdown-menu";
@@ -102,7 +100,7 @@ export default function Categories() {
     }, 100);
   };
   const columns = [{
-    header: "Category",
+    header: "Name",
     accessorKey: "name" as keyof Category,
     cell: ({
       row
@@ -110,8 +108,7 @@ export default function Categories() {
       row: {
         original: Category;
       };
-    }) => <div className="flex items-center font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors" onClick={() => handleEditCategory(row.original)}>
-          <FolderOpen className="mr-2 h-4 w-4 text-blue-500" />
+    }) => <div className="flex items-center font-medium text-blue-600 cursor-pointer" onClick={() => handleEditCategory(row.original)}>
           {row.original.name}
         </div>
   }, {
@@ -123,11 +120,9 @@ export default function Categories() {
       row: {
         original: Category;
       };
-    }) => <div className="flex items-center justify-between">
-          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
-            {row.original.subcategories?.length || 0} items
-          </Badge>
-          {(row.original.subcategories?.length || 0) > 0 && <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1" onClick={() => handleViewSubcategories(row.original)}>
+    }) => <div className="flex items-center">
+          <span className="mr-2">{row.original.subcategories?.length || 0}</span>
+          {(row.original.subcategories?.length || 0) > 0 && <Button variant="ghost" size="sm" className="text-blue-600" onClick={() => handleViewSubcategories(row.original)}>
               <ChevronRight className="h-4 w-4" />
             </Button>}
         </div>
@@ -143,7 +138,7 @@ export default function Categories() {
     }) => {
       return <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+              <Button variant="ghost" size="icon">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -163,70 +158,43 @@ export default function Categories() {
   }];
 
   // Custom render function for mobile view to match the design
-  const renderCustomMobileCard = (category: Category) => <Card key={category.id} className="overflow-hidden border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
-      <CardContent className="p-0">
-        {/* Card Header with primary information */}
-        <div className="flex justify-between items-center px-4 py-2 border-b bg-blue-50/30">
-          <div className="flex items-center text-blue-700 font-semibold cursor-pointer hover:text-blue-800 transition-colors" onClick={() => handleEditCategory(category)}>
-            <FolderOpen className="mr-2 h-4 w-4" />
-            {category.name}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover:bg-blue-100">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditCategory(category)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDeleteCategory(category)}>
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+  const renderCustomMobileCard = (category: Category) => <div key={category.id} className="mobile-card border-l-blue-500 overflow-visible">
+      <div className="flex justify-between items-center px-1 py-2 border-b border-gray-100">
+        <div className="text-blue-600 font-medium cursor-pointer" onClick={() => handleEditCategory(category)}>
+          {category.name}
         </div>
-        
-        {/* Card Content */}
-        <div onClick={() => handleViewSubcategories(category)} className="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-          <div className="flex items-center text-gray-600">
-            <Tag className="mr-2 h-4 w-4" />
-            <span className="font-medium">Subcategories</span>
-          </div>
-          <div className="flex items-center">
-            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 mr-2">
-              {category.subcategories?.length || 0}
-            </Badge>
-            <ChevronRight className="h-4 w-4 text-blue-600" />
-          </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditCategory(category)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDeleteCategory(category)}>
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div onClick={() => handleViewSubcategories(category)} className="flex justify-between items-center px-1 py-3 cursor-pointer">
+        <div className="text-gray-600">Subcategories</div>
+        <div className="flex items-center">
+          <span className="mr-2">{category.subcategories?.length || 0}</span>
+          <ChevronRight className="h-4 w-4 text-blue-600" />
         </div>
-      </CardContent>
-    </Card>;
-
-  // Calculate stats
-  const totalSubcategories = categories.reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0);
+      </div>
+    </div>;
   return <div className="page-container">
-      <PageHeader title="Service Categories" description="Organize your services into categories and subcategories." actions={<div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
-              <FolderOpen className="mr-1 h-3 w-3" />
-              {categories.length} Categories
-            </Badge>
-            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-              <Tag className="mr-1 h-3 w-3" />
-              {totalSubcategories} Subcategories
-            </Badge>
-          </div>} />
+      <PageHeader title="Service Categories" />
       
-      <div className="mt-6">
-        <Card className="shadow-sm border-0 bg-white">
-          <CardContent className="p-0">
-            <DataTable columns={columns} data={categories} searchKey="name" renderCustomMobileCard={renderCustomMobileCard} emptyMessage="No categories found. Add your first service category to get started." />
-          </CardContent>
-        </Card>
+      <div className="mt-2">
+        <DataTable columns={columns} data={categories} searchKey="name" renderCustomMobileCard={renderCustomMobileCard} />
       </div>
 
       <AlertDialog open={showConfirmDelete} onOpenChange={open => {
@@ -256,8 +224,6 @@ export default function Categories() {
 
       {selectedCategory && <SubcategoriesDialog open={showSubcategories} onOpenChange={setShowSubcategories} category={selectedCategory} />}
 
-      <FloatingActionButton onClick={() => navigate("/categories/add")} className="bg-blue-600 hover:bg-blue-700 shadow-lg">
-        <Plus className="h-6 w-6" />
-      </FloatingActionButton>
+      <FloatingActionButton onClick={() => navigate("/categories/add")} />
     </div>;
 }

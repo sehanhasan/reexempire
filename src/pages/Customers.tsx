@@ -7,16 +7,13 @@ import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { Card, CardContent } from "@/components/ui/card";
 import { 
   Edit,
   Trash,
   Loader2,
   Mail,
   Phone,
-  MapPin,
-  Users,
-  UserPlus
+  MapPin
 } from "lucide-react";
 
 import {
@@ -132,7 +129,7 @@ export default function Customers() {
       header: "Unit #",
       accessorKey: "unit_number" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="font-medium text-blue-600">{row.original.unit_number || 'N/A'}</div>
+        <div className="font-medium">{row.original.unit_number || 'N/A'}</div>
       ),
     },
     {
@@ -140,7 +137,7 @@ export default function Customers() {
       accessorKey: "name" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
         <div 
-          className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+          className="font-medium text-blue-600 cursor-pointer"
           onClick={() => handleView(row.original)}
         >
           {row.original.name}
@@ -152,13 +149,13 @@ export default function Customers() {
       accessorKey: "phone" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
         <div className="flex items-center">
-          <Phone className="mr-2 h-4 w-4 text-green-500" />
+          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           {row.original.phone ? (
             <a 
               href={`https://wa.me/${row.original.phone.replace(/^\+/, '')}`} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-green-600 hover:text-green-700 hover:underline transition-colors"
+              className="text-blue-600 hover:underline"
             >
               {row.original.phone}
             </a>
@@ -172,58 +169,36 @@ export default function Customers() {
       header: "Address",
       accessorKey: "address" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="flex items-center">
-          <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span className="text-gray-700">{row.original.address || 'Not provided'}</span>
-        </div>
+        <span>{row.original.address || 'Not provided'}</span>
       ),
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-[70vh]">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-gray-900">Loading Customers</h3>
-              <p className="text-muted-foreground">Please wait while we fetch your customer data...</p>
-            </div>
-          </div>
-        </div>
+      <div className="page-container flex items-center justify-center h-[70vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-lg">Loading customers...</span>
       </div>
     );
   }
+
 
   return (
     <div className="page-container">
       <PageHeader 
         title="Customers" 
-        description="Manage your customer database and relationships."
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
-              <Users className="mr-1 h-3 w-3" />
-              {customers.length} Total
-            </Badge>
-          </div>
-        }
+        description="Manage your customer database."
       />
       
-      <div className="mt-6">
-        <Card className="shadow-sm border-0 bg-white">
-          <CardContent className="p-0">
-            <DataTable 
-              columns={columns} 
-              data={customers} 
-              searchKey="name" 
-              externalSearchTerm={searchTerm}
-              onExternalSearchChange={setSearchTerm}
-              emptyMessage="No customers found. Add your first customer to get started."
-            />
-          </CardContent>
-        </Card>
+      <div className="mt-2">
+        <DataTable 
+          columns={columns} 
+          data={customers} 
+          searchKey="name" 
+          externalSearchTerm={searchTerm}
+          onExternalSearchChange={setSearchTerm}
+        />
       </div>
 
       {selectedCustomer && (
@@ -233,65 +208,58 @@ export default function Customers() {
         }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                Customer Details
-              </DialogTitle>
+              <DialogTitle>Customer Details</DialogTitle>
               <DialogDescription>
                 Complete information about this customer.
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-blue-700 mb-1">Unit Number</p>
-                <p className="text-xl font-bold text-blue-900">{selectedCustomer.unit_number || 'N/A'}</p>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Unit Number</p>
+                <p className="text-lg font-medium">{selectedCustomer.unit_number || 'N/A'}</p>
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">Customer Name</p>
-                <p className="text-lg font-semibold text-gray-900">{selectedCustomer.name}</p>
+                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="text-lg font-medium">{selectedCustomer.name}</p>
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-3">Contact Information</p>
-                <div className="space-y-3">
-                  <div className="flex items-center p-3 bg-green-50 rounded-lg">
-                    <Phone className="h-5 w-5 mr-3 text-green-600" />
-                    <div className="flex-1">
-                      {selectedCustomer.phone ? (
-                        <a 
-                          href={`https://wa.me/${selectedCustomer.phone.replace(/^\+/, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-700 hover:text-green-800 font-medium hover:underline"
-                        >
-                          {selectedCustomer.phone}
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">Not provided</span>
-                      )}
-                    </div>
-                  </div>
-                  {selectedCustomer.email && (
-                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                      <Mail className="h-5 w-5 mr-3 text-gray-600" />
-                      <a 
-                        href={`mailto:${selectedCustomer.email}`}
-                        className="text-gray-700 hover:text-gray-800 font-medium hover:underline"
-                      >
-                        {selectedCustomer.email}
-                      </a>
-                    </div>
+                <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
+                <div className="flex items-center mt-1">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  {selectedCustomer.phone ? (
+                    <a 
+                      href={`https://wa.me/${selectedCustomer.phone.replace(/^\+/, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {selectedCustomer.phone}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">Not provided</span>
                   )}
                 </div>
+                {selectedCustomer.email && (
+                  <div className="flex items-center mt-1">
+                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <a 
+                      href={`mailto:${selectedCustomer.email}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {selectedCustomer.email}
+                    </a>
+                  </div>
+                )}
               </div>
               
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">Address</p>
-                <div className="flex items-start p-3 bg-gray-50 rounded-lg">
-                  <MapPin className="h-5 w-5 mr-3 mt-0.5 text-gray-600" />
-                  <span className="text-gray-700">
+                <p className="text-sm font-medium text-muted-foreground">Address</p>
+                <div className="flex items-start mt-1">
+                  <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
+                  <span>
                     {selectedCustomer.address || 'Not provided'}
                     {selectedCustomer.city && `, ${selectedCustomer.city}`}
                     {selectedCustomer.state && `, ${selectedCustomer.state}`}
@@ -302,20 +270,17 @@ export default function Customers() {
               
               {selectedCustomer.notes && (
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Notes</p>
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">{selectedCustomer.notes}</p>
-                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                  <p className="text-sm mt-1">{selectedCustomer.notes}</p>
                 </div>
               )}
             </div>
             
-            <DialogFooter className="sm:justify-end pt-6">
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <DialogFooter className="sm:justify-end">
+              <div className="flex flex-wrap gap-2">
                 <Button 
                   variant="outline" 
                   onClick={() => setShowDetails(false)}
-                  className="order-last sm:order-first"
                 >
                   Close
                 </Button>
@@ -337,7 +302,6 @@ export default function Customers() {
                     setShowDetails(false);
                     if (selectedCustomer) handleEdit(selectedCustomer);
                   }}
-                  className="border-gray-300 hover:bg-gray-50"
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
@@ -347,7 +311,6 @@ export default function Customers() {
                   onClick={() => {
                     if (selectedCustomer) handleDelete(selectedCustomer);
                   }}
-                  className="bg-red-600 hover:bg-red-700"
                 >
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
@@ -358,12 +321,7 @@ export default function Customers() {
         </Dialog>
       )}
 
-      <FloatingActionButton 
-        onClick={() => navigate("/customers/add")}
-        className="bg-blue-600 hover:bg-blue-700 shadow-lg"
-      >
-        <UserPlus className="h-6 w-6" />
-      </FloatingActionButton>
+      <FloatingActionButton onClick={() => navigate("/customers/add")} />
     </div>
   );
 }
