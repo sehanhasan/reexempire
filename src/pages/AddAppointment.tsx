@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { CustomerInfoCard } from "@/components/customers/CustomerInfoCard";
+import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { AppointmentInfoForm } from "@/components/appointments/AppointmentInfoForm";
 import { appointmentService, customerService } from "@/services";
 import { Customer } from "@/types/database";
@@ -60,13 +61,24 @@ export default function AddAppointment() {
 
     try {
       setIsSubmitting(true);
+      
+      // Convert appointmentTime to start_time and calculate end_time (1 hour later)
+      const [hours, minutes] = appointmentTime.split(':');
+      const startHour = parseInt(hours, 10);
+      const endHour = startHour + 1;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${minutes}`;
+
       const appointment = {
         customer_id: customerId,
+        staff_id: null,
         title: title,
         description: description,
         appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
-        status: status
+        start_time: appointmentTime,
+        end_time: endTime,
+        status: status,
+        location: customer?.unit_number || null,
+        notes: null
       };
 
       const newAppointment = await appointmentService.create(appointment);
@@ -120,12 +132,27 @@ export default function AddAppointment() {
     }
 
     try {
+      // Create a mock appointment object for WhatsApp sharing
+      const mockAppointment = {
+        id: appointmentId,
+        customer_id: customerId,
+        staff_id: null,
+        title: title,
+        description: description,
+        appointment_date: appointmentDate,
+        start_time: appointmentTime,
+        end_time: `${(parseInt(appointmentTime.split(':')[0]) + 1).toString().padStart(2, '0')}:${appointmentTime.split(':')[1]}`,
+        status: status,
+        location: customer.unit_number || null,
+        notes: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
       const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(
-        appointmentId,
-        title,
+        mockAppointment,
         customer.name,
-        appointmentDate,
-        appointmentTime
+        []
       );
       window.location.href = whatsAppUrl;
     } catch (error) {
@@ -157,8 +184,12 @@ export default function AddAppointment() {
           customerId={customerId}
           setCustomer={setCustomerId}
           documentType="appointment"
+          documentNumber=""
+          setDocumentNumber={() => {}}
           documentDate={appointmentDate}
           setDocumentDate={setAppointmentDate}
+          expiryDate=""
+          setExpiryDate={() => {}}
         />
 
         <AppointmentInfoForm

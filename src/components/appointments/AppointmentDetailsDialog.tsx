@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -101,12 +102,11 @@ export function AppointmentDetailsDialog({
     }
 
     try {
+      const staffMembers = assignedStaff ? [{ id: assignedStaff.id, name: assignedStaff.name, phone: assignedStaff.phone }] : [];
       const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(
-        appointment.id,
-        appointment.title,
+        appointment,
         customer.name,
-        appointment.appointment_date,
-        appointment.appointment_time
+        staffMembers
       );
       window.location.href = whatsAppUrl;
     } catch (error) {
