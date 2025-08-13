@@ -133,12 +133,16 @@ export default function Quotations() {
             setQuotations(prev => 
               prev.map(q => {
                 if (q.id === payload.new.id) {
-                  const customer = customers[payload.new.customer_id];
+                  // Get customer data from the current customers state
+                  setCustomers(currentCustomers => {
+                    const customer = currentCustomers[payload.new.customer_id];
+                    return currentCustomers;
+                  });
                   return {
                     ...q,
                     ...payload.new,
-                    customer_name: customer?.name || q.customer_name,
-                    unit_number: customer?.unit_number || q.unit_number
+                    customer_name: q.customer_name, // Keep existing customer name
+                    unit_number: q.unit_number // Keep existing unit number
                   } as QuotationWithCustomer;
                 }
                 return q;
@@ -156,7 +160,7 @@ export default function Quotations() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [customers]);
+  }, []);
   useEffect(() => {
     let filtered = [...quotations];
     if (statusFilter !== "all") {
