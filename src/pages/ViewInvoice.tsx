@@ -448,14 +448,14 @@ export default function ViewInvoice() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
             >
               <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+              {isDownloading ? 'Downloading...' : 'Download'}
             </Button>
 
             <Button 
               onClick={() => window.print()}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
             >
-              🖨 Print
+              Print
             </Button>
           </div>
         </div>
