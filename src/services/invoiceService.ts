@@ -30,6 +30,7 @@ interface InvoiceInput {
   terms?: string | null;
   subject?: string | null;
   quotation_ref_number?: string | null;
+  signature_data?: string | null;
 }
 
 const getAll = async (): Promise<Invoice[]> => {
@@ -221,6 +222,31 @@ const generateWhatsAppShareUrl = (invoiceId: string, invoiceNumber: string, cust
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 };
 
+const getInvoiceImages = async (invoiceId: string): Promise<any[]> => {
+  const { data, error } = await supabase
+    .rpc('get_invoice_images', { p_invoice_id: invoiceId });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+};
+
+const addInvoiceImage = async (invoiceId: string, imageUrl: string): Promise<any> => {
+  const { data, error } = await supabase
+    .rpc('add_invoice_image', { 
+      p_invoice_id: invoiceId, 
+      p_image_url: imageUrl 
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
 export const invoiceService = {
   getAll,
   getById,
@@ -232,5 +258,10 @@ export const invoiceService = {
   deleteItemsByInvoiceId,
   generateNextReferenceNumber,
   storePDFUrl,
-  generateWhatsAppShareUrl
+  generateWhatsAppShareUrl,
+  getInvoiceImages,
+  addInvoiceImage,
+  delete: remove
 };
+
+export type { InvoiceInput };

@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
@@ -337,5 +336,14 @@ export const generateInvoicePDF = async (details: InvoiceDetails): Promise<strin
   } catch (error) {
     console.error('Error generating PDF URL:', error);
     throw error;
+  }
+};
+
+// Add downloadPDF function for backward compatibility
+export const downloadPDF = async (type: 'quotation' | 'invoice', details: QuotationDetails | InvoiceDetails): Promise<string> => {
+  if (type === 'quotation') {
+    return generateQuotationPDF(details as QuotationDetails);
+  } else {
+    return generateInvoicePDF(details as InvoiceDetails);
   }
 };

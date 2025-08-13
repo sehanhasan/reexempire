@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem as DBQuotationItem, Customer } from "@/types/database";
 
@@ -26,6 +25,7 @@ interface QuotationInput {
   requires_deposit?: boolean;
   deposit_amount?: number;
   deposit_percentage?: number;
+  signature_data?: string | null;
 }
 
 const getAll = async (): Promise<Quotation[]> => {
@@ -199,7 +199,7 @@ const storePDFUrl = async (quotationId: string, pdfUrl: string): Promise<void> =
   }
 };
 
-const generateWhatsAppShareUrl = (quotationId: string, quotationNumber: string, customerName: string, quotationUrl: string): string => {
+const generateWhatsAppShareUrl = (quotationId: string, quotationNumber: string, customerName: string): string => {
   // Use permanent public URLs based on environment
   const baseUrl = window.location.hostname.includes('lovable.app') 
     ? 'https://reexempire.lovable.app'
@@ -228,5 +228,8 @@ export const quotationService = {
   deleteAllItems,
   generateNextReferenceNumber,
   storePDFUrl,
-  generateWhatsAppShareUrl
+  generateWhatsAppShareUrl,
+  delete: remove
 };
+
+export type { QuotationInput };
