@@ -445,13 +445,13 @@ export default function ViewInvoice() {
                 <p>For all enquiries, please contact Khalil Pasha</p>
                 <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
               </div>
+              {/* Compact Footer */}
+              <div className="text-center text-gray-500 text-xs py-3">
+                <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
+              </div>
             </div>
           </div>
 
-          {/* Compact Footer */}
-          <div className="text-center text-gray-500 text-xs py-3">
-            <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
-          </div>
         </div>
       </div>
     </div>
