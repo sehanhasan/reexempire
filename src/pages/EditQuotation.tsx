@@ -361,7 +361,7 @@ export default function EditQuotation() {
                   }}
                 >
                   <FileText className="mr-2 h-4 w-4" />
-                  Convert to Invoice
+                  Create Invoice
                 </Button>
               )}
             </div>
