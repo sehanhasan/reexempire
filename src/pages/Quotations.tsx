@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "@/components/common/DataTable";
 import { toast } from "@/components/ui/use-toast";
 import { MoreHorizontal, Pencil, Copy, Trash2, Share2 } from "lucide-react";
 import {

@@ -1,3 +1,4 @@
+
 // Database Types
 export interface Category {
   id: string;
@@ -108,6 +109,7 @@ export interface Quotation {
   updated_at: string;
   subject?: string | null; // Added subject field to fix errors
   signature_data?: string | null; // Added signature_data field for storing digital signatures
+  customers?: Customer; // Added customers relationship
 }
 
 export interface QuotationItem {
@@ -145,6 +147,7 @@ export interface Invoice {
   updated_at: string;
   subject?: string | null; // Added subject field to fix errors
   quotation_ref_number?: string | null; // Added quotation_ref_number field
+  customers?: Customer; // Added customers relationship
 }
 
 export interface InvoiceItem {
