@@ -534,7 +534,7 @@ export default function Dashboard() {
                                 <div 
                                   key={quotation.id} 
                                   className="flex items-center justify-between pb-2 border-b cursor-pointer hover:bg-gray-50 p-2 rounded-md" 
-                                  onClick={()={() => navigateToQuotation(quotation.id)}}
+                                  onClick={() => navigateToQuotation(quotation.id)}
                                 >
                                   <div>
                                     <h3 className="font-medium">
