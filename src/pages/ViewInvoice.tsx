@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,6 @@ import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { shareInvoice } from "@/utils/mobileShare";
 import html2pdf from "html2pdf.js";
-import "@/styles/zoom.css"; // ✅ Allow pinch zoom styles
 
 export default function ViewInvoice() {
   const { id } = useParams();
@@ -20,26 +20,6 @@ export default function ViewInvoice() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
-
-  // ✅ Pinch-to-zoom effect for this page only
-  useEffect(() => {
-    const viewport = document.querySelector("meta[name=viewport]");
-    let original = "";
-
-    if (viewport) {
-      original = viewport.getAttribute("content") || "";
-      viewport.setAttribute(
-        "content",
-        "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"
-      );
-    }
-
-    return () => {
-      if (viewport && original) {
-        viewport.setAttribute("content", original);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
@@ -111,26 +91,25 @@ export default function ViewInvoice() {
       }
 
       const options = {
-        margin: [5, 5, 5, 5],
+        margin: [10, 15, 10, 15],
         filename: `invoice-${invoice.reference_number}.pdf`,
         image: { type: "jpeg", quality: 0.95 },
         html2canvas: {
-          scale: 1.5,
+          scale: 2,
           useCORS: true,
           allowTaint: true,
           backgroundColor: "#ffffff",
           scrollX: 0,
           scrollY: 0,
-          height: element.scrollHeight,
           width: element.scrollWidth,
+          height: element.scrollHeight,
         },
         jsPDF: {
           unit: "mm",
           format: "a4",
           orientation: "portrait",
-          compress: true,
         },
-        pagebreak: { mode: "avoid-all" },
+        pagebreak: { mode: "avoid-all", before: ".page-break" },
       };
 
       await html2pdf().set(options).from(element).save();
@@ -187,10 +166,7 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen bg-background flex justify-center items-center zoom-page"
-        style={{ minWidth: "1024px" }}
-      >
+      <div className="min-h-screen bg-background flex justify-center items-center">
         <p>Loading invoice details...</p>
       </div>
     );
@@ -198,10 +174,7 @@ export default function ViewInvoice() {
 
   if (!invoice || !customer) {
     return (
-      <div
-        className="min-h-screen bg-background flex justify-center items-center zoom-page"
-        style={{ minWidth: "1024px" }}
-      >
+      <div className="min-h-screen bg-background flex justify-center items-center">
         <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
         <h2 className="text-2xl font-bold">Invoice Not Found</h2>
         <Button onClick={() => navigate("/")}>Return Home</Button>
@@ -229,7 +202,7 @@ export default function ViewInvoice() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }}>
+    <div className="min-h-screen bg-background">
       <div className="py-4 px-4 invoice-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
@@ -372,6 +345,16 @@ export default function ViewInvoice() {
           <div className="grid grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-4">
+              {/* Terms & Conditions */}
+              {invoice.terms && (
+                <Card className="shadow-sm">
+                  <CardContent className="p-4">
+                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
+                    <p className="text-sm whitespace-pre-wrap">{invoice.terms}</p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Payment Information Card */}
               <Card className="shadow-sm">
                 <CardContent className="p-4">
@@ -386,19 +369,22 @@ export default function ViewInvoice() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Download Button */}
+              <div className="text-center">
+                <Button 
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {isDownloading ? 'Downloading...' : 'Download PDF'}
+                </Button>
+              </div>
             </div>
 
             {/* Right Column */}
             <div className="space-y-4">
-              {/* Terms & Conditions */}
-                {invoice.terms && (
-                  <Card className="shadow-sm">
-                    <CardContent className="p-4">
-                      <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
-                      <p className="text-sm whitespace-pre-wrap">{invoice.terms}</p>
-                    </CardContent>
-                  </Card>
-                )}
               {/* Contact Info */}
               <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
                 <p>For all enquiries, please contact Khalil Pasha</p>
@@ -407,27 +393,7 @@ export default function ViewInvoice() {
                   <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
                 </div>
               </div>
-              
             </div>
-          </div>
-
-          {/* Download & Print Buttons */}
-          <div className="text-center flex gap-4 justify-center">
-            <Button 
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Downloading...' : 'Download'}
-            </Button>
-
-            <Button 
-              onClick={() => window.print()}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-            >
-              Print
-            </Button>
           </div>
         </div>
       </div>
