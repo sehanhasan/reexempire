@@ -1,0 +1,4 @@
+/* Only allow pinch zoom for this page */
+.zoom-page {
+  touch-action: pinch-zoom !important;
+}
