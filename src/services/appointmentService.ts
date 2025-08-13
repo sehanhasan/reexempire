@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "@/types/database";
 
@@ -28,21 +29,6 @@ export const appointmentService = {
 
     if (error) {
       console.error(`Error fetching appointments from ${startDate} to ${endDate}:`, error);
-      throw error;
-    }
-
-    return data || [];
-  },
-
-  async getTodaysAppointments(date: string): Promise<Appointment[]> {
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*")
-      .eq("appointment_date", date)
-      .order("start_time", { ascending: true });
-
-    if (error) {
-      console.error(`Error fetching today's appointments for ${date}:`, error);
       throw error;
     }
 
