@@ -369,7 +369,7 @@ export default function Dashboard() {
       <div className="p-2">
 
         {/* Modern Tab Navigation */}
-        <div className="mb-2">
+        <div className="mb-4">
           <div className="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200">
             <button onClick={() => setActiveTab("activity")} className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab === "activity" ? "bg-blue-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"}`}>
               Activity
