@@ -132,19 +132,30 @@ export default function ViewQuotation() {
     try {
       setIsDownloading(true);
       
+      // Transform items to match ItemBase interface
+      const transformedItems = items.map((item, index) => ({
+        id: index + 1,
+        description: item.description,
+        category: item.category || 'General',
+        quantity: item.quantity,
+        unit: item.unit,
+        unitPrice: item.unit_price, // Transform snake_case to camelCase
+        amount: item.amount
+      }));
+      
       // Prepare quotation details for PDF generation
       const quotationDetails = {
         documentNumber: quotation.reference_number,
         documentDate: formatDate(quotation.issue_date),
         customerName: customer.name,
-        unitNumber: customer.unit_number,
+        unitNumber: customer.unit_number || '',
         expiryDate: formatDate(quotation.expiry_date),
         notes: quotation.notes || '',
-        items: items,
-        subject: quotation.subject,
-        customerAddress: customer.address,
-        customerContact: customer.phone,
-        customerEmail: customer.email,
+        items: transformedItems,
+        subject: quotation.subject || '',
+        customerAddress: customer.address || '',
+        customerContact: customer.phone || '',
+        customerEmail: customer.email || '',
         validUntil: formatDate(quotation.expiry_date),
         depositInfo: {
           requiresDeposit: quotation.requires_deposit,
