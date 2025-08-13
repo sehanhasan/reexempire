@@ -36,15 +36,10 @@ export default function ViewQuotation() {
       );
     }
 
-    // Apply zoom class to the entire document body for this page
-    document.body.classList.add('zoom-page');
-
     return () => {
       if (viewport && original) {
         viewport.setAttribute('content', original);
       }
-      // Remove zoom class when leaving the page
-      document.body.classList.remove('zoom-page');
     };
   }, []);
 
@@ -107,27 +102,17 @@ export default function ViewQuotation() {
 
     setIsProcessing(true);
     try {
-      console.log('Accepting quotation with ID:', quotation.id);
-      console.log('Updating quotation status to Accepted...');
-      
-      // Simple update without creating notifications to avoid foreign key errors
       await quotationService.update(quotation.id, {
         status: 'Accepted',
         signature_data: signatureDataUrl,
       });
-      
-      console.log('Quotation update successful');
       setSignatureData(signatureDataUrl);
       setIsSigning(false);
       toast.success('Quotation accepted successfully!');
       refetch();
     } catch (error) {
       console.error('Error accepting quotation:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-      
-      // More specific error message
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to accept quotation: ${errorMessage}`);
+      toast.error('Failed to accept quotation');
     } finally {
       setIsProcessing(false);
     }
@@ -245,7 +230,7 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
+    <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }} id="quotation-view">
       <div className="py-4 px-4 quotation-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}

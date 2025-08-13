@@ -1,13 +1,4 @@
-
-/* Allow pinch zoom for the entire page when the zoom-page class is applied to body */
-body.zoom-page,
-body.zoom-page * {
-  touch-action: pinch-zoom !important;
-}
-
-/* Ensure tables and other elements can be zoomed */
-body.zoom-page table,
-body.zoom-page .quotation-content,
-body.zoom-page .max-w-4xl {
+/* Only allow pinch zoom for this page */
+.zoom-page {
   touch-action: pinch-zoom !important;
 }
