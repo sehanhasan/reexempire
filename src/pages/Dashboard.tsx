@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -270,14 +271,16 @@ export default function Dashboard() {
               {upcomingAppointments.map(appointment => (
                 <div 
                   key={appointment.id} 
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer shadow-sm hover:shadow-md"
                   onClick={() => showAppointmentDetails(appointment)}
                 >
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-medium text-slate-800 text-sm">
-                        {appointment.customer?.unit_number ? `#${appointment.customer.unit_number} - ` : ""}
-                        {appointment.title}
+                      <h3 className="font-semibold text-slate-900 text-sm">
+                        {appointment.customer?.unit_number ? (
+                          <span className="text-blue-700">#{appointment.customer.unit_number}</span>
+                        ) : ""}{appointment.customer?.unit_number ? " - " : ""}
+                        <span className="text-slate-800">{appointment.title}</span>
                       </h3>
                       <Badge 
                         className={
@@ -295,9 +298,13 @@ export default function Dashboard() {
                       </Badge>
                     </div>
                     <p className="text-xs text-slate-600">
-                      {new Date(appointment.appointment_date).toLocaleDateString()} 
+                      <span className="text-indigo-600 font-medium">
+                        {new Date(appointment.appointment_date).toLocaleDateString()}
+                      </span>
                       {' • '}
-                      {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+                      <span className="text-emerald-600 font-medium">
+                        {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -339,18 +346,22 @@ export default function Dashboard() {
                     <div 
                       key={quotation.id} 
                       onClick={() => navigateToQuotation(quotation.id)} 
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer shadow-sm hover:shadow-md"
                     >
                       <div>
-                        <h3 className="font-medium text-slate-800 text-sm">
-                          {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
+                        <h3 className="font-semibold text-slate-900 text-sm">
+                          <span className="text-purple-700">
+                            {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
+                          </span>
                         </h3>
                         <p className="text-xs text-slate-600">
-                          {quotation.reference_number} • {new Date(quotation.created_at).toLocaleDateString()}
+                          <span className="text-indigo-600 font-medium">{quotation.reference_number}</span>
+                          {' • '}
+                          <span className="text-slate-500">{new Date(quotation.created_at).toLocaleDateString()}</span>
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-slate-800 text-sm">{formatMoney(quotation.total)}</p>
+                        <p className="font-bold text-emerald-700 text-sm">{formatMoney(quotation.total)}</p>
                         <Badge 
                           className={
                             quotation.status === 'Approved' 
@@ -401,19 +412,23 @@ export default function Dashboard() {
                   return (
                     <div 
                       key={invoice.id} 
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer" 
+                      className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all cursor-pointer shadow-sm hover:shadow-md" 
                       onClick={() => navigateToInvoice(invoice.id)}
                     >
                       <div>
-                        <h3 className="font-medium text-slate-800 text-sm">
-                          {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
+                        <h3 className="font-semibold text-slate-900 text-sm">
+                          <span className="text-emerald-700">
+                            {customer.unit_number ? `#${customer.unit_number}` : "No Unit"}
+                          </span>
                         </h3>
                         <p className="text-xs text-slate-600">
-                          {invoice.reference_number} • {new Date(invoice.created_at).toLocaleDateString()}
+                          <span className="text-indigo-600 font-medium">{invoice.reference_number}</span>
+                          {' • '}
+                          <span className="text-slate-500">{new Date(invoice.created_at).toLocaleDateString()}</span>
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-slate-800 text-sm">{formatMoney(invoice.total)}</p>
+                        <p className="font-bold text-emerald-700 text-sm">{formatMoney(invoice.total)}</p>
                         <Badge 
                           className={
                             invoice.payment_status === 'Paid' 
