@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,7 +13,6 @@ import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
 import { shareQuotation } from '@/utils/mobileShare';
 import html2pdf from 'html2pdf.js';
-import '@/styles/zoom.css';
 
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
@@ -22,26 +22,6 @@ export default function ViewQuotation() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
-
-  // Pinch-to-zoom effect for this page only
-  useEffect(() => {
-    const viewport = document.querySelector('meta[name=viewport]');
-    let original = '';
-
-    if (viewport) {
-      original = viewport.getAttribute('content') || '';
-      viewport.setAttribute(
-        'content',
-        'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes'
-      );
-    }
-
-    return () => {
-      if (viewport && original) {
-        viewport.setAttribute('content', original);
-      }
-    };
-  }, []);
 
   const { data: quotation, isLoading, refetch } = useQuery({
     queryKey: ['quotation', id],
@@ -130,26 +110,25 @@ export default function ViewQuotation() {
       }
 
       const options = {
-        margin: [5, 5, 5, 5],
+        margin: [10, 15, 10, 15],
         filename: `quotation-${quotation.reference_number}.pdf`,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: {
-          scale: 1.5,
+          scale: 2,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
-          height: element.scrollHeight,
           width: element.scrollWidth,
+          height: element.scrollHeight,
         },
         jsPDF: {
           unit: 'mm',
           format: 'a4',
           orientation: 'portrait',
-          compress: true,
         },
-        pagebreak: { mode: 'avoid-all' },
+        pagebreak: { mode: 'avoid-all', before: '.page-break' },
       };
 
       await html2pdf().set(options).from(element).save();
@@ -183,10 +162,7 @@ export default function ViewQuotation() {
 
   if (isLoading) {
     return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
@@ -197,10 +173,7 @@ export default function ViewQuotation() {
 
   if (!quotation) {
     return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -230,7 +203,7 @@ export default function ViewQuotation() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }} id="quotation-view">
+    <div className="min-h-screen bg-background">
       <div className="py-4 px-4 quotation-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}
@@ -378,6 +351,17 @@ export default function ViewQuotation() {
                 </div>
               </div>
 
+              {/* Download Button */}
+              <div className="text-center">
+                <Button 
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {isDownloading ? 'Downloading...' : 'Download PDF'}
+                </Button>
+              </div>
             </div>
 
             {/* Right Column - Acceptance Section */}
@@ -471,25 +455,6 @@ export default function ViewQuotation() {
                 </Card>
               )}
             </div>
-          </div>
-
-          {/* Download & Print Buttons */}
-          <div className="text-center flex gap-4 justify-center">
-            <Button 
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Downloading...' : 'Download'}
-            </Button>
-
-            <Button 
-              onClick={() => window.print()}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-            >
-              Print
-            </Button>
           </div>
         </div>
       </div>
