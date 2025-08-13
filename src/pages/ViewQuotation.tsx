@@ -137,20 +137,21 @@ export default function ViewQuotation() {
         return;
       }
 
-      // Configure PDF options to force single A4 page
+      // Configure PDF options with A4 size and specific margins
       const options = {
-        margin: [5, 5, 5, 5], // Reduced margins
+        margin: [10, 15, 10, 15], // top, right, bottom, left in mm
         filename: `quotation-${quotation.reference_number}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
+        image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-          scale: 1.5, // Reduced scale to fit more content
+          scale: 2,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           scrollX: 0,
           scrollY: 0,
           height: element.scrollHeight,
-          width: element.scrollWidth
+          width: element.scrollWidth,
+          letterRendering: true
         },
         jsPDF: { 
           unit: 'mm', 
@@ -158,7 +159,11 @@ export default function ViewQuotation() {
           orientation: 'portrait',
           compress: true
         },
-        pagebreak: { mode: 'avoid-all' } // Force everything on one page
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy'],
+          before: '.page-break-before',
+          after: '.page-break-after'
+        }
       };
 
       // Generate and download PDF
@@ -230,57 +235,57 @@ export default function ViewQuotation() {
 
   return (
     <div className="min-h-screen bg-background" style={{ minWidth: '1024px' }} id="quotation-view">
-      <div className="py-4 px-4 quotation-content">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <div className="p-3 quotation-content">
+        <div className="max-w-4xl mx-auto space-y-3">
           {/* Compact Header with Company and Quotation Info in Columns */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="grid grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow-sm p-3">
+            <div className="grid grid-cols-2 gap-4">
               {/* Left Column - Company Logo and Details */}
               <div>
                 <img 
                   src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
                   alt="Reex Empire Logo" 
-                  className="h-16 w-auto mb-3"
+                  className="h-12 w-auto mb-2"
                 />
-                <h2 className="text-sm font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
-                <div className="text-sm text-gray-600 space-y-1">
+                <h2 className="text-xs font-bold text-gray-900 mb-1">Reex Empire Sdn Bhd (1426553-A)</h2>
+                <div className="text-xs text-gray-600 space-y-0.5">
                   <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
                   <p>53300 Setapak Kuala Lumpur</p>
                   <p className="text-gray-800">www.reexempire.com</p>
                 </div>
-                  {/* Subject within customer info */}
-                  {quotation.subject && (
-                    <div className="mt-3 pt-2 border-t">
-                      <p className="text-sm text-gray-800 font-semibold mb-1">Subject: {quotation.subject}</p>
-                    </div>
-                  )}
+                {/* Subject within customer info */}
+                {quotation.subject && (
+                  <div className="mt-2 pt-1 border-t">
+                    <p className="text-xs text-gray-800 font-semibold mb-1">Subject: {quotation.subject}</p>
+                  </div>
+                )}
               </div>
               
               {/* Right Column - Quotation Details and Customer */}
               <div>
-                <div className="mb-3">
-                  <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
+                <div className="mb-2">
+                  <h1 className="text-lg font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
+                    <Badge className="text-xs" variant={isAccepted ? "default" : "secondary"}>
                       {quotation.status}
                     </Badge>
-                      {hasSignature && (
-                        <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200 flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Signed
-                        </Badge>
-                      )}
+                    {hasSignature && (
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 flex items-center">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Signed
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-sm text-gray-600 space-y-1">
+                  <div className="text-xs text-gray-600 space-y-0.5">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
                   </div>
                 </div>
                 
                 {customer && (
-                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
-                    <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
-                    <div className="text-sm text-gray-800 space-y-1">
+                  <div className="w-56 bg-gray-100 p-2 rounded-lg text-xs">
+                    <p className="text-sm font-bold text-gray-500 font-medium mb-1">Bill To</p>
+                    <div className="text-xs text-gray-800 space-y-0.5">
                       <p>Attn: {customer.name}</p>
                       <p className="font-semibold">{customer.unit_number}</p>
                       <p>{customer.address}</p>
@@ -295,20 +300,20 @@ export default function ViewQuotation() {
           <Card className="shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="text-left p-2 font-semibold text-gray-700">Description</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-12">Qty</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-20">Unit Price</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-20">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categories.map((category, categoryIndex) => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
+                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-xs">
                             {categoryIndex + 1}- {category}
                           </td>
                         </tr>
@@ -327,9 +332,9 @@ export default function ViewQuotation() {
               </div>
               
               {/* Compact Subtotal, Deposit and Total Information */}
-              <div className="p-3 bg-gray-50 border-t">
+              <div className="p-2 bg-gray-50 border-t">
                 <div className="flex justify-end">
-                  <div className="w-64 space-y-1 text-sm">
+                  <div className="w-48 space-y-1 text-xs">
                     <div className="flex justify-between">
                       <span className="font-medium">Subtotal:</span>
                       <span>{formatCurrency(quotation.subtotal)}</span>
@@ -344,7 +349,7 @@ export default function ViewQuotation() {
                       </div>
                     )}
                     
-                    <div className="flex justify-between text-base font-bold border-t pt-1">
+                    <div className="flex justify-between text-sm font-bold border-t pt-1">
                       <span>Total:</span>
                       <span className="text-blue-600">{formatCurrency(quotation.total)}</span>
                     </div>
@@ -355,36 +360,47 @@ export default function ViewQuotation() {
           </Card>
 
           {/* Two-Column Bottom Section */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             {/* Left Column */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Terms & Conditions */}
               {quotation.terms && (
                 <Card className="shadow-sm">
-                  <CardContent className="p-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
-                    <p className="text-sm whitespace-pre-wrap">{quotation.terms}</p>
+                  <CardContent className="p-3">
+                    <h4 className="font-medium text-xs text-muted-foreground mb-2">Terms & Conditions</h4>
+                    <p className="text-xs whitespace-pre-wrap">{quotation.terms}</p>
                   </CardContent>
                 </Card>
               )}
 
               {/* Contact Info */}
-              <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
+              <div className="text-center text-gray-600 text-xs py-2 bg-gray-50 rounded-lg">
                 <p>For all enquiries, please contact Khalil Pasha</p>
                 <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
-                <div className="text-center text-gray-500 text-xs py-3">
+                <div className="text-center text-gray-500 text-xs py-1">
                   <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
                 </div>
               </div>
 
+              {/* Download Button */}
+              <div className="text-center">
+                <Button 
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm"
+                >
+                  <Download className="h-3 w-3 mr-2" />
+                  {isDownloading ? 'Generating PDF...' : 'Download PDF'}
+                </Button>
+              </div>
             </div>
 
             {/* Right Column - Acceptance Section */}
             <div>
               {!isAccepted && (
                 <Card className="shadow-sm print:hidden">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm text-gray-800">Acceptance</CardTitle>
                     {isSigning && (
                       <Button
                         variant="ghost"
@@ -397,21 +413,21 @@ export default function ViewQuotation() {
                   </CardHeader>
                   <CardContent>
                     {!isSigning ? (
-                      <div className="text-center py-8 bg-gray-50 rounded-lg">
-                        <p className="text-gray-600 mb-4 text-base">
+                      <div className="text-center py-6 bg-gray-50 rounded-lg">
+                        <p className="text-gray-600 mb-3 text-sm">
                           Please digitally sign to accept this quotation.
                         </p>
                         <Button 
                           onClick={() => setIsSigning(true)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm"
                         >
-                          <Pen className="h-4 w-4 mr-2" />
+                          <Pen className="h-3 w-3 mr-2" />
                           Start Digital Signature
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                      <div className="space-y-3">
+                        <div className="text-xs text-gray-600 bg-yellow-50 border border-yellow-200 p-2 rounded-lg">
                           By signing below, you accept the terms and conditions of this quotation.
                         </div>
                         
@@ -428,18 +444,18 @@ export default function ViewQuotation() {
                           </div>
                         </div>
                         
-                        <div className="flex justify-between gap-3">
+                        <div className="flex justify-between gap-2">
                           <Button 
                             variant="outline" 
                             onClick={handleClearSignature}
-                            className="px-4"
+                            className="px-3 text-xs"
                           >
                             Clear
                           </Button>
                           <Button 
                             onClick={handleAcceptQuotation}
                             disabled={isProcessing}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6"
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 text-xs"
                           >
                             {isProcessing ? 'Processing...' : 'Accept Quotation'}
                           </Button>
@@ -453,16 +469,16 @@ export default function ViewQuotation() {
               {/* Show signature if accepted */}
               {hasSignature && (
                 <Card className="shadow-sm">
-                  <CardContent className="p-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                  <CardContent className="p-3">
+                    <h4 className="font-medium text-xs text-muted-foreground mb-2">Customer Signature</h4>
+                    <div className="bg-gray-50 p-3 rounded-lg">
                       <img 
                         src={signatureData || quotation.signature_data} 
                         alt="Customer Signature" 
                         className="max-w-full h-auto border border-gray-200 rounded bg-white"
-                        style={{ maxHeight: '150px' }}
+                        style={{ maxHeight: '120px' }}
                       />
-                      <p className="text-xs text-muted-foreground mt-2">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Signed digitally on {new Date().toLocaleDateString()}
                       </p>
                     </div>
@@ -470,17 +486,6 @@ export default function ViewQuotation() {
                 </Card>
               )}
             </div>
-          </div>
-          {/* Download Button */}
-          <div className="text-center">
-            <Button 
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-              >
-              <Download className="h-4 w-4 mr-2" />
-                {isDownloading ? 'Generating PDF...' : 'Download PDF'}
-            </Button>
           </div>
         </div>
       </div>
