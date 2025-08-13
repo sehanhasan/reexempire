@@ -377,17 +377,6 @@ export default function ViewQuotation() {
                 </div>
               </div>
 
-              {/* Download Button */}
-              <div className="text-center">
-                <Button 
-                  onClick={handleDownloadPDF}
-                  disabled={isDownloading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {isDownloading ? 'Generating PDF...' : 'Download PDF'}
-                </Button>
-              </div>
             </div>
 
             {/* Right Column - Acceptance Section */}
