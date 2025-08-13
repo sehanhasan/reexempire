@@ -99,7 +99,7 @@ export function DataTable<T extends Record<string, any>>({
             </div> : filteredData.length === 0 ? <div className="py-8 text-center">
               <p className="text-muted-foreground">{emptyMessage}</p>
             </div> : <>
-              {isMobile ? <div className="p-2 space-y-3">
+              {isMobile ? <div>
                   {renderCustomMobileCard ?
             // Use custom mobile card renderer if provided
             filteredData.map(item => renderCustomMobileCard(item)) :

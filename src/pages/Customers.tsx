@@ -188,7 +188,6 @@ export default function Customers() {
     <div className="page-container">
       <PageHeader 
         title="Customers" 
-        description="Manage your customer database."
       />
       
       <div className="mt-8">
@@ -273,7 +272,7 @@ export default function Customers() {
               )}
             </div>
             
-            <DialogFooter className="justify-center">
+            <DialogFooter className="sm:justify-end">
               <div className="flex flex-wrap gap-2">
                 <Button 
                   variant="outline"
