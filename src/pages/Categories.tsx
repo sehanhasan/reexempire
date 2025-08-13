@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -8,13 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Edit, MoreHorizontal, Trash, ChevronRight, FolderOpen, Plus, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { categoryService } from "@/services/categoryService";
+import { categoryService, Category } from "@/services/categoryService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, closeDropdown } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, closeAlertDialog } from "@/components/ui/alert-dialog";
 import "../styles/mobile-card.css";
-import { Category, Subcategory } from "@/types/database";
 import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
+
 export default function Categories() {
   const navigate = useNavigate();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -35,7 +36,7 @@ export default function Categories() {
       const processedCategories = new Map();
       for (const category of categories) {
         if (!processedCategories.has(category.id)) {
-          const subcategories = await categoryService.getSubcategoriesByCategoryId(category.id);
+          const subcategories = await categoryService.getSubcategories(category.id);
           processedCategories.set(category.id, {
             ...category,
             subcategories: subcategories || []
@@ -45,9 +46,11 @@ export default function Categories() {
       return Array.from(processedCategories.values());
     }
   });
+
   const handleEditCategory = (category: Category) => {
     navigate(`/categories/add?id=${category.id}`);
   };
+
   const handleDeleteCategory = (category: Category) => {
     // Close dropdown first to prevent UI freeze
     closeDropdown();
@@ -58,10 +61,12 @@ export default function Categories() {
       setShowConfirmDelete(true);
     }, 50);
   };
+
   const handleViewSubcategories = (category: Category) => {
     setSelectedCategory(category);
     setShowSubcategories(true);
   };
+
   const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
     try {
@@ -91,6 +96,7 @@ export default function Categories() {
       });
     }
   };
+
   const handleCancelDelete = () => {
     // Close dialog
     closeAlertDialog();
@@ -101,6 +107,7 @@ export default function Categories() {
       setCategoryToDelete(null);
     }, 100);
   };
+
   const columns = [{
     header: "Category",
     accessorKey: "name" as keyof Category,
@@ -209,8 +216,14 @@ export default function Categories() {
 
   // Calculate stats
   const totalSubcategories = categories.reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0);
-  return <div className="page-container">
-      <PageHeader title="Service Categories" description="Organize your services into categories and subcategories." actions={<div className="flex items-center gap-2">
+
+  return (
+    <div className="page-container">
+      <PageHeader 
+        title="Service Categories" 
+        description="Organize your services into categories and subcategories." 
+        actions={
+          <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
               <FolderOpen className="mr-1 h-3 w-3" />
               {categories.length} Categories
@@ -219,21 +232,29 @@ export default function Categories() {
               <Tag className="mr-1 h-3 w-3" />
               {totalSubcategories} Subcategories
             </Badge>
-          </div>} />
+          </div>
+        } 
+      />
       
       <div className="mt-2">
         <Card className="shadow-sm border-0 bg-white">
           <CardContent className="p-0">
-            <DataTable columns={columns} data={categories} searchKey="name" renderCustomMobileCard={renderCustomMobileCard} emptyMessage="No categories found. Add your first service category to get started." />
+            <DataTable 
+              columns={columns} 
+              data={categories} 
+              searchKey="name" 
+              renderCustomMobileCard={renderCustomMobileCard} 
+              emptyMessage="No categories found. Add your first service category to get started." 
+            />
           </CardContent>
         </Card>
       </div>
 
       <AlertDialog open={showConfirmDelete} onOpenChange={open => {
-      if (!open) {
-        handleCancelDelete();
-      }
-    }}>
+        if (!open) {
+          handleCancelDelete();
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -254,10 +275,16 @@ export default function Categories() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {selectedCategory && <SubcategoriesDialog open={showSubcategories} onOpenChange={setShowSubcategories} category={selectedCategory} />}
+      {selectedCategory && (
+        <SubcategoriesDialog 
+          category={selectedCategory} 
+          onClose={() => setShowSubcategories(false)}
+        />
+      )}
 
       <FloatingActionButton onClick={() => navigate("/categories/add")} className="bg-blue-600 hover:bg-blue-700 shadow-lg">
         <Plus className="h-6 w-6" />
       </FloatingActionButton>
-    </div>;
+    </div>
+  );
 }

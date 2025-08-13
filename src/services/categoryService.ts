@@ -4,16 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 export interface Category {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   created_at: string;
   updated_at: string;
+  subcategories?: Subcategory[];
 }
 
 export interface Subcategory {
   id: string;
   category_id: string;
   name: string;
-  description?: string;
+  description: string | null;
   price: number;
   created_at: string;
   updated_at: string;
@@ -56,7 +57,13 @@ export const categoryService = {
       return null;
     }
 
-    return data;
+    // Fetch subcategories for this category
+    const subcategories = await this.getSubcategories(id);
+    
+    return {
+      ...data,
+      subcategories
+    };
   },
 
   async create(category: Omit<Category, "id" | "created_at" | "updated_at">): Promise<Category> {
@@ -112,6 +119,20 @@ export const categoryService = {
 
     if (error) {
       console.error("Error fetching subcategories:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getAllSubcategories(): Promise<Subcategory[]> {
+    const { data, error } = await supabase
+      .from("subcategories")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Error fetching all subcategories:", error);
       throw error;
     }
 
@@ -183,6 +204,20 @@ export const categoryService = {
 
     if (error) {
       console.error("Error fetching pricing options:", error);
+      throw error;
+    }
+
+    return data || [];
+  },
+
+  async getAllPricingOptions(): Promise<PricingOption[]> {
+    const { data, error } = await supabase
+      .from("pricing_options")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      console.error("Error fetching all pricing options:", error);
       throw error;
     }
 
