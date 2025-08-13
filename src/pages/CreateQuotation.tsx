@@ -175,7 +175,7 @@ export default function CreateQuotation() {
             quotationViewUrl
           );
           
-          window.open(whatsappUrl, '_blank');
+          window.location.href = whatsappUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({

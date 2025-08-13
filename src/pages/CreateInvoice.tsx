@@ -312,7 +312,7 @@ export default function CreateInvoice() {
           
           const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
           
-          window.open(whatsappUrl, '_blank');
+          window.location.href = whatsappUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({

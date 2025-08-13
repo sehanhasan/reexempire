@@ -111,7 +111,7 @@ export const shareQuotation = async (quotationId: string, referenceNumber: strin
   
   // For iframes and mobile apps, open directly
   if (isMobileApp() || isIframe()) {
-    window.open(whatsappUrl, '_blank');
+    window.location.href = whatsappUrl;
     return;
   }
 
@@ -135,7 +135,7 @@ export const shareInvoice = async (invoiceId: string, referenceNumber: string, c
   
   // For iframes and mobile apps, open directly
   if (isMobileApp() || isIframe()) {
-    window.open(whatsappUrl, '_blank');
+    window.location.href = whatsappUrl;
     return;
   }
 

@@ -168,7 +168,7 @@ export default function Quotations() {
     try {
       const quotationViewUrl = `${window.location.origin}/quotations/view/${quotation.id}`;
       const whatsappUrl = quotationService.generateWhatsAppShareUrl(quotation.id, quotation.reference_number, customer.name, quotationViewUrl);
-      window.open(whatsappUrl, '_blank');
+      window.location.href = whatsappUrl;
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({

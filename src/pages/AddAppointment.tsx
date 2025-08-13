@@ -275,7 +275,7 @@ export default function AddAppointment() {
         );
         
         // Open in a new tab
-        window.open(whatsAppUrl, '_blank');
+        window.location.href = whatsappUrl;
       }
       
       setIsLoading(false);
