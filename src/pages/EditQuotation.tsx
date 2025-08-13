@@ -302,41 +302,73 @@ export default function EditQuotation() {
             </Button>
           </div>} />
 
-      {status === "Sent" && <div className="rounded-md p-4 mt-1 bg-white">
+      {(status === "Sent" || status === "Accepted") && (
+        <div className="rounded-md p-4 mt-1 bg-white">
           <div className="flex flex-col gap-3">
             <div>
-              <h3 className="font-medium">Quotation Status: <span className="text-amber-600">Sent</span></h3>
-              <p className="text-sm text-muted-foreground">Update the status of this quotation</p>
+              <h3 className="font-medium">
+                Quotation Status:{" "}
+                <span className={status === "Sent" ? "text-amber-600" : "text-green-600"}>
+                  {status}
+                </span>
+              </h3>
+              {status === "Sent" && (
+                <p className="text-sm text-muted-foreground">
+                  Update the status of this quotation
+                </p>
+              )}
             </div>
-            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
-              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} onClick={() => handleStatusChange("Rejected")}>
-                <XCircle className="mr-2 h-4 w-4" />
-                Mark as Rejected
-              </Button>
-              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} onClick={() => handleStatusChange("Accepted")}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Accepted
-              </Button>
-              <Button variant="outline" className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} onClick={handleSendWhatsapp}>
+
+            <div className={`flex ${isMobile ? "flex-col" : "flex-row justify-end"} gap-2`}>
+              {status === "Sent" && (
+                <>
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`}
+                    onClick={() => handleStatusChange("Rejected")}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Mark as Rejected
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
+                    onClick={() => handleStatusChange("Accepted")}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Accepted
+                  </Button>
+                </>
+              )}
+
+              <Button
+                variant="outline"
+                className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+                onClick={handleSendWhatsapp}
+              >
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp
               </Button>
-              
-              <Button
-                variant="outline"
-                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleConvertToInvoice(quotationData as QuotationWithCustomer);
-                }}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Convert to Invoice
-              </Button>
-              
+
+              {status === "Accepted" && (
+                <Button
+                  variant="outline"
+                  className={`${isMobile ? "w-full" : ""} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleConvertToInvoice(quotationData as QuotationWithCustomer);
+                  }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Convert to Invoice
+                </Button>
+              )}
             </div>
           </div>
-        </div>}
+        </div>
+      )}
+
 
       <form className="mt-8 space-y-6">
         <CustomerInfoCard customerId={customerId} setCustomer={setCustomerId} documentType="quotation" documentNumber={documentNumber} setDocumentNumber={setDocumentNumber} documentDate={quotationDate} setDocumentDate={setQuotationDate} expiryDate={validUntil} setExpiryDate={setValidUntil} subject={subject} setSubject={setSubject} />
