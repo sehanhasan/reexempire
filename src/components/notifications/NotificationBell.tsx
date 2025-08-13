@@ -51,6 +51,7 @@ export function NotificationBell() {
           // Only add notifications for the current user
           const { data: { user } } = await supabase.auth.getUser();
           if (user && newNotification.user_id === user.id) {
+            console.log('Adding notification for current user:', newNotification);
             setNotifications(prev => [newNotification, ...prev]);
             
             // Show a toast notification for quotation status changes
@@ -61,6 +62,8 @@ export function NotificationBell() {
                 duration: 5000,
               });
             }
+          } else {
+            console.log('Notification not for current user or no user authenticated');
           }
         }
       )
@@ -86,8 +89,12 @@ export function NotificationBell() {
   const fetchNotifications = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log('No authenticated user found');
+        return;
+      }
 
+      console.log('Fetching notifications for user:', user.id);
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -95,7 +102,12 @@ export function NotificationBell() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+      }
+      
+      console.log('Fetched notifications:', data);
       setNotifications(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
