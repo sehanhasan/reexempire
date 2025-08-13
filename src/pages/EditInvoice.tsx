@@ -203,19 +203,10 @@ export default function EditInvoice() {
           description: `Invoice for ${customer?.name} has been updated and sent successfully.`
         });
         
-        // Open WhatsApp directly for sending
+        // Use the service function for consistent WhatsApp URL generation
         try {
           const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
-          
-          const message = `Dear ${customer?.name},\n\n` +
-            `Please find your updated invoice ${documentNumber} for review at the link below: ` +
-            `${invoiceViewUrl}\n\n` +
-            `You can review the invoice details and make payment.\n\n` +
-            `If you have any questions, please don't hesitate to contact us.\n\n` +
-            `Thank you,\nReex Empire Sdn Bhd`;
-          
-          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-          
+          const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', invoiceViewUrl);
           window.open(whatsappUrl, '_blank');
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
@@ -277,7 +268,9 @@ export default function EditInvoice() {
     }
     
     try {
-      await shareInvoice(id!, invoiceData.reference_number, customer.name);
+      const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
+      const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id!, invoiceData.reference_number, customer.name, invoiceViewUrl);
+      window.open(whatsappUrl, '_blank');
     } catch (error) {
       console.error("Error sharing invoice:", error);
       toast({
