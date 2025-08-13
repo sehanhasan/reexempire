@@ -308,6 +308,19 @@ export default function EditQuotation() {
                 <Share2 className="mr-2 h-4 w-4" />
                 Share via WhatsApp
               </Button>
+              
+              <Button
+                variant="outline"
+                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConvertToInvoice(quotation);
+                }}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Convert to Invoice
+              </Button>
+              
             </div>
           </div>
         </div>}
