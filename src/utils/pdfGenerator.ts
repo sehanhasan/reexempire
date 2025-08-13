@@ -1,349 +1,553 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { supabase } from '@/integrations/supabase/client';
+import { QuotationItem, InvoiceItem, DepositInfo } from '@/components/quotations/types';
 
-export interface ItemBase {
-  description: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  amount: number;
-  category?: string;
-}
-
-export interface QuotationDetails {
+// Common interface for both document types
+interface DocumentDetails {
   documentNumber: string;
   documentDate: string;
   customerName: string;
-  customerAddress: string;
-  customerContact: string;
-  customerEmail: string;
-  unitNumber: string;
+  unitNumber?: string;
   expiryDate: string;
+  notes: string;
+  items: QuotationItem[] | InvoiceItem[];
+  subject?: string;
+  customerAddress?: string;
+  customerContact?: string;
+  customerEmail?: string;
+}
+
+// Specific interfaces
+interface QuotationDetails extends DocumentDetails {
   validUntil: string;
-  subject: string;
-  notes: string;
-  items: ItemBase[];
-  depositInfo: {
-    requiresDeposit: boolean;
-    depositAmount: number;
-    depositPercentage: number;
-  };
+  depositInfo: DepositInfo;
 }
 
-export interface InvoiceDetails {
-  documentNumber: string;
-  documentDate: string;
+interface InvoiceDetails extends DocumentDetails {
   dueDate: string;
-  customerName: string;
-  customerAddress: string;
-  customerContact: string;
-  customerEmail: string;
-  unitNumber: string;
-  subject: string;
-  notes: string;
-  items: ItemBase[];
-  quotationRefNumber?: string;
+  paymentMethod: string;
+  isDepositInvoice: boolean;
+  depositAmount: number;
+  depositPercentage: number;
+  quotationReference?: string;
+  images?: string[];
 }
 
-const addCompanyHeader = (doc: jsPDF) => {
-  // Company logo and header
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.text('REEX EMPIRE SDN BHD', 20, 25);
-  
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('SSM: 202301043078 (1529078-A)', 20, 32);
-  doc.text('No. 53, Jalan Ros Merah 2/16, Taman Johor Jaya,', 20, 38);
-  doc.text('81100 Johor Bahru, Johor', 20, 44);
-  doc.text('Tel: +6017-716 2628', 20, 50);
-  doc.text('Email: reexempire@gmail.com', 20, 56);
-  
-  // Add a line separator
-  doc.setLineWidth(0.5);
-  doc.line(20, 65, 190, 65);
+const formatCurrency = (amount: number): string => {
+  return `RM ${amount.toFixed(2)}`;
 };
 
-const addCustomerInfo = (doc: jsPDF, details: QuotationDetails | InvoiceDetails, startY: number) => {
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Bill To:', 20, startY);
+const calculateSubtotal = (items: QuotationItem[] | InvoiceItem[]): number => {
+  return items.reduce((sum, item) => sum + item.amount, 0);
+};
+
+const calculateTax = (subtotal: number): number => {
+  return subtotal * 0.06;
+};
+
+const calculateTotal = (subtotal: number): number => {
+  return subtotal + calculateTax(subtotal);
+};
+
+// Add logo to PDF
+const addLogo = (pdf: jsPDF, x: number, y: number, width: number) => {
+  try {
+    pdf.addImage('/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png', 'PNG', x, y, width, width * 0.75);
+  } catch (error) {
+    console.error('Error loading logo:', error);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('STAR RESIDENCES', x, y + 10);
+  }
+};
+
+// Add company info to PDF
+const addCompanyInfo = (pdf: jsPDF, x: number, y: number) => {
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(9);
+  pdf.text([
+    'Reex Empire Sdn Bhd (1426553-A)',
+    'No. 29-1, Jalan 2A/6',
+    'Taman Setapak Indah',
+    '53300 Setapak Kuala Lumpur',
+    'www.reexempire.com'
+  ], x, y);
+};
+
+// Base PDF generation function
+const generateBasePDF = (title: string): jsPDF => {
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
   
-  doc.setFont('helvetica', 'normal');
-  let currentY = startY + 8;
-  doc.text(details.customerName, 20, currentY);
+  // Add logo (smaller and properly positioned)
+  addLogo(pdf, 20, 10, 25);
   
-  if (details.customerAddress) {
-    currentY += 6;
-    const addressLines = doc.splitTextToSize(details.customerAddress, 80);
-    doc.text(addressLines, 20, currentY);
-    currentY += addressLines.length * 6;
+  // Add company info (aligned with logo)
+  addCompanyInfo(pdf, 55, 15);
+  
+  // Add document title (properly aligned)
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(20);
+  pdf.text(title, 190, 20, { align: 'right' });
+  
+  // Add a line under the title
+  pdf.setLineWidth(0.5);
+  pdf.line(140, 25, 190, 25);
+  
+  return pdf;
+};
+
+// Generate a quotation PDF
+export const generateQuotationPDF = (details: QuotationDetails): jsPDF => {
+  const pdf = generateBasePDF('QUOTATION');
+  const subtotal = calculateSubtotal(details.items);
+  
+  // Add header with quotation number
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.text(`Quotation #${details.documentNumber}`, 20, 50);
+  
+  // Add quotation date and validity
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.text(`Date: ${details.documentDate}`, 20, 60);
+  pdf.text(`Valid Until: ${details.expiryDate}`, 20, 67);
+  
+  // Customer Information Section
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.text('BILL TO:', 20, 80);
+  
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  let yPos = 90;
+  
+  if (details.customerName) {
+    pdf.text(`Name: ${details.customerName}`, 20, yPos);
+    yPos += 7;
   }
   
-  if (details.customerContact) {
-    currentY += 6;
-    doc.text(`Phone: ${details.customerContact}`, 20, currentY);
+  if (details.unitNumber) {
+    pdf.text(`Unit: ${details.unitNumber}`, 20, yPos);
+    yPos += 7;
   }
   
   if (details.customerEmail) {
-    currentY += 6;
-    doc.text(`Email: ${details.customerEmail}`, 20, currentY);
+    pdf.text(`Email: ${details.customerEmail}`, 20, yPos);
+    yPos += 7;
   }
   
-  return currentY + 10;
+  if (details.customerContact) {
+    pdf.text(`Phone: ${details.customerContact}`, 20, yPos);
+    yPos += 7;
+  }
+  
+  if (details.customerAddress) {
+    const addressLines = pdf.splitTextToSize(`Address: ${details.customerAddress}`, 170);
+    pdf.text(addressLines, 20, yPos);
+    yPos += addressLines.length * 7;
+  }
+  
+  // Add some spacing
+  yPos += 10;
+  
+  // Subject line if available
+  if (details.subject) {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Subject:', 20, yPos);
+    pdf.setFont('helvetica', 'normal');
+    const subjectLines = pdf.splitTextToSize(details.subject, 150);
+    pdf.text(subjectLines, 50, yPos);
+    yPos += subjectLines.length * 7 + 10;
+  }
+  
+  // Items table
+  const tableData = details.items
+    .filter(item => item.description && item.description.trim() !== '')
+    .map((item, index) => [
+      (index + 1).toString(),
+      item.description,
+      typeof item.quantity === 'string' ? item.quantity : item.quantity.toString(),
+      item.unit,
+      formatCurrency(item.unitPrice),
+      formatCurrency(item.amount)
+    ]);
+  
+  if (tableData.length > 0) {
+    autoTable(pdf, {
+      startY: yPos,
+      head: [['No.', 'Description', 'Qty', 'Unit', 'Unit Price', 'Amount']],
+      body: tableData,
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      headStyles: {
+        fillColor: [70, 130, 180],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        0: { cellWidth: 15, halign: 'center' },
+        1: { cellWidth: 80 },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 20, halign: 'center' },
+        4: { cellWidth: 30, halign: 'right' },
+        5: { cellWidth: 30, halign: 'right' }
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    // @ts-ignore
+    yPos = pdf.lastAutoTable?.finalY + 15 || yPos + 50;
+  }
+  
+  // Summary section
+  const summaryStartX = 120;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  
+  pdf.text('Subtotal:', summaryStartX, yPos);
+  pdf.text(formatCurrency(subtotal), 170, yPos, { align: 'right' });
+  yPos += 8;
+  
+  // Deposit information if applicable
+  if (details.depositInfo.requiresDeposit && details.depositInfo.depositAmount > 0) {
+    const depositPercentage = typeof details.depositInfo.depositPercentage === 'string' 
+      ? parseFloat(details.depositInfo.depositPercentage) 
+      : details.depositInfo.depositPercentage;
+    
+    pdf.text(`Deposit (${depositPercentage.toFixed(1)}%):`, summaryStartX, yPos);
+    pdf.text(formatCurrency(details.depositInfo.depositAmount), 170, yPos, { align: 'right' });
+    yPos += 8;
+    
+    pdf.text('Balance Due:', summaryStartX, yPos);
+    pdf.text(formatCurrency(subtotal - details.depositInfo.depositAmount), 170, yPos, { align: 'right' });
+    yPos += 8;
+  }
+  
+  // Total
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.text('TOTAL:', summaryStartX, yPos);
+  pdf.text(formatCurrency(subtotal), 170, yPos, { align: 'right' });
+  yPos += 15;
+  
+  // Notes section
+  if (details.notes && details.notes.trim()) {
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11);
+    pdf.text('NOTES:', 20, yPos);
+    yPos += 8;
+    
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    const notesLines = pdf.splitTextToSize(details.notes, 170);
+    pdf.text(notesLines, 20, yPos);
+  }
+  
+  // Footer
+  const pageHeight = pdf.internal.pageSize.height;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
+  pdf.text('Thank you for your business!', 105, pageHeight - 20, { align: 'center' });
+  pdf.text('© 2025 Reex Empire Sdn Bhd. All rights reserved.', 105, pageHeight - 15, { align: 'center' });
+  
+  return pdf;
 };
 
-const addDocumentInfo = (doc: jsPDF, details: QuotationDetails | InvoiceDetails, docType: 'quotation' | 'invoice', startY: number) => {
-  const isQuotation = docType === 'quotation';
-  const quotationDetails = details as QuotationDetails;
-  const invoiceDetails = details as InvoiceDetails;
+// Generate an invoice PDF
+export const generateInvoicePDF = (details: InvoiceDetails): jsPDF => {
+  const pdf = generateBasePDF('INVOICE');
+  let subtotal = calculateSubtotal(details.items);
+  let taxableAmount = subtotal;
   
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${isQuotation ? 'Quotation' : 'Invoice'} #:`, 120, startY);
-  doc.text(`${isQuotation ? 'Quotation' : 'Invoice'} Date:`, 120, startY + 8);
-  
-  if (isQuotation) {
-    doc.text('Valid Until:', 120, startY + 16);
-  } else {
-    doc.text('Due Date:', 120, startY + 16);
+  if (details.isDepositInvoice) {
+    taxableAmount = details.depositAmount;
   }
   
-  if (!isQuotation && invoiceDetails.quotationRefNumber) {
-    doc.text('Quotation Ref:', 120, startY + 24);
+  const tax = calculateTax(taxableAmount);
+  const total = details.isDepositInvoice ? details.depositAmount + tax : subtotal + tax;
+  
+  // Add customer details section
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(20, 60, 80, 50, 'F');
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.text('Bill to:', 25, 70);
+  
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  const billToLines = [
+    `Attn: ${details.customerName}`,
+    details.unitNumber ? `Unit ${details.unitNumber}` : '',
+    details.customerAddress || '',
+    details.customerContact || '',
+    details.customerEmail || ''
+  ].filter(line => line !== '');
+  
+  pdf.text(billToLines, 25, 80);
+  
+  // Add invoice details table on the right
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(110, 60, 80, 50, 'F');
+  
+  const invoiceDetailsTable = [
+    ['Date:', details.documentDate],
+    ['Invoice No:', details.documentNumber],
+    ['Due Date:', details.dueDate],
+    ['Payment Method:', details.paymentMethod.replace('_', ' ').toUpperCase()]
+  ];
+  
+  if (details.quotationReference) {
+    invoiceDetailsTable.push(['Quotation Ref:', details.quotationReference]);
   }
   
-  doc.setFont('helvetica', 'normal');
-  doc.text(details.documentNumber, 160, startY);
-  doc.text(details.documentDate, 160, startY + 8);
+  autoTable(pdf, {
+    startY: 65,
+    margin: { left: 112 },
+    tableWidth: 76,
+    body: invoiceDetailsTable,
+    theme: 'plain',
+    styles: {
+      fontSize: 10,
+      cellPadding: 1,
+    },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 30 },
+      1: { cellWidth: 46 }
+    }
+  });
   
-  if (isQuotation) {
-    doc.text(quotationDetails.validUntil, 160, startY + 16);
-  } else {
-    doc.text(invoiceDetails.dueDate, 160, startY + 16);
+  let startY = 120;
+  
+  // Add subject if available
+  if (details.subject) {
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Subject:', 20, startY);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(details.subject, 45, startY);
+    startY += 10;
   }
   
-  if (!isQuotation && invoiceDetails.quotationRefNumber) {
-    doc.text(invoiceDetails.quotationRefNumber, 160, startY + 24);
-  }
+  // Add items table
+  const tableHeaders = [
+    { header: 'No.', dataKey: 'no' },
+    { header: 'Description', dataKey: 'description' },
+    { header: 'Price/Unit', dataKey: 'unitPrice' },
+    { header: 'QTY', dataKey: 'quantity' },
+    { header: 'Amount', dataKey: 'amount' }
+  ];
   
-  return startY + ((!isQuotation && invoiceDetails.quotationRefNumber) ? 32 : 24);
-};
-
-const addItemsTable = (doc: jsPDF, items: ItemBase[], startY: number) => {
-  const tableData = items.map(item => [
-    item.description,
-    item.quantity.toString(),
-    item.unit,
-    `RM ${item.unitPrice.toFixed(2)}`,
-    `RM ${item.amount.toFixed(2)}`
-  ]);
+  const tableData = details.items.map((item, index) => ({
+    no: (index + 1).toString(),
+    description: item.description,
+    quantity: item.quantity,
+    unitPrice: formatCurrency(item.unitPrice),
+    amount: formatCurrency(item.amount)
+  }));
   
-  autoTable(doc, {
-    head: [['Description', 'Qty', 'Unit', 'Unit Price', 'Amount']],
-    body: tableData,
+  autoTable(pdf, {
     startY: startY,
+    head: [tableHeaders.map(h => h.header)],
+    body: tableData.map(item => [
+      item.no,
+      item.description,
+      item.unitPrice,
+      item.quantity,
+      item.amount
+    ]),
     theme: 'grid',
     headStyles: {
-      fillColor: [66, 139, 202],
-      textColor: 255,
-      fontSize: 10,
+      fillColor: [150, 150, 150],
+      textColor: [255, 255, 255],
       fontStyle: 'bold'
     },
-    bodyStyles: {
-      fontSize: 9,
-      cellPadding: 3
+    columnStyles: {
+      0: { cellWidth: 15, halign: 'center' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 35, halign: 'right' },
+      3: { cellWidth: 20, halign: 'center' },
+      4: { cellWidth: 35, halign: 'right' }
+    },
+    didParseCell: (data) => {
+      // Style for numeric columns
+      if (data.column.index > 1) {
+        data.cell.styles.halign = 'right';
+      }
+      // Make description column left-aligned
+      if (data.column.index === 1) {
+        data.cell.styles.halign = 'left';
+      }
+    },
+    margin: { left: 20, right: 20 }
+  });
+  
+  // Get the final Y position after the table
+  // @ts-ignore - lastAutoTable is added by the plugin but not in the type definition
+  let tableEndY = pdf.lastAutoTable?.finalY || 200;
+  
+  // Add any images if provided
+  if (details.images && details.images.length > 0) {
+    pdf.addPage();
+    
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(14);
+    pdf.text('WORK PHOTOS', 20, 25);
+    
+    const imagesPerRow = 2;
+    const imageWidth = 70;
+    const imageHeight = 70;
+    const marginX = 20;
+    const marginY = 35;
+    const spacingX = 15;
+    const spacingY = 80;
+    
+    details.images.forEach((imageUrl, index) => {
+      const row = Math.floor(index / imagesPerRow);
+      const col = index % imagesPerRow;
+      
+      const x = marginX + col * (imageWidth + spacingX);
+      const y = marginY + row * spacingY;
+      
+      try {
+        pdf.addImage(imageUrl, 'JPEG', x, y, imageWidth, imageHeight);
+        
+        // Add caption below image
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.text(`Photo ${index + 1}`, x, y + imageHeight + 8);
+      } catch (error) {
+        console.error(`Error adding image ${index}:`, error);
+        
+        // Draw a placeholder if image fails to load
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setFillColor(240, 240, 240);
+        pdf.roundedRect(x, y, imageWidth, imageHeight, 3, 3, 'FD');
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(9);
+        pdf.text('Image could not be loaded', x + imageWidth/2, y + imageHeight/2, { align: 'center' });
+      }
+    });
+    
+    // Reset to the first page for summary
+    pdf.setPage(1);
+  }
+  
+  // Add summary calculation
+  let summaryTable;
+  if (details.isDepositInvoice) {
+    summaryTable = [
+      ['Subtotal:', formatCurrency(subtotal)],
+      [`Deposit (${details.depositPercentage}%):`, formatCurrency(details.depositAmount)],
+      ['Balance Due (Future Invoice):', formatCurrency(subtotal - details.depositAmount)],
+      ['SST (6%) on Deposit:', formatCurrency(tax)],
+      ['Total Due Now:', formatCurrency(total)]
+    ];
+  } else {
+    summaryTable = [
+      ['Subtotal:', formatCurrency(subtotal)],
+      ['SST (6%):', formatCurrency(tax)],
+      ['Total Due:', formatCurrency(total)]
+    ];
+  }
+  
+  autoTable(pdf, {
+    startY: tableEndY + 10,
+    body: summaryTable,
+    theme: 'plain',
+    styles: {
+      fontSize: 10,
+    },
+    margin: { left: 110, right: 20 },
+    tableWidth: 80,
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 40 },
+      1: { cellWidth: 40, halign: 'right' }
+    }
+  });
+  
+  // Add notes if available
+  if (details.notes) {
+    const notesY = tableEndY + 60;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11);
+    pdf.text('NOTES', 20, notesY);
+    
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    
+    // Split notes into multiple lines if needed
+    const splitNotes = pdf.splitTextToSize(details.notes, 170);
+    pdf.text(splitNotes, 20, notesY + 8);
+  }
+  
+  // Add footer
+  const pageHeight = pdf.internal.pageSize.height;
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
+  pdf.text('Thank you for your business!', 105, pageHeight - 15, { align: 'center' });
+  pdf.text('© 2025 Reex Empire Sdn Bhd. All rights reserved.', 105, pageHeight - 10, { align: 'center' });
+  
+  return pdf;
+};
+
+// Helper function to add items table
+const addItemsTable = (pdf: jsPDF, items: QuotationItem[] | InvoiceItem[], startY: number): void => {
+  const tableHeaders = [
+    { header: 'Description', dataKey: 'description' },
+    { header: 'Quantity', dataKey: 'quantity' },
+    { header: 'Unit', dataKey: 'unit' },
+    { header: 'Unit Price (RM)', dataKey: 'unitPrice' },
+    { header: 'Amount (RM)', dataKey: 'amount' }
+  ];
+  
+  const tableData = items.map(item => ({
+    description: item.description,
+    quantity: item.quantity,
+    unit: item.unit,
+    unitPrice: item.unitPrice.toFixed(2),
+    amount: item.amount.toFixed(2)
+  }));
+  
+  autoTable(pdf, {
+    startY: startY,
+    head: [tableHeaders.map(h => h.header)],
+    body: tableData.map(item => [
+      item.description,
+      item.quantity,
+      item.unit,
+      item.unitPrice,
+      item.amount
+    ]),
+    theme: 'grid',
+    headStyles: {
+      fillColor: [82, 117, 180],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold'
     },
     columnStyles: {
       0: { cellWidth: 80 },
       1: { cellWidth: 20, halign: 'center' },
-      2: { cellWidth: 25, halign: 'center' },
+      2: { cellWidth: 20, halign: 'center' },
       3: { cellWidth: 30, halign: 'right' },
-      4: { cellWidth: 35, halign: 'right' }
+      4: { cellWidth: 30, halign: 'right' }
     },
-    margin: { left: 20, right: 20 },
+    didParseCell: (data) => {
+      if (data.column.index > 2) {
+        data.cell.styles.halign = 'right';
+      }
+    }
   });
-  
-  return (doc as any).lastAutoTable.finalY + 10;
 };
 
-const addTotals = (doc: jsPDF, items: ItemBase[], startY: number, depositInfo?: QuotationDetails['depositInfo']) => {
-  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-  
-  doc.setFont('helvetica', 'bold');
-  doc.text('Subtotal:', 140, startY);
-  doc.text(`RM ${subtotal.toFixed(2)}`, 175, startY, { align: 'right' });
-  
-  let currentY = startY + 8;
-  
-  if (depositInfo?.requiresDeposit) {
-    doc.text('Deposit Required:', 140, currentY);
-    doc.text(`RM ${depositInfo.depositAmount.toFixed(2)}`, 175, currentY, { align: 'right' });
-    currentY += 8;
-  }
-  
-  doc.setFontSize(12);
-  doc.text('Total:', 140, currentY);
-  doc.text(`RM ${subtotal.toFixed(2)}`, 175, currentY, { align: 'right' });
-  
-  return currentY + 15;
-};
-
-const addFooter = (doc: jsPDF, notes: string, startY: number) => {
-  if (notes) {
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Notes:', 20, startY);
-    
-    doc.setFont('helvetica', 'normal');
-    const noteLines = doc.splitTextToSize(notes, 170);
-    doc.text(noteLines, 20, startY + 8);
-    
-    startY += 8 + (noteLines.length * 6) + 10;
-  }
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'italic');
-  doc.text('Thank you for your business!', 20, startY);
-  
-  return startY;
-};
-
-export const generateQuotationPDF = async (details: QuotationDetails): Promise<string> => {
-  const doc = new jsPDF();
-  
-  // Add company header
-  addCompanyHeader(doc);
-  
-  // Add document title
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text('QUOTATION', 105, 80, { align: 'center' });
-  
-  // Add subject if provided
-  let currentY = 90;
-  if (details.subject) {
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Subject: ${details.subject}`, 20, currentY);
-    currentY += 10;
-  }
-  
-  // Add customer info
-  currentY = addCustomerInfo(doc, details, currentY + 5);
-  
-  // Add document info
-  addDocumentInfo(doc, details, 'quotation', currentY - 35);
-  
-  // Add items table
-  currentY = addItemsTable(doc, details.items, currentY + 10);
-  
-  // Add totals
-  currentY = addTotals(doc, details.items, currentY, details.depositInfo);
-  
-  // Add footer
-  addFooter(doc, details.notes, currentY);
-  
-  // Generate PDF blob and upload to storage
-  const pdfBlob = doc.output('blob');
-  const fileName = `quotation-${details.documentNumber}-${Date.now()}.pdf`;
-  
-  try {
-    // Upload to Supabase storage using public bucket
-    const { data, error } = await supabase.storage
-      .from('payment-receipts') // Using existing public bucket
-      .upload(`pdfs/${fileName}`, pdfBlob, {
-        contentType: 'application/pdf',
-        upsert: true
-      });
-
-    if (error) {
-      console.error('Error uploading PDF:', error);
-      throw error;
-    }
-
-    // Get permanent public URL
-    const { data: urlData } = supabase.storage
-      .from('payment-receipts')
-      .getPublicUrl(`pdfs/${fileName}`);
-
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error('Error generating PDF URL:', error);
-    throw error;
-  }
-};
-
-export const generateInvoicePDF = async (details: InvoiceDetails): Promise<string> => {
-  const doc = new jsPDF();
-  
-  // Add company header
-  addCompanyHeader(doc);
-  
-  // Add document title
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.text('INVOICE', 105, 80, { align: 'center' });
-  
-  // Add subject if provided
-  let currentY = 90;
-  if (details.subject) {
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Subject: ${details.subject}`, 20, currentY);
-    currentY += 10;
-  }
-  
-  // Add customer info
-  currentY = addCustomerInfo(doc, details, currentY + 5);
-  
-  // Add document info
-  addDocumentInfo(doc, details, 'invoice', currentY - 35);
-  
-  // Add items table
-  currentY = addItemsTable(doc, details.items, currentY + 10);
-  
-  // Add totals
-  currentY = addTotals(doc, details.items, currentY);
-  
-  // Add footer
-  addFooter(doc, details.notes, currentY);
-  
-  // Generate PDF blob and upload to storage
-  const pdfBlob = doc.output('blob');
-  const fileName = `invoice-${details.documentNumber}-${Date.now()}.pdf`;
-  
-  try {
-    // Upload to Supabase storage using public bucket
-    const { data, error } = await supabase.storage
-      .from('payment-receipts') // Using existing public bucket
-      .upload(`pdfs/${fileName}`, pdfBlob, {
-        contentType: 'application/pdf',
-        upsert: true
-      });
-
-    if (error) {
-      console.error('Error uploading PDF:', error);
-      throw error;
-    }
-
-    // Get permanent public URL
-    const { data: urlData } = supabase.storage
-      .from('payment-receipts')
-      .getPublicUrl(`pdfs/${fileName}`);
-
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error('Error generating PDF URL:', error);
-    throw error;
-  }
-};
-
-// Add downloadPDF function for backward compatibility
-export const downloadPDF = async (type: 'quotation' | 'invoice', details: QuotationDetails | InvoiceDetails): Promise<string> => {
-  if (type === 'quotation') {
-    return generateQuotationPDF(details as QuotationDetails);
-  } else {
-    return generateInvoicePDF(details as InvoiceDetails);
-  }
+// Function to download the PDF
+export const downloadPDF = (pdf: jsPDF, filename: string): void => {
+  pdf.save(filename);
 };
