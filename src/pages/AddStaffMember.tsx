@@ -120,7 +120,7 @@ export default function AddStaffMember() {
           Back to Staff
         </Button>} />
       
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      <form onSubmit={handleSubmit} className="mt-2 space-y-6">
         <Card>
           <CardContent className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -141,12 +141,12 @@ export default function AddStaffMember() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="joinDate">Join Date</Label>
-                <Input id="joinDate" type="date" value={staffData.join_date} onChange={e => handleChange("join_date", e.target.value)} required />
+                <Input id="joinDate" type="date" value={staffData.join_date} onChange={e => handleChange("join_date", e.target.value)} />
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select value={staffData.status} onValueChange={value => handleChange("status", value)}>
                   <SelectTrigger>
@@ -159,10 +159,10 @@ export default function AddStaffMember() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">Setting status to Inactive will ban user from logging in</p>
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" placeholder="e.g. 012-3456789" value={staffData.phone} onChange={e => handleChange("phone", e.target.value)} />
+                <Input id="phone" placeholder="e.g. 012-3456789" value={staffData.phone} onChange={e => handleChange("phone", e.target.value)} required />
                 <p className="text-xs text-muted-foreground">Malaysian phone format: 01X-XXXXXXX</p>
               </div>
             </div>
