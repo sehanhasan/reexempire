@@ -297,8 +297,6 @@ export default function CreateInvoice() {
           documentType="invoice"
           isSubmitting={isSubmitting}
           showDraft={true}
-          isDepositInvoice={isDepositInvoice}
-          setIsDepositInvoice={setIsDepositInvoice}
         />
       </form>
     </div>
