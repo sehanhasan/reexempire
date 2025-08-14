@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardTitle, CardDescription, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
@@ -122,6 +122,12 @@ export default function AddStaffMember() {
       
       <form onSubmit={handleSubmit} className="mt-2 space-y-6">
         <Card>
+            <CardHeader>
+              <CardTitle className="text-lg text-cyan-600">Staff Information</CardTitle>
+                <CardDescription>
+                  Enter the basic information about staff member.
+                </CardDescription>
+            </CardHeader>
           <CardContent className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
