@@ -374,9 +374,9 @@ export default function Invoices() {
 
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-gray-500 flex items-center">
-                              <Clock className="h-3.5 w-3.5 mr-1.5" />Payment Status
+                              <Clock className="h-3.5 w-3.5 mr-1.5" />Due Date
                             </span>
-                            <span>{invoice.payment_status}</span>
+                            <span>{invoice.due_date}</span>
                           </div>
 
                           <div className="flex justify-between items-center text-sm">
