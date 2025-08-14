@@ -160,21 +160,6 @@ export default function StaffPage() {
       ),
     },
     {
-      header: "Role",
-      accessorKey: "role" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <Badge className={
-            row.original.role === "Admin" ? "bg-purple-100 text-purple-800 hover:bg-purple-200" :
-            row.original.role === "Manager" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-200"
-          }>
-            {row.original.role}
-          </Badge>
-        );
-      },
-    },
-    {
       header: "Phone",
       accessorKey: "phone" as keyof Staff,
       cell: ({ row }: { row: { original: Staff } }) => (
@@ -273,10 +258,6 @@ export default function StaffPage() {
           isLoading={isLoading}
           externalSearchTerm={searchTerm}
           onExternalSearchChange={setSearchTerm}
-          getRowProps={(row) => ({
-            onClick: () => handleView(row.original),
-            className: "hover:bg-gray-50 cursor-pointer"
-          })}
         />
       </div>
 
