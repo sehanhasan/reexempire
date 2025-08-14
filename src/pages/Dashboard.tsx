@@ -30,17 +30,30 @@ export default function Dashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [revenueData, setRevenueData] = useState([]);
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [customers, quotations, invoices, appointments] = await Promise.all([customerService.getAll(), quotationService.getAll(), invoiceService.getAll(), appointmentService.getAll()]);
+        console.log("Fetching dashboard data...");
+        const [customers, quotations, invoices, appointments] = await Promise.all([
+          customerService.getAll(), 
+          quotationService.getAll(), 
+          invoiceService.getAll(), 
+          appointmentService.getAll()
+        ]);
+        
+        console.log("Fetched quotations:", quotations);
+        console.log("Fetched invoices:", invoices);
+        console.log("Fetched customers:", customers);
+        console.log("Fetched appointments:", appointments);
+        
         const customersMapData = {};
         customers.forEach(customer => {
           customersMapData[customer.id] = customer;
         });
         setCustomersMap(customersMapData);
+        
         const paidInvoices = invoices.filter(invoice => invoice.payment_status === 'Paid');
         const totalRevenue = paidInvoices.reduce((acc, invoice) => {
           const numAcc = typeof acc === 'number' ? acc : 0;
@@ -53,12 +66,14 @@ export default function Dashboard() {
           }
           return numAcc + invoiceTotal;
         }, 0);
+        
         setStats({
           customers: customers.length,
           quotations: quotations.length,
           invoices: invoices.length,
           revenue: totalRevenue
         });
+        
         const revenueByMonth = generateRevenueByMonth(paidInvoices);
         setRevenueData(revenueByMonth);
 
@@ -139,7 +154,8 @@ export default function Dashboard() {
     navigate(`/schedule/edit/${id}`);
   };
 
-  const renderOverviewTab = () => <div className="space-y-4">
+  const renderOverviewTab = () => (
+    <div className="space-y-4">
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
@@ -215,9 +231,11 @@ export default function Dashboard() {
         </div>
         <Chart chartData={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={250} title="" />
       </div>
-    </div>;
+    </div>
+  );
 
-  const renderUpcomingTab = () => <div className="space-y-4">
+  const renderActivityTab = () => (
+    <div className="space-y-4">
       {/* Upcoming Appointments */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -235,14 +253,20 @@ export default function Dashboard() {
           </Button>
         </CardHeader>
         <CardContent className="pt-0">
-          {loading ? <div className="py-8 text-center">
+          {loading ? (
+            <div className="py-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-sm text-slate-600 mt-2">Loading appointments...</p>
-            </div> : upcomingAppointments.length === 0 ? <div className="py-8 text-center">
+            </div>
+          ) : upcomingAppointments.length === 0 ? (
+            <div className="py-8 text-center">
               <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-2" />
               <p className="text-sm text-slate-600">No upcoming appointments</p>
-            </div> : <div className="space-y-3">
-              {upcomingAppointments.map(appointment => <div key={appointment.id} onClick={() => showAppointmentDetails(appointment)} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer">
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {upcomingAppointments.map(appointment => (
+                <div key={appointment.id} onClick={() => showAppointmentDetails(appointment)} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-semibold text-slate-900 text-sm">
@@ -263,8 +287,10 @@ export default function Dashboard() {
                       </span>
                     </p>
                   </div>
-                </div>)}
-            </div>}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -287,13 +313,17 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
-            {recentQuotations.length === 0 ? <div className="py-8 text-center">
+            {recentQuotations.length === 0 ? (
+              <div className="py-8 text-center">
                 <ReceiptText className="h-12 w-12 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-600">No quotations found</p>
-              </div> : <div className="space-y-3">
+              </div>
+            ) : (
+              <div className="space-y-3">
                 {recentQuotations.slice(0, 3).map(quotation => {
-              const customer = customersMap[quotation.customer_id] || {};
-              return <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer ">
+                  const customer = customersMap[quotation.customer_id] || {};
+                  return (
+                    <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer ">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-purple-700">
@@ -312,9 +342,11 @@ export default function Dashboard() {
                           {quotation.status}
                         </Badge>
                       </div>
-                    </div>;
-            })}
-              </div>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -335,13 +367,17 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
-            {recentInvoices.length === 0 ? <div className="py-8 text-center">
+            {recentInvoices.length === 0 ? (
+              <div className="py-8 text-center">
                 <Receipt className="h-12 w-12 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-600">No invoices found</p>
-              </div> : <div className="space-y-3">
+              </div>
+            ) : (
+              <div className="space-y-3">
                 {recentInvoices.slice(0, 3).map(invoice => {
-              const customer = customersMap[invoice.customer_id] || {};
-              return <div key={invoice.id} onClick={() => navigateToInvoice(invoice.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all cursor-pointer">
+                  const customer = customersMap[invoice.customer_id] || {};
+                  return (
+                    <div key={invoice.id} onClick={() => navigateToInvoice(invoice.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all cursor-pointer">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-emerald-700">
@@ -360,63 +396,90 @@ export default function Dashboard() {
                           {invoice.payment_status}
                         </Badge>
                       </div>
-                    </div>;
-            })}
-              </div>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 
-  return <div className="page-container min-h-screen bg-slate-50">
+  return (
+    <div className="page-container min-h-screen bg-slate-50">
       <div className="p-2">
-
-        {/* Updated Tab Navigation to match the reference image */}
+        {/* Fixed Tab Navigation */}
         <div className="mb-4">
           <div className="flex border-b border-slate-200">
-            <button onClick={() => setActiveTab("upcoming")} className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${activeTab === "upcoming" ? "border-blue-500 text-blue-600" : "border-transparent text-slate-600 hover:text-slate-800"}`}>
-              Upcoming
+            <button 
+              onClick={() => setActiveTab("overview")} 
+              className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${
+                activeTab === "overview" 
+                  ? "border-blue-500 text-blue-600" 
+                  : "border-transparent text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Overview
             </button>
-            
+            <button 
+              onClick={() => setActiveTab("activity")} 
+              className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${
+                activeTab === "activity" 
+                  ? "border-blue-500 text-blue-600" 
+                  : "border-transparent text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Activity
+            </button>
           </div>
         </div>
 
         {/* Tab Content */}
         <div className="animate-fade-in">
-          {activeTab === "upcoming" && renderUpcomingTab()}
-          
+          {activeTab === "overview" && renderOverviewTab()}
+          {activeTab === "activity" && renderActivityTab()}
         </div>
       </div>
 
-      
-      <AppointmentDetailsDialog open={isAppointmentDetailOpen} onClose={() => setIsAppointmentDetailOpen(false)} appointment={selectedAppointment} customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null} assignedStaff={null} onMarkAsCompleted={async appointment => {
-      try {
-        await appointmentService.update(appointment.id, {
-          ...appointment,
-          status: 'Completed'
-        });
-        setUpcomingAppointments(prev => prev.map(app => app.id === appointment.id ? {
-          ...app,
-          status: 'Completed'
-        } : app));
-        setIsAppointmentDetailOpen(false);
-      } catch (error) {
-        console.error("Error marking appointment as completed:", error);
-      }
-    }} onMarkAsInProgress={async appointment => {
-      try {
-        await appointmentService.update(appointment.id, {
-          ...appointment,
-          status: 'In Progress'
-        });
-        setUpcomingAppointments(prev => prev.map(app => app.id === appointment.id ? {
-          ...app,
-          status: 'In Progress'
-        } : app));
-        setIsAppointmentDetailOpen(false);
-      } catch (error) {
-        console.error("Error marking appointment as in progress:", error);
-      }
-    }} />
-    </div>;
+      <AppointmentDetailsDialog 
+        open={isAppointmentDetailOpen} 
+        onClose={() => setIsAppointmentDetailOpen(false)} 
+        appointment={selectedAppointment} 
+        customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null} 
+        assignedStaff={null} 
+        onMarkAsCompleted={async appointment => {
+          try {
+            await appointmentService.update(appointment.id, {
+              ...appointment,
+              status: 'Completed'
+            });
+            setUpcomingAppointments(prev => prev.map(app => app.id === appointment.id ? {
+              ...app,
+              status: 'Completed'
+            } : app));
+            setIsAppointmentDetailOpen(false);
+          } catch (error) {
+            console.error("Error marking appointment as completed:", error);
+          }
+        }} 
+        onMarkAsInProgress={async appointment => {
+          try {
+            await appointmentService.update(appointment.id, {
+              ...appointment,
+              status: 'In Progress'
+            });
+            setUpcomingAppointments(prev => prev.map(app => app.id === appointment.id ? {
+              ...app,
+              status: 'In Progress'
+            } : app));
+            setIsAppointmentDetailOpen(false);
+          } catch (error) {
+            console.error("Error marking appointment as in progress:", error);
+          }
+        }} 
+      />
+    </div>
+  );
 }

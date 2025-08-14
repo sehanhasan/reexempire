@@ -7,32 +7,46 @@ interface QuotationItemInput extends Omit<QuotationItem, "id" | "created_at" | "
 
 export const quotationService = {
   async getAll(): Promise<Quotation[]> {
-    const { data, error } = await supabase
-      .from("quotations")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      console.log("QuotationService: Fetching all quotations...");
+      const { data, error } = await supabase
+        .from("quotations")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching quotations:", error);
+      if (error) {
+        console.error("QuotationService: Error fetching quotations:", error);
+        throw new Error(`Failed to fetch quotations: ${error.message}`);
+      }
+
+      console.log("QuotationService: Successfully fetched quotations:", data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error("QuotationService: Unexpected error in getAll:", error);
       throw error;
     }
-
-    return data || [];
   },
 
   async getById(id: string): Promise<Quotation | null> {
-    const { data, error } = await supabase
-      .from("quotations")
-      .select("*")
-      .eq("id", id)
-      .single();
+    try {
+      console.log(`QuotationService: Fetching quotation with id ${id}...`);
+      const { data, error } = await supabase
+        .from("quotations")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-    if (error) {
-      console.error(`Error fetching quotation with id ${id}:`, error);
+      if (error) {
+        console.error(`QuotationService: Error fetching quotation with id ${id}:`, error);
+        throw new Error(`Failed to fetch quotation: ${error.message}`);
+      }
+
+      console.log(`QuotationService: Successfully fetched quotation:`, data);
+      return data;
+    } catch (error) {
+      console.error(`QuotationService: Unexpected error in getById:`, error);
       throw error;
     }
-
-    return data;
   },
 
   async generateUniqueReferenceNumber(): Promise<string> {
@@ -46,15 +60,23 @@ export const quotationService = {
       const sequence = counter.toString().padStart(4, '0');
       referenceNumber = `QT-${year}-${sequence}`;
       
+      console.log(`QuotationService: Checking reference number: ${referenceNumber}`);
+      
       // Check if this reference number already exists
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("quotations")
         .select("id")
         .eq("reference_number", referenceNumber)
-        .single();
+        .maybeSingle();
+      
+      if (error) {
+        console.error("QuotationService: Error checking reference number:", error);
+        throw new Error(`Error checking reference number: ${error.message}`);
+      }
       
       if (!data) {
         // Reference number is unique
+        console.log(`QuotationService: Found unique reference number: ${referenceNumber}`);
         break;
       }
       
@@ -62,77 +84,90 @@ export const quotationService = {
     } while (counter <= 9999); // Prevent infinite loop
     
     if (counter > 9999) {
-      throw new Error("Unable to generate unique reference number");
+      throw new Error("Unable to generate unique reference number - sequence exhausted");
     }
     
     return referenceNumber;
   },
 
   async create(quotation: Omit<Quotation, "id" | "created_at" | "updated_at">): Promise<Quotation> {
-    // Generate unique reference number if not provided
-    let quotationData = { ...quotation };
-    if (!quotationData.reference_number) {
-      quotationData.reference_number = await this.generateUniqueReferenceNumber();
-    }
-
-    const { data, error } = await supabase
-      .from("quotations")
-      .insert([quotationData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating quotation:", error);
+    try {
+      console.log("QuotationService: Creating quotation with data:", quotation);
       
-      // If it's a duplicate reference number error, try generating a new one
-      if (error.code === '23505' && error.message.includes('reference_number')) {
-        console.log("Duplicate reference number detected, generating new one...");
+      // Generate unique reference number if not provided
+      let quotationData = { ...quotation };
+      if (!quotationData.reference_number) {
         quotationData.reference_number = await this.generateUniqueReferenceNumber();
+      }
+
+      const { data, error } = await supabase
+        .from("quotations")
+        .insert([quotationData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("QuotationService: Error creating quotation:", error);
         
-        const { data: retryData, error: retryError } = await supabase
-          .from("quotations")
-          .insert([quotationData])
-          .select()
-          .single();
+        // If it's a duplicate reference number error, try generating a new one
+        if (error.code === '23505' && error.message.includes('reference_number')) {
+          console.log("QuotationService: Duplicate reference number detected, generating new one...");
+          quotationData.reference_number = await this.generateUniqueReferenceNumber();
           
-        if (retryError) {
-          console.error("Error creating quotation on retry:", retryError);
-          throw retryError;
+          const { data: retryData, error: retryError } = await supabase
+            .from("quotations")
+            .insert([quotationData])
+            .select()
+            .single();
+            
+          if (retryError) {
+            console.error("QuotationService: Error creating quotation on retry:", retryError);
+            throw new Error(`Failed to create quotation: ${retryError.message}`);
+          }
+          
+          console.log("QuotationService: Successfully created quotation on retry:", retryData);
+          return retryData;
         }
         
-        return retryData;
+        throw new Error(`Failed to create quotation: ${error.message}`);
       }
-      
+
+      console.log("QuotationService: Successfully created quotation:", data);
+      return data;
+    } catch (error) {
+      console.error("QuotationService: Unexpected error in create:", error);
       throw error;
     }
-
-    return data;
   },
 
   async update(id: string, quotation: Partial<Omit<Quotation, "id" | "created_at" | "updated_at"> & { signature_data?: string }>): Promise<Quotation> {
-    console.log(`QuotationService: Updating quotation ${id} with data:`, quotation);
-    
-    const { data, error } = await supabase
-      .from("quotations")
-      .update(quotation)
-      .eq("id", id)
-      .select()
-      .single();
+    try {
+      console.log(`QuotationService: Updating quotation ${id} with data:`, quotation);
+      
+      const { data, error } = await supabase
+        .from("quotations")
+        .update(quotation)
+        .eq("id", id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error(`QuotationService: Error updating quotation with id ${id}:`, error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      if (error) {
+        console.error(`QuotationService: Error updating quotation with id ${id}:`, error);
+        throw new Error(`Failed to update quotation: ${error.message}`);
+      }
+
+      console.log(`QuotationService: Successfully updated quotation:`, data);
+      return data;
+    } catch (error) {
+      console.error(`QuotationService: Unexpected error in update:`, error);
       throw error;
     }
-
-    console.log(`QuotationService: Successfully updated quotation:`, data);
-    return data;
   },
 
   async updateStatus(id: string, status: string): Promise<Quotation> {
-    console.log(`Updating quotation ${id} status to ${status}`);
-    
     try {
+      console.log(`QuotationService: Updating quotation ${id} status to ${status}`);
+      
       const { data, error } = await supabase
         .from("quotations")
         .update({ status })
@@ -141,96 +176,147 @@ export const quotationService = {
         .single();
 
       if (error) {
-        console.error(`Error updating quotation status for id ${id}:`, error);
+        console.error(`QuotationService: Error updating quotation status for id ${id}:`, error);
         throw new Error(`Failed to update quotation status: ${error.message}`);
       }
 
-      console.log(`Successfully updated quotation status:`, data);
+      console.log(`QuotationService: Successfully updated quotation status:`, data);
       return data;
     } catch (error) {
-      console.error(`QuotationService: Error in updateStatus:`, error);
+      console.error(`QuotationService: Unexpected error in updateStatus:`, error);
       throw error;
     }
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("quotations")
-      .delete()
-      .eq("id", id);
+    try {
+      console.log(`QuotationService: Deleting quotation with id ${id}`);
+      
+      const { error } = await supabase
+        .from("quotations")
+        .delete()
+        .eq("id", id);
 
-    if (error) {
-      console.error(`Error deleting quotation with id ${id}:`, error);
+      if (error) {
+        console.error(`QuotationService: Error deleting quotation with id ${id}:`, error);
+        throw new Error(`Failed to delete quotation: ${error.message}`);
+      }
+
+      console.log(`QuotationService: Successfully deleted quotation with id ${id}`);
+    } catch (error) {
+      console.error(`QuotationService: Unexpected error in delete:`, error);
       throw error;
     }
   },
 
   async getItemsByQuotationId(quotationId: string): Promise<QuotationItem[]> {
-    const { data, error } = await supabase
-      .from("quotation_items")
-      .select("*")
-      .eq("quotation_id", quotationId)
-      .order("id");
+    try {
+      console.log(`QuotationService: Fetching items for quotation ${quotationId}`);
+      
+      const { data, error } = await supabase
+        .from("quotation_items")
+        .select("*")
+        .eq("quotation_id", quotationId)
+        .order("id");
 
-    if (error) {
-      console.error(`Error fetching items for quotation ${quotationId}:`, error);
+      if (error) {
+        console.error(`QuotationService: Error fetching items for quotation ${quotationId}:`, error);
+        throw new Error(`Failed to fetch quotation items: ${error.message}`);
+      }
+
+      console.log(`QuotationService: Successfully fetched ${data?.length || 0} items for quotation ${quotationId}`);
+      return data || [];
+    } catch (error) {
+      console.error(`QuotationService: Unexpected error in getItemsByQuotationId:`, error);
       throw error;
     }
-
-    return data || [];
   },
 
   async createItem(item: QuotationItemInput): Promise<QuotationItem> {
-    const { data, error } = await supabase
-      .from("quotation_items")
-      .insert([item])
-      .select()
-      .single();
+    try {
+      console.log("QuotationService: Creating quotation item:", item);
+      
+      const { data, error } = await supabase
+        .from("quotation_items")
+        .insert([item])
+        .select()
+        .single();
 
-    if (error) {
-      console.error("Error creating quotation item:", error);
+      if (error) {
+        console.error("QuotationService: Error creating quotation item:", error);
+        throw new Error(`Failed to create quotation item: ${error.message}`);
+      }
+
+      console.log("QuotationService: Successfully created quotation item:", data);
+      return data;
+    } catch (error) {
+      console.error("QuotationService: Unexpected error in createItem:", error);
       throw error;
     }
-
-    return data;
   },
 
   async updateItem(id: string, item: Partial<QuotationItemInput>): Promise<QuotationItem> {
-    const { data, error } = await supabase
-      .from("quotation_items")
-      .update(item)
-      .eq("id", id)
-      .select()
-      .single();
+    try {
+      console.log(`QuotationService: Updating quotation item ${id} with:`, item);
+      
+      const { data, error } = await supabase
+        .from("quotation_items")
+        .update(item)
+        .eq("id", id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error(`Error updating quotation item with id ${id}:`, error);
+      if (error) {
+        console.error(`QuotationService: Error updating quotation item with id ${id}:`, error);
+        throw new Error(`Failed to update quotation item: ${error.message}`);
+      }
+
+      console.log(`QuotationService: Successfully updated quotation item:`, data);
+      return data;
+    } catch (error) {
+      console.error(`QuotationService: Unexpected error in updateItem:`, error);
       throw error;
     }
-
-    return data;
   },
 
   async deleteItem(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("quotation_items")
-      .delete()
-      .eq("id", id);
+    try {
+      console.log(`QuotationService: Deleting quotation item with id ${id}`);
+      
+      const { error } = await supabase
+        .from("quotation_items")
+        .delete()
+        .eq("id", id);
 
-    if (error) {
-      console.error(`Error deleting quotation item with id ${id}:`, error);
+      if (error) {
+        console.error(`QuotationService: Error deleting quotation item with id ${id}:`, error);
+        throw new Error(`Failed to delete quotation item: ${error.message}`);
+      }
+
+      console.log(`QuotationService: Successfully deleted quotation item with id ${id}`);
+    } catch (error) {
+      console.error(`QuotationService: Unexpected error in deleteItem:`, error);
       throw error;
     }
   },
 
   async deleteAllItems(quotationId: string): Promise<void> {
-    const { error } = await supabase
-      .from("quotation_items")
-      .delete()
-      .eq("quotation_id", quotationId);
+    try {
+      console.log(`QuotationService: Deleting all items for quotation ${quotationId}`);
+      
+      const { error } = await supabase
+        .from("quotation_items")
+        .delete()
+        .eq("quotation_id", quotationId);
 
-    if (error) {
-      console.error(`Error deleting all items for quotation ${quotationId}:`, error);
+      if (error) {
+        console.error(`QuotationService: Error deleting all items for quotation ${quotationId}:`, error);
+        throw new Error(`Failed to delete quotation items: ${error.message}`);
+      }
+
+      console.log(`QuotationService: Successfully deleted all items for quotation ${quotationId}`);
+    } catch (error) {
+      console.error(`QuotationService: Unexpected error in deleteAllItems:`, error);
       throw error;
     }
   },

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
+// import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { SearchButton } from '@/components/common/SearchButton';
 
 interface MobileHeaderProps {
@@ -43,7 +43,7 @@ export function MobileHeader({ title, onMenuClick, actions = [], searchProps }: 
               placeholder={searchProps.placeholder}
             />
           )}
-          <NotificationBell />
+          {/* <NotificationBell /> */}
         </div>
       </div>
     </div>
