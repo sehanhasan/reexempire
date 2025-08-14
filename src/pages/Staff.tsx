@@ -147,17 +147,36 @@ export default function StaffPage() {
   };
 
   const columns = [
-    {
-      header: "Name",
-      accessorKey: "name" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => (
-        <div 
-          className="font-medium text-blue-600 cursor-pointer"
+    <tbody>
+      {table.getRowModel().rows.map((row) => (
+        <tr
+          key={row.id}
+          className="hover:bg-gray-50 cursor-pointer"
           onClick={() => handleView(row.original)}
         >
-          {row.original.name}
-        </div>
-      ),
+          {row.getVisibleCells().map((cell) => (
+            <td key={cell.id} className="px-4 py-2">
+              {cell.renderCell()}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+
+    {
+      header: "Role",
+      accessorKey: "role" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => {
+        return (
+          <Badge className={
+            row.original.role === "Admin" ? "bg-purple-100 text-purple-800 hover:bg-purple-200" :
+            row.original.role === "Manager" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" :
+            "bg-gray-100 text-gray-800 hover:bg-gray-200"
+          }>
+            {row.original.role}
+          </Badge>
+        );
+      },
     },
     {
       header: "Phone",
