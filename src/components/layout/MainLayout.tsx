@@ -144,7 +144,7 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
           searchProps={mobileSearchProps}
         />
         
-        <main className="px-0 pt-16 pb-4 flex-1 max-w-full overflow-x-hidden">
+        <main className="px-0 pt-16 pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50">
           {children}
         </main>
       </div>
