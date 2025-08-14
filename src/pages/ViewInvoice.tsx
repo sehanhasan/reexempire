@@ -9,7 +9,6 @@ import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { shareInvoice } from "@/utils/mobileShare";
 import html2pdf from "html2pdf.js";
-import { generateInvoicePDF } from '@/utils/customPdfGenerator';
 import "@/styles/zoom.css"; // ✅ Allow pinch zoom styles
 
 export default function ViewInvoice() {
@@ -98,33 +97,49 @@ export default function ViewInvoice() {
     });
 
   const handleDownloadPDF = async () => {
-    if (!invoice || !customer) {
-      toast({
-        title: "Missing Information",
-        description: "Invoice or customer information not found.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    if (!invoice) return;
     try {
       setIsDownloading(true);
-      
-      const invoiceData = {
-        invoice,
-        customer,
-        items,
-        images
+      const element = document.querySelector(".invoice-content");
+      if (!element) {
+        toast({
+          title: "Error",
+          description: "Could not find invoice content to download",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const options = {
+        margin: [5, 5, 5, 5],
+        filename: `invoice-${invoice.reference_number}.pdf`,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: {
+          scale: 1.5,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          height: element.scrollHeight,
+          width: element.scrollWidth,
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+          compress: true,
+        },
+        pagebreak: { mode: "avoid-all" },
       };
 
-      generateInvoicePDF(invoiceData);
-      
+      await html2pdf().set(options).from(element).save();
+
       toast({
         title: "Success",
         description: "Invoice PDF downloaded successfully!",
       });
     } catch (error) {
-      console.error('Error generating PDF:', error);
       toast({
         title: "Error",
         description: "Failed to generate PDF. Please try again.",
