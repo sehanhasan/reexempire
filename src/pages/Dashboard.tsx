@@ -409,7 +409,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container min-h-screen bg-slate-50">
-      <div className="p-2">
+      {/* <div className="p-2">
         {/* Fixed Tab Navigation */}
         <div className="mb-4">
           <div className="flex border-b border-slate-200">
@@ -441,7 +441,7 @@ export default function Dashboard() {
           {activeTab === "activity" && renderActivityTab()}
           {activeTab === "overview" && renderOverviewTab()}
         </div>
-      </div>
+      </div> */}
 
       <AppointmentDetailsDialog 
         open={isAppointmentDetailOpen} 
