@@ -10,11 +10,12 @@ import { EditableCategoryTitle } from "./EditableCategoryTitle";
 
 interface ItemsTableProps {
   items: (QuotationItem | InvoiceItem)[];
-  setItems: React.Dispatch<React.SetStateAction<(QuotationItem | InvoiceItem)[]>>;
-  calculateItemAmount: (item: QuotationItem | InvoiceItem) => number;
+  handleItemChange: (id: number, field: keyof (QuotationItem | InvoiceItem), value: any) => void;
+  removeItem: (id: number) => void;
+  showDescription: boolean;
 }
 
-export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableProps) => {
+export const ItemsTable = ({ items, handleItemChange, removeItem, showDescription }: ItemsTableProps) => {
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   
   const addItem = () => {
@@ -28,34 +29,16 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
       unitPrice: 0,
       amount: 0
     };
-    setItems([...items, newItem]);
-  };
-
-  const removeItem = (id: number) => {
-    if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
-    }
-  };
-
-  const updateItem = (id: number, field: keyof (QuotationItem | InvoiceItem), value: any) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.amount = calculateItemAmount(updatedItem);
-        }
-        return updatedItem;
-      }
-      return item;
-    }));
+    // We can't add items from this component, this should be handled by parent
+    console.log("Add item should be handled by parent component");
   };
 
   const updateCategoryTitle = (oldCategory: string, newCategory: string) => {
-    setItems(items.map(item => 
-      item.category === oldCategory 
-        ? { ...item, category: newCategory }
-        : item
-    ));
+    items.forEach(item => {
+      if (item.category === oldCategory) {
+        handleItemChange(item.id, 'category', newCategory);
+      }
+    });
     setEditingCategory(null);
   };
 
@@ -109,15 +92,18 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                         <div className="flex gap-2">
                           <Input
                             value={item.description}
-                            onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                            onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
                             placeholder="Enter description..."
                             className="flex-1"
                           />
                           <CategoryItemSelector
-                            onSelectItem={(selectedItem) => {
-                              updateItem(item.id, 'description', selectedItem.name);
-                              updateItem(item.id, 'unitPrice', selectedItem.price);
-                              updateItem(item.id, 'unit', selectedItem.unit);
+                            onSelectItems={(selectedItems) => {
+                              if (selectedItems.length > 0) {
+                                const selectedItem = selectedItems[0];
+                                handleItemChange(item.id, 'description', selectedItem.description);
+                                handleItemChange(item.id, 'unitPrice', selectedItem.price);
+                                handleItemChange(item.id, 'unit', selectedItem.unit);
+                              }
                             }}
                           />
                         </div>
@@ -126,7 +112,7 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                         <Input
                           type="number"
                           value={item.quantity}
-                          onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 1)}
+                          onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 1)}
                           min="0"
                           step="0.01"
                           className="w-full"
@@ -135,7 +121,7 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                       <td className="px-3 py-2">
                         <Select
                           value={item.unit}
-                          onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                          onValueChange={(value) => handleItemChange(item.id, 'unit', value)}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue />
@@ -155,7 +141,7 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                         <Input
                           type="number"
                           value={item.unitPrice}
-                          onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                           min="0"
                           step="0.01"
                           className="w-full"
@@ -190,15 +176,18 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                   <div className="flex gap-2">
                     <Input
                       value={item.description}
-                      onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                      onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
                       placeholder="Enter description..."
                       className="flex-1"
                     />
                     <CategoryItemSelector
-                      onSelectItem={(selectedItem) => {
-                        updateItem(item.id, 'description', selectedItem.name);
-                        updateItem(item.id, 'unitPrice', selectedItem.price);
-                        updateItem(item.id, 'unit', selectedItem.unit);
+                      onSelectItems={(selectedItems) => {
+                        if (selectedItems.length > 0) {
+                          const selectedItem = selectedItems[0];
+                          handleItemChange(item.id, 'description', selectedItem.description);
+                          handleItemChange(item.id, 'unitPrice', selectedItem.price);
+                          handleItemChange(item.id, 'unit', selectedItem.unit);
+                        }
                       }}
                     />
                   </div>
@@ -209,7 +198,7 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                       <Input
                         type="number"
                         value={item.quantity}
-                        onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 1)}
+                        onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 1)}
                         min="0"
                         step="0.01"
                       />
@@ -218,7 +207,7 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                       <label className="text-xs text-gray-500">Unit</label>
                       <Select
                         value={item.unit}
-                        onValueChange={(value) => updateItem(item.id, 'unit', value)}
+                        onValueChange={(value) => handleItemChange(item.id, 'unit', value)}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -242,7 +231,7 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
                       <Input
                         type="number"
                         value={item.unitPrice}
-                        onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                         min="0"
                         step="0.01"
                       />
@@ -273,16 +262,6 @@ export const ItemsTable = ({ items, setItems, calculateItemAmount }: ItemsTableP
           </div>
         </div>
       ))}
-      
-      <Button
-        type="button"
-        variant="outline"
-        onClick={addItem}
-        className="w-full border-dashed"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Add Item
-      </Button>
     </div>
   );
 };

@@ -142,26 +142,26 @@ export default function Dashboard() {
         <StatCard
           title="Total Customers"
           value={stats.totalCustomers}
-          icon={Users}
-          trend={{ value: 12, label: "from last month" }}
+          icon={<Users className="h-4 w-4" />}
+          trend={{ value: 12, isPositive: true }}
         />
         <StatCard
           title="Active Quotations"
           value={stats.pendingQuotations}
-          icon={FileText}
-          trend={{ value: 8, label: "pending approval" }}
+          icon={<FileText className="h-4 w-4" />}
+          trend={{ value: 8, isPositive: true }}
         />
         <StatCard
           title="Unpaid Invoices"
           value={stats.unpaidInvoices}
-          icon={DollarSign}
-          trend={{ value: -5, label: "from last month" }}
+          icon={<DollarSign className="h-4 w-4" />}
+          trend={{ value: 5, isPositive: false }}
         />
         <StatCard
           title="Today's Appointments"
           value={stats.todayAppointments}
-          icon={Calendar}
-          trend={{ value: 3, label: "scheduled today" }}
+          icon={<Calendar className="h-4 w-4" />}
+          trend={{ value: 3, isPositive: true }}
         />
       </div>
 
@@ -172,7 +172,12 @@ export default function Dashboard() {
             <CardTitle>Revenue Overview</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
-            <Chart />
+            <Chart 
+              title="Revenue"
+              chartData={[]}
+              categories={[]}
+              index=""
+            />
           </CardContent>
         </Card>
         <Card className="col-span-3">
