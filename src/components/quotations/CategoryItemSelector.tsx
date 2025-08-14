@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { Search } from "lucide-react";
 import { categoryService } from "@/services";
 import { Category, Subcategory, PricingOption } from "@/types/database";
-
 export interface SelectedItem {
   id: string;
   description: string;
@@ -17,13 +16,11 @@ export interface SelectedItem {
   unit: string;
   price: number;
 }
-
 interface CategoryItemSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectItems: (items: SelectedItem[]) => void;
 }
-
 export function CategoryItemSelector({
   open,
   onOpenChange,
@@ -36,7 +33,6 @@ export function CategoryItemSelector({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -57,14 +53,12 @@ export function CategoryItemSelector({
       fetchData();
     }
   }, [open]);
-
   useEffect(() => {
     if (open) {
       setSelectedItems([]);
       setSearchTerm("");
     }
   }, [open]);
-
   const toggleSubcategorySelection = (subcategory: Subcategory, categoryName: string) => {
     setSelectedItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === subcategory.id);
@@ -82,7 +76,6 @@ export function CategoryItemSelector({
       }
     });
   };
-
   const togglePricingOptionSelection = (pricingOption: PricingOption, subcategoryName: string) => {
     setSelectedItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === pricingOption.id);
@@ -100,35 +93,28 @@ export function CategoryItemSelector({
       }
     });
   };
-
   const updateItemQuantity = (id: string, quantity: number) => {
     setSelectedItems(prevItems => prevItems.map(item => item.id === id ? {
       ...item,
       quantity
     } : item));
   };
-
   const getSubcategoriesForCategory = (categoryId: string) => {
     return subcategories.filter(subcategory => subcategory.category_id === categoryId);
   };
-
   const getPricingOptionsForSubcategory = (subcategoryId: string) => {
     return pricingOptions.filter(option => option.subcategory_id === subcategoryId);
   };
-
   const isItemSelected = (id: string) => {
     return selectedItems.some(item => item.id === id);
   };
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value.toLowerCase());
   };
-
   const handleSubmit = () => {
     onSelectItems(selectedItems);
     onOpenChange(false);
   };
-
   const filteredCategories = searchTerm ? categories.filter(category => {
     if (category.name.toLowerCase().includes(searchTerm)) return true;
     const relatedSubcategories = getSubcategoriesForCategory(category.id);
@@ -138,7 +124,6 @@ export function CategoryItemSelector({
       return options.some(option => option.name.toLowerCase().includes(searchTerm));
     });
   }) : categories;
-
   return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
         <DialogHeader>
@@ -161,7 +146,7 @@ export function CategoryItemSelector({
             const categorySubcategories = getSubcategoriesForCategory(category.id);
             return <div key={category.id}>
                     <AccordionItem value={category.id} className="border-0 w-full">
-                      <AccordionTrigger className="px-0 py-4 hover:no-underline text-left font-medium text-lg">
+                      <AccordionTrigger className="px-0 py-4 hover:no-underline text-left font-medium text-base">
                         {category.name}
                       </AccordionTrigger>
                       <AccordionContent className="px-0 py-2">
@@ -169,7 +154,6 @@ export function CategoryItemSelector({
                             No items in this category
                           </div> : categorySubcategories.map(subcategory => {
                     const subcategoryOptions = getPricingOptionsForSubcategory(subcategory.id);
-
                     return <div key={subcategory.id} className="mb-6">
                                 
                                 <div className="space-y-3">
