@@ -2,29 +2,40 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Image, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { InvoiceItem, DepositInfo } from "@/components/quotations/types";
+import { InvoiceItem } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
-import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
+import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { invoiceService, customerService, quotationService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface ExtendedQuotation {
+  id: string;
+  customer_id: string;
+  reference_number: string;
+  requires_deposit?: boolean;
+  deposit_amount?: number;
+  deposit_percentage?: number;
+  subject?: string | null;
+  [key: string]: any;
+}
 
 export default function CreateInvoice() {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: 1, description: "", category: "", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
+    { id: 1, description: "", category: "Other Items", quantity: 1, unit: "Unit", unitPrice: 0, amount: 0 }
   ]);
 
-  const initialCustomerId = location.state?.customerId || "";
-  const initialQuotationId = location.state?.quotationId || "";
-  const [customerId, setCustomerId] = useState(initialCustomerId);
-  const [quotationId, setQuotationId] = useState(initialQuotationId);
-  
+  const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -33,32 +44,47 @@ export default function CreateInvoice() {
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
-  const [terms, setTerms] = useState("");
+  const [terms, setTerms] = useState("Payment is due within 3 days from the date of this invoice");
   const [subject, setSubject] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
-  const [quotationRefNumber, setQuotationRefNumber] = useState<string | null>(null);
-  
-  const [depositInfo, setDepositInfo] = useState<DepositInfo>({
-    requiresDeposit: false,
-    depositAmount: 0,
-    depositPercentage: 50
-  });
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
+  const [quotationReference, setQuotationReference] = useState("");
+  const [quotationId, setQuotationId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
 
-  const generateReferenceNumber = async (isDepositInvoice: boolean = false) => {
+  // Calculate total from items
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => {
+      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+      return sum + (qty * item.unitPrice);
+    }, 0);
+  };
+
+  // Auto-update deposit amount when items change or deposit percentage changes
+  useEffect(() => {
+    if (isDepositInvoice) {
+      const total = calculateTotal();
+      const newDepositAmount = total * (depositPercentage / 100);
+      setDepositAmount(newDepositAmount);
+    }
+  }, [items, depositPercentage, isDepositInvoice]);
+
+  const generateReferenceNumber = async () => {
     const currentYear = new Date().getFullYear();
     try {
       const invoices = await invoiceService.getAll();
       
-      const currentYearInvoices = invoices?.filter(i => 
-        i.reference_number?.startsWith(`INV-${currentYear}`)
+      const currentYearInvoices = invoices?.filter(inv => 
+        inv.reference_number?.startsWith(`INV-${currentYear}`)
       ) || [];
       
       const nextNumber = currentYearInvoices.length + 1;
-      const sequence = nextNumber.toString().padStart(4, '0');
-      return isDepositInvoice ? `INV-${currentYear}-${sequence}-A` : `INV-${currentYear}-${sequence}`;
+      return `INV-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
     } catch (error) {
       console.error('Error generating reference number:', error);
       return `INV-${currentYear}-0001`;
@@ -69,11 +95,11 @@ export default function CreateInvoice() {
 
   useEffect(() => {
     const initializeReferenceNumber = async () => {
-      const refNumber = await generateReferenceNumber(isDepositInvoice);
+      const refNumber = await generateReferenceNumber();
       setDocumentNumber(refNumber);
     };
     initializeReferenceNumber();
-  }, [isDepositInvoice]);
+  }, []);
 
   useEffect(() => {
     if (customerId) {
@@ -89,29 +115,26 @@ export default function CreateInvoice() {
       fetchCustomer();
     }
   }, [customerId]);
-  
+
   useEffect(() => {
-    if (quotationId) {
-      const fetchQuotation = async () => {
+    const fetchQuotationData = async () => {
+      const fromQuotationId = location.state?.quotationId;
+      
+      if (fromQuotationId) {
         try {
-          const quotation = await quotationService.getById(quotationId);
+          const quotation = await quotationService.getById(fromQuotationId) as ExtendedQuotation;
           if (quotation) {
-            setQuotationRefNumber(quotation.reference_number);
+            setQuotationId(quotation.id);
+            setQuotationReference(quotation.reference_number);
             setCustomerId(quotation.customer_id);
-            setInvoiceDate(quotation.issue_date);
-            setDueDate(quotation.expiry_date);
-            setNotes(quotation.notes || "");
-            setTerms(quotation.terms || "");
             setSubject(quotation.subject || "");
-            setDepositInfo({
-              requiresDeposit: quotation.requires_deposit || false,
-              depositAmount: quotation.deposit_amount || 0,
-              depositPercentage: quotation.deposit_percentage || 50
-            });
             
-            const quotationItems = await quotationService.getItemsByQuotationId(quotationId);
+            setIsDepositInvoice(quotation.requires_deposit || false);
+            setDepositPercentage(quotation.deposit_percentage || 30);
+            
+            const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
             if (quotationItems && quotationItems.length > 0) {
-              setItems(quotationItems.map((item, index) => ({
+              const mappedItems = quotationItems.map((item, index) => ({
                 id: index + 1,
                 description: item.description,
                 category: item.category || "Other Items",
@@ -119,44 +142,100 @@ export default function CreateInvoice() {
                 unit: item.unit,
                 unitPrice: item.unit_price,
                 amount: item.amount
-              })));
+              }));
+              setItems(mappedItems);
+              
+              // Set deposit amount based on quotation
+              if (quotation.requires_deposit) {
+                const total = mappedItems.reduce((sum, item) => {
+                  const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+                  return sum + (qty * item.unitPrice);
+                }, 0);
+                setDepositAmount(total * ((quotation.deposit_percentage || 30) / 100));
+              }
             }
+            
+            toast({
+              title: "Created from Quotation",
+              description: "Invoice has been pre-filled with quotation data.",
+            });
           }
         } catch (error) {
           console.error("Error fetching quotation:", error);
         }
-      };
-      
-      fetchQuotation();
-    }
-  }, [quotationId]);
-
-  // Add effect to auto-update deposit amount when items change
-  useEffect(() => {
-    if (depositInfo.requiresDeposit) {
-      const subtotal = items.reduce((sum, item) => {
-        const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-        return sum + (qty * item.unitPrice);
-      }, 0);
-      
-      const depositPercentage = typeof depositInfo.depositPercentage === 'string' 
-        ? parseFloat(depositInfo.depositPercentage) 
-        : depositInfo.depositPercentage;
-      
-      const newDepositAmount = (subtotal * depositPercentage) / 100;
-      
-      if (newDepositAmount !== depositInfo.depositAmount) {
-        setDepositInfo(prev => ({
-          ...prev,
-          depositAmount: newDepositAmount
-        }));
       }
-    }
-  }, [items, depositInfo.requiresDeposit, depositInfo.depositPercentage]);
+    };
+    
+    fetchQuotationData();
+  }, [location]);
 
   const calculateItemAmount = (item: InvoiceItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
     return qty * item.unitPrice;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      const validFiles = filesArray.filter(file => 
+        file.type.startsWith('image/')
+      );
+      
+      if (validFiles.length !== filesArray.length) {
+        toast({
+          title: "Invalid Files",
+          description: "Only image files are allowed.",
+          variant: "destructive"
+        });
+      }
+      
+      const newImageUrls = validFiles.map(file => URL.createObjectURL(file));
+      
+      setImages(prev => [...prev, ...validFiles]);
+      setImageUrls(prev => [...prev, ...newImageUrls]);
+    }
+  };
+  
+  const removeImage = (index: number) => {
+    URL.revokeObjectURL(imageUrls[index]);
+    
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const uploadImages = async (invoiceId: string): Promise<string[]> => {
+    if (images.length === 0) return [];
+    
+    const uploadedUrls: string[] = [];
+    setUploadingImages(true);
+    
+    try {
+      for (const file of images) {
+        const fileName = `${invoiceId}/${Date.now()}-${file.name}`;
+        
+        const { data, error } = await supabase.storage
+          .from('invoice-images')
+          .upload(fileName, file);
+        
+        if (error) {
+          console.error("Error uploading image:", error);
+          continue;
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('invoice-images')
+          .getPublicUrl(data.path);
+        
+        uploadedUrls.push(urlData.publicUrl);
+      }
+      
+      return uploadedUrls;
+    } catch (error) {
+      console.error("Error in image upload process:", error);
+      return [];
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent, status: string = "Draft") => {
@@ -181,44 +260,36 @@ export default function CreateInvoice() {
       return;
     }
     
-    const subtotal = items.reduce((sum, item) => {
-      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-      return sum + (qty * item.unitPrice);
-    }, 0);
+    const subtotal = calculateTotal();
+    const total = isDepositInvoice ? depositAmount : subtotal;
     
     try {
       setIsSubmitting(true);
       
-      const depositPercentage = typeof depositInfo.depositPercentage === 'string' 
-        ? parseFloat(depositInfo.depositPercentage) 
-        : depositInfo.depositPercentage;
-      
       const invoice = {
-        quotation_id: quotationId || null,
         customer_id: customerId,
+        quotation_id: quotationId,
         reference_number: documentNumber,
         issue_date: invoiceDate,
         due_date: dueDate,
-        subtotal: subtotal,
-        tax_rate: 6,
-        tax_amount: subtotal * 0.06,
-        total: subtotal * 1.06,
         status: status,
-        payment_status: "Unpaid",
+        subtotal: subtotal,
+        tax_rate: 0,
+        tax_amount: 0,
+        total: total,
         notes: notes || null,
-        terms: terms || null,
-        payment_method: paymentMethod,
-        is_deposit_invoice: isDepositInvoice,
-        deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositPercentage : 0,
         subject: subject || null,
-        quotation_ref_number: quotationRefNumber || null
+        terms: terms,
+        is_deposit_invoice: isDepositInvoice,
+        deposit_amount: isDepositInvoice ? depositAmount : 0,
+        deposit_percentage: isDepositInvoice ? depositPercentage : 0,
+        payment_status: "Unpaid",
+        quotation_ref_number: quotationReference || null
       };
       
       const createdInvoice = await invoiceService.create(invoice);
       setCreatedInvoiceId(createdInvoice.id);
       
-      // Preserve the original order of items
       for (const item of items) {
         if (item.description && item.unitPrice > 0) {
           const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
@@ -234,10 +305,51 @@ export default function CreateInvoice() {
         }
       }
       
-      toast({
-        title: "Invoice Created",
-        description: `Invoice for ${customer?.name} has been created as ${status}.`,
-      });
+      let uploadedImageUrls: string[] = [];
+      if (images.length > 0) {
+        uploadedImageUrls = await uploadImages(createdInvoice.id);
+        
+        if (uploadedImageUrls.length > 0) {
+          for (const imageUrl of uploadedImageUrls) {
+            await invoiceService.addInvoiceImage(createdInvoice.id, imageUrl);
+          }
+        }
+      }
+      
+      if (status === "Sent") {
+        toast({
+          title: "Invoice Sent",
+          description: `Invoice for ${customer?.name} has been sent successfully.`,
+        });
+        
+        // Only try WhatsApp after successful creation
+        try {
+          const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
+          
+          const message = `Dear ${customer?.name},\n\n` +
+            `Please find your invoice ${documentNumber} for review at the link below: ` +
+            `${invoiceViewUrl}\n\n` +
+            `You can review the invoice details and make payment.\n\n` +
+            `If you have any questions, please don't hesitate to contact us.\n\n` +
+            `Thank you,\nReex Empire Sdn Bhd`;
+          
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+          window.location.href = whatsappUrl;
+        } catch (error) {
+          console.error("Error opening WhatsApp:", error);
+          toast({
+            title: "WhatsApp Error",
+            description: "Invoice saved successfully, but failed to open WhatsApp. You can share it manually from the invoices list.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Invoice Created",
+          description: `Invoice for ${customer?.name} has been created successfully.`,
+        });
+      }
       
       navigate("/invoices");
     } catch (error) {
@@ -266,7 +378,7 @@ export default function CreateInvoice() {
         }
       />
 
-      <form className="mt-2 space-y-6">
+      <form className="mt-8 space-y-6">
         <CustomerInfoCard 
           customerId={customerId}
           setCustomer={setCustomerId}
@@ -277,17 +389,77 @@ export default function CreateInvoice() {
           setDocumentDate={setInvoiceDate}
           expiryDate={dueDate}
           setExpiryDate={setDueDate}
+          quotationReference={quotationReference}
           subject={subject}
           setSubject={setSubject}
         />
         
-        <QuotationItemsCard 
+        <InvoiceItemsCard 
           items={items}
           setItems={setItems}
-          depositInfo={depositInfo}
-          setDepositInfo={setDepositInfo}
+          isDepositInvoice={isDepositInvoice}
+          setIsDepositInvoice={setIsDepositInvoice}
+          depositAmount={depositAmount}
+          setDepositAmount={setDepositAmount}
+          depositPercentage={depositPercentage}
+          setDepositPercentage={setDepositPercentage}
           calculateItemAmount={calculateItemAmount}
         />
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Work Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Label htmlFor="image-upload">Upload images to include in the invoice PDF</Label>
+              <div className="flex items-center gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                >
+                  <Image className="mr-2 h-4 w-4" />
+                  Add Images
+                </Button>
+                <Input 
+                  id="image-upload" 
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleFileChange}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {images.length} {images.length === 1 ? 'image' : 'images'} selected
+                </p>
+              </div>
+              
+              {imageUrls.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  {imageUrls.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={url} 
+                        alt={`Preview ${index + 1}`} 
+                        className="w-full h-32 object-cover rounded-md" 
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
         
         <AdditionalInfoForm 
           terms={terms}
@@ -295,7 +467,7 @@ export default function CreateInvoice() {
           onSubmit={handleSubmit}
           onCancel={() => navigate("/invoices")}
           documentType="invoice"
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting || uploadingImages}
           showDraft={true}
         />
       </form>

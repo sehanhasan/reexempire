@@ -8,7 +8,8 @@ import { invoiceService, customerService } from "@/services";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { shareInvoice } from "@/utils/mobileShare";
-import { captureViewAsPDF } from "@/utils/htmlToPdf";
+import html2pdf from "html2pdf.js";
+import "@/styles/zoom.css"; // ✅ Allow pinch zoom styles
 
 export default function ViewInvoice() {
   const { id } = useParams();
@@ -19,6 +20,26 @@ export default function ViewInvoice() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // ✅ Pinch-to-zoom effect for this page only
+  useEffect(() => {
+    const viewport = document.querySelector("meta[name=viewport]");
+    let original = "";
+
+    if (viewport) {
+      original = viewport.getAttribute("content") || "";
+      viewport.setAttribute(
+        "content",
+        "width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"
+      );
+    }
+
+    return () => {
+      if (viewport && original) {
+        viewport.setAttribute("content", original);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
@@ -79,11 +100,40 @@ export default function ViewInvoice() {
     if (!invoice) return;
     try {
       setIsDownloading(true);
-      const filename = `invoice-${invoice.reference_number}.pdf`;
-      await captureViewAsPDF('invoice-view', filename, {
-        backgroundColor: '#ffffff',
-        scale: 2
-      });
+      const element = document.querySelector(".invoice-content");
+      if (!element) {
+        toast({
+          title: "Error",
+          description: "Could not find invoice content to download",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const options = {
+        margin: [5, 5, 5, 5],
+        filename: `invoice-${invoice.reference_number}.pdf`,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: {
+          scale: 1.5,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          height: element.scrollHeight,
+          width: element.scrollWidth,
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+          compress: true,
+        },
+        pagebreak: { mode: "avoid-all" },
+      };
+
+      await html2pdf().set(options).from(element).save();
 
       toast({
         title: "Success",
@@ -137,7 +187,10 @@ export default function ViewInvoice() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center">
+      <div
+        className="min-h-screen bg-background flex justify-center items-center zoom-page"
+        style={{ minWidth: "1024px" }}
+      >
         <p>Loading invoice details...</p>
       </div>
     );
@@ -145,7 +198,10 @@ export default function ViewInvoice() {
 
   if (!invoice || !customer) {
     return (
-      <div className="min-h-screen bg-background flex justify-center items-center">
+      <div
+        className="min-h-screen bg-background flex justify-center items-center zoom-page"
+        style={{ minWidth: "1024px" }}
+      >
         <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
         <h2 className="text-2xl font-bold">Invoice Not Found</h2>
         <Button onClick={() => navigate("/")}>Return Home</Button>
@@ -173,8 +229,8 @@ export default function ViewInvoice() {
   const categories = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="py-4 px-4" id="invoice-view">
+    <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }}>
+      <div className="py-4 px-4 invoice-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
           <div className="bg-white rounded-lg shadow-sm p-4">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -118,28 +119,6 @@ export default function EditQuotation() {
     };
     fetchQuotationData();
   }, [id, navigate]);
-
-  useEffect(() => {
-    if (depositInfo.requiresDeposit) {
-      const subtotal = items.reduce((sum, item) => {
-        const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-        return sum + (qty * item.unitPrice);
-      }, 0);
-      
-      const depositPercentage = typeof depositInfo.depositPercentage === 'string' 
-        ? parseFloat(depositInfo.depositPercentage) 
-        : depositInfo.depositPercentage;
-      
-      const newDepositAmount = (subtotal * depositPercentage) / 100;
-      
-      if (newDepositAmount !== depositInfo.depositAmount) {
-        setDepositInfo(prev => ({
-          ...prev,
-          depositAmount: newDepositAmount
-        }));
-      }
-    }
-  }, [items, depositInfo.requiresDeposit, depositInfo.depositPercentage]);
 
   const calculateItemAmount = (item: QuotationItem) => {
     const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
