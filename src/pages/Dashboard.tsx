@@ -279,32 +279,19 @@ export default function Dashboard() {
                 <CardTitle className="text-lg font-semibold text-slate-800">Quotations</CardTitle>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/quotations")}
-              className="text-purple-600 hover:text-purple-700"
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate("/quotations")} className="text-purple-600 hover:text-purple-700">
               View All
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
-            {recentQuotations.length === 0 ? (
-              <div className="py-8 text-center">
+            {recentQuotations.length === 0 ? <div className="py-8 text-center">
                 <ReceiptText className="h-12 w-12 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-600">No quotations found</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentQuotations.slice(0, 3).map((quotation) => {
-                  const customer = customersMap[quotation.customer_id] || {};
-                  return (
-                    <div
-                      key={quotation.id}
-                      onClick={() => navigateToQuotation(quotation.id)}
-                      className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer"
-                    >
+              </div> : <div className="space-y-3">
+                {recentQuotations.slice(0, 3).map(quotation => {
+              const customer = customersMap[quotation.customer_id] || {};
+              return <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer ">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-purple-700">
@@ -319,26 +306,13 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-sm text-slate-800">{formatMoney(quotation.total)}</p>
-        
-                        {/* Only show badge for Approved or Sent */}
-                        {(quotation.status === "Approved" || quotation.status === "Sent") && (
-                          <Badge
-                            className={
-                              quotation.status === "Approved"
-                                ? "bg-green-100 text-green-700 hover:bg-green-100"
-                                : "bg-blue-100 text-blue-700 hover:bg-blue-100"
-                            }
-                          >
-                            {quotation.status}
-                          </Badge>
-                        )}
-        
+                        <Badge className={quotation.status === 'Approved' ? "bg-green-100 text-green-700 hover:bg-green-100" : quotation.status === 'Sent' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} >
+                          {quotation.status}
+                        </Badge>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    </div>;
+            })}
+              </div>}
           </CardContent>
         </Card>
 
