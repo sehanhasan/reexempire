@@ -326,8 +326,8 @@ export default function Invoices() {
                   <SelectItem value="paid">Paid</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div> */}
+            </div> */}
+          </div>
 
           {loading ? (
             <div className="py-8 text-center bg-slate-100">
