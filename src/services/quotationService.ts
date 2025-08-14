@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
 
@@ -35,15 +36,76 @@ export const quotationService = {
     return data;
   },
 
+  async generateUniqueReferenceNumber(): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    
+    let counter = 1;
+    let referenceNumber: string;
+    
+    do {
+      const sequence = counter.toString().padStart(3, '0');
+      referenceNumber = `QUO-${year}${month}${day}-${sequence}`;
+      
+      // Check if this reference number already exists
+      const { data } = await supabase
+        .from("quotations")
+        .select("id")
+        .eq("reference_number", referenceNumber)
+        .single();
+      
+      if (!data) {
+        // Reference number is unique
+        break;
+      }
+      
+      counter++;
+    } while (counter <= 999); // Prevent infinite loop
+    
+    if (counter > 999) {
+      throw new Error("Unable to generate unique reference number");
+    }
+    
+    return referenceNumber;
+  },
+
   async create(quotation: Omit<Quotation, "id" | "created_at" | "updated_at">): Promise<Quotation> {
+    // Generate unique reference number if not provided
+    let quotationData = { ...quotation };
+    if (!quotationData.reference_number) {
+      quotationData.reference_number = await this.generateUniqueReferenceNumber();
+    }
+
     const { data, error } = await supabase
       .from("quotations")
-      .insert([quotation])
+      .insert([quotationData])
       .select()
       .single();
 
     if (error) {
       console.error("Error creating quotation:", error);
+      
+      // If it's a duplicate reference number error, try generating a new one
+      if (error.code === '23505' && error.message.includes('reference_number')) {
+        console.log("Duplicate reference number detected, generating new one...");
+        quotationData.reference_number = await this.generateUniqueReferenceNumber();
+        
+        const { data: retryData, error: retryError } = await supabase
+          .from("quotations")
+          .insert([quotationData])
+          .select()
+          .single();
+          
+        if (retryError) {
+          console.error("Error creating quotation on retry:", retryError);
+          throw retryError;
+        }
+        
+        return retryData;
+      }
+      
       throw error;
     }
 
@@ -73,20 +135,25 @@ export const quotationService = {
   async updateStatus(id: string, status: string): Promise<Quotation> {
     console.log(`Updating quotation ${id} status to ${status}`);
     
-    const { data, error } = await supabase
-      .from("quotations")
-      .update({ status })
-      .eq("id", id)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("quotations")
+        .update({ status })
+        .eq("id", id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error(`Error updating quotation status for id ${id}:`, error);
+      if (error) {
+        console.error(`Error updating quotation status for id ${id}:`, error);
+        throw new Error(`Failed to update quotation status: ${error.message}`);
+      }
+
+      console.log(`Successfully updated quotation status:`, data);
+      return data;
+    } catch (error) {
+      console.error(`QuotationService: Error in updateStatus:`, error);
       throw error;
     }
-
-    console.log(`Successfully updated quotation status:`, data);
-    return data;
   },
 
   async delete(id: string): Promise<void> {
