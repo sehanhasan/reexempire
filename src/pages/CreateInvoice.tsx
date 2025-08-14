@@ -204,6 +204,7 @@ export default function CreateInvoice() {
         tax_amount: subtotal * 0.06,
         total: subtotal * 1.06,
         status: status,
+        payment_status: "Unpaid",
         notes: notes || null,
         terms: terms || null,
         payment_method: paymentMethod,
@@ -296,8 +297,6 @@ export default function CreateInvoice() {
           documentType="invoice"
           isSubmitting={isSubmitting}
           showDraft={true}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
           isDepositInvoice={isDepositInvoice}
           setIsDepositInvoice={setIsDepositInvoice}
         />

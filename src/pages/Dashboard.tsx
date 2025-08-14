@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -100,21 +99,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="Total Customers"
+          value={stats.totalCustomers}
           icon={<Users className="h-6 w-6" />}
           trend={{ value: stats.totalCustomers, isPositive: true }}
         />
         <StatCard
           title="Total Quotations"
+          value={stats.totalQuotations}
           icon={<FileText className="h-6 w-6" />}
           trend={{ value: stats.totalQuotations, isPositive: true }}
         />
         <StatCard
           title="Total Invoices"
+          value={stats.totalInvoices}
           icon={<DollarSign className="h-6 w-6" />}
           trend={{ value: stats.totalInvoices, isPositive: true }}
         />
         <StatCard
           title="Total Appointments"
+          value={stats.totalAppointments}
           icon={<Calendar className="h-6 w-6" />}
           trend={{ value: stats.totalAppointments, isPositive: true }}
         />
