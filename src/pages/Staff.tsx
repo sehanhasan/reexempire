@@ -9,58 +9,41 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Edit,
-  MoreHorizontal,
   Trash,
-  Eye,
+  Loader2,
+  Mail,
   Phone,
-  Plus
+  User
 } from "lucide-react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
 import { staffService } from "@/services";
-import { format } from "date-fns";
-import type { Staff } from "@/types/database";
+import { StaffMember } from "@/types/database";
 
-export default function StaffPage() {
+export default function Staff() {
   const navigate = useNavigate();
-  const [staffMembers, setStaffMembers] = useState<Staff[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   
   const fetchStaff = async () => {
     try {
-      setIsLoading(true);
       const data = await staffService.getAll();
-      setStaffMembers(data);
+      // Sort by most recent first (created_at in descending order)
+      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setStaff(data);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching staff:", error);
@@ -76,171 +59,6 @@ export default function StaffPage() {
   useEffect(() => {
     fetchStaff();
   }, []);
-  
-  // Action handlers
-  const handleView = (staff: Staff) => {
-    // First clear the previous staff to avoid state issues
-    setSelectedStaff(null);
-    // Use setTimeout to ensure the state is updated before showing dialog
-    setTimeout(() => {
-      setSelectedStaff(staff);
-      setShowDetails(true);
-    }, 10);
-  };
-
-  const handleEdit = (staff: Staff) => {
-    navigate(`/staff/add?id=${staff.id}`);
-  };
-
-  const handleDelete = (staff: Staff) => {
-    setStaffToDelete(staff);
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!staffToDelete) return;
-    
-    try {
-      await staffService.delete(staffToDelete.id);
-      setStaffMembers(staffMembers.filter(s => s.id !== staffToDelete.id));
-      setShowDeleteConfirm(false);
-      setStaffToDelete(null);
-      
-      toast({
-        title: "Staff Removed",
-        description: `${staffToDelete.name} has been removed from staff records`,
-        variant: "destructive",
-      });
-    } catch (error) {
-      console.error("Error deleting staff:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete staff member. Please try again.",
-        variant: "destructive",
-      });
-      setShowDeleteConfirm(false); // Close dialog on error to prevent UI freeze
-    }
-  };
-
-  const handleStatusChange = (staff: Staff, newStatus: "Active" | "On Leave" | "Inactive") => {
-    // Update the staff status
-    const updateStaff = async () => {
-      try {
-        await staffService.update(staff.id, { status: newStatus });
-        fetchStaff(); // Refresh the list
-        
-        toast({
-          title: "Status Updated",
-          description: `${staff.name}'s status changed to ${newStatus}`,
-        });
-      } catch (error) {
-        console.error("Error updating staff status:", error);
-        toast({
-          title: "Error",
-          description: "Failed to update staff status. Please try again.",
-          variant: "destructive",
-        });
-      }
-    };
-    
-    updateStaff();
-  };
-
-  const columns = [
-    {
-      header: "Name",
-      accessorKey: "name" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => (
-        <div 
-          className="font-medium text-blue-600 cursor-pointer"
-          onClick={() => handleView(row.original)}
-        >
-          {row.original.name}
-        </div>
-      ),
-    },
-    {
-      header: "Role",
-      accessorKey: "role" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <Badge className={
-            row.original.role === "Admin" ? "bg-purple-100 text-purple-800 hover:bg-purple-200" :
-            row.original.role === "Manager" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-200"
-          }>
-            {row.original.role}
-          </Badge>
-        );
-      },
-    },
-    {
-      header: "Phone",
-      accessorKey: "phone" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => (
-        <div className="flex items-center">
-          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          <a href={`https://wa.me/${row.original.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600">
-            {row.original.phone}
-          </a>
-        </div>
-      ),
-    },
-    {
-      header: "Status",
-      accessorKey: "status" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <Badge className={
-            row.original.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
-            row.original.status === "On Leave" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
-            "bg-gray-100 text-gray-800 hover:bg-gray-200"
-          }>
-            {row.original.status}
-          </Badge>
-        );
-      },
-    },
-    {
-      header: "Actions",
-      accessorKey: "id" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleView(row.original)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleEdit(row.original)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="cursor-pointer text-red-600"
-                onClick={() => handleDelete(row.original)}
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
 
   // Set up mobile search
   useEffect(() => {
@@ -258,152 +76,255 @@ export default function StaffPage() {
     };
   }, [searchTerm]);
 
-  return (
-    <div className="page-container">
-      <PageHeader 
-        title="Staff" 
-        description="Manage your team members."
-      />
-      
-      <div className="mt-8">
-        <DataTable 
-          columns={columns} 
-          data={staffMembers} 
-          searchKey="name" 
-          isLoading={isLoading}
-          externalSearchTerm={searchTerm}
-          onExternalSearchChange={setSearchTerm}
-        />
-      </div>
+  const handleView = (staffMember: StaffMember) => {
+    setSelectedStaff(null);
+    setTimeout(() => {
+      setSelectedStaff(staffMember);
+      setShowDetails(true);
+    }, 10);
+  };
 
-      {selectedStaff && (
-        <Dialog open={showDetails} onOpenChange={(open) => {
-          setShowDetails(open);
-          if (!open) setSelectedStaff(null);
-        }}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Staff Details</DialogTitle>
-              <DialogDescription>
-                Complete information about this staff member.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Name</p>
-                <p className="text-lg font-medium">{selectedStaff.name}</p>
-              </div>
+  const handleEdit = (staffMember: StaffMember) => {
+    navigate(`/staff/edit/${staffMember.id}`);
+  };
+
+  const handleDelete = async (staffMember: StaffMember) => {
+    try {
+      await staffService.delete(staffMember.id);
+      setStaff(staff.filter(s => s.id !== staffMember.id));
+      setShowDetails(false);
+      setSelectedStaff(null);
+      setShowDeleteConfirm(false);
+      setStaffToDelete(null);
+      
+      toast({
+        title: "Staff Member Deleted",
+        description: `${staffMember.name} has been deleted successfully.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Error deleting staff member:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete staff member. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const columns = [
+    {
+      header: "Name",
+      accessorKey: "name" as keyof StaffMember,
+      cell: ({ row }: { row: { original: StaffMember } }) => (
+        <div 
+          className="font-medium text-blue-600 cursor-pointer"
+          onClick={() => handleView(row.original)}
+        >
+          {row.original.name}
+        </div>
+      ),
+    },
+    {
+      header: "Position",
+      accessorKey: "position" as keyof StaffMember,
+      cell: ({ row }: { row: { original: StaffMember } }) => (
+        <div className="font-medium">{row.original.position || 'N/A'}</div>
+      ),
+    },
+    {
+      header: "Phone",
+      accessorKey: "phone" as keyof StaffMember,
+      cell: ({ row }: { row: { original: StaffMember } }) => (
+        <div className="flex items-center">
+          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+          {row.original.phone ? (
+            <a 
+              href={`tel:${row.original.phone}`} 
+              className="text-blue-600 hover:underline"
+            >
+              {row.original.phone}
+            </a>
+          ) : (
+            <span className="text-muted-foreground">Not provided</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: "Email",
+      accessorKey: "email" as keyof StaffMember,
+      cell: ({ row }: { row: { original: StaffMember } }) => (
+        <div className="flex items-center">
+          <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+          {row.original.email ? (
+            <a 
+              href={`mailto:${row.original.email}`} 
+              className="text-blue-600 hover:underline"
+            >
+              {row.original.email}
+            </a>
+          ) : (
+            <span className="text-muted-foreground">Not provided</span>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="p-2">
+          <div className="flex items-center justify-center h-[70vh]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Loading staff...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="p-2">
+        <PageHeader 
+          title="Staff" 
+          description="Manage your staff members."
+        />
+        
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+          <DataTable 
+            columns={columns} 
+            data={staff} 
+            searchKey="name" 
+            externalSearchTerm={searchTerm}
+            onExternalSearchChange={setSearchTerm}
+          />
+        </div>
+
+        {selectedStaff && (
+          <Dialog open={showDetails} onOpenChange={(open) => {
+            setShowDetails(open);
+            if (!open) setSelectedStaff(null);
+          }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Staff Member Details</DialogTitle>
+                <DialogDescription>
+                  Complete information about this staff member.
+                </DialogDescription>
+              </DialogHeader>
               
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Role</p>
-                <Badge className={
-                  selectedStaff.role === "Admin" ? "bg-purple-100 text-purple-800" :
-                  selectedStaff.role === "Manager" ? "bg-blue-100 text-blue-800" :
-                  "bg-gray-100 text-gray-800"
-                }>
-                  {selectedStaff.role || "Staff"}
-                </Badge>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <Badge className={
-                  selectedStaff.status === "Active" ? "bg-green-100 text-green-800" :
-                  selectedStaff.status === "On Leave" ? "bg-amber-100 text-amber-800" :
-                  "bg-gray-100 text-gray-800"
-                }>
-                  {selectedStaff.status}
-                </Badge>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Join Date</p>
-                <p>{selectedStaff.join_date ? format(new Date(selectedStaff.join_date), "MMMM dd, yyyy") : "N/A"}</p>
-              </div>
-              
-              {selectedStaff.position && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Name</p>
+                  <p className="text-lg font-medium">{selectedStaff.name}</p>
+                </div>
+                
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Position</p>
-                  <p>{selectedStaff.position}</p>
+                  <p className="text-lg font-medium">{selectedStaff.position || 'N/A'}</p>
                 </div>
-              )}
-              
-              {selectedStaff.passport && (
+                
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Passport #</p>
-                  <p>{selectedStaff.passport}</p>
-                </div>
-              )}
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
-                {selectedStaff.phone && (
+                  <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
                   <div className="flex items-center mt-1">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <a href={`https://wa.me/${selectedStaff.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      {selectedStaff.phone}
-                    </a>
+                    {selectedStaff.phone ? (
+                      <a 
+                        href={`tel:${selectedStaff.phone}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {selectedStaff.phone}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">Not provided</span>
+                    )}
                   </div>
-                )}
-                {selectedStaff.email && (
-                  <div className="flex items-center mt-1">
-                    <div className="h-4 w-4 mr-2 text-muted-foreground">@</div>
-                    <a href={`mailto:${selectedStaff.email}`} className="text-blue-600 hover:underline">
-                      {selectedStaff.email}
-                    </a>
+                  {selectedStaff.email && (
+                    <div className="flex items-center mt-1">
+                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <a 
+                        href={`mailto:${selectedStaff.email}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {selectedStaff.email}
+                      </a>
+                    </div>
+                  )}
+                </div>
+                
+                {selectedStaff.notes && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                    <p className="text-sm mt-1">{selectedStaff.notes}</p>
                   </div>
                 )}
               </div>
-            </div>
-            
-            <DialogFooter className="sm:justify-end">
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDetails(false)}
-                >
-                  Close
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setShowDetails(false);
-                    if (selectedStaff) handleEdit(selectedStaff);
-                  }}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-              </div>
+              
+              <DialogFooter className="sm:justify-end">
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowDetails(false)}
+                  >
+                    Close
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowDetails(false);
+                      if (selectedStaff) handleEdit(selectedStaff);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => {
+                      if (selectedStaff) {
+                        setStaffToDelete(selectedStaff);
+                        setShowDeleteConfirm(true);
+                      }
+                    }}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Staff Member</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete{" "}
+                <span className="font-medium">{staffToDelete?.name}</span>
+                ? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={() => {
+                if (staffToDelete) handleDelete(staffToDelete);
+              }}>
+                <Trash className="mr-2 h-4 w-4" />
+                Delete Staff Member
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
 
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove {staffToDelete?.name} from your staff records.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <FloatingActionButton 
-        onClick={() => navigate("/staff/add")}
-      />
+        <FloatingActionButton onClick={() => navigate("/staff/add")} />
+      </div>
     </div>
   );
 }

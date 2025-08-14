@@ -176,152 +176,157 @@ export default function Customers() {
 
   if (isLoading) {
     return (
-      <div className="page-container flex items-center justify-center h-[70vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-lg">Loading customers...</span>
+      <div className="min-h-screen bg-slate-50">
+        <div className="p-2">
+          <div className="flex items-center justify-center h-[70vh]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Loading customers...</span>
+          </div>
+        </div>
       </div>
     );
   }
 
-
   return (
-    <div className="page-container">
-      <PageHeader 
-        title="Customers" 
-        description="Manage your customer database."
-      />
-      
-      <div className="mt-2">
-        <DataTable 
-          columns={columns} 
-          data={customers} 
-          searchKey="name" 
-          externalSearchTerm={searchTerm}
-          onExternalSearchChange={setSearchTerm}
+    <div className="min-h-screen bg-slate-50">
+      <div className="p-2">
+        <PageHeader 
+          title="Customers" 
+          description="Manage your customer database."
         />
-      </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+          <DataTable 
+            columns={columns} 
+            data={customers} 
+            searchKey="name" 
+            externalSearchTerm={searchTerm}
+            onExternalSearchChange={setSearchTerm}
+          />
+        </div>
 
-      {selectedCustomer && (
-        <Dialog open={showDetails} onOpenChange={(open) => {
-          setShowDetails(open);
-          if (!open) setSelectedCustomer(null);
-        }}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Customer Details</DialogTitle>
-              <DialogDescription>
-                Complete information about this customer.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Unit Number</p>
-                <p className="text-lg font-medium">{selectedCustomer.unit_number || 'N/A'}</p>
-              </div>
+        {selectedCustomer && (
+          <Dialog open={showDetails} onOpenChange={(open) => {
+            setShowDetails(open);
+            if (!open) setSelectedCustomer(null);
+          }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Customer Details</DialogTitle>
+                <DialogDescription>
+                  Complete information about this customer.
+                </DialogDescription>
+              </DialogHeader>
               
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Name</p>
-                <p className="text-lg font-medium">{selectedCustomer.name}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
-                <div className="flex items-center mt-1">
-                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  {selectedCustomer.phone ? (
-                    <a 
-                      href={`https://wa.me/${selectedCustomer.phone.replace(/^\+/, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {selectedCustomer.phone}
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground">Not provided</span>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Unit Number</p>
+                  <p className="text-lg font-medium">{selectedCustomer.unit_number || 'N/A'}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Name</p>
+                  <p className="text-lg font-medium">{selectedCustomer.name}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
+                  <div className="flex items-center mt-1">
+                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                    {selectedCustomer.phone ? (
+                      <a 
+                        href={`https://wa.me/${selectedCustomer.phone.replace(/^\+/, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {selectedCustomer.phone}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">Not provided</span>
+                    )}
+                  </div>
+                  {selectedCustomer.email && (
+                    <div className="flex items-center mt-1">
+                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <a 
+                        href={`mailto:${selectedCustomer.email}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {selectedCustomer.email}
+                      </a>
+                    </div>
                   )}
                 </div>
-                {selectedCustomer.email && (
-                  <div className="flex items-center mt-1">
-                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <a 
-                      href={`mailto:${selectedCustomer.email}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {selectedCustomer.email}
-                    </a>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Address</p>
+                  <div className="flex items-start mt-1">
+                    <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
+                    <span>
+                      {selectedCustomer.address || 'Not provided'}
+                      {selectedCustomer.city && `, ${selectedCustomer.city}`}
+                      {selectedCustomer.state && `, ${selectedCustomer.state}`}
+                      {selectedCustomer.postal_code && ` ${selectedCustomer.postal_code}`}
+                    </span>
+                  </div>
+                </div>
+                
+                {selectedCustomer.notes && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                    <p className="text-sm mt-1">{selectedCustomer.notes}</p>
                   </div>
                 )}
               </div>
               
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Address</p>
-                <div className="flex items-start mt-1">
-                  <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
-                  <span>
-                    {selectedCustomer.address || 'Not provided'}
-                    {selectedCustomer.city && `, ${selectedCustomer.city}`}
-                    {selectedCustomer.state && `, ${selectedCustomer.state}`}
-                    {selectedCustomer.postal_code && ` ${selectedCustomer.postal_code}`}
-                  </span>
+              <DialogFooter className="sm:justify-end">
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowDetails(false)}
+                  >
+                    Close
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setShowDetails(false);
+                      if (selectedCustomer) {
+                        navigate("/quotations/create", { state: { customerId: selectedCustomer.id } });
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Mail className="mr-2 h-4 w-4" />
+                    Create Quotation
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowDetails(false);
+                      if (selectedCustomer) handleEdit(selectedCustomer);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => {
+                      if (selectedCustomer) handleDelete(selectedCustomer);
+                    }}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
                 </div>
-              </div>
-              
-              {selectedCustomer.notes && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                  <p className="text-sm mt-1">{selectedCustomer.notes}</p>
-                </div>
-              )}
-            </div>
-            
-            <DialogFooter className="sm:justify-end">
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDetails(false)}
-                >
-                  Close
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setShowDetails(false);
-                    if (selectedCustomer) {
-                      navigate("/quotations/create", { state: { customerId: selectedCustomer.id } });
-                    }
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Create Quotation
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setShowDetails(false);
-                    if (selectedCustomer) handleEdit(selectedCustomer);
-                  }}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button 
-                  variant="destructive"
-                  onClick={() => {
-                    if (selectedCustomer) handleDelete(selectedCustomer);
-                  }}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
 
-      <FloatingActionButton onClick={() => navigate("/customers/add")} />
+        <FloatingActionButton onClick={() => navigate("/customers/add")} />
+      </div>
     </div>
   );
 }
