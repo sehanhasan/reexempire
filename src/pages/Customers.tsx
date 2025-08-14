@@ -102,16 +102,25 @@ export default function Customers() {
     navigate(`/customers/add?id=${customer.id}`);
   };
 
-  const handleDelete = async (customer: Customer) => {
+  const handleDeleteClick = (customer: Customer) => {
+    setCustomerToDelete(customer);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!customerToDelete) return;
+    
     try {
-      await customerService.delete(customer.id);
-      setCustomers(customers.filter(c => c.id !== customer.id));
+      await customerService.delete(customerToDelete.id);
+      setCustomers(customers.filter(c => c.id !== customerToDelete.id));
       setShowDetails(false);
       setSelectedCustomer(null);
+      setShowDeleteConfirm(false);
+      setCustomerToDelete(null);
       
       toast({
         title: "Customer Deleted",
-        description: `${customer.name} has been deleted successfully.`,
+        description: `${customerToDelete.name} has been deleted successfully.`,
         variant: "destructive",
       });
     } catch (error) {
@@ -122,6 +131,11 @@ export default function Customers() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setCustomerToDelete(null);
   };
 
   const columns = [
@@ -182,7 +196,6 @@ export default function Customers() {
       </div>
     );
   }
-
 
   return (
     <div className="page-container">
@@ -309,7 +322,8 @@ export default function Customers() {
                 <Button 
                   variant="destructive"
                   onClick={() => {
-                    if (selectedCustomer) handleDelete(selectedCustomer);
+                    setShowDetails(false);
+                    if (selectedCustomer) handleDeleteClick(selectedCustomer);
                   }}
                 >
                   <Trash className="mr-2 h-4 w-4" />
@@ -320,6 +334,30 @@ export default function Customers() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the customer "{customerToDelete?.name}" and all associated data.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete Customer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FloatingActionButton onClick={() => navigate("/customers/add")} />
     </div>

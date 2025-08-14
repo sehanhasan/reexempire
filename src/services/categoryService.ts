@@ -200,13 +200,51 @@ export const categoryService = {
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("categories")
-      .delete()
-      .eq("id", id);
+    try {
+      // First delete all pricing options for subcategories in this category
+      const { data: subcategories } = await supabase
+        .from("subcategories")
+        .select("id")
+        .eq("category_id", id);
 
-    if (error) {
-      console.error(`Error deleting category with id ${id}:`, error);
+      if (subcategories && subcategories.length > 0) {
+        const subcategoryIds = subcategories.map(sub => sub.id);
+        
+        // Delete pricing options first
+        const { error: pricingError } = await supabase
+          .from("pricing_options")
+          .delete()
+          .in("subcategory_id", subcategoryIds);
+
+        if (pricingError) {
+          console.error("Error deleting pricing options:", pricingError);
+          throw pricingError;
+        }
+      }
+
+      // Then delete all subcategories for this category
+      const { error: subcatError } = await supabase
+        .from("subcategories")
+        .delete()
+        .eq("category_id", id);
+
+      if (subcatError) {
+        console.error("Error deleting subcategories:", subcatError);
+        throw subcatError;
+      }
+
+      // Finally delete the category
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error(`Error deleting category with id ${id}:`, error);
+        throw error;
+      }
+    } catch (error) {
+      console.error(`Error in category deletion process:`, error);
       throw error;
     }
   },
@@ -265,13 +303,30 @@ export const categoryService = {
   },
 
   async deleteSubcategory(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("subcategories")
-      .delete()
-      .eq("id", id);
+    try {
+      // First delete all pricing options for this subcategory
+      const { error: pricingError } = await supabase
+        .from("pricing_options")
+        .delete()
+        .eq("subcategory_id", id);
 
-    if (error) {
-      console.error(`Error deleting subcategory with id ${id}:`, error);
+      if (pricingError) {
+        console.error("Error deleting pricing options:", pricingError);
+        throw pricingError;
+      }
+
+      // Then delete the subcategory
+      const { error } = await supabase
+        .from("subcategories")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error(`Error deleting subcategory with id ${id}:`, error);
+        throw error;
+      }
+    } catch (error) {
+      console.error(`Error in subcategory deletion process:`, error);
       throw error;
     }
   },
