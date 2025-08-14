@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -210,7 +210,7 @@ export default function CreateQuotation() {
         title="Create Quotation"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/quotations")} className="border-slate-200 hover:bg-slate-50">
+            <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Quotations
             </Button>
@@ -218,59 +218,38 @@ export default function CreateQuotation() {
         }
       />
 
-      {/* Progress indicator */}
-      <div className="mb-6">
-        <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-purple-900">New Quotation</h3>
-              <p className="text-sm text-purple-600 mt-1">Complete the form below to create a new quotation</p>
-            </div>
-            <div className="p-3 bg-purple-500 rounded-lg">
-              <FileText className="h-5 w-5 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <form className="space-y-6">
-        <div className="bg-white rounded-xl border shadow-sm">
-          <CustomerInfoCard 
-            customerId={customerId}
-            setCustomer={setCustomerId}
-            documentType="quotation"
-            documentNumber={documentNumber}
-            setDocumentNumber={setDocumentNumber}
-            documentDate={quotationDate}
-            setDocumentDate={setQuotationDate}
-            expiryDate={validUntil}
-            setExpiryDate={setValidUntil}
-            subject={subject}
-            setSubject={setSubject}
-          />
-        </div>
+      <form className="mt-2 space-y-6">
+        <CustomerInfoCard 
+          customerId={customerId}
+          setCustomer={setCustomerId}
+          documentType="quotation"
+          documentNumber={documentNumber}
+          setDocumentNumber={setDocumentNumber}
+          documentDate={quotationDate}
+          setDocumentDate={setQuotationDate}
+          expiryDate={validUntil}
+          setExpiryDate={setValidUntil}
+          subject={subject}
+          setSubject={setSubject}
+        />
         
-        <div className="bg-white rounded-xl border shadow-sm">
-          <QuotationItemsCard 
-            items={items}
-            setItems={setItems}
-            depositInfo={depositInfo}
-            setDepositInfo={setDepositInfo}
-            calculateItemAmount={calculateItemAmount}
-          />
-        </div>
+        <QuotationItemsCard 
+          items={items}
+          setItems={setItems}
+          depositInfo={depositInfo}
+          setDepositInfo={setDepositInfo}
+          calculateItemAmount={calculateItemAmount}
+        />
         
-        <div className="bg-white rounded-xl border shadow-sm">
-          <AdditionalInfoForm 
-            terms={terms}
-            setTerms={setTerms}
-            onSubmit={handleSubmit}
-            onCancel={() => navigate("/quotations")}
-            documentType="quotation"
-            isSubmitting={isSubmitting}
-            showDraft={true}
-          />
-        </div>
+        <AdditionalInfoForm 
+          terms={terms}
+          setTerms={setTerms}
+          onSubmit={handleSubmit}
+          onCancel={() => navigate("/quotations")}
+          documentType="quotation"
+          isSubmitting={isSubmitting}
+          showDraft={true}
+        />
       </form>
     </div>
   );

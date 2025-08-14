@@ -13,9 +13,7 @@ import {
   Loader2,
   Mail,
   Phone,
-  MapPin,
-  Users,
-  Home
+  MapPin
 } from "lucide-react";
 
 import {
@@ -192,49 +190,8 @@ export default function Customers() {
         title="Customers" 
         description="Manage your customer database."
       />
-
-      {/* Modern header with stats */}
-      <div className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Customers</p>
-                <p className="text-2xl font-bold text-blue-900 mt-1">{customers.length}</p>
-              </div>
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <Users className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-green-600 uppercase tracking-wide">With Units</p>
-                <p className="text-2xl font-bold text-green-900 mt-1">{customers.filter(c => c.unit_number).length}</p>
-              </div>
-              <div className="p-2 bg-green-500 rounded-lg">
-                <Home className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-purple-600 uppercase tracking-wide">With Phone</p>
-                <p className="text-2xl font-bold text-purple-900 mt-1">{customers.filter(c => c.phone).length}</p>
-              </div>
-              <div className="p-2 bg-purple-500 rounded-lg">
-                <Phone className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
       
-      <div className="bg-white rounded-xl border shadow-sm">
+      <div className="mt-2">
         <DataTable 
           columns={columns} 
           data={customers} 

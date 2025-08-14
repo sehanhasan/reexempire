@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight, ReceiptText } from "lucide-react";
+import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
@@ -254,140 +254,84 @@ export default function Quotations() {
   return <div className="page-container">
       <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
 
-      {/* Modern header with stats */}
-      <div className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-purple-600 uppercase tracking-wide">Total</p>
-                <p className="text-xl font-bold text-purple-900 mt-1">{filteredQuotations.length}</p>
-              </div>
-              <div className="p-2 bg-purple-500 rounded-lg">
-                <ReceiptText className="h-4 w-4 text-white" />
-              </div>
+        <CardContent className="p-0">
+          <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+            <div className="relative flex-1 hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input type="search" placeholder="Search quotations..." className="pl-10 h-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            </div>
+            
+            <div className="w-full sm:w-60">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="accepted">Accepted</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Accepted</p>
-                <p className="text-xl font-bold text-green-900 mt-1">{filteredQuotations.filter(q => q.status === 'Accepted').length}</p>
-              </div>
-              <div className="p-2 bg-green-500 rounded-lg">
-                <CheckCircle2 className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Sent</p>
-                <p className="text-xl font-bold text-blue-900 mt-1">{filteredQuotations.filter(q => q.status === 'Sent').length}</p>
-              </div>
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <Send className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Total Value</p>
-                <p className="text-lg font-bold text-amber-900 mt-1">{formatMoney(filteredQuotations.reduce((sum, q) => sum + q.total, 0))}</p>
-              </div>
-              <div className="p-2 bg-amber-500 rounded-lg">
-                <FileText className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Search and filters */}
-      <div className="bg-white rounded-xl border shadow-sm mb-6">
-        <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-          <div className="relative flex-1 hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search quotations..." className="pl-10 h-10 border-slate-200" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-          </div>
-          
-          <div className="w-full sm:w-60">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-10 border-slate-200">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {loading ? <div className="py-12 text-center bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
-            <p className="text-slate-600 font-medium">Loading quotations...</p>
-          </div> : filteredQuotations.length === 0 ? <div className="py-12 text-center bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl">
-            <ReceiptText className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-600 font-medium">No quotations found matching your criteria</p>
-          </div> : <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+          {loading ? <div className="py-8 text-center bg-slate-100">
+              <p className="text-muted-foreground">Loading quotations...</p>
+            </div> : filteredQuotations.length === 0 ? <div className="py-8 text-center">
+              <p className="text-muted-foreground">No quotations found matching your criteria</p>
+            </div> : <div className="overflow-x-auto">
               {isMobile ? <div className="p-2 space-y-3">
                   {filteredQuotations.map(quotation => {
               const status = quotation.status;
-              return <div key={quotation.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200 shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 border-l-purple-500 mx-3 mb-3" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
-                        <div className="p-4 border-b border-purple-100 flex justify-between items-center">
+              return <div key={quotation.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                        <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
                           <div>
-                            <div className="font-semibold text-purple-700 text-base">
-                              #{quotation.unit_number || "No Unit"}
+                            <div className="font-medium text-blue-700">
+                              {quotation.unit_number || "-"}
                             </div>
-                            <div className="text-xs text-slate-500 flex items-center mt-1">
+                            <div className="text-xs text-gray-500 flex items-center mt-0.5">
                               <FileText className="h-3 w-3 mr-1" />
                               {quotation.reference_number}
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <Badge className={`flex items-center ${status === 'Accepted' ? 'bg-green-100 text-green-700 border-green-200' : status === 'Sent' ? 'bg-blue-100 text-blue-700 border-blue-200' : status === 'Rejected' ? 'bg-red-100 text-red-700 border-red-200' : status === 'Expired' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                            <Badge className={`flex items-center ${status === 'Accepted' ? 'bg-green-100 text-green-700' : status === 'Sent' ? 'bg-blue-100 text-blue-700' : status === 'Rejected' ? 'bg-red-100 text-red-700' : status === 'Expired' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}`}>
                               <StatusIcon status={status} />
                               {status}
                             </Badge>
                           </div>
                         </div>
                         
-                        <div className="px-4 py-3 space-y-2">
+                        <div className="px-3 py-2 space-y-1.5">
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-500 flex items-center font-medium">
-                              <Calendar className="h-3.5 w-3.5 mr-2 text-purple-500" />Issue Date
+                            <span className="text-gray-500 flex items-center">
+                              <Calendar className="h-3.5 w-3.5 mr-1.5" />Issue Date
                             </span>
-                            <span className="text-slate-700 font-medium">{formatDate(quotation.issue_date)}</span>
+                            <span className="text-inherit">{formatDate(quotation.issue_date)}</span>
                           </div>
                           
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-500 flex items-center font-medium">
-                              <Clock className="h-3.5 w-3.5 mr-2 text-purple-500" />Expiry Date
+                            <span className="text-gray-500 flex items-center">
+                              <Clock className="h-3.5 w-3.5 mr-1.5" />Expiry Date
                             </span>
-                            <span className="text-slate-700 font-medium">{formatDate(quotation.expiry_date)}</span>
+                            <span>{formatDate(quotation.expiry_date)}</span>
                           </div>
                           
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-500 flex items-center font-medium">
-                              <Home className="h-3.5 w-3.5 mr-2 text-purple-500" />Customer
+                            <span className="text-gray-500 flex items-center">
+                              <Home className="h-3.5 w-3.5 mr-1.5" />Customer
                             </span>
-                            <span className="font-semibold truncate max-w-[150px] text-slate-800">
+                            <span className="font-medium truncate max-w-[150px]">
                               {quotation.customer_name}
                             </span>
                           </div>
                         </div>
                         
-                        <div className="border-t border-purple-100 p-3 bg-gradient-to-r from-purple-50 to-pink-50 flex justify-between items-center">
-                          <span className="text-lg font-bold text-purple-700">
+                        <div className="border-t p-2 bg-gray-50 flex justify-between items-center">
+                          <span className="text-sm font-semibold text-blue-700">
                             {formatMoney(quotation.total)}
                           </span>
                           <DropdownMenu>
@@ -509,7 +453,7 @@ export default function Quotations() {
                   </TableBody>
                 </Table>}
             </div>}
-      </div>
+        </CardContent>
 
       <FloatingActionButton onClick={() => navigate("/quotations/create")} />
 

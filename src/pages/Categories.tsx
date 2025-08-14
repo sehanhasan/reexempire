@@ -210,41 +210,23 @@ export default function Categories() {
   // Calculate stats
   const totalSubcategories = categories.reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0);
   return <div className="page-container">
-      <PageHeader title="Service Categories" description="Organize your services into categories and subcategories." />
-
-      {/* Modern header with stats */}
-      <div className="mb-6">
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Categories</p>
-                <p className="text-2xl font-bold text-blue-900 mt-1">{categories.length}</p>
-              </div>
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <FolderOpen className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Subcategories</p>
-                <p className="text-2xl font-bold text-green-900 mt-1">{totalSubcategories}</p>
-              </div>
-              <div className="p-2 bg-green-500 rounded-lg">
-                <Tag className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="Service Categories" description="Organize your services into categories and subcategories." actions={<div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+              <FolderOpen className="mr-1 h-3 w-3" />
+              {categories.length} Categories
+            </Badge>
+            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+              <Tag className="mr-1 h-3 w-3" />
+              {totalSubcategories} Subcategories
+            </Badge>
+          </div>} />
       
-      <div className="bg-white rounded-xl border shadow-sm">
-        <CardContent className="p-0">
-          <DataTable columns={columns} data={categories} searchKey="name" renderCustomMobileCard={renderCustomMobileCard} emptyMessage="No categories found. Add your first service category to get started." />
-        </CardContent>
+      <div className="mt-2">
+        <Card className="shadow-sm border-0 bg-white">
+          <CardContent className="p-0">
+            <DataTable columns={columns} data={categories} searchKey="name" renderCustomMobileCard={renderCustomMobileCard} emptyMessage="No categories found. Add your first service category to get started." />
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={showConfirmDelete} onOpenChange={open => {

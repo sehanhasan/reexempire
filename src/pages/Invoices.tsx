@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight, Receipt } from "lucide-react";
+import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
@@ -282,173 +282,115 @@ export default function Invoices() {
     <div className="page-container">
       <PageHeader title="Invoices" actions={<div className="hidden md:block"></div>} />
 
-      {/* Modern header with stats */}
-      <div className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Total</p>
-                <p className="text-xl font-bold text-emerald-900 mt-1">{filteredInvoices.length}</p>
-              </div>
-              <div className="p-2 bg-emerald-500 rounded-lg">
-                <Receipt className="h-4 w-4 text-white" />
-              </div>
+      <div className="mt-1">
+        <div className="p-0">
+          <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+            <div className="relative flex-1 hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search invoices..."
+                className="pl-10 h-10"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="w-full sm:w-60">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-full sm:w-60">
+              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Filter by payment status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payment Statuses</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="partial">Partial</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Paid</p>
-                <p className="text-xl font-bold text-green-900 mt-1">{filteredInvoices.filter(q => q.payment_status === 'Paid').length}</p>
-              </div>
-              <div className="p-2 bg-green-500 rounded-lg">
-                <CheckCircle2 className="h-4 w-4 text-white" />
-              </div>
+
+          {loading ? (
+            <div className="py-8 text-center bg-slate-100">
+              <p className="text-muted-foreground">Loading invoices...</p>
             </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Overdue</p>
-                <p className="text-xl font-bold text-red-900 mt-1">{filteredInvoices.filter(q => q.status === 'Overdue').length}</p>
-              </div>
-              <div className="p-2 bg-red-500 rounded-lg">
-                <XCircle className="h-4 w-4 text-white" />
-              </div>
+          ) : filteredInvoices.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground">No invoices found matching your criteria</p>
             </div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Total Value</p>
-                <p className="text-lg font-bold text-amber-900 mt-1">{formatMoney(filteredInvoices.reduce((sum, q) => sum + q.total, 0))}</p>
-              </div>
-              <div className="p-2 bg-amber-500 rounded-lg">
-                <FileText className="h-4 w-4 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search and filters */}
-      <div className="bg-white rounded-xl border shadow-sm mb-6">
-        <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-          <div className="relative flex-1 hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search invoices..."
-              className="pl-10 h-10 border-slate-200"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="w-full sm:w-60">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-10 border-slate-200">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="w-full sm:w-60">
-            <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-              <SelectTrigger className="h-10 border-slate-200">
-                <SelectValue placeholder="Filter by payment status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Payment Statuses</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="unpaid">Unpaid</SelectItem>
-                <SelectItem value="partial">Partial</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="py-12 text-center bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-          <p className="text-slate-600 font-medium">Loading invoices...</p>
-        </div>
-      ) : filteredInvoices.length === 0 ? (
-        <div className="py-12 text-center bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl">
-          <Receipt className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <p className="text-slate-600 font-medium">No invoices found matching your criteria</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-          {isMobile ? (
-            <div className="p-2 space-y-3">
-              {filteredInvoices.map(invoice => {
+          ) : (
+            <div className="overflow-x-auto">
+              {isMobile ? (
+                <div className="p-2 space-y-3">
+                  {filteredInvoices.map(invoice => {
                     const status = invoice.status;
                     return (
                       <div
                         key={invoice.id}
-                        className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 border-l-emerald-500 mx-3 mb-3"
+                        className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm"
                         onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
                       >
-                        <div className="p-4 border-b border-emerald-100 flex justify-between items-center">
+                        <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
                           <div>
-                            <div className="font-semibold text-emerald-700 text-base">
-                              #{invoice.unit_number || "No Unit"}
+                            <div className="font-medium text-blue-700">
+                              {invoice.unit_number || "-"}
                             </div>
-                            <div className="text-xs text-slate-500 flex items-center mt-1">
-                              <Receipt className="h-3 w-3 mr-1" />
+                            <div className="text-xs text-gray-500 flex items-center mt-0.5">
+                              <FileText className="h-3 w-3 mr-1" />
                               {invoice.reference_number}
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <Badge className={`flex items-center ${status === 'Paid' ? 'bg-green-100 text-green-700 border-green-200' : status === 'Sent' ? 'bg-blue-100 text-blue-700 border-blue-200' : status === 'Overdue' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                            <Badge className={`flex items-center ${status === 'Paid' ? 'bg-green-100 text-green-700' : status === 'Sent' ? 'bg-blue-100 text-blue-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
                               <StatusIcon status={status} />
                               {status}
                             </Badge>
                           </div>
                         </div>
 
-                        <div className="px-4 py-3 space-y-2">
+                        <div className="px-3 py-2 space-y-1.5">
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-500 flex items-center font-medium">
-                              <Calendar className="h-3.5 w-3.5 mr-2 text-emerald-500" />Issue Date
+                            <span className="text-gray-500 flex items-center">
+                              <Calendar className="h-3.5 w-3.5 mr-1.5" />Issue Date
                             </span>
-                            <span className="text-slate-700 font-medium">{formatDate(invoice.issue_date)}</span>
+                            <span className="text-inherit">{formatDate(invoice.issue_date)}</span>
                           </div>
 
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-500 flex items-center font-medium">
-                              <Clock className="h-3.5 w-3.5 mr-2 text-emerald-500" />Payment Status
+                            <span className="text-gray-500 flex items-center">
+                              <Clock className="h-3.5 w-3.5 mr-1.5" />Payment Status
                             </span>
-                            <Badge className={`text-xs ${invoice.payment_status === 'Paid' ? 'bg-green-100 text-green-700 border-green-200' : invoice.payment_status === 'Partial' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
-                              {invoice.payment_status}
-                            </Badge>
+                            <span>{invoice.payment_status}</span>
                           </div>
 
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-500 flex items-center font-medium">
-                              <Home className="h-3.5 w-3.5 mr-2 text-emerald-500" />Customer
+                            <span className="text-gray-500 flex items-center">
+                              <Home className="h-3.5 w-3.5 mr-1.5" />Customer
                             </span>
-                            <span className="font-semibold truncate max-w-[150px] text-slate-800">
+                            <span className="font-medium truncate max-w-[150px]">
                               {invoice.customer_name}
                             </span>
                           </div>
                         </div>
 
-                        <div className="border-t border-emerald-100 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 flex justify-between items-center">
-                          <span className="text-lg font-bold text-emerald-700">
+                        <div className="border-t p-2 bg-gray-50 flex justify-between items-center">
+                          <span className="text-sm font-semibold text-blue-700">
                             {formatMoney(invoice.total)}
                           </span>
                           <DropdownMenu>
@@ -479,9 +421,9 @@ export default function Invoices() {
                         </div>
                       </div>
                     );
-              })}
-            </div>
-          ) : (
+                  })}
+                </div>
+              ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -542,8 +484,10 @@ export default function Invoices() {
                   </TableBody>
                 </Table>
               )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <FloatingActionButton onClick={() => navigate("/invoices/create")} />
 
