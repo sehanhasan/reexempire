@@ -45,7 +45,7 @@ export default function AddCustomer() {
         }
       />
       
-      <div className="mt-8">
+      <div className="mt-2">
         <AddCustomerForm />
       </div>
     </div>
