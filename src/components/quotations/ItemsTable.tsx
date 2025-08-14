@@ -1,289 +1,133 @@
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus } from "lucide-react";
-import { QuotationItem, InvoiceItem } from "./types";
-import { CategoryItemSelector, SelectedItem } from "./CategoryItemSelector";
-import { EditableCategoryTitle } from "./EditableCategoryTitle";
-
+import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { QuotationItem } from "./types";
 interface ItemsTableProps {
-  items: (QuotationItem | InvoiceItem)[];
-  handleItemChange: (id: number, field: keyof (QuotationItem | InvoiceItem), value: any) => void;
+  items: QuotationItem[];
+  handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
-  showDescription: boolean;
+  showDescription?: boolean;
 }
+export function ItemsTable({
+  items,
+  handleItemChange,
+  removeItem,
+  showDescription = true
+}: ItemsTableProps) {
+  const isMobile = useIsMobile();
 
-export const ItemsTable = ({ items, handleItemChange, removeItem, showDescription }: ItemsTableProps) => {
-  const [editingCategory, setEditingCategory] = useState<string | null>(null);
-  const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [currentItemId, setCurrentItemId] = useState<number | null>(null);
-  
-  const addItem = () => {
-    const newId = Math.max(...items.map(item => item.id), 0) + 1;
-    const newItem = {
-      id: newId,
-      description: "",
-      category: "Other Items",
-      quantity: 1,
-      unit: "Unit",
-      unitPrice: 0,
-      amount: 0
-    };
-    // We can't add items from this component, this should be handled by parent
-    console.log("Add item should be handled by parent component");
+  // Format currency without RM symbol for items table
+  const formatAmount = (amount: number) => {
+    return amount.toFixed(2);
   };
 
-  const updateCategoryTitle = (oldCategory: string, newCategory: string) => {
+  // Group items by category
+  const groupItemsByCategory = () => {
+    const groupedItems: {
+      [key: string]: QuotationItem[];
+    } = {};
+    const orderedCategories: string[] = [];
     items.forEach(item => {
-      if (item.category === oldCategory) {
-        handleItemChange(item.id, 'category', newCategory);
+      const category = item.category && item.category.trim() || 'Other Items';
+      if (!groupedItems[category]) {
+        groupedItems[category] = [];
+        orderedCategories.push(category);
       }
+      groupedItems[category].push(item);
     });
-    setEditingCategory(null);
+    return {
+      groupedItems,
+      orderedCategories
+    };
   };
-
-  const handleSelectFromCategories = (itemId: number) => {
-    setCurrentItemId(itemId);
-    setShowCategorySelector(true);
-  };
-
-  const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
-    if (selectedItems.length > 0 && currentItemId) {
-      const selectedItem = selectedItems[0];
-      handleItemChange(currentItemId, 'description', selectedItem.description);
-      handleItemChange(currentItemId, 'unitPrice', selectedItem.price);
-      handleItemChange(currentItemId, 'unit', selectedItem.unit);
-    }
-    setShowCategorySelector(false);
-    setCurrentItemId(null);
-  };
-
-  const groupedItems = items.reduce((acc, item) => {
-    const category = item.category || "Other Items";
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(item);
-    return acc;
-  }, {} as Record<string, (QuotationItem | InvoiceItem)[]>);
-
-  return (
-    <>
-      <div className="space-y-6">
-        {Object.entries(groupedItems).map(([category, categoryItems]) => (
-          <div key={category} className="space-y-2">
-            <EditableCategoryTitle
-              title={category}
-              onTitleChange={(newTitle) => updateCategoryTitle(category, newTitle)}
-            />
-            
-            <div className="border rounded-lg overflow-hidden">
-              <div className="hidden md:block">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                        Qty
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                        Unit
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                        Unit Price
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                        Amount
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {categoryItems.map((item) => (
-                      <tr key={item.id}>
-                        <td className="px-3 py-2">
-                          <div className="flex gap-2">
-                            <Input
-                              value={item.description}
-                              onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                              placeholder="Enter description..."
-                              className="flex-1"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSelectFromCategories(item.id)}
-                            >
-                              Select
-                            </Button>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 1)}
-                            min="0"
-                            step="0.01"
-                            className="w-full"
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <Select
-                            value={item.unit}
-                            onValueChange={(value) => handleItemChange(item.id, 'unit', value)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Unit">Unit</SelectItem>
-                              <SelectItem value="Hours">Hours</SelectItem>
-                              <SelectItem value="Days">Days</SelectItem>
-                              <SelectItem value="Sq Ft">Sq Ft</SelectItem>
-                              <SelectItem value="Sq M">Sq M</SelectItem>
-                              <SelectItem value="Linear Ft">Linear Ft</SelectItem>
-                              <SelectItem value="Linear M">Linear M</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-3 py-2">
-                          <Input
-                            type="number"
-                            value={item.unitPrice}
-                            onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            min="0"
-                            step="0.01"
-                            className="w-full"
-                          />
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="text-right font-medium">
-                            RM {item.amount?.toFixed(2) || '0.00'}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeItem(item.id)}
-                            disabled={items.length === 1}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile view */}
-              <div className="md:hidden space-y-4 p-4">
-                {categoryItems.map((item) => (
-                  <div key={item.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex gap-2">
-                      <Input
-                        value={item.description}
-                        onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                        placeholder="Enter description..."
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSelectFromCategories(item.id)}
-                      >
-                        Select
-                      </Button>
+  const {
+    groupedItems,
+    orderedCategories
+  } = groupItemsByCategory();
+  return <div className="w-full overflow-auto">
+      {isMobile ? <div className="space-y-5">
+          {orderedCategories.map(category => <div key={category} className="space-y-3">
+              <div className="font-medium text-base text-blue-600">{category}</div>
+              {groupedItems[category].map((item, index) => <div key={item.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white">
+                  <div className="absolute top-2 right-2">
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3 pb-1">
+                    <div className="mb-1 font-medium text-sm text-slate-500">Item #{index + 1}</div>
+                    
+                    <div className="space-y-2">
+                      <label className="block text-xs mb-1 text-slate-600 font-medium">Description</label>
+                      <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-xs text-gray-500">Quantity</label>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 1)}
-                          min="0"
-                          step="0.01"
-                        />
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-2">
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                        <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Unit</label>
-                        <Select
-                          value={item.unit}
-                          onValueChange={(value) => handleItemChange(item.id, 'unit', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Unit">Unit</SelectItem>
-                            <SelectItem value="Hours">Hours</SelectItem>
-                            <SelectItem value="Days">Days</SelectItem>
-                            <SelectItem value="Sq Ft">Sq Ft</SelectItem>
-                            <SelectItem value="Sq M">Sq M</SelectItem>
-                            <SelectItem value="Linear Ft">Linear Ft</SelectItem>
-                            <SelectItem value="Linear M">Linear M</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      
+                      <div className="space-y-2">
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
+                        <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
                       </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-xs text-gray-500">Unit Price</label>
-                        <Input
-                          type="number"
-                          value={item.unitPrice}
-                          onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Amount</label>
-                        <div className="text-right font-medium bg-gray-50 p-2 rounded">
-                          RM {item.amount?.toFixed(2) || '0.00'}
+                      
+                      <div className="space-y-2">
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
+                        <div className="p-2 h-10 text-right text-gray-800">
+                          {formatAmount(item.amount)}
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(item.id)}
-                        disabled={items.length === 1}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <CategoryItemSelector
-        open={showCategorySelector}
-        onOpenChange={setShowCategorySelector}
-        onSelectItems={handleItemsFromCategories}
-      />
-    </>
-  );
-};
+                </div>)}
+            </div>)}
+        </div> : <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="py-2 px-1 text-left font-medium text-sm w-6">#</th>
+              <th className="py-2 px-2 text-left font-medium text-sm">Description</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-20">Qty</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-32">Unit Price (RM)</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-32">Amount (RM)</th>
+              <th className="py-2 px-1 w-12"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderedCategories.map(category => <React.Fragment key={category}>
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 px-2 font-small text-blue-600 border-t">
+                    {category}
+                  </td>
+                </tr>
+                {groupedItems[category].map((item, index) => <tr key={item.id} className="border-b last:border-b-0">
+                    <td className="py-3 px-1 align-top">
+                      {index + 1}
+                    </td>
+                    <td className="py-3 px-2">
+                      <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
+                    </td>
+                    <td className="py-3 px-2">
+                      <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-right h-10" />
+                    </td>
+                    <td className="py-3 px-2">
+                      <Input type="number" min="0" step="0.01" className="text-right h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                    </td>
+                    <td className="py-3 px-2 text-right text-gray-600">
+                      {formatAmount(item.amount)}
+                    </td>
+                    <td className="py-3 px-1">
+                      <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>)}
+              </React.Fragment>)}
+          </tbody>
+        </table>}
+    </div>;
+}

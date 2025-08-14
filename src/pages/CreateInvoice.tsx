@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -74,26 +73,6 @@ export default function CreateInvoice() {
       setDepositAmount(newDepositAmount);
     }
   }, [items, depositPercentage, isDepositInvoice]);
-
-  // Additional effect to handle item quantity changes specifically
-  useEffect(() => {
-    const updatedItems = items.map(item => {
-      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-      return {
-        ...item,
-        amount: qty * item.unitPrice
-      };
-    });
-    
-    // Only update if amounts have actually changed
-    const hasAmountChanges = updatedItems.some((item, index) => 
-      item.amount !== items[index].amount
-    );
-    
-    if (hasAmountChanges) {
-      setItems(updatedItems);
-    }
-  }, [items.map(item => `${item.quantity}-${item.unitPrice}`).join(',')]);
 
   const generateReferenceNumber = async () => {
     const currentYear = new Date().getFullYear();
