@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -83,7 +82,7 @@ export default function ViewQuotation() {
   }, [quotation]);
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `quotation-${quotation?.reference_number}`,
     onAfterPrint: () => {
       toast.success('Quotation PDF generated successfully!');

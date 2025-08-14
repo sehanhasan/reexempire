@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,7 +42,7 @@ export default function ViewInvoice() {
   }, []);
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `invoice-${invoice?.reference_number}`,
     onAfterPrint: () => {
       toast({
