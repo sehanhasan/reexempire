@@ -168,12 +168,14 @@ export default function CreateQuotation() {
         try {
           const quotationViewUrl = `${window.location.origin}/quotations/view/${createdQuotation.id}`;
           
-          await quotationService.generateWhatsAppShareUrl(
+          const whatsappUrl = quotationService.generateWhatsAppShareUrl(
             createdQuotation.id,
             documentNumber,
             customer?.name || '',
             quotationViewUrl
           );
+          
+          window.location.href = whatsappUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({

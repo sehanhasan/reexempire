@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { shareInvoice } from "@/utils/mobileShare";
 
 interface ExtendedQuotation {
   id: string;
@@ -325,7 +324,18 @@ export default function CreateInvoice() {
         
         // Only try WhatsApp after successful creation
         try {
-          await shareInvoice(createdInvoice.id, documentNumber, customer?.name || 'Customer');
+          const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
+          
+          const message = `Dear ${customer?.name},\n\n` +
+            `Please find your invoice ${documentNumber} for review at the link below: ` +
+            `${invoiceViewUrl}\n\n` +
+            `You can review the invoice details and make payment.\n\n` +
+            `If you have any questions, please don't hesitate to contact us.\n\n` +
+            `Thank you,\nReex Empire Sdn Bhd`;
+          
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+          
+          window.location.href = whatsappUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({

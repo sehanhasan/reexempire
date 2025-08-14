@@ -235,7 +235,8 @@ export default function EditInvoice() {
         // Use window.location.href for better WebView/APK compatibility
         try {
           const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
-          await invoiceService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', invoiceViewUrl);
+          const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', invoiceViewUrl);
+          window.location.href = whatsappUrl;
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -319,7 +320,8 @@ export default function EditInvoice() {
           message = `Dear ${customer.name},\n\nPlease find Invoice ${invoiceData.reference_number} for review:\n\n${invoiceViewUrl}\n\nIf you have any questions, please contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
       }
       
-      await invoiceService.generateWhatsAppShareUrl(id!, invoiceData!.reference_number, customer?.name || '', `${window.location.origin}/invoices/view/${id}`);
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.location.href = whatsappUrl;
     } catch (error) {
       console.error("Error sharing invoice:", error);
       toast({
