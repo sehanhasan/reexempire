@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -26,16 +25,16 @@ import {
 } from "@/components/ui/dialog";
 
 import { staffService } from "@/services";
-import { StaffMember } from "@/types/database";
+import { Staff } from "@/types/database";
 
 export default function Staff() {
   const navigate = useNavigate();
-  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [staffToDelete, setStaffToDelete] = useState<StaffMember | null>(null);
+  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
   const fetchStaff = async () => {
@@ -76,7 +75,7 @@ export default function Staff() {
     };
   }, [searchTerm]);
 
-  const handleView = (staffMember: StaffMember) => {
+  const handleView = (staffMember: Staff) => {
     setSelectedStaff(null);
     setTimeout(() => {
       setSelectedStaff(staffMember);
@@ -84,11 +83,11 @@ export default function Staff() {
     }, 10);
   };
 
-  const handleEdit = (staffMember: StaffMember) => {
+  const handleEdit = (staffMember: Staff) => {
     navigate(`/staff/edit/${staffMember.id}`);
   };
 
-  const handleDelete = async (staffMember: StaffMember) => {
+  const handleDelete = async (staffMember: Staff) => {
     try {
       await staffService.delete(staffMember.id);
       setStaff(staff.filter(s => s.id !== staffMember.id));
@@ -115,8 +114,8 @@ export default function Staff() {
   const columns = [
     {
       header: "Name",
-      accessorKey: "name" as keyof StaffMember,
-      cell: ({ row }: { row: { original: StaffMember } }) => (
+      accessorKey: "name" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
         <div 
           className="font-medium text-blue-600 cursor-pointer"
           onClick={() => handleView(row.original)}
@@ -127,15 +126,15 @@ export default function Staff() {
     },
     {
       header: "Position",
-      accessorKey: "position" as keyof StaffMember,
-      cell: ({ row }: { row: { original: StaffMember } }) => (
+      accessorKey: "position" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
         <div className="font-medium">{row.original.position || 'N/A'}</div>
       ),
     },
     {
       header: "Phone",
-      accessorKey: "phone" as keyof StaffMember,
-      cell: ({ row }: { row: { original: StaffMember } }) => (
+      accessorKey: "phone" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
         <div className="flex items-center">
           <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
           {row.original.phone ? (
@@ -153,8 +152,8 @@ export default function Staff() {
     },
     {
       header: "Email",
-      accessorKey: "email" as keyof StaffMember,
-      cell: ({ row }: { row: { original: StaffMember } }) => (
+      accessorKey: "email" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
         <div className="flex items-center">
           <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
           {row.original.email ? (

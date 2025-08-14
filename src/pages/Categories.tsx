@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -125,7 +124,7 @@ export default function Categories() {
     },
     {
       header: "Actions",
-      id: "actions",
+      accessorKey: "id" as keyof Category,
       cell: ({ row }: { row: { original: Category } }) => (
         <div className="flex items-center gap-2">
           <Button
