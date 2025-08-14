@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [revenueData, setRevenueData] = useState([]);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("activity");
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -414,16 +414,6 @@ export default function Dashboard() {
         <div className="mb-4">
           <div className="flex border-b border-slate-200">
             <button 
-              onClick={() => setActiveTab("overview")} 
-              className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${
-                activeTab === "overview" 
-                  ? "border-blue-500 text-blue-600" 
-                  : "border-transparent text-slate-600 hover:text-slate-800"
-              }`}
-            >
-              Overview
-            </button>
-            <button 
               onClick={() => setActiveTab("activity")} 
               className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${
                 activeTab === "activity" 
@@ -433,13 +423,23 @@ export default function Dashboard() {
             >
               Activity
             </button>
+            <button 
+              onClick={() => setActiveTab("overview")} 
+              className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${
+                activeTab === "overview" 
+                  ? "border-blue-500 text-blue-600" 
+                  : "border-transparent text-slate-600 hover:text-slate-800"
+              }`}
+            >
+              Overview
+            </button>
           </div>
         </div>
 
         {/* Tab Content */}
         <div className="animate-fade-in">
-          {activeTab === "overview" && renderOverviewTab()}
           {activeTab === "activity" && renderActivityTab()}
+          {activeTab === "overview" && renderOverviewTab()}
         </div>
       </div>
 
