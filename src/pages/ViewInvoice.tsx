@@ -100,40 +100,13 @@ export default function ViewInvoice() {
     if (!invoice) return;
     try {
       setIsDownloading(true);
-      const element = document.querySelector(".invoice-content");
-      if (!element) {
-        toast({
-          title: "Error",
-          description: "Could not find invoice content to download",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const options = {
-        margin: [5, 5, 5, 5],
-        filename: `invoice-${invoice.reference_number}.pdf`,
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: {
-          scale: 1.5,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#ffffff",
-          scrollX: 0,
-          scrollY: 0,
-          height: element.scrollHeight,
-          width: element.scrollWidth,
-        },
-        jsPDF: {
-          unit: "mm",
-          format: "a4",
-          orientation: "portrait",
-          compress: true,
-        },
-        pagebreak: { mode: "avoid-all" },
-      };
-
-      await html2pdf().set(options).from(element).save();
+      
+      // Use the improved PDF generation function
+      const { captureViewAsPDF } = await import('@/utils/htmlToPdf');
+      await captureViewAsPDF('quotation-view', `invoice-${invoice.reference_number}.pdf`, {
+        backgroundColor: '#ffffff',
+        scale: 2.5
+      });
 
       toast({
         title: "Success",

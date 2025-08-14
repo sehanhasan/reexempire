@@ -13,6 +13,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import { shareQuotation } from '@/utils/mobileShare';
 import html2pdf from 'html2pdf.js';
 import '@/styles/zoom.css';
+import { captureViewAsPDF } from '@/utils/htmlToPdf';
 
 export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
@@ -123,36 +124,13 @@ export default function ViewQuotation() {
 
     try {
       setIsDownloading(true);
-      const element = document.querySelector('.quotation-content');
-      if (!element) {
-        toast.error('Could not find quotation content to download');
-        return;
-      }
-
-      const options = {
-        margin: [5, 5, 5, 5],
-        filename: `quotation-${quotation.reference_number}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: {
-          scale: 1.5,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          scrollX: 0,
-          scrollY: 0,
-          height: element.scrollHeight,
-          width: element.scrollWidth,
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait',
-          compress: true,
-        },
-        pagebreak: { mode: 'avoid-all' },
-      };
-
-      await html2pdf().set(options).from(element).save();
+      
+      // Use the improved PDF generation function
+      await captureViewAsPDF('quotation-view', `quotation-${quotation.reference_number}.pdf`, {
+        backgroundColor: '#ffffff',
+        scale: 2.5
+      });
+      
       toast.success('Quotation PDF downloaded successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);

@@ -18,30 +18,18 @@ export const captureViewAsPDF = async (
       throw new Error(`Element with id "${elementId}" not found`);
     }
     
-    // Hide print-hidden elements
+    // Hide print-hidden elements temporarily
     const printHiddenElements = element.querySelectorAll('.print\\:hidden');
-    printHiddenElements.forEach(el => {
-      (el as HTMLElement).style.display = 'none';
-    });
-    
-    // Force white background and remove any background colors
-    const originalStyles = new Map<HTMLElement, string>();
-    const allElements = element.querySelectorAll('*');
-    allElements.forEach(el => {
+    const originalDisplays: string[] = [];
+    printHiddenElements.forEach((el, index) => {
       const htmlEl = el as HTMLElement;
-      if (htmlEl.style.backgroundColor) {
-        originalStyles.set(htmlEl, htmlEl.style.backgroundColor);
-        htmlEl.style.backgroundColor = 'white';
-      }
+      originalDisplays[index] = htmlEl.style.display;
+      htmlEl.style.display = 'none';
     });
     
-    // Set the main element background to white
-    const originalBg = element.style.backgroundColor;
-    element.style.backgroundColor = 'white';
-    
-    // Default options for high quality capture
+    // Enhanced options for better quality
     const defaultOptions = {
-      scale: 2,
+      scale: 2.5, // Higher scale for better quality
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
@@ -50,30 +38,34 @@ export const captureViewAsPDF = async (
       scrollY: 0,
       width: element.scrollWidth,
       height: element.scrollHeight,
+      x: 0,
+      y: 0,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
       ...options
     };
 
-    // Capture the element as canvas
+    // Capture the element as canvas with high quality
     const canvas = await html2canvas(element, defaultOptions);
     
-    // Restore original styles
-    element.style.backgroundColor = originalBg;
-    originalStyles.forEach((originalBg, el) => {
-      el.style.backgroundColor = originalBg;
-    });
-    
     // Restore print-hidden elements
-    printHiddenElements.forEach(el => {
-      (el as HTMLElement).style.display = '';
+    printHiddenElements.forEach((el, index) => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.display = originalDisplays[index] || '';
     });
     
     // Create PDF with A4 dimensions
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
     
     // A4 dimensions in mm
     const pdfWidth = 210;
     const pdfHeight = 297;
-    const margin = 15; // 15mm margin on all sides
+    const margin = 10; // 10mm margin on all sides
     const contentWidth = pdfWidth - (2 * margin);
     const contentHeight = pdfHeight - (2 * margin);
     
@@ -82,66 +74,22 @@ export const captureViewAsPDF = async (
     const imgHeight = canvas.height;
     const ratio = imgWidth / imgHeight;
     
-    // Calculate dimensions to fit within content area
+    // Calculate dimensions to fit within A4 page with margins
     let width = contentWidth;
     let height = contentWidth / ratio;
     
-    // If height exceeds one page, handle multi-page
+    // If content is too tall, scale it down to fit on one page
     if (height > contentHeight) {
-      // Calculate how many pages we need
-      const pagesNeeded = Math.ceil(height / contentHeight);
-      const pageHeight = contentHeight;
-      
-      for (let i = 0; i < pagesNeeded; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
-        // Calculate the source region for this page
-        const sourceY = (i * pageHeight * imgHeight) / height;
-        const sourceHeight = Math.min((pageHeight * imgHeight) / height, imgHeight - sourceY);
-        
-        // Create a temporary canvas for this page section
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = imgWidth;
-        pageCanvas.height = sourceHeight;
-        
-        const pageCtx = pageCanvas.getContext('2d');
-        if (pageCtx) {
-          // Fill with white background
-          pageCtx.fillStyle = '#ffffff';
-          pageCtx.fillRect(0, 0, imgWidth, sourceHeight);
-          
-          const img = new Image();
-          img.onload = () => {
-            pageCtx.drawImage(img, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
-            
-            const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
-            const pageRatio = imgWidth / sourceHeight;
-            
-            let pageImgWidth = contentWidth;
-            let pageImgHeight = contentWidth / pageRatio;
-            
-            if (pageImgHeight > pageHeight) {
-              pageImgHeight = pageHeight;
-              pageImgWidth = pageHeight * pageRatio;
-            }
-            
-            const pageX = margin + (contentWidth - pageImgWidth) / 2;
-            const pageY = margin;
-            
-            pdf.addImage(pageImgData, 'PNG', pageX, pageY, pageImgWidth, pageImgHeight, undefined, 'FAST');
-          };
-          img.src = imgData;
-        }
-      }
-    } else {
-      // Single page - center the content
-      const x = margin + (contentWidth - width) / 2;
-      const y = margin + (contentHeight - height) / 2;
-      
-      pdf.addImage(imgData, 'PNG', x, y, width, height, undefined, 'FAST');
+      height = contentHeight;
+      width = contentHeight * ratio;
     }
+    
+    // Center the content on the page
+    const x = margin + (contentWidth - width) / 2;
+    const y = margin + (contentHeight - height) / 2;
+    
+    // Add the image to PDF, ensuring it fits on one page
+    pdf.addImage(imgData, 'PNG', x, y, width, height, undefined, 'FAST');
     
     // Download the PDF
     pdf.save(filename);
@@ -158,6 +106,15 @@ export const generateQuotationPDF = async (quotation: any, customer: any, items:
   const filename = `quotation-${quotation.reference_number}.pdf`;
   return captureViewAsPDF('quotation-view', filename, {
     backgroundColor: '#ffffff',
-    scale: 2
+    scale: 2.5
+  });
+};
+
+// Export function for invoices
+export const generateInvoicePDF = async (invoice: any, customer: any, items: any[]) => {
+  const filename = `invoice-${invoice.reference_number}.pdf`;
+  return captureViewAsPDF('quotation-view', filename, {
+    backgroundColor: '#ffffff',
+    scale: 2.5
   });
 };
