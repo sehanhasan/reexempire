@@ -184,7 +184,7 @@ export function CategoryItemSelector({
                                       </div>
                                       
                                       <div className="flex items-center space-x-4">
-                                        {isItemSelected(subcategory.id) && <div className="flex items-center space-x-2">
+                                        {isItemSelected(subcategory.id) && <div className="flex items-center">
                                             <Button type="button" variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => {
                                 const selectedItem = selectedItems.find(item => item.id === subcategory.id);
                                 updateItemQuantity(subcategory.id, Math.max(1, (selectedItem?.quantity || 1) - 1));
