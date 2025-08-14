@@ -12,6 +12,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -29,7 +30,8 @@ export default function Dashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [revenueData, setRevenueData] = useState([]);
-  const [activeTab, setActiveTab] = useState("activity");
+  const [activeTab, setActiveTab] = useState("upcoming");
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -87,18 +89,21 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, []);
+
   const formatMoney = amount => {
     return `RM ${amount.toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
+
   const formatTime = time => {
     if (!time) return "";
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours, 10);
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
+
   const generateRevenueByMonth = paidInvoices => {
     const data = [];
     for (let i = 5; i >= 0; i--) {
@@ -116,19 +121,24 @@ export default function Dashboard() {
     }
     return data;
   };
+
   const navigateToQuotation = id => {
     navigate(`/quotations/edit/${id}`);
   };
+
   const navigateToInvoice = id => {
     navigate(`/invoices/edit/${id}`);
   };
+
   const showAppointmentDetails = appointment => {
     setSelectedAppointment(appointment);
     setIsAppointmentDetailOpen(true);
   };
+
   const navigateToEditAppointment = id => {
     navigate(`/schedule/edit/${id}`);
   };
+
   const renderOverviewTab = () => <div className="space-y-4">
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
@@ -197,25 +207,17 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Revenue Chart */}
-      <Card className="border-0 shadow-sm bg-gradient-to-r from-slate-50 to-slate-100">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold text-slate-800">Revenue Trend</CardTitle>
-              <CardDescription className="text-sm text-slate-600">Last 6 months performance</CardDescription>
-            </div>
-            <div className="p-2 bg-slate-600 rounded-lg">
-              <Activity className="h-4 w-4 text-white" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <Chart chartData={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={200} title="" />
-        </CardContent>
-      </Card>
+      {/* Revenue Chart - Removed card background for more space */}
+      <div className="px-2 py-4">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-slate-800">Revenue Trend</h3>
+          <p className="text-sm text-slate-600">Last 6 months performance</p>
+        </div>
+        <Chart chartData={revenueData} categories={["revenue"]} index="month" colors={["#3b82f6"]} valueFormatter={value => `RM ${value.toLocaleString()}`} height={250} title="" />
+      </div>
     </div>;
-  const renderActivityTab = () => <div className="space-y-4">
+
+  const renderUpcomingTab = () => <div className="space-y-4">
       {/* Upcoming Appointments */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -306,7 +308,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-sm text-slate-800">{formatMoney(quotation.total)}</p>
-                        <Badge className={quotation.status === 'Approved' ? "bg-green-100 text-green-700 hover:bg-green-100" : quotation.status === 'Sent' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} >
+                        <Badge className={quotation.status === 'Approved' || quotation.status === 'Accepted' ? "bg-green-100 text-green-700 hover:bg-green-100" : quotation.status === 'Sent' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} >
                           {quotation.status}
                         </Badge>
                       </div>
@@ -365,29 +367,28 @@ export default function Dashboard() {
         </Card>
       </div>
     </div>;
+
   return <div className="page-container min-h-screen bg-slate-50">
       <div className="p-2">
 
-        {/* Modern Tab Navigation */}
+        {/* Updated Tab Navigation to match the reference image */}
         <div className="mb-4">
-          <div className="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200">
-            <button onClick={() => setActiveTab("activity")} className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab === "activity" ? "bg-blue-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"}`}>
-              Activity
+          <div className="flex border-b border-slate-200">
+            <button onClick={() => setActiveTab("upcoming")} className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 ${activeTab === "upcoming" ? "border-blue-500 text-blue-600" : "border-transparent text-slate-600 hover:text-slate-800"}`}>
+              Upcoming
             </button>
-            <button onClick={() => setActiveTab("overview")} className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab === "overview" ? "bg-blue-500 text-white shadow-sm" : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"}`}>
-              Overview
-            </button>
+            
           </div>
         </div>
 
         {/* Tab Content */}
         <div className="animate-fade-in">
-          {activeTab === "activity" && renderActivityTab()}
-          {activeTab === "overview" && renderOverviewTab()}
+          {activeTab === "upcoming" && renderUpcomingTab()}
+          
         </div>
       </div>
 
-      {/* Keep existing AppointmentDetailsDialog */}
+      
       <AppointmentDetailsDialog open={isAppointmentDetailOpen} onClose={() => setIsAppointmentDetailOpen(false)} appointment={selectedAppointment} customer={selectedAppointment ? customersMap[selectedAppointment.customer_id] : null} assignedStaff={null} onMarkAsCompleted={async appointment => {
       try {
         await appointmentService.update(appointment.id, {

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Quotation, QuotationItem } from "@/types/database";
 
@@ -38,16 +37,14 @@ export const quotationService = {
 
   async generateUniqueReferenceNumber(): Promise<string> {
     const now = new Date();
-    const year = now.getFullYear().toString().slice(-2);
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
+    const year = now.getFullYear();
     
     let counter = 1;
     let referenceNumber: string;
     
     do {
-      const sequence = counter.toString().padStart(3, '0');
-      referenceNumber = `QUO-${year}${month}${day}-${sequence}`;
+      const sequence = counter.toString().padStart(4, '0');
+      referenceNumber = `QT-${year}-${sequence}`;
       
       // Check if this reference number already exists
       const { data } = await supabase
@@ -62,9 +59,9 @@ export const quotationService = {
       }
       
       counter++;
-    } while (counter <= 999); // Prevent infinite loop
+    } while (counter <= 9999); // Prevent infinite loop
     
-    if (counter > 999) {
+    if (counter > 9999) {
       throw new Error("Unable to generate unique reference number");
     }
     
