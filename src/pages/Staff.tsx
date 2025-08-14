@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { staffService } from "@/services";
-import { Staff } from "@/types/database";
+import type { Staff } from "@/types/database";
 
 export default function Staff() {
   const navigate = useNavigate();
