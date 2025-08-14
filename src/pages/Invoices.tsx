@@ -306,25 +306,28 @@ export default function Invoices() {
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="sent">Sent</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="partial">Partial</SelectItem>
                   <SelectItem value="overdue">Overdue</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="w-full sm:w-60">
+            {/* <div className="w-full sm:w-60">
               <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Filter by payment status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Payment Statuses</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
                   <SelectItem value="partial">Partial</SelectItem>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </div> */}
 
           {loading ? (
             <div className="py-8 text-center bg-slate-100">
