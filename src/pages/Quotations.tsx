@@ -17,6 +17,7 @@ import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number?: string;
@@ -187,42 +188,42 @@ export default function Quotations() {
       });
       return;
     }
+
     try {
-      const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
-      const itemsForPDF = quotationItems.map(item => ({
-        id: Number(item.id),
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unit_price,
-        amount: item.amount,
-        category: item.category || '',
-        unit: item.unit || ''
-      }));
-      const pdf = generateQuotationPDF({
-        documentNumber: quotation.reference_number,
-        documentDate: quotation.issue_date,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || "",
-        expiryDate: quotation.expiry_date,
-        validUntil: quotation.expiry_date,
-        notes: quotation.notes || "",
-        items: itemsForPDF,
-        subject: quotation.subject || "",
-        customerAddress: customer.address || "",
-        customerContact: customer.phone || "",
-        customerEmail: customer.email || "",
-        depositInfo: {
-          requiresDeposit: quotation.requires_deposit || false,
-          depositAmount: quotation.deposit_amount || 0,
-          depositPercentage: quotation.deposit_percentage || 0
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your PDF...",
+      });
+
+      const publicUrl = `${window.location.origin}/quotations/view/${quotation.id}`;
+      
+      const { data, error } = await supabase.functions.invoke('generate-pdf', {
+        body: {
+          publicUrl,
+          documentId: quotation.id,
+          documentType: 'quotation'
         }
       });
-      downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
+
+      if (error) throw error;
+
+      // Download the PDF
+      const link = document.createElement('a');
+      link.href = data.pdfUrl;
+      link.download = `quotation-${quotation.reference_number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "PDF Downloaded",
+        description: "Quotation PDF has been downloaded successfully.",
+      });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
         variant: "destructive"
       });
     }
@@ -354,13 +355,13 @@ export default function Quotations() {
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
                               </DropdownMenuItem>
-                              {/* <DropdownMenuItem onClick={e => {
+                              <DropdownMenuItem onClick={e => {
                         e.stopPropagation();
                         handleDownloadPDF(quotation);
                       }}>
                                 <Download className="mr-2 h-4 w-4" />
                                 Download PDF
-                              </DropdownMenuItem> */}
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={e => {
                         e.stopPropagation();
                         handleConvertToInvoice(quotation);
@@ -428,10 +429,10 @@ export default function Quotations() {
                                   <Send className="mr-2 h-4 w-4" />
                                   Send via WhatsApp
                                 </DropdownMenuItem>
-                                {/* <DropdownMenuItem onClick={() => handleDownloadPDF(quotation)}>
+                                <DropdownMenuItem onClick={() => handleDownloadPDF(quotation)}>
                                   <Download className="mr-2 h-4 w-4" />
                                   Download PDF
-                                </DropdownMenuItem> */}
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
                                   <FileText className="mr-2 h-4 w-4" />
                                   Convert to Invoice

@@ -17,6 +17,7 @@ import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InvoiceWithCustomer extends Invoice {
   customer_name: string;
@@ -212,42 +213,40 @@ export default function Invoices() {
     }
 
     try {
-      const invoiceItems = await invoiceService.getItemsByInvoiceId(invoice.id);
-      const itemsForPDF = invoiceItems.map(item => ({
-        id: Number(item.id),
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unit_price,
-        amount: item.amount,
-        category: item.category || '',
-        unit: item.unit || ''
-      }));
-
-      const pdf = generateInvoicePDF({
-        documentNumber: invoice.reference_number,
-        documentDate: invoice.issue_date,
-        dueDate: invoice.due_date,
-        paymentMethod: 'bank_transfer',
-        isDepositInvoice: invoice.is_deposit_invoice,
-        depositAmount: invoice.deposit_amount,
-        depositPercentage: invoice.deposit_percentage,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || "",
-        items: itemsForPDF,
-        subject: invoice.subject || "",
-        customerAddress: customer.address || "",
-        customerContact: customer.phone || "",
-        customerEmail: customer.email || "",
-        notes: invoice.notes || "",
-        expiryDate: invoice.due_date,
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your PDF...",
       });
 
-      downloadPDF(pdf, `Invoice_${invoice.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
+      const publicUrl = `${window.location.origin}/invoices/view/${invoice.id}`;
+      
+      const { data, error } = await supabase.functions.invoke('generate-pdf', {
+        body: {
+          publicUrl,
+          documentId: invoice.id,
+          documentType: 'invoice'
+        }
+      });
+
+      if (error) throw error;
+
+      // Download the PDF
+      const link = document.createElement('a');
+      link.href = data.pdfUrl;
+      link.download = `invoice-${invoice.reference_number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "PDF Downloaded",
+        description: "Invoice PDF has been downloaded successfully.",
+      });
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
         variant: "destructive"
       });
     }
@@ -408,6 +407,13 @@ export default function Invoices() {
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={e => {
+                                e.stopPropagation();
+                                handleDownloadPDF(invoice);
+                              }}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download PDF
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600" onClick={e => {
                                 e.stopPropagation();
@@ -467,6 +473,10 @@ export default function Invoices() {
                                 <DropdownMenuItem onClick={() => handleSendWhatsapp(invoice)}>
                                   <Send className="mr-2 h-4 w-4" />
                                   Send via WhatsApp
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDownloadPDF(invoice)}>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download PDF
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-red-600" onClick={() => {
