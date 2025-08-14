@@ -104,47 +104,131 @@ const generateWhatsAppUrl = (phoneNumber: string, message: string): string => {
 export const shareQuotation = async (quotationId: string, referenceNumber: string, customerName: string): Promise<void> => {
   const quotationUrl = `${window.location.origin}/quotations/view/${quotationId}`;
   
-  const message = `Quotation #${referenceNumber} for ${customerName}\n\nView: ${quotationUrl}`;
-  
-  // Use iframe-friendly WhatsApp URL
-  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-  
-  // For iframes and mobile apps, open directly
-  if (isMobileApp() || isIframe()) {
-    window.location.href = whatsappUrl;
-    return;
+  try {
+    // Generate PDF instead of sharing the public URL
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const { data, error } = await supabase.functions.invoke('generate-pdf', {
+      body: {
+        publicUrl: quotationUrl,
+        documentId: quotationId,
+        documentType: 'quotation'
+      }
+    });
+
+    if (error) {
+      console.error('PDF generation error:', error);
+      throw new Error('Failed to generate PDF');
+    }
+
+    if (!data.success || !data.pdfUrl) {
+      throw new Error('PDF generation failed');
+    }
+
+    // Create WhatsApp message with PDF link and signature link
+    const message = `Quotation #${referenceNumber} for ${customerName}\n\nPDF: ${data.pdfUrl}\n\nStart Digital Signature: ${quotationUrl}`;
+    
+    // Use iframe-friendly WhatsApp URL
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    
+    // For iframes and mobile apps, open directly
+    if (isMobileApp() || isIframe()) {
+      window.location.href = whatsappUrl;
+      return;
+    }
+
+    // For web, use the share API with PDF URL
+    const shareData: ShareData = {
+      title: `Quotation #${referenceNumber}`,
+      text: `Quotation #${referenceNumber} for ${customerName} - PDF: ${data.pdfUrl}`,
+      url: data.pdfUrl
+    };
+
+    await shareContent(shareData);
+  } catch (error) {
+    console.error('Error generating PDF, falling back to original URL:', error);
+    
+    // Fallback to original sharing method
+    const message = `Quotation #${referenceNumber} for ${customerName}\n\nView: ${quotationUrl}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    
+    if (isMobileApp() || isIframe()) {
+      window.location.href = whatsappUrl;
+      return;
+    }
+
+    const shareData: ShareData = {
+      title: `Quotation #${referenceNumber}`,
+      text: `Quotation #${referenceNumber} for ${customerName}`,
+      url: quotationUrl
+    };
+
+    await shareContent(shareData);
   }
-
-  // For web, use the share API
-  const shareData: ShareData = {
-    title: `Quotation #${referenceNumber}`,
-    text: `Quotation #${referenceNumber} for ${customerName}`,
-    url: quotationUrl
-  };
-
-  await shareContent(shareData);
 };
 
 export const shareInvoice = async (invoiceId: string, referenceNumber: string, customerName: string): Promise<void> => {
   const invoiceUrl = `${window.location.origin}/invoices/view/${invoiceId}`;
   
-  const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
-  
-  // Use iframe-friendly WhatsApp URL
-  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-  
-  // For iframes and mobile apps, open directly
-  if (isMobileApp() || isIframe()) {
-    window.location.href = whatsappUrl;
-    return;
+  try {
+    // Generate PDF instead of sharing the public URL
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const { data, error } = await supabase.functions.invoke('generate-pdf', {
+      body: {
+        publicUrl: invoiceUrl,
+        documentId: invoiceId,
+        documentType: 'invoice'
+      }
+    });
+
+    if (error) {
+      console.error('PDF generation error:', error);
+      throw new Error('Failed to generate PDF');
+    }
+
+    if (!data.success || !data.pdfUrl) {
+      throw new Error('PDF generation failed');
+    }
+
+    // Create WhatsApp message with PDF link and signature link
+    const message = `Invoice #${referenceNumber} for ${customerName}\n\nPDF: ${data.pdfUrl}\n\nStart Digital Signature: ${invoiceUrl}`;
+    
+    // Use iframe-friendly WhatsApp URL
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    
+    // For iframes and mobile apps, open directly
+    if (isMobileApp() || isIframe()) {
+      window.location.href = whatsappUrl;
+      return;
+    }
+
+    // For web, use the share API with PDF URL
+    const shareData: ShareData = {
+      title: `Invoice #${referenceNumber}`,
+      text: `Invoice #${referenceNumber} for ${customerName} - PDF: ${data.pdfUrl}`,
+      url: data.pdfUrl
+    };
+
+    await shareContent(shareData);
+  } catch (error) {
+    console.error('Error generating PDF, falling back to original URL:', error);
+    
+    // Fallback to original sharing method
+    const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    
+    if (isMobileApp() || isIframe()) {
+      window.location.href = whatsappUrl;
+      return;
+    }
+
+    const shareData: ShareData = {
+      title: `Invoice #${referenceNumber}`,
+      text: `Invoice #${referenceNumber} for ${customerName}`,
+      url: invoiceUrl
+    };
+
+    await shareContent(shareData);
   }
-
-  // For web, use the share API
-  const shareData: ShareData = {
-    title: `Invoice #${referenceNumber}`,
-    text: `Invoice #${referenceNumber} for ${customerName}`,
-    url: invoiceUrl
-  };
-
-  await shareContent(shareData);
 };
