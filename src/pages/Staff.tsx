@@ -147,22 +147,18 @@ export default function StaffPage() {
   };
 
   const columns = [
-    <tbody>
-      {table.getRowModel().rows.map((row) => (
-        <tr
-          key={row.id}
-          className="hover:bg-gray-50 cursor-pointer"
+    {
+      header: "Name",
+      accessorKey: "name" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
+        <div 
+          className="font-medium text-blue-600 cursor-pointer"
           onClick={() => handleView(row.original)}
         >
-          {row.getVisibleCells().map((cell) => (
-            <td key={cell.id} className="px-4 py-2">
-              {cell.renderCell()}
-            </td>
-          ))}
-        </tr>
-      ))}
-    </tbody>
-
+          {row.original.name}
+        </div>
+      ),
+    },
     {
       header: "Role",
       accessorKey: "role" as keyof Staff,
@@ -277,6 +273,10 @@ export default function StaffPage() {
           isLoading={isLoading}
           externalSearchTerm={searchTerm}
           onExternalSearchChange={setSearchTerm}
+          getRowProps={(row) => ({
+            onClick: () => handleView(row.original),
+            className: "hover:bg-gray-50 cursor-pointer"
+          })}
         />
       </div>
 
