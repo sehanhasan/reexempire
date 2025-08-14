@@ -39,9 +39,9 @@ export const captureViewAsPDF = async (
     const originalBg = element.style.backgroundColor;
     element.style.backgroundColor = 'white';
     
-    // Default options for high quality capture
+    // Enhanced options for better quality
     const defaultOptions = {
-      scale: 2,
+      scale: 3, // Increased scale for better quality
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
@@ -50,10 +50,13 @@ export const captureViewAsPDF = async (
       scrollY: 0,
       width: element.scrollWidth,
       height: element.scrollHeight,
+      x: 0,
+      y: 0,
+      logging: false,
       ...options
     };
 
-    // Capture the element as canvas
+    // Capture the element as canvas with higher quality
     const canvas = await html2canvas(element, defaultOptions);
     
     // Restore original styles
@@ -67,16 +70,22 @@ export const captureViewAsPDF = async (
       (el as HTMLElement).style.display = '';
     });
     
-    // Create PDF with A4 dimensions
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    // Create PDF with better compression and quality
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
     
     // A4 dimensions in mm
     const pdfWidth = 210;
     const pdfHeight = 297;
-    const margin = 15; // 15mm margin on all sides
+    const margin = 10; // Reduced margin for more content space
     const contentWidth = pdfWidth - (2 * margin);
     const contentHeight = pdfHeight - (2 * margin);
     
+    // Convert canvas to high-quality image
     const imgData = canvas.toDataURL('image/png', 1.0);
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
@@ -86,11 +95,9 @@ export const captureViewAsPDF = async (
     let width = contentWidth;
     let height = contentWidth / ratio;
     
-    // If height exceeds one page, handle multi-page
+    // Handle multi-page content
     if (height > contentHeight) {
-      // Calculate how many pages we need
       const pagesNeeded = Math.ceil(height / contentHeight);
-      const pageHeight = contentHeight;
       
       for (let i = 0; i < pagesNeeded; i++) {
         if (i > 0) {
@@ -98,41 +105,51 @@ export const captureViewAsPDF = async (
         }
         
         // Calculate the source region for this page
-        const sourceY = (i * pageHeight * imgHeight) / height;
-        const sourceHeight = Math.min((pageHeight * imgHeight) / height, imgHeight - sourceY);
+        const sourceY = (i * contentHeight * imgHeight) / height;
+        const sourceHeight = Math.min((contentHeight * imgHeight) / height, imgHeight - sourceY);
         
         // Create a temporary canvas for this page section
         const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = imgWidth;
-        pageCanvas.height = sourceHeight;
+        const pixelRatio = window.devicePixelRatio || 1;
+        pageCanvas.width = imgWidth * pixelRatio;
+        pageCanvas.height = sourceHeight * pixelRatio;
+        pageCanvas.style.width = imgWidth + 'px';
+        pageCanvas.style.height = sourceHeight + 'px';
         
         const pageCtx = pageCanvas.getContext('2d');
         if (pageCtx) {
+          pageCtx.scale(pixelRatio, pixelRatio);
+          
           // Fill with white background
           pageCtx.fillStyle = '#ffffff';
           pageCtx.fillRect(0, 0, imgWidth, sourceHeight);
           
+          // Draw the image section
           const img = new Image();
-          img.onload = () => {
-            pageCtx.drawImage(img, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
-            
-            const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
-            const pageRatio = imgWidth / sourceHeight;
-            
-            let pageImgWidth = contentWidth;
-            let pageImgHeight = contentWidth / pageRatio;
-            
-            if (pageImgHeight > pageHeight) {
-              pageImgHeight = pageHeight;
-              pageImgWidth = pageHeight * pageRatio;
-            }
-            
-            const pageX = margin + (contentWidth - pageImgWidth) / 2;
-            const pageY = margin;
-            
-            pdf.addImage(pageImgData, 'PNG', pageX, pageY, pageImgWidth, pageImgHeight, undefined, 'FAST');
-          };
-          img.src = imgData;
+          await new Promise((resolve, reject) => {
+            img.onload = () => {
+              pageCtx.drawImage(img, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
+              resolve(null);
+            };
+            img.onerror = reject;
+            img.src = imgData;
+          });
+          
+          const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
+          const pageRatio = imgWidth / sourceHeight;
+          
+          let pageImgWidth = contentWidth;
+          let pageImgHeight = contentWidth / pageRatio;
+          
+          if (pageImgHeight > contentHeight) {
+            pageImgHeight = contentHeight;
+            pageImgWidth = contentHeight * pageRatio;
+          }
+          
+          const pageX = margin + (contentWidth - pageImgWidth) / 2;
+          const pageY = margin;
+          
+          pdf.addImage(pageImgData, 'PNG', pageX, pageY, pageImgWidth, pageImgHeight, undefined, 'FAST');
         }
       }
     } else {
@@ -158,6 +175,6 @@ export const generateQuotationPDF = async (quotation: any, customer: any, items:
   const filename = `quotation-${quotation.reference_number}.pdf`;
   return captureViewAsPDF('quotation-view', filename, {
     backgroundColor: '#ffffff',
-    scale: 2
+    scale: 3
   });
 };
