@@ -129,7 +129,7 @@ export default function Schedule() {
           </Button>} />
       
       <div className="mt-0">
-        <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
+        <div className="flex border-b border-gray-200 rounded-t-lg">
           <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "upcoming" ? "text-cyan-600 border-b-2 border-cyan-600" : "text-gray-500 hover:text-gray-700"}`}>
             Upcoming
           </button>
