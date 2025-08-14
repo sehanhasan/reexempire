@@ -155,7 +155,7 @@ export default function Quotations() {
       }
     });
   };
-  const handleSendWhatsapp = (quotation: QuotationWithCustomer) => {
+  const handleSendWhatsapp = async (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
       toast({
@@ -167,8 +167,7 @@ export default function Quotations() {
     }
     try {
       const quotationViewUrl = `${window.location.origin}/quotations/view/${quotation.id}`;
-      const whatsappUrl = quotationService.generateWhatsAppShareUrl(quotation.id, quotation.reference_number, customer.name, quotationViewUrl);
-      window.location.href = whatsappUrl;
+      await quotationService.generateWhatsAppShareUrl(quotation.id, quotation.reference_number, customer.name, quotationViewUrl);
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({

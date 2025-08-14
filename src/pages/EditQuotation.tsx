@@ -199,8 +199,7 @@ export default function EditQuotation() {
         // Use window.location.href for better WebView/APK compatibility
         try {
           const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-          const whatsAppUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
-          window.location.href = whatsAppUrl;
+          await quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
         } catch (error) {
           console.error("Error opening WhatsApp:", error);
           toast({
@@ -263,7 +262,7 @@ export default function EditQuotation() {
     }
   };
 
-  const handleSendWhatsapp = () => {
+  const handleSendWhatsapp = async () => {
     if (!quotationData || !customer) {
       toast({
         title: "Missing Information",
@@ -274,8 +273,7 @@ export default function EditQuotation() {
     }
     try {
       const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-      const whatsAppUrl = quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name, quotationViewUrl);
-      window.location.href = whatsAppUrl;
+      await quotationService.generateWhatsAppShareUrl(id!, quotationData.reference_number, customer.name, quotationViewUrl);
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({

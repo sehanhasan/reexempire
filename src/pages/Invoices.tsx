@@ -176,7 +176,7 @@ export default function Invoices() {
     }
   };
 
-  const handleSendWhatsapp = (invoice: InvoiceWithCustomer) => {
+  const handleSendWhatsapp = async (invoice: InvoiceWithCustomer) => {
     const customer = customers[invoice.customer_id];
     if (!customer) {
       toast({
@@ -189,8 +189,7 @@ export default function Invoices() {
 
     try {
       const invoiceViewUrl = `${window.location.origin}/invoices/view/${invoice.id}`;
-      const whatsappUrl = invoiceService.generateWhatsAppShareUrl(invoice.id, invoice.reference_number, customer.name, invoiceViewUrl);
-      window.location.href = whatsappUrl;
+      await invoiceService.generateWhatsAppShareUrl(invoice.id, invoice.reference_number, customer.name, invoiceViewUrl);
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       toast({
