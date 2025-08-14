@@ -194,7 +194,7 @@ export default function EditInvoice() {
         subject: subject || null,
         is_deposit_invoice: depositInfo.requiresDeposit,
         deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
-        deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
+        deposit_percentage: depositInfo.requiresDeposit ? Number(depositInfo.depositPercentage) : 0
       };
 
       await invoiceService.update(id, invoice);
