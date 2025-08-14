@@ -57,6 +57,23 @@ export default function CreateInvoice() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
 
+  // Calculate total from items
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => {
+      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+      return sum + (qty * item.unitPrice);
+    }, 0);
+  };
+
+  // Auto-update deposit amount when items change or deposit percentage changes
+  useEffect(() => {
+    if (isDepositInvoice) {
+      const total = calculateTotal();
+      const newDepositAmount = total * (depositPercentage / 100);
+      setDepositAmount(newDepositAmount);
+    }
+  }, [items, depositPercentage, isDepositInvoice]);
+
   const generateReferenceNumber = async () => {
     const currentYear = new Date().getFullYear();
     try {
@@ -113,12 +130,11 @@ export default function CreateInvoice() {
             setSubject(quotation.subject || "");
             
             setIsDepositInvoice(quotation.requires_deposit || false);
-            setDepositAmount(quotation.deposit_amount || 0);
             setDepositPercentage(quotation.deposit_percentage || 30);
             
             const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
             if (quotationItems && quotationItems.length > 0) {
-              setItems(quotationItems.map((item, index) => ({
+              const mappedItems = quotationItems.map((item, index) => ({
                 id: index + 1,
                 description: item.description,
                 category: item.category || "Other Items",
@@ -126,7 +142,17 @@ export default function CreateInvoice() {
                 unit: item.unit,
                 unitPrice: item.unit_price,
                 amount: item.amount
-              })));
+              }));
+              setItems(mappedItems);
+              
+              // Set deposit amount based on quotation
+              if (quotation.requires_deposit) {
+                const total = mappedItems.reduce((sum, item) => {
+                  const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+                  return sum + (qty * item.unitPrice);
+                }, 0);
+                setDepositAmount(total * ((quotation.deposit_percentage || 30) / 100));
+              }
             }
             
             toast({
@@ -234,10 +260,7 @@ export default function CreateInvoice() {
       return;
     }
     
-    const subtotal = items.reduce((sum, item) => {
-      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-      return sum + (qty * item.unitPrice);
-    }, 0);
+    const subtotal = calculateTotal();
     const total = isDepositInvoice ? depositAmount : subtotal;
     
     try {

@@ -153,14 +153,14 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
 
     // Calculate the due amount (total - deposit amount)
     const depositAmount = Number(depositInvoice.deposit_amount || 0);
-    const totalAmount = Number(depositInvoice.total || 0);
+    const totalAmount = Number(depositInvoice.subtotal || 0);
     const dueAmount = totalAmount - depositAmount;
 
     if (dueAmount <= 0) {
       throw new Error("No due amount remaining for this deposit invoice");
     }
 
-    // Create the due invoice with modified reference number (remove -A and add -B)
+    // Create the due invoice with proper reference number format
     const baseRefNumber = depositInvoice.reference_number.replace('-A', '');
     const dueReferenceNumber = `${baseRefNumber}-B`;
 
@@ -171,7 +171,7 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
       subtotal: dueAmount,
       tax_rate: depositInvoice.tax_rate || 0,
-      tax_amount: 0, // Will be calculated
+      tax_amount: 0,
       total: dueAmount,
       is_deposit_invoice: false,
       deposit_amount: 0,
@@ -197,13 +197,16 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
     const depositItems = await getItemsByInvoiceId(depositInvoiceId);
     
     for (const item of depositItems) {
+      // Calculate proportional amounts for the due invoice
+      const proportionalAmount = (item.amount / totalAmount) * dueAmount;
+      
       await createItem({
         invoice_id: dueInvoice.id,
         description: item.description,
         quantity: item.quantity,
         unit: item.unit,
         unit_price: item.unit_price,
-        amount: item.amount,
+        amount: proportionalAmount,
         category: item.category,
         display_order: item.display_order
       });

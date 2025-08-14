@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -302,13 +303,18 @@ export default function EditQuotation() {
             </Button>
           </div>} />
 
-      {(status === "Sent" || status === "Accepted") && (
+      {/* Status sections for different quotation statuses */}
+      {(status === "Sent" || status === "Accepted" || status === "Rejected") && (
         <div className="rounded-md p-4 mt-1 bg-white">
           <div className="flex flex-col gap-3">
             <div>
               <h3 className="font-medium">
                 Quotation Status:{" "}
-                <span className={status === "Sent" ? "text-amber-600" : "text-green-600"}>
+                <span className={
+                  status === "Sent" ? "text-amber-600" : 
+                  status === "Accepted" ? "text-green-600" : 
+                  status === "Rejected" ? "text-red-600" : "text-gray-600"
+                }>
                   {status}
                 </span>
               </h3>
@@ -317,9 +323,15 @@ export default function EditQuotation() {
                   Update the status of this quotation
                 </p>
               )}
+              {status === "Rejected" && (
+                <p className="text-sm text-muted-foreground">
+                  This quotation has been rejected. You can share it again or create a new version.
+                </p>
+              )}
             </div>
 
             <div className={`flex ${isMobile ? "flex-col" : "flex-row justify-end"} gap-2`}>
+              {/* Actions for Sent status */}
               {status === "Sent" && (
                 <>
                   <Button
@@ -339,36 +351,70 @@ export default function EditQuotation() {
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Mark as Accepted
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+                    onClick={handleSendWhatsapp}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share via WhatsApp
+                  </Button>
                 </>
               )}
 
-              <Button
-                variant="outline"
-                className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
-                onClick={handleSendWhatsapp}
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share via WhatsApp
-              </Button>
-
+              {/* Actions for Accepted status */}
               {status === "Accepted" && (
-                <Button
-                  variant="outline"
-                  className={`${isMobile ? "w-full" : ""} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleConvertToInvoice(quotationData as QuotationWithCustomer);
-                  }}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Create Invoice
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+                    onClick={handleSendWhatsapp}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share via WhatsApp
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConvertToInvoice(quotationData as QuotationWithCustomer);
+                    }}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Create Invoice
+                  </Button>
+                </>
+              )}
+
+              {/* Actions for Rejected status */}
+              {status === "Rejected" && (
+                <>
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`}
+                    onClick={() => handleStatusChange("Sent")}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Resend Quotation
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+                    onClick={handleSendWhatsapp}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share via WhatsApp
+                  </Button>
+                </>
               )}
             </div>
           </div>
         </div>
       )}
-
 
       <form className="mt-8 space-y-6">
         <CustomerInfoCard customerId={customerId} setCustomer={setCustomerId} documentType="quotation" documentNumber={documentNumber} setDocumentNumber={setDocumentNumber} documentDate={quotationDate} setDocumentDate={setQuotationDate} expiryDate={validUntil} setExpiryDate={setValidUntil} subject={subject} setSubject={setSubject} />

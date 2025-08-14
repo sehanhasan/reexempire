@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Share2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2, Clock, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -36,6 +37,7 @@ export default function EditInvoice() {
   const [subject, setSubject] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [status, setStatus] = useState("Draft");
+  const [paymentStatus, setPaymentStatus] = useState("Unpaid");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
@@ -43,6 +45,14 @@ export default function EditInvoice() {
     depositPercentage: 50
   });
   const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
+
+  // Check if invoice is overdue
+  const isOverdue = () => {
+    if (!invoiceData || paymentStatus === 'Paid') return false;
+    const today = new Date();
+    const due = new Date(invoiceData.due_date);
+    return today > due;
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -63,13 +73,30 @@ export default function EditInvoice() {
           setTerms(invoice.terms || "");
           setSubject(invoice.subject || "");
           setStatus(invoice.status);
+          setPaymentStatus(invoice.payment_status || "Unpaid");
 
-          // For invoices, deposit info might not be as relevant, but keeping for consistency
-          setDepositInfo({
-            requiresDeposit: false,
-            depositAmount: 0,
-            depositPercentage: 0
-          });
+          // Auto-update status to Overdue if past due date
+          if (invoice.payment_status !== 'Paid' && new Date() > new Date(invoice.due_date)) {
+            if (invoice.status !== "Overdue") {
+              await invoiceService.update(id, { status: "Overdue" });
+              setStatus("Overdue");
+            }
+          }
+
+          // Set deposit info for deposit invoices
+          if (invoice.is_deposit_invoice) {
+            setDepositInfo({
+              requiresDeposit: true,
+              depositAmount: invoice.deposit_amount || 0,
+              depositPercentage: invoice.deposit_percentage || 50
+            });
+          } else {
+            setDepositInfo({
+              requiresDeposit: false,
+              depositAmount: 0,
+              depositPercentage: 50
+            });
+          }
 
           if (invoice.customer_id) {
             const customerData = await customerService.getById(invoice.customer_id);
@@ -161,10 +188,13 @@ export default function EditInvoice() {
         due_date: dueDate,
         status: newStatus || status,
         subtotal: subtotal,
-        total: subtotal,
+        total: depositInfo.requiresDeposit ? depositInfo.depositAmount : subtotal,
         notes: notes || null,
         terms: terms || null,
-        subject: subject || null
+        subject: subject || null,
+        is_deposit_invoice: depositInfo.requiresDeposit,
+        deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
+        deposit_percentage: depositInfo.requiresDeposit ? depositInfo.depositPercentage : 0
       };
 
       await invoiceService.update(id, invoice);
@@ -238,9 +268,15 @@ export default function EditInvoice() {
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return;
     try {
-      await invoiceService.update(id, {
-        status: newStatus
-      });
+      const updateData: any = { status: newStatus };
+      
+      // Update payment status when marking as paid
+      if (newStatus === "Paid") {
+        updateData.payment_status = "Paid";
+        setPaymentStatus("Paid");
+      }
+      
+      await invoiceService.update(id, updateData);
       setStatus(newStatus);
       toast({
         title: "Status Updated",
@@ -256,7 +292,7 @@ export default function EditInvoice() {
     }
   };
 
-  const handleSendWhatsapp = async () => {
+  const handleSendWhatsapp = async (messageType: string = 'general') => {
     if (!invoiceData || !customer) {
       toast({
         title: "Missing Information",
@@ -268,13 +304,49 @@ export default function EditInvoice() {
     
     try {
       const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
-      const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id!, invoiceData.reference_number, customer.name, invoiceViewUrl);
+      let message = '';
+      
+      switch (messageType) {
+        case 'overdue':
+          message = `Dear ${customer.name},\n\nThis is a friendly reminder that Invoice ${invoiceData.reference_number} is now overdue. Please review and make payment at your earliest convenience:\n\n${invoiceViewUrl}\n\nIf you have any questions, please don't hesitate to contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
+          break;
+        case 'partial':
+          message = `Dear ${customer.name},\n\nWe have received a partial payment for Invoice ${invoiceData.reference_number}. Please review the remaining balance and complete the payment:\n\n${invoiceViewUrl}\n\nThank you for your payment.\n\nReex Empire Sdn Bhd`;
+          break;
+        case 'paid':
+          message = `Dear ${customer.name},\n\nThank you for your payment! Invoice ${invoiceData.reference_number} has been marked as paid. You can view the invoice details here:\n\n${invoiceViewUrl}\n\nWe appreciate your business!\n\nReex Empire Sdn Bhd`;
+          break;
+        default:
+          message = `Dear ${customer.name},\n\nPlease find Invoice ${invoiceData.reference_number} for review:\n\n${invoiceViewUrl}\n\nIf you have any questions, please contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
+      }
+      
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.location.href = whatsappUrl;
     } catch (error) {
       console.error("Error sharing invoice:", error);
       toast({
         title: "Error",
         description: "Failed to share invoice. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const createDueInvoice = async () => {
+    if (!invoiceData || !invoiceData.is_deposit_invoice) return;
+    
+    try {
+      const dueInvoice = await invoiceService.createDueInvoiceFromDeposit(invoiceData.id);
+      toast({
+        title: "Due Invoice Created",
+        description: `Due invoice ${dueInvoice.reference_number} has been created successfully.`
+      });
+      navigate(`/invoices/edit/${dueInvoice.id}`);
+    } catch (error) {
+      console.error("Error creating due invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create due invoice. Please try again.",
         variant: "destructive"
       });
     }
@@ -302,40 +374,139 @@ export default function EditInvoice() {
         } 
       />
 
-      {status === "Sent" && <div className="rounded-md p-4 mt-4 bg-white">
+      {/* Status sections for different invoice statuses */}
+      {(status === "Sent" || status === "Overdue" || status === "Paid" || paymentStatus === "Partial") && (
+        <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col gap-3">
             <div>
-              <h3 className="font-medium">Invoice Status: <span className="text-amber-600">Sent</span></h3>
-              <p className="text-sm text-muted-foreground">Update the status of this invoice</p>
+              <h3 className="font-medium">
+                Invoice Status: <span className={
+                  status === "Sent" ? "text-amber-600" : 
+                  status === "Overdue" ? "text-red-600" : 
+                  status === "Paid" ? "text-green-600" :
+                  paymentStatus === "Partial" ? "text-blue-600" : "text-gray-600"
+                }>
+                  {paymentStatus === "Partial" ? "Partially Paid" : status}
+                </span>
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {status === "Sent" && "Update the status of this invoice"}
+                {status === "Overdue" && "This invoice is past due. Take action to collect payment."}
+                {status === "Paid" && "This invoice has been fully paid."}
+                {paymentStatus === "Partial" && "This invoice has been partially paid."}
+              </p>
             </div>
+            
             <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
-                onClick={() => handleStatusChange("Overdue")}
-              >
-                <XCircle className="mr-2 h-4 w-4" />
-                Mark as Overdue
-              </Button>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
-                onClick={() => handleStatusChange("Paid")}
-              >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Mark as Paid
-              </Button>
-              <Button 
-                variant="outline" 
-                className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-                onClick={handleSendWhatsapp}
-              >
-                <Share2 className="mr-2 h-4 w-4" />
-                Share via WhatsApp
-              </Button>
+              {/* Actions for Sent status */}
+              {status === "Sent" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
+                    onClick={() => handleStatusChange("Overdue")}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Mark as Overdue
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                    onClick={() => handleStatusChange("Paid")}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Paid
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => handleSendWhatsapp('general')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share via WhatsApp
+                  </Button>
+                </>
+              )}
+
+              {/* Actions for Overdue status */}
+              {status === "Overdue" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                    onClick={() => handleStatusChange("Paid")}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Paid
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => setPaymentStatus("Partial")}
+                  >
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Mark as Partial
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
+                    onClick={() => handleSendWhatsapp('overdue')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Send Reminder
+                  </Button>
+                </>
+              )}
+
+              {/* Actions for Paid status */}
+              {status === "Paid" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => handleSendWhatsapp('paid')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share Receipt
+                  </Button>
+                  {invoiceData?.is_deposit_invoice && (
+                    <Button 
+                      variant="outline" 
+                      className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                      onClick={createDueInvoice}
+                    >
+                      <Clock className="mr-2 h-4 w-4" />
+                      Create Due Invoice
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {/* Actions for Partial status */}
+              {paymentStatus === "Partial" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                    onClick={() => handleStatusChange("Paid")}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Paid
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => handleSendWhatsapp('partial')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Send Balance Due
+                  </Button>
+                </>
+              )}
             </div>
           </div>
-        </div>}
+        </div>
+      )}
 
       <form className="mt-8 space-y-6">
         <CustomerInfoCard 
