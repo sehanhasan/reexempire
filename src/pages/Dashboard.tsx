@@ -306,7 +306,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-sm text-slate-800">{formatMoney(quotation.total)}</p>
-                        <Badge className={quotation.status === 'Approved' ? "bg-green-100 text-green-700 hover:bg-green-100" : quotation.status === 'Sent' ? "bg-blue-100 text-blue-700 hover:bg-blue-100"} >
+                        <Badge className={quotation.status === 'Approved' ? "bg-green-100 text-green-700 hover:bg-green-100" : quotation.status === 'Sent' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} >
                           {quotation.status}
                         </Badge>
                       </div>
