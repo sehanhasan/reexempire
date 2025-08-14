@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { appointmentService, customerService, staffService } from "@/services";
 import { ListView } from "@/components/schedule/ListView";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Calendar, Clock, CheckCircle2, Activity } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { Appointment, Staff } from "@/types/database";
@@ -123,22 +123,75 @@ export default function Schedule() {
     return true;
   });
   return <div className="page-container">
-      <PageHeader title="Schedule" description="" actions={<Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
+      <PageHeader title="Schedule" description="" actions={<Button className="flex items-center bg-blue-600 hover:bg-blue-700" onClick={() => navigate("/schedule/add")}>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Appointment
           </Button>} />
+
+      {/* Modern header with stats */}
+      <div className="mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total</p>
+                <p className="text-xl font-bold text-blue-900 mt-1">{appointments.length}</p>
+              </div>
+              <div className="p-2 bg-blue-500 rounded-lg">
+                <Calendar className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Upcoming</p>
+                <p className="text-xl font-bold text-amber-900 mt-1">{appointments.filter(a => ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(a.status) && a.status !== "Cancelled").length}</p>
+              </div>
+              <div className="p-2 bg-amber-500 rounded-lg">
+                <Clock className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Completed</p>
+                <p className="text-xl font-bold text-green-900 mt-1">{appointments.filter(a => a.status === "Completed").length}</p>
+              </div>
+              <div className="p-2 bg-green-500 rounded-lg">
+                <CheckCircle2 className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-purple-600 uppercase tracking-wide">In Progress</p>
+                <p className="text-xl font-bold text-purple-900 mt-1">{appointments.filter(a => a.status === "In Progress").length}</p>
+              </div>
+              <div className="p-2 bg-purple-500 rounded-lg">
+                <Activity className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
-      <div className="mt-0">
-        <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
-          <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "upcoming" ? "text-cyan-600 border-b-2 border-cyan-600" : "text-gray-500 hover:text-gray-700"}`}>
+      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="flex border-b border-slate-200">
+          <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-4 px-6 text-center font-semibold transition-all duration-200 ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}>
             Upcoming
           </button>
-          <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "completed" ? "text-cyan-600 border-b-2 border-cyan-600" : "text-gray-500 hover:text-gray-700"}`}>
+          <button onClick={() => setActiveTab("completed")} className={`flex-1 py-4 px-6 text-center font-semibold transition-all duration-200 ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}>
             Completed
           </button>
         </div>
         
-        <div className="mt-4">
+        <div className="p-4">
           <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} />
         </div>
       </div>
