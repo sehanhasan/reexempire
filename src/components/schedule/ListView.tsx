@@ -143,7 +143,7 @@ export function ListView({
       {sortedDates.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">No appointments found</p>
+            <p className="text-muted-foreground">No appointments available</p>
           </CardContent>
         </Card>
       ) : (
