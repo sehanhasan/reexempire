@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
@@ -191,9 +190,6 @@ export default function Customers() {
                           </h3>
                         </div>
                       </div>
-                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100" variant="secondary">
-                        Customer
-                      </Badge>
                     </div>
                   </div>
                   
