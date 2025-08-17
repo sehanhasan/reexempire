@@ -83,6 +83,7 @@ export function ItemsTable({
                       value={editCategoryValue}
                       onChange={(e) => setEditCategoryValue(e.target.value)}
                       className="text-blue-600 font-medium text-base h-8"
+                      autoFocus
                     />
                     <Button
                       type="button"
