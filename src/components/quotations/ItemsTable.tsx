@@ -1,15 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { Trash, Pencil, Check, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { QuotationItem } from "./types";
+
 interface ItemsTableProps {
   items: QuotationItem[];
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
   showDescription?: boolean;
 }
+
 export function ItemsTable({
   items,
   handleItemChange,
@@ -17,6 +19,8 @@ export function ItemsTable({
   showDescription = true
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editCategoryValue, setEditCategoryValue] = useState("");
 
   // Format currency without RM symbol for items table
   const formatAmount = (amount: number) => {
@@ -42,14 +46,79 @@ export function ItemsTable({
       orderedCategories
     };
   };
+
+  const handleEditCategory = (category: string) => {
+    setEditingCategory(category);
+    setEditCategoryValue(category);
+  };
+
+  const handleSaveCategory = (oldCategory: string) => {
+    // Update all items in this category with the new category name
+    items.forEach(item => {
+      if ((item.category || 'Other Items') === oldCategory) {
+        handleItemChange(item.id, 'category', editCategoryValue || 'Other Items');
+      }
+    });
+    setEditingCategory(null);
+    setEditCategoryValue("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategory(null);
+    setEditCategoryValue("");
+  };
+
   const {
     groupedItems,
     orderedCategories
   } = groupItemsByCategory();
+
   return <div className="w-full overflow-auto">
       {isMobile ? <div className="space-y-5">
           {orderedCategories.map(category => <div key={category} className="space-y-3">
-              <div className="font-medium text-base text-blue-600">{category}</div>
+              <div className="flex items-center gap-2">
+                {editingCategory === category ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <Input
+                      value={editCategoryValue}
+                      onChange={(e) => setEditCategoryValue(e.target.value)}
+                      className="text-blue-600 font-medium text-base h-8"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-green-600 hover:text-green-700"
+                      onClick={() => handleSaveCategory(category)}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-red-600 hover:text-red-700"
+                      onClick={handleCancelEdit}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="font-medium text-base text-blue-600">{category}</div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-gray-500 hover:text-blue-600"
+                      onClick={() => handleEditCategory(category)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
               {groupedItems[category].map((item, index) => <div key={item.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white">
                   <div className="absolute top-2 right-2">
                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
@@ -101,7 +170,49 @@ export function ItemsTable({
             {orderedCategories.map(category => <React.Fragment key={category}>
                 <tr className="bg-gray-50">
                   <td colSpan={6} className="py-2 px-2 font-small text-blue-600 border-t">
-                    {category}
+                    <div className="flex items-center gap-2">
+                      {editingCategory === category ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={editCategoryValue}
+                            onChange={(e) => setEditCategoryValue(e.target.value)}
+                            className="text-blue-600 font-medium h-7 text-sm"
+                            autoFocus
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-green-600 hover:text-green-700"
+                            onClick={() => handleSaveCategory(category)}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-red-600 hover:text-red-700"
+                            onClick={handleCancelEdit}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{category}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-gray-500 hover:text-blue-600"
+                            onClick={() => handleEditCategory(category)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
                 {groupedItems[category].map((item, index) => <tr key={item.id} className="border-b last:border-b-0">
