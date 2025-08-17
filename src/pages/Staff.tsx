@@ -1,21 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
+import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Edit,
   Trash,
-  Loader2,
-  Mail,
   Phone,
-  MapPin,
-  Users,
-  Calendar
 } from "lucide-react";
 
 import {
@@ -28,7 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
 import {
   Dialog,
   DialogContent,
@@ -39,22 +32,24 @@ import {
 } from "@/components/ui/dialog";
 
 import { staffService } from "@/services";
-import { Staff } from "@/types/database";
+import { format } from "date-fns";
+import type { Staff } from "@/types/database";
 
 export default function StaffPage() {
   const navigate = useNavigate();
-  const [staff, setStaff] = useState<Staff[]>([]);
+  const [staffMembers, setStaffMembers] = useState<Staff[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-
+  
   const fetchStaff = async () => {
     try {
+      setIsLoading(true);
       const data = await staffService.getAll();
-      setStaff(data);
+      setStaffMembers(data);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching staff:", error);
@@ -70,6 +65,114 @@ export default function StaffPage() {
   useEffect(() => {
     fetchStaff();
   }, []);
+  
+  // Action handlers
+  const handleView = (staff: Staff) => {
+    // First clear the previous staff to avoid state issues
+    setSelectedStaff(null);
+    // Use setTimeout to ensure the state is updated before showing dialog
+    setTimeout(() => {
+      setSelectedStaff(staff);
+      setShowDetails(true);
+    }, 10);
+  };
+
+  const handleEdit = (staff: Staff) => {
+    navigate(`/staff/add?id=${staff.id}`);
+  };
+
+  const handleDelete = (staff: Staff) => {
+    setStaffToDelete(staff);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!staffToDelete) return;
+    
+    try {
+      await staffService.delete(staffToDelete.id);
+      setStaffMembers(staffMembers.filter(s => s.id !== staffToDelete.id));
+      setShowDeleteConfirm(false);
+      setStaffToDelete(null);
+      
+      toast({
+        title: "Staff Removed",
+        description: `${staffToDelete.name} has been removed from staff records`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      console.error("Error deleting staff:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete staff member. Please try again.",
+        variant: "destructive",
+      });
+      setShowDeleteConfirm(false); // Close dialog on error to prevent UI freeze
+    }
+  };
+
+  const handleStatusChange = (staff: Staff, newStatus: "Active" | "On Leave" | "Inactive") => {
+    // Update the staff status
+    const updateStaff = async () => {
+      try {
+        await staffService.update(staff.id, { status: newStatus });
+        fetchStaff(); // Refresh the list
+        
+        toast({
+          title: "Status Updated",
+          description: `${staff.name}'s status changed to ${newStatus}`,
+        });
+      } catch (error) {
+        console.error("Error updating staff status:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update staff status. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    updateStaff();
+  };
+
+  const columns = [
+    {
+      header: "Name",
+      accessorKey: "name" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
+        <div className="font-medium text-blue-600">
+          {row.original.name}
+        </div>
+      ),
+    },
+    {
+      header: "Phone",
+      accessorKey: "phone" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => (
+        <div className="flex items-center">
+          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+          <a href={`https://wa.me/${row.original.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600">
+            {row.original.phone}
+          </a>
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      accessorKey: "status" as keyof Staff,
+      cell: ({ row }: { row: { original: Staff } }) => {
+        return (
+          <Badge className={
+            row.original.status === "Active" ? "bg-green-100 text-green-800 hover:bg-green-200" :
+            row.original.status === "On Leave" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" :
+            "bg-gray-100 text-gray-800 hover:bg-gray-200"
+          }>
+            {row.original.status}
+          </Badge>
+        );
+      },
+    },
+  ];
 
   // Set up mobile search
   useEffect(() => {
@@ -87,78 +190,6 @@ export default function StaffPage() {
     };
   }, [searchTerm]);
 
-  const handleView = (staffMember: Staff) => {
-    setSelectedStaff(staffMember);
-    setShowDetails(true);
-  };
-
-  const handleEdit = (staffMember: Staff) => {
-    navigate(`/staff/add?id=${staffMember.id}`);
-  };
-
-  const handleDeleteClick = (staffMember: Staff) => {
-    setStaffToDelete(staffMember);
-    setShowDeleteConfirm(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!staffToDelete) return;
-    
-    try {
-      await staffService.delete(staffToDelete.id);
-      setStaff(staff.filter(s => s.id !== staffToDelete.id));
-      setShowDetails(false);
-      setSelectedStaff(null);
-      setShowDeleteConfirm(false);
-      setStaffToDelete(null);
-      
-      toast({
-        title: "Staff Member Deleted",
-        description: `${staffToDelete.name} has been deleted successfully.`,
-        variant: "destructive",
-      });
-    } catch (error) {
-      console.error("Error deleting staff member:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete staff member. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setShowDeleteConfirm(false);
-    setStaffToDelete(null);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === "active") {
-      return <Badge className="bg-green-100 text-green-700 hover:bg-green-100" variant="secondary">Active</Badge>;
-    } else if (statusLower === "inactive") {
-      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100" variant="secondary">Inactive</Badge>;
-    }
-    return <Badge variant="secondary">{status}</Badge>;
-  };
-
-  // Filter staff based on search term
-  const filteredStaff = staff.filter(staffMember =>
-    staffMember.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (staffMember.position && staffMember.position.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (staffMember.email && staffMember.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (staffMember.phone && staffMember.phone.includes(searchTerm))
-  );
-
-  if (isLoading) {
-    return (
-      <div className="page-container flex items-center justify-center h-[70vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-lg">Loading staff...</span>
-      </div>
-    );
-  }
-
   return (
     <div className="page-container">
       <PageHeader 
@@ -166,76 +197,16 @@ export default function StaffPage() {
         description="Manage your team members."
       />
       
-      <div className="mt-6">
-        {filteredStaff.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-lg">
-              {searchTerm ? "No staff members found matching your search." : "No staff members found."}
-            </p>
-            {!searchTerm && (
-              <p className="text-muted-foreground text-sm mt-2">
-                Get started by adding your first team member.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredStaff.map((staffMember) => (
-              <Card key={staffMember.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(staffMember)}>
-                <CardContent className="p-0">
-                  <div className="p-4 border-b bg-blue-50/30">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Users className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-blue-700">
-                            {staffMember.name}
-                          </h3>
-                          {staffMember.position && (
-                            <p className="text-sm text-muted-foreground">{staffMember.position}</p>
-                          )}
-                        </div>
-                      </div>
-                      {getStatusBadge(staffMember.status || "Active")}
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 space-y-3">
-                    {staffMember.phone && (
-                      <div className="flex items-center text-sm">
-                        <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">{staffMember.phone}</span>
-                      </div>
-                    )}
-                    {staffMember.email && (
-                      <div className="flex items-center text-sm">
-                        <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <a 
-                          href={`mailto:${staffMember.email}`}
-                          className="text-blue-600 hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {staffMember.email}
-                        </a>
-                      </div>
-                    )}
-                    {staffMember.join_date && (
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">
-                          Joined: {new Date(staffMember.join_date).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+      <div className="mt-8">
+        <DataTable 
+          columns={columns} 
+          data={staffMembers} 
+          searchKey="name" 
+          isLoading={isLoading}
+          externalSearchTerm={searchTerm}
+          onExternalSearchChange={setSearchTerm}
+          onRowClick={handleView}
+        />
       </div>
 
       {selectedStaff && (
@@ -257,69 +228,77 @@ export default function StaffPage() {
                 <p className="text-lg font-medium">{selectedStaff.name}</p>
               </div>
               
-              {selectedStaff.position && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Position</p>
-                  <p className="text-sm mt-1">{selectedStaff.position}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Role</p>
+                <Badge className={
+                  selectedStaff.role === "Admin" ? "bg-purple-100 text-purple-800" :
+                  selectedStaff.role === "Manager" ? "bg-blue-100 text-blue-800" :
+                  "bg-gray-100 text-gray-800"
+                }>
+                  {selectedStaff.role || "Staff"}
+                </Badge>
+              </div>
               
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <div className="mt-1">{getStatusBadge(selectedStaff.status || "Active")}</div>
+                <Badge className={
+                  selectedStaff.status === "Active" ? "bg-green-100 text-green-800" :
+                  selectedStaff.status === "On Leave" ? "bg-amber-100 text-amber-800" :
+                  "bg-gray-100 text-gray-800"
+                }>
+                  {selectedStaff.status}
+                </Badge>
               </div>
+              
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Join Date</p>
+                <p>{selectedStaff.join_date ? format(new Date(selectedStaff.join_date), "MMMM dd, yyyy") : "N/A"}</p>
+              </div>
+              
+              {selectedStaff.position && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Position</p>
+                  <p>{selectedStaff.position}</p>
+                </div>
+              )}
+              
+              {selectedStaff.passport && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Passport #</p>
+                  <p>{selectedStaff.passport}</p>
+                </div>
+              )}
               
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Contact Information</p>
                 {selectedStaff.phone && (
                   <div className="flex items-center mt-1">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{selectedStaff.phone}</span>
+                    <a href={`https://wa.me/${selectedStaff.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      {selectedStaff.phone}
+                    </a>
                   </div>
                 )}
                 {selectedStaff.email && (
                   <div className="flex items-center mt-1">
-                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <a 
-                      href={`mailto:${selectedStaff.email}`}
-                      className="text-blue-600 hover:underline"
-                    >
+                    <div className="h-4 w-4 mr-2 text-muted-foreground">@</div>
+                    <a href={`mailto:${selectedStaff.email}`} className="text-blue-600 hover:underline">
                       {selectedStaff.email}
                     </a>
                   </div>
                 )}
               </div>
-              
-              {selectedStaff.join_date && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Join Date</p>
-                  <div className="flex items-center mt-1">
-                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{new Date(selectedStaff.join_date).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              )}
-              
-              {selectedStaff.address && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Address</p>
-                  <div className="flex items-start mt-1">
-                    <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
-                    <span>
-                      {selectedStaff.address}
-                      {selectedStaff.city && `, ${selectedStaff.city}`}
-                      {selectedStaff.state && `, ${selectedStaff.state}`}
-                      {selectedStaff.postal_code && ` ${selectedStaff.postal_code}`}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
             
             <DialogFooter className="sm:justify-end">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2">
                 <Button 
-                  variant="outline"
+                  variant="outline" 
+                  onClick={() => setShowDetails(false)}
+                >
+                  Close
+                </Button>
+                <Button 
                   onClick={() => {
                     setShowDetails(false);
                     if (selectedStaff) handleEdit(selectedStaff);
@@ -328,53 +307,36 @@ export default function StaffPage() {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDetails(false)}
-                >
-                  Close
-                </Button>
-                <Button 
-                  variant="destructive"
-                  onClick={() => {
-                    setShowDetails(false);
-                    if (selectedStaff) handleDeleteClick(selectedStaff);
-                  }}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
               </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the staff member "{staffToDelete?.name}" and all associated data.
+              This will permanently remove {staffToDelete?.name} from your staff records.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDeleteCancel}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDeleteConfirm}
+              onClick={confirmDelete}
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete Staff Member
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <FloatingActionButton onClick={() => navigate("/staff/add")} />
+      <FloatingActionButton 
+        onClick={() => navigate("/staff/add")}
+      />
     </div>
   );
 }
