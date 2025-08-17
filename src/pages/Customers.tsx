@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -150,10 +149,7 @@ export default function Customers() {
       header: "Name",
       accessorKey: "name" as keyof Customer,
       cell: ({ row }: { row: { original: Customer } }) => (
-        <div 
-          className="font-medium text-blue-600 cursor-pointer"
-          onClick={() => handleView(row.original)}
-        >
+        <div className="font-medium text-blue-600">
           {row.original.name}
         </div>
       ),
@@ -211,6 +207,7 @@ export default function Customers() {
           searchKey="name" 
           externalSearchTerm={searchTerm}
           onExternalSearchChange={setSearchTerm}
+          onRowClick={handleView}
         />
       </div>
 

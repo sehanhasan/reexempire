@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 export interface Column<T> {
   header: string;
   accessorKey: keyof T | string;
@@ -17,6 +18,7 @@ export interface Column<T> {
     };
   }) => React.ReactNode;
 }
+
 interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
@@ -26,7 +28,9 @@ interface DataTableProps<T> {
   renderCustomMobileCard?: (item: T) => React.ReactNode;
   externalSearchTerm?: string;
   onExternalSearchChange?: (value: string) => void;
+  onRowClick?: (item: T) => void;
 }
+
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
@@ -35,7 +39,8 @@ export function DataTable<T extends Record<string, any>>({
   emptyMessage = "No data available",
   renderCustomMobileCard,
   externalSearchTerm,
-  onExternalSearchChange
+  onExternalSearchChange,
+  onRowClick
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
@@ -106,8 +111,11 @@ export function DataTable<T extends Record<string, any>>({
             // Default mobile card rendering
             filteredData.map((row, rowIndex) => <Card key={getCardKey(row, rowIndex)} className="overflow-hidden border-l-2 border-l-blue-500 shadow-sm">
                         <CardContent className="p-0">
-                          {/* Card Header with primary information */}
-                          <div className="p-3 border-b bg-blue-50/30">
+                          {/* Card Header with primary information - now clickable */}
+                          <div 
+                            className="p-3 border-b bg-blue-50/30 cursor-pointer hover:bg-blue-50/50 transition-colors"
+                            onClick={() => onRowClick?.(row)}
+                          >
                             <div className="flex justify-between items-center">
                               <div className="font-medium text-blue-700">
                                 {primaryColumn.cell ? primaryColumn.cell({
@@ -142,11 +150,13 @@ export function DataTable<T extends Record<string, any>>({
                           
                           {/* Card Footer with Actions */}
                           {actionsColumn && actionsColumn.cell && <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
-                              {actionsColumn.cell({
+                              <div onClick={(e) => e.stopPropagation()}>
+                                {actionsColumn.cell({
                     row: {
                       original: row
                     }
                   })}
+                              </div>
                             </div>}
                         </CardContent>
                       </Card>)}

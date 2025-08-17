@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -9,20 +8,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Edit,
-  MoreHorizontal,
   Trash,
-  Eye,
   Phone,
-  Plus
 } from "lucide-react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -151,10 +140,7 @@ export default function StaffPage() {
       header: "Name",
       accessorKey: "name" as keyof Staff,
       cell: ({ row }: { row: { original: Staff } }) => (
-        <div 
-          className="font-medium text-blue-600 cursor-pointer"
-          onClick={() => handleView(row.original)}
-        >
+        <div className="font-medium text-blue-600">
           {row.original.name}
         </div>
       ),
@@ -183,45 +169,6 @@ export default function StaffPage() {
           }>
             {row.original.status}
           </Badge>
-        );
-      },
-    },
-    {
-      header: "Actions",
-      accessorKey: "id" as keyof Staff,
-      cell: ({ row }: { row: { original: Staff } }) => {
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleView(row.original)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={() => handleEdit(row.original)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="cursor-pointer text-red-600"
-                onClick={() => handleDelete(row.original)}
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         );
       },
     },
@@ -258,6 +205,7 @@ export default function StaffPage() {
           isLoading={isLoading}
           externalSearchTerm={searchTerm}
           onExternalSearchChange={setSearchTerm}
+          onRowClick={handleView}
         />
       </div>
 
