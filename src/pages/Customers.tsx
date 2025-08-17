@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
-import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Edit,
@@ -12,7 +13,8 @@ import {
   Loader2,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  User
 } from "lucide-react";
 
 import {
@@ -88,13 +90,8 @@ export default function Customers() {
   }, [searchTerm]);
 
   const handleView = (customer: Customer) => {
-    // First clear the previous customer to avoid state issues
-    setSelectedCustomer(null);
-    // Use setTimeout to ensure the state is updated before showing dialog
-    setTimeout(() => {
-      setSelectedCustomer(customer);
-      setShowDetails(true);
-    }, 10);
+    setSelectedCustomer(customer);
+    setShowDetails(true);
   };
 
   const handleEdit = (customer: Customer) => {
@@ -137,52 +134,13 @@ export default function Customers() {
     setCustomerToDelete(null);
   };
 
-  const columns = [
-    {
-      header: "Unit #",
-      accessorKey: "unit_number" as keyof Customer,
-      cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="font-medium">{row.original.unit_number || 'N/A'}</div>
-      ),
-    },
-    {
-      header: "Name",
-      accessorKey: "name" as keyof Customer,
-      cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="font-medium text-blue-600">
-          {row.original.name}
-        </div>
-      ),
-    },
-    {
-      header: "WhatsApp",
-      accessorKey: "phone" as keyof Customer,
-      cell: ({ row }: { row: { original: Customer } }) => (
-        <div className="flex items-center">
-          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          {row.original.phone ? (
-            <a 
-              href={`https://wa.me/${row.original.phone.replace(/^\+/, '')}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {row.original.phone}
-            </a>
-          ) : (
-            <span className="text-muted-foreground">Not provided</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: "Address",
-      accessorKey: "address" as keyof Customer,
-      cell: ({ row }: { row: { original: Customer } }) => (
-        <span>{row.original.address || 'Not provided'}</span>
-      ),
-    },
-  ];
+  // Filter customers based on search term
+  const filteredCustomers = customers.filter(customer =>
+    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (customer.unit_number && customer.unit_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (customer.phone && customer.phone.includes(searchTerm)) ||
+    (customer.address && customer.address.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   if (isLoading) {
     return (
@@ -200,15 +158,89 @@ export default function Customers() {
         description="Manage your customer database."
       />
       
-      <div className="mt-2">
-        <DataTable 
-          columns={columns} 
-          data={customers} 
-          searchKey="name" 
-          externalSearchTerm={searchTerm}
-          onExternalSearchChange={setSearchTerm}
-          onRowClick={handleView}
-        />
+      <div className="mt-6">
+        {filteredCustomers.length === 0 ? (
+          <div className="text-center py-12">
+            <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-lg">
+              {searchTerm ? "No customers found matching your search." : "No customers found."}
+            </p>
+            {!searchTerm && (
+              <p className="text-muted-foreground text-sm mt-2">
+                Get started by adding your first customer.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredCustomers.map((customer) => (
+              <Card key={customer.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(customer)}>
+                <CardContent className="p-0">
+                  <div className="p-4 border-b bg-blue-50/30">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-blue-700">
+                            {customer.unit_number && (
+                              <span className="text-blue-700">#{customer.unit_number} - </span>
+                            )}
+                            {customer.name}
+                          </h3>
+                        </div>
+                      </div>
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100" variant="secondary">
+                        Customer
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 space-y-3">
+                    {customer.phone && (
+                      <div className="flex items-center text-sm">
+                        <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
+                        <a 
+                          href={`https://wa.me/${customer.phone.replace(/^\+/, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {customer.phone}
+                        </a>
+                      </div>
+                    )}
+                    {customer.email && (
+                      <div className="flex items-center text-sm">
+                        <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
+                        <a 
+                          href={`mailto:${customer.email}`}
+                          className="text-blue-600 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {customer.email}
+                        </a>
+                      </div>
+                    )}
+                    {customer.address && (
+                      <div className="flex items-start text-sm">
+                        <MapPin className="h-4 w-4 mr-3 mt-1 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          {customer.address}
+                          {customer.city && `, ${customer.city}`}
+                          {customer.state && `, ${customer.state}`}
+                          {customer.postal_code && ` ${customer.postal_code}`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {selectedCustomer && (
