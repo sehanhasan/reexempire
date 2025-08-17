@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
 export interface Column<T> {
   header: string;
   accessorKey: keyof T | string;
@@ -19,7 +17,6 @@ export interface Column<T> {
     };
   }) => React.ReactNode;
 }
-
 interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
@@ -30,7 +27,6 @@ interface DataTableProps<T> {
   externalSearchTerm?: string;
   onExternalSearchChange?: (value: string) => void;
 }
-
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
@@ -86,7 +82,6 @@ export function DataTable<T extends Record<string, any>>({
     return nameColumn || mobileColumns[0];
   };
   const primaryColumn = getPrimaryColumn();
-
   return <div className="space-y-4">
       {searchKey && !isMobile && externalSearchTerm === undefined && <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -146,11 +141,13 @@ export function DataTable<T extends Record<string, any>>({
                           </div>
                           
                           {/* Card Footer with Actions */}
-                          {actionsColumn && actionsColumn.cell && (
-                            <div className="p-3 border-t bg-gray-50/30">
-                              {actionsColumn.cell({ row: { original: row } })}
-                            </div>
-                          )}
+                          {actionsColumn && actionsColumn.cell && <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
+                              {actionsColumn.cell({
+                    row: {
+                      original: row
+                    }
+                  })}
+                            </div>}
                         </CardContent>
                       </Card>)}
                 </div> : <Table>
