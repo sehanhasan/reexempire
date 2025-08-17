@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,16 +15,19 @@ interface Service {
   description?: string;
   price?: number;
 }
+
 interface AppointmentWithRelations extends Appointment {
   service?: Service;
   customer?: Customer;
 }
+
 interface ListViewProps {
   appointments: AppointmentWithRelations[];
   onEdit: (appointment: AppointmentWithRelations) => void;
   onMarkAsCompleted: (appointment: AppointmentWithRelations) => void;
   onMarkAsInProgress: (appointment: AppointmentWithRelations) => void;
 }
+
 export function ListView({
   appointments,
   onEdit,
@@ -37,6 +41,7 @@ export function ListView({
 
   useEffect(() => {
     if (!appointments.length) return;
+
     const grouped: Record<string, AppointmentWithRelations[]> = {};
     appointments.forEach(appointment => {
       const date = appointment.appointment_date.split('T')[0];
@@ -51,6 +56,7 @@ export function ListView({
         return a.start_time.localeCompare(b.start_time);
       });
     });
+
     setGroupedAppointments(grouped);
   }, [appointments]);
 
@@ -101,22 +107,22 @@ export function ListView({
   };
 
   const getStatusBadge = (status) => {
-    status = status.toLowerCase().replace(/\s+/g, '');
+    const normalizedStatus = status?.toLowerCase().replace(/\s+/g, '');
     
-    switch(status) {
+    switch(normalizedStatus) {
       case "completed":
-        return <Badge variant="completed">Completed</Badge>;
+        return <Badge variant="completed" className="text-xs">Completed</Badge>;
       case "inprogress":
-        return <Badge variant="inprogress">In Progress</Badge>;
+        return <Badge variant="inprogress" className="text-xs whitespace-nowrap">In Progress</Badge>;
       case "cancelled":
-        return <Badge variant="cancelled">Cancelled</Badge>;
+        return <Badge variant="cancelled" className="text-xs">Cancelled</Badge>;
       case "confirmed":
       case "scheduled":
-        return <Badge variant="scheduled">Scheduled</Badge>;
+        return <Badge variant="scheduled" className="text-xs">Scheduled</Badge>;
       case "pending":
-        return <Badge variant="pending">Pending</Badge>;
+        return <Badge variant="pending" className="text-xs">Pending</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge className="text-xs">{status}</Badge>;
     }
   };
 
@@ -177,7 +183,7 @@ export function ListView({
                         </h3>
                       </div>
                       
-                      <div>
+                      <div className="flex-shrink-0">
                         {getStatusBadge(appointment.status)}
                       </div>
                     </div>

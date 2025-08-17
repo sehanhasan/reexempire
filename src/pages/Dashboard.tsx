@@ -243,7 +243,7 @@ export default function Dashboard() {
                         {appointment.customer?.unit_number ? <span className="text-blue-700">#{appointment.customer.unit_number}</span> : ""}{appointment.customer?.unit_number ? " - " : ""}
                         <span className="text-slate-800">{appointment.title}</span>
                       </h3>
-                      <Badge className={appointment.status.toLowerCase() === "confirmed" || appointment.status.toLowerCase() === "scheduled" ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : appointment.status.toLowerCase() === "completed" ? "bg-green-100 text-green-700 hover:bg-green-100" : appointment.status.toLowerCase() === "in progress" ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} variant="secondary">
+                      <Badge className={appointment.status.toLowerCase() === "confirmed" || appointment.status.toLowerCase() === "scheduled" ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : appointment.status.toLowerCase() === "completed" ? "bg-green-100 text-green-700 hover:bg-green-100" : appointment.status.toLowerCase() === "in progress" ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-xs whitespace-nowrap" : "bg-slate-100 text-slate-700 hover:bg-slate-100"} variant="secondary">
                         {appointment.status}
                       </Badge>
                     </div>
