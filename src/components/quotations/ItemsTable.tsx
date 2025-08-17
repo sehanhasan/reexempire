@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,32 @@ export function ItemsTable({
   // Format currency without RM symbol for items table
   const formatAmount = (amount: number) => {
     return amount.toFixed(2);
+  };
+
+  // Handle quantity change and update amount
+  const handleQuantityChange = (id: number, value: string) => {
+    const quantity = parseFloat(value) || 1;
+    handleItemChange(id, 'quantity', quantity);
+    
+    // Find the item and recalculate amount
+    const item = items.find(item => item.id === id);
+    if (item) {
+      const newAmount = quantity * item.unitPrice;
+      handleItemChange(id, 'amount', newAmount);
+    }
+  };
+
+  // Handle unit price change and update amount
+  const handleUnitPriceChange = (id: number, value: number) => {
+    handleItemChange(id, 'unitPrice', value);
+    
+    // Find the item and recalculate amount
+    const item = items.find(item => item.id === id);
+    if (item) {
+      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : item.quantity;
+      const newAmount = qty * value;
+      handleItemChange(id, 'amount', newAmount);
+    }
   };
 
   // Group items by category
@@ -137,12 +164,12 @@ export function ItemsTable({
                     <div className="grid grid-cols-3 gap-2">
                       <div className="space-y-2">
                         <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
-                        <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                        <Input value={item.quantity} onChange={e => handleQuantityChange(item.id, e.target.value)} className="h-10" />
                       </div>
                       
                       <div className="space-y-2">
                         <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
-                        <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                        <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleUnitPriceChange(item.id, parseFloat(e.target.value) || 0)} />
                       </div>
                       
                       <div className="space-y-2">
@@ -223,10 +250,10 @@ export function ItemsTable({
                       <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                     </td>
                     <td className="py-3 px-2">
-                      <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-right h-10" />
+                      <Input value={item.quantity} onChange={e => handleQuantityChange(item.id, e.target.value)} className="text-right h-10" />
                     </td>
                     <td className="py-3 px-2">
-                      <Input type="number" min="0" step="0.01" className="text-right h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                      <Input type="number" min="0" step="0.01" className="text-right h-10" value={item.unitPrice} onChange={e => handleUnitPriceChange(item.id, parseFloat(e.target.value) || 0)} />
                     </td>
                     <td className="py-3 px-2 text-right text-gray-600">
                       {formatAmount(item.amount)}
