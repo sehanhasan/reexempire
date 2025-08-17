@@ -141,13 +141,7 @@ export function DataTable<T extends Record<string, any>>({
                           </div>
                           
                           {/* Card Footer with Actions */}
-                          {actionsColumn && actionsColumn.cell && <div className="border-t p-2 bg-gray-50 flex justify-end gap-2">
-                              {actionsColumn.cell({
-                    row: {
-                      original: row
-                    }
-                  })}
-                            </div>}
+                          {actionsColumn && actionsColumn.cell}
                         </CardContent>
                       </Card>)}
                 </div> : <Table>
