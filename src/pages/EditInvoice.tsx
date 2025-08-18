@@ -1,194 +1,549 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/PageHeader";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, CheckCircle, XCircle, Share2, Clock, DollarSign } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
-import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
-import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
+import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
+import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { invoiceService, customerService } from "@/services";
-import { Customer, Invoice, InvoiceItem } from "@/types/database";
-import { WorkPhotosCard } from "@/components/invoices/WorkPhotosCard";
-import { InvoiceItem as InvoiceItemType } from "./EditInvoice/types";
+import { Customer, Invoice } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const { id } = useParams<{ id: string }>();
+  const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<QuotationItem[]>([{
+    id: 1,
+    description: "",
+    category: "",
+    quantity: 1,
+    unit: "Unit",
+    unitPrice: 0,
+    amount: 0
+  }]);
+  const [customerId, setCustomerId] = useState("");
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [items, setItems] = useState<InvoiceItemType[]>([]);
-  const [isDepositInvoice, setIsDepositInvoice] = useState(false);
-  const [depositAmount, setDepositAmount] = useState(0);
-  const [depositPercentage, setDepositPercentage] = useState(30);
+  const [invoiceData, setInvoiceData] = useState<Invoice | null>(null);
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [workPhotos, setWorkPhotos] = useState<string[]>([]);
+  const [subject, setSubject] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [status, setStatus] = useState("Draft");
+  const [paymentStatus, setPaymentStatus] = useState("Unpaid");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [depositInfo, setDepositInfo] = useState<DepositInfo>({
+    requiresDeposit: false,
+    depositAmount: 0,
+    depositPercentage: 50
+  });
+  const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
+
+  // Check if invoice is overdue
+  const isOverdue = () => {
+    if (!invoiceData || paymentStatus === 'Paid') return false;
+    const today = new Date();
+    const due = new Date(invoiceData.due_date);
+    return today > due;
+  };
 
   useEffect(() => {
+    if (!id) return;
     const fetchInvoiceData = async () => {
-      if (id) {
-        try {
-          const invoiceData = await invoiceService.getById(id);
-          setInvoice(invoiceData);
-          setIsDepositInvoice(invoiceData.is_deposit_invoice);
-          setDepositAmount(invoiceData.deposit_amount);
-          setDepositPercentage(invoiceData.deposit_percentage);
-          setNotes(invoiceData.notes || "");
-          setTerms(invoiceData.terms || "");
+      try {
+        setIsLoading(true);
+        console.log("Fetching invoice data for ID:", id);
 
-          const customerData = await customerService.getById(invoiceData.customer_id);
-          setCustomer(customerData);
+        const invoice = await invoiceService.getById(id);
+        if (invoice) {
+          console.log("Invoice data fetched:", invoice);
+          setInvoiceData(invoice);
+          setCustomerId(invoice.customer_id);
+          setDocumentNumber(invoice.reference_number);
+          setInvoiceDate(invoice.issue_date);
+          setDueDate(invoice.due_date);
+          setNotes(invoice.notes || "");
+          setTerms(invoice.terms || "");
+          setSubject(invoice.subject || "");
+          setStatus(invoice.status);
+          setPaymentStatus(invoice.payment_status || "Unpaid");
+
+          // Auto-update status to Overdue if past due date
+          if (invoice.payment_status !== 'Paid' && new Date() > new Date(invoice.due_date)) {
+            if (invoice.status !== "Overdue") {
+              await invoiceService.update(id, { status: "Overdue" });
+              setStatus("Overdue");
+            }
+          }
+
+          // Set deposit info for deposit invoices
+          if (invoice.is_deposit_invoice) {
+            setDepositInfo({
+              requiresDeposit: true,
+              depositAmount: invoice.deposit_amount || 0,
+              depositPercentage: invoice.deposit_percentage || 50
+            });
+          } else {
+            setDepositInfo({
+              requiresDeposit: false,
+              depositAmount: 0,
+              depositPercentage: 50
+            });
+          }
+
+          if (invoice.customer_id) {
+            const customerData = await customerService.getById(invoice.customer_id);
+            setCustomer(customerData);
+            console.log("Customer data fetched:", customerData);
+          }
 
           const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
-          // Convert InvoiceItem to InvoiceItemType format
-          const convertedItems = invoiceItems.map(item => ({
-            id: parseInt(item.id),
-            description: item.description,
-            category: item.category || "Other Items",
-            quantity: item.quantity,
-            unit: item.unit,
-            unitPrice: item.unit_price,
-            amount: item.amount
-          }));
-          setItems(convertedItems);
-        } catch (error) {
-          console.error("Error fetching invoice data:", error);
+          if (invoiceItems && invoiceItems.length > 0) {
+            console.log("Invoice items fetched:", invoiceItems);
+            const orderMap: {[key: number]: number} = {};
+            invoiceItems.forEach((item, index) => {
+              orderMap[index + 1] = index;
+            });
+            setOriginalItemOrder(orderMap);
+            
+            setItems(invoiceItems.map((item, index) => ({
+              id: index + 1,
+              description: item.description,
+              category: item.category || "Other Items",
+              quantity: item.quantity,
+              unit: item.unit,
+              unitPrice: item.unit_price,
+              amount: item.amount
+            })));
+          }
+        } else {
+          console.error("Invoice not found");
           toast({
             title: "Error",
-            description: "Failed to load invoice data",
-            variant: "destructive",
+            description: "Invoice not found.",
+            variant: "destructive"
+          });
+          navigate("/invoices");
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching invoice:", error);
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: "Failed to fetch invoice data. Please try again.",
+          variant: "destructive"
+        });
+        navigate("/invoices");
+      }
+    };
+    fetchInvoiceData();
+  }, [id, navigate]);
+
+  const calculateItemAmount = (item: QuotationItem) => {
+    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+    return qty * item.unitPrice;
+  };
+
+  const handleSubmit = async (e: React.FormEvent, newStatus?: string) => {
+    e.preventDefault();
+    if (!customerId || !id) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a customer before updating the invoice.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const validItems = items.filter(item => item.description && item.unitPrice > 0);
+    if (validItems.length === 0) {
+      toast({
+        title: "Missing Items",
+        description: "Please add at least one item to the invoice.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const subtotal = items.reduce((sum, item) => {
+      const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+      return sum + qty * item.unitPrice;
+    }, 0);
+
+    try {
+      setIsSubmitting(true);
+
+      const invoice = {
+        customer_id: customerId,
+        reference_number: documentNumber,
+        issue_date: invoiceDate,
+        due_date: dueDate,
+        status: newStatus || status,
+        subtotal: subtotal,
+        total: depositInfo.requiresDeposit ? depositInfo.depositAmount : subtotal,
+        notes: notes || null,
+        terms: terms || null,
+        subject: subject || null,
+        is_deposit_invoice: depositInfo.requiresDeposit,
+        deposit_amount: depositInfo.requiresDeposit ? depositInfo.depositAmount : 0,
+        deposit_percentage: depositInfo.requiresDeposit ? Number(depositInfo.depositPercentage) : 0
+      };
+
+      await invoiceService.update(id, invoice);
+
+      // Delete existing items and recreate them
+      await invoiceService.deleteItemsByInvoiceId(id);
+
+      const sortedItems = [...items].sort((a, b) => {
+        if (originalItemOrder[a.id] !== undefined && originalItemOrder[b.id] !== undefined) {
+          return originalItemOrder[a.id] - originalItemOrder[b.id];
+        }
+        if (originalItemOrder[a.id] !== undefined) return -1;
+        if (originalItemOrder[b.id] !== undefined) return 1;
+        return a.id - b.id;
+      });
+
+      for (const item of sortedItems) {
+        if (item.description && item.unitPrice > 0) {
+          const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+          await invoiceService.createItem({
+            invoice_id: id,
+            description: item.description,
+            quantity: qty,
+            unit: item.unit,
+            unit_price: item.unitPrice,
+            amount: qty * item.unitPrice,
+            category: item.category
           });
         }
       }
-    };
 
-    fetchInvoiceData();
-  }, [id]);
-
-  const calculateItemAmount = (item: InvoiceItemType) => {
-    return item.quantity * item.unitPrice;
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    if (!invoice) return;
-
-    try {
-      // Prepare invoice data for update
-      const invoiceData = {
-        ...invoice,
-        notes,
-        terms,
-        is_deposit_invoice: isDepositInvoice,
-        deposit_amount: depositAmount,
-        deposit_percentage: depositPercentage,
-        subtotal: items.reduce((sum, item) => sum + item.amount, 0),
-        total: isDepositInvoice ? depositAmount : items.reduce((sum, item) => sum + item.amount, 0),
-      };
-
-      // Update invoice
-      await invoiceService.update(id, invoiceData);
-
-      // Update or create invoice items
-      for (const item of items) {
-        // Convert back to database format
-        const dbItem = {
-          id: item.id.toString(),
-          invoice_id: id!,
-          description: item.description,
-          quantity: item.quantity,
-          unit: item.unit,
-          unit_price: item.unitPrice,
-          amount: item.amount,
-          category: item.category,
-          created_at: "",
-          updated_at: ""
-        };
-        await invoiceService.updateItem(item.id.toString(), dbItem);
+      if (newStatus === "Sent") {
+        toast({
+          title: "Invoice Update Sent",
+          description: `Invoice for ${customer?.name} has been updated and sent successfully.`
+        });
+        
+        // Use window.location.href for better WebView/APK compatibility
+        try {
+          const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
+          const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', invoiceViewUrl);
+          window.location.href = whatsappUrl;
+        } catch (error) {
+          console.error("Error opening WhatsApp:", error);
+          toast({
+            title: "Share Error",
+            description: "Invoice updated successfully, but failed to open WhatsApp. You can share it manually.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Invoice Updated",
+          description: `Invoice for ${customer?.name} has been updated successfully.`
+        });
       }
 
-      toast({
-        title: "Invoice Updated",
-        description: "Invoice has been updated successfully.",
-      });
       navigate("/invoices");
     } catch (error) {
       console.error("Error updating invoice:", error);
       toast({
         title: "Error",
-        description: "Failed to update invoice",
-        variant: "destructive",
+        description: "There was an error updating the invoice. Please try again.",
+        variant: "destructive"
       });
     } finally {
-      setIsSaving(false);
+      setIsSubmitting(false);
     }
   };
 
-  const setCustomerId = (customerId: string) => {
-    // This function is required by CustomerInfoCard but not used in edit mode
-    // since customer is already set and shouldn't change
+  const handleStatusChange = async (newStatus: string) => {
+    if (!id) return;
+    try {
+      const updateData: any = { status: newStatus };
+      
+      // Update payment status when marking as paid
+      if (newStatus === "Paid") {
+        updateData.payment_status = "Paid";
+        setPaymentStatus("Paid");
+      }
+      
+      await invoiceService.update(id, updateData);
+      setStatus(newStatus);
+      toast({
+        title: "Status Updated",
+        description: `Invoice status has been updated to "${newStatus}".`
+      });
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update invoice status. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  if (!invoice || !customer) {
-    return <div>Loading...</div>;
+  const handleSendWhatsapp = async (messageType: string = 'general') => {
+    if (!invoiceData || !customer) {
+      toast({
+        title: "Missing Information",
+        description: "Customer information not found.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
+      let message = '';
+      
+      switch (messageType) {
+        case 'overdue':
+          message = `Dear ${customer.name},\n\nThis is a friendly reminder that Invoice ${invoiceData.reference_number} is now overdue. Please review and make payment at your earliest convenience:\n\n${invoiceViewUrl}\n\nIf you have any questions, please don't hesitate to contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
+          break;
+        case 'partial':
+          message = `Dear ${customer.name},\n\nWe have received a partial payment for Invoice ${invoiceData.reference_number}. Please review the remaining balance and complete the payment:\n\n${invoiceViewUrl}\n\nThank you for your payment.\n\nReex Empire Sdn Bhd`;
+          break;
+        case 'paid':
+          message = `Dear ${customer.name},\n\nThank you for your payment! Invoice ${invoiceData.reference_number} has been marked as paid. You can view the invoice details here:\n\n${invoiceViewUrl}\n\nWe appreciate your business!\n\nReex Empire Sdn Bhd`;
+          break;
+        default:
+          message = `Dear ${customer.name},\n\nPlease find Invoice ${invoiceData.reference_number} for review:\n\n${invoiceViewUrl}\n\nIf you have any questions, please contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
+      }
+      
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.location.href = whatsappUrl;
+    } catch (error) {
+      console.error("Error sharing invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to share invoice. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const createDueInvoice = async () => {
+    if (!invoiceData || !invoiceData.is_deposit_invoice) return;
+    
+    try {
+      const dueInvoice = await invoiceService.createDueInvoiceFromDeposit(invoiceData.id);
+      toast({
+        title: "Due Invoice Created",
+        description: `Due invoice ${dueInvoice.reference_number} has been created successfully.`
+      });
+      navigate(`/invoices/edit/${dueInvoice.id}`);
+    } catch (error) {
+      console.error("Error creating due invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create due invoice. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (isLoading) {
+    return <div className="page-container">
+        <PageHeader title="Edit Invoice" />
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+        </div>
+      </div>;
   }
 
-  return (
-    <div className="page-container">
-      <PageHeader
+  return <div className="page-container">
+      <PageHeader 
         title="Edit Invoice"
-        description="Update invoice details and send to customer"
         actions={
-          <div className="flex gap-2">
+          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/invoices")}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Changes"}
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Invoices
             </Button>
           </div>
-        }
+        } 
       />
 
-      <div className="space-y-6">
-        <CustomerInfoCard 
-          customerId={customer.id}
-          setCustomer={setCustomerId}
-          documentType="invoice"
-          documentNumber={invoice.reference_number}
-          setDocumentNumber={() => {}} // Read-only in edit mode
-          documentDate={invoice.issue_date}
-          setDocumentDate={() => {}} // Read-only in edit mode
-          expiryDate={invoice.due_date}
-          setExpiryDate={() => {}} // Read-only in edit mode
-          paymentMethod=""
-          setPaymentMethod={() => {}}
-          quotationReference={invoice.quotation_ref_number || ""}
-        />
+      {/* Status sections for different invoice statuses */}
+      {(status === "Sent" || status === "Overdue" || status === "Paid" || paymentStatus === "Partial") && (
+        <div className="rounded-md p-4 mt-4 bg-white">
+          <div className="flex flex-col gap-3">
+            <div>
+              <h3 className="font-medium">
+                Invoice Status: <span className={
+                  status === "Sent" ? "text-amber-600" : 
+                  status === "Overdue" ? "text-red-600" : 
+                  status === "Paid" ? "text-green-600" :
+                  paymentStatus === "Partial" ? "text-blue-600" : "text-gray-600"
+                }>
+                  {paymentStatus === "Partial" ? "Partially Paid" : status}
+                </span>
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {status === "Sent" && "Update the status of this invoice"}
+                {status === "Overdue" && "This invoice is past due. Take action to collect payment."}
+                {status === "Paid" && "This invoice has been fully paid."}
+                {paymentStatus === "Partial" && "This invoice has been partially paid."}
+              </p>
+            </div>
+            
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row justify-end'} gap-2`}>
+              {/* Actions for Sent status */}
+              {status === "Sent" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
+                    onClick={() => handleStatusChange("Overdue")}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Mark as Overdue
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                    onClick={() => handleStatusChange("Paid")}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Paid
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => handleSendWhatsapp('general')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share via WhatsApp
+                  </Button>
+                </>
+              )}
 
-        <InvoiceItemsCard
-          items={items}
-          setItems={setItems}
-          isDepositInvoice={isDepositInvoice}
-          setIsDepositInvoice={setIsDepositInvoice}
-          depositAmount={depositAmount}
-          setDepositAmount={setDepositAmount}
-          depositPercentage={depositPercentage}
-          setDepositPercentage={setDepositPercentage}
-          calculateItemAmount={calculateItemAmount}
+              {/* Actions for Overdue status */}
+              {status === "Overdue" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                    onClick={() => handleStatusChange("Paid")}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Paid
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => setPaymentStatus("Partial")}
+                  >
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Mark as Partial
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-red-200 bg-red-50 hover:bg-red-100 text-red-600`} 
+                    onClick={() => handleSendWhatsapp('overdue')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Send Reminder
+                  </Button>
+                </>
+              )}
+
+              {/* Actions for Paid status */}
+              {status === "Paid" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => handleSendWhatsapp('paid')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share Receipt
+                  </Button>
+                  {invoiceData?.is_deposit_invoice && (
+                    <Button 
+                      variant="outline" 
+                      className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                      onClick={createDueInvoice}
+                    >
+                      <Clock className="mr-2 h-4 w-4" />
+                      Create Due Invoice
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {/* Actions for Partial status */}
+              {paymentStatus === "Partial" && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+                    onClick={() => handleStatusChange("Paid")}
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Mark as Paid
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+                    onClick={() => handleSendWhatsapp('partial')}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Send Balance Due
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form className="mt-8 space-y-6">
+        <CustomerInfoCard 
+          customerId={customerId} 
+          setCustomer={setCustomerId} 
+          documentType="invoice" 
+          documentNumber={documentNumber} 
+          setDocumentNumber={setDocumentNumber} 
+          documentDate={invoiceDate} 
+          setDocumentDate={setInvoiceDate} 
+          expiryDate={dueDate} 
+          setExpiryDate={setDueDate} 
+          subject={subject} 
+          setSubject={setSubject} 
+          quotationReference={invoiceData?.quotation_ref_number || undefined}
         />
         
-        <WorkPhotosCard
-          images={workPhotos}
-          onImagesChange={setWorkPhotos}
+        <QuotationItemsCard 
+          items={items} 
+          setItems={setItems} 
+          depositInfo={depositInfo} 
+          setDepositInfo={setDepositInfo} 
+          calculateItemAmount={calculateItemAmount} 
         />
-
-        <AdditionalInfoCard 
-          subject={invoice.subject || undefined}
-          terms={terms || undefined}
+        
+        <AdditionalInfoForm 
+          terms={terms}
+          setTerms={setTerms}
+          onSubmit={handleSubmit}
+          onCancel={() => navigate("/invoices")} 
+          documentType="invoice" 
+          isSubmitting={isSubmitting}
+          showDraft={false}
+          documentId={id}
+          documentNumber={documentNumber}
+          customerName={customer?.name}
         />
-      </div>
-    </div>
-  );
+      </form>
+    </div>;
 }

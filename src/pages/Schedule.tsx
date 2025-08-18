@@ -9,7 +9,6 @@ import { PlusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { Appointment, Staff } from "@/types/database";
-
 export default function Schedule() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -18,7 +17,6 @@ export default function Schedule() {
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("upcoming");
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -63,11 +61,9 @@ export default function Schedule() {
     };
     fetchData();
   }, []);
-
   const handleEdit = appointment => {
     navigate(`/schedule/edit/${appointment.id}`);
   };
-
   const handleMarkAsCompleted = async (appointment: Appointment) => {
     try {
       await appointmentService.update(appointment.id, {
@@ -92,7 +88,6 @@ export default function Schedule() {
       });
     }
   };
-
   const handleMarkAsInProgress = async (appointment: Appointment) => {
     try {
       await appointmentService.update(appointment.id, {
@@ -120,18 +115,13 @@ export default function Schedule() {
 
   // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
-    const normalizedStatus = appointment.status?.toLowerCase().replace(/\s+/g, '');
-    
     if (activeTab === "upcoming") {
-      return ["confirmed", "scheduled", "pending"].includes(normalizedStatus) && normalizedStatus !== "cancelled";
-    } else if (activeTab === "inprogress") {
-      return normalizedStatus === "inprogress";
+      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status) && appointment.status !== "Cancelled";
     } else if (activeTab === "completed") {
-      return normalizedStatus === "completed" || normalizedStatus === "cancelled";
+      return appointment.status === "Completed" || appointment.status === "Cancelled";
     }
     return true;
   });
-
   return <div className="page-container">
       <PageHeader title="Schedule" description="" actions={<Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -142,9 +132,6 @@ export default function Schedule() {
         <div className="flex border-b border-gray-200 rounded-t-lg">
           <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Upcoming
-          </button>
-          <button onClick={() => setActiveTab("inprogress")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "inprogress" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
-            In Progress
           </button>
           <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Completed

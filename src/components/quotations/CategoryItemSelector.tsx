@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { Search } from "lucide-react";
 import { categoryService } from "@/services";
 import { Category, Subcategory, PricingOption } from "@/types/database";
-
 export interface SelectedItem {
   id: string;
   description: string;
@@ -17,13 +16,11 @@ export interface SelectedItem {
   unit: string;
   price: number;
 }
-
 interface CategoryItemSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectItems: (items: SelectedItem[]) => void;
 }
-
 export function CategoryItemSelector({
   open,
   onOpenChange,
@@ -36,7 +33,6 @@ export function CategoryItemSelector({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -57,14 +53,12 @@ export function CategoryItemSelector({
       fetchData();
     }
   }, [open]);
-
   useEffect(() => {
     if (open) {
       setSelectedItems([]);
       setSearchTerm("");
     }
   }, [open]);
-
   const toggleSubcategorySelection = (subcategory: Subcategory, categoryName: string) => {
     setSelectedItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === subcategory.id);
@@ -82,7 +76,6 @@ export function CategoryItemSelector({
       }
     });
   };
-
   const togglePricingOptionSelection = (pricingOption: PricingOption, subcategoryName: string) => {
     setSelectedItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === pricingOption.id);
@@ -100,35 +93,28 @@ export function CategoryItemSelector({
       }
     });
   };
-
   const updateItemQuantity = (id: string, quantity: number) => {
     setSelectedItems(prevItems => prevItems.map(item => item.id === id ? {
       ...item,
       quantity
     } : item));
   };
-
   const getSubcategoriesForCategory = (categoryId: string) => {
     return subcategories.filter(subcategory => subcategory.category_id === categoryId);
   };
-
   const getPricingOptionsForSubcategory = (subcategoryId: string) => {
     return pricingOptions.filter(option => option.subcategory_id === subcategoryId);
   };
-
   const isItemSelected = (id: string) => {
     return selectedItems.some(item => item.id === id);
   };
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value.toLowerCase());
   };
-
   const handleSubmit = () => {
     onSelectItems(selectedItems);
     onOpenChange(false);
   };
-
   const filteredCategories = searchTerm ? categories.filter(category => {
     if (category.name.toLowerCase().includes(searchTerm)) return true;
     const relatedSubcategories = getSubcategoriesForCategory(category.id);
@@ -138,7 +124,6 @@ export function CategoryItemSelector({
       return options.some(option => option.name.toLowerCase().includes(searchTerm));
     });
   }) : categories;
-
   return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
         <DialogHeader>
@@ -174,17 +159,15 @@ export function CategoryItemSelector({
                                 <div className="space-y-3">
                                   {subcategoryOptions.length === 0 ?
                         // If no pricing options, display the subcategory itself as selectable
-                        <div className={`flex flex-col p-3 rounded-md transition-colors ${isItemSelected(subcategory.id) ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}`}>
-                                      <div className="flex items-center mb-2">
+                        <div className={`flex items-center justify-between p-3 rounded-md transition-colors ${isItemSelected(subcategory.id) ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}`}>
+                                      <div className="flex items-center flex-1">
                                         <Checkbox id={subcategory.id} checked={isItemSelected(subcategory.id)} onCheckedChange={() => toggleSubcategorySelection(subcategory, category.name)} className="mr-3" />
-                                        <div className="flex-1 overflow-hidden">
-                                          <label htmlFor={subcategory.id} className="text-sm cursor-pointer font-medium block whitespace-nowrap overflow-x-auto scrollbar-thin">
-                                            {subcategory.name}
-                                          </label>
-                                        </div>
+                                        <label htmlFor={subcategory.id} className="text-sm cursor-pointer flex-1 font-medium">
+                                          {subcategory.name}
+                                        </label>
                                       </div>
                                       
-                                      <div className="flex items-center justify-between pl-7">
+                                      <div className="flex items-center space-x-4">
                                         {isItemSelected(subcategory.id) && <div className="flex items-center">
                                             <Button type="button" variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => {
                                 const selectedItem = selectedItems.find(item => item.id === subcategory.id);
@@ -211,17 +194,15 @@ export function CategoryItemSelector({
                         subcategoryOptions.map(option => {
                           const isSelected = isItemSelected(option.id);
                           const selectedItem = selectedItems.find(item => item.id === option.id);
-                          return <div key={option.id} className={`flex flex-col p-3 rounded-md transition-colors ${isSelected ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}`}>
-                                          <div className="flex items-center mb-2">
+                          return <div key={option.id} className={`flex items-center justify-between p-3 rounded-md transition-colors ${isSelected ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}`}>
+                                          <div className="flex items-center flex-1">
                                             <Checkbox id={option.id} checked={isSelected} onCheckedChange={() => togglePricingOptionSelection(option, subcategory.name)} className="mr-3" />
-                                            <div className="flex-1 overflow-hidden">
-                                              <label htmlFor={option.id} className="text-sm cursor-pointer font-medium block whitespace-nowrap overflow-x-auto scrollbar-thin">
-                                                {option.name}
-                                              </label>
-                                            </div>
+                                            <label htmlFor={option.id} className="text-sm cursor-pointer flex-1 font-medium">
+                                              {option.name}
+                                            </label>
                                           </div>
                                           
-                                          <div className="flex items-center justify-between pl-7">
+                                          <div className="flex items-center space-x-4">
                                             {isSelected && <div className="flex items-center space-x-2">
                                                 <Button type="button" variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => updateItemQuantity(option.id, Math.max(1, (selectedItem?.quantity || 1) - 1))}>
                                                   <span>-</span>
