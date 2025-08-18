@@ -9,7 +9,7 @@ import { Plus, FolderOpen, Wallet } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
 import { QuotationItem, DepositInfo } from "./types";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuotationItemsCardProps {
@@ -215,7 +215,7 @@ export function QuotationItemsCard({
                       <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
                       <div className="relative">
                         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                        <Input id="depositAmount" type="number" min="0" value={depositInfo.depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value))} className="pl-8 h-10 text-sm" />
+                        <Input id="depositAmount" type="number" min="0" value={depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value))} className="pl-8 h-10 text-sm" />
                       </div>
                     </div>
                     </div>
