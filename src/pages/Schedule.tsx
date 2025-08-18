@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/common/PageHeader";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { appointmentService, customerService, staffService } from "@/services";
 import { ListView } from "@/components/schedule/ListView";
-
+import { PlusCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "@/hooks/use-toast";
+import { Appointment, Staff } from "@/types/database";
 export default function Schedule() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -15,70 +17,111 @@ export default function Schedule() {
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("upcoming");
-
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       try {
-        // Simulate fetching appointments, customers, and staff members
-        const appointmentsData = [
-          { id: "1", appointment_date: "2024-08-10T00:00:00.000Z", start_time: "09:00", end_time: "10:00", status: "confirmed", customer_id: "1", staff_id: "1", title: "Service 1" },
-          { id: "2", appointment_date: "2024-08-11T00:00:00.000Z", start_time: "11:00", end_time: "12:00", status: "in progress", customer_id: "2", staff_id: "2", title: "Service 2" },
-          { id: "3", appointment_date: "2024-08-10T00:00:00.000Z", start_time: "14:00", end_time: "15:00", status: "completed", customer_id: "1", staff_id: "1", title: "Service 3" },
-          { id: "4", appointment_date: "2024-08-12T00:00:00.000Z", start_time: "16:00", end_time: "17:00", status: "scheduled", customer_id: "3", staff_id: "3", title: "Service 4" },
-        ];
-        const customersData = {
-          "1": { id: "1", name: "Customer 1" },
-          "2": { id: "2", name: "Customer 2" },
-          "3": { id: "3", name: "Customer 3" },
-        };
-        const staffMembersData = {
-          "1": { id: "1", name: "Staff 1" },
-          "2": { id: "2", name: "Staff 2" },
-          "3": { id: "3", name: "Staff 3" },
-        };
+        setIsLoading(true);
+        const [appointmentsData, customersData, staffData] = await Promise.all([appointmentService.getAll(), customerService.getAll(), staffService.getAll()]);
 
-        setAppointments(appointmentsData);
-        setCustomers(customersData);
-        setStaffMembers(staffMembersData);
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-      } finally {
+        // Create a customer lookup map for quick access
+        const customersMap = {};
+        customersData.forEach(customer => {
+          customersMap[customer.id] = customer;
+        });
+
+        // Create a staff lookup map for quick access
+        const staffMap = {};
+        staffData.forEach(staff => {
+          staffMap[staff.id] = staff;
+        });
+
+        // Enhance appointments with customer data
+        const enhancedAppointments = appointmentsData.map(appointment => {
+          const customer = customersMap[appointment.customer_id] || null;
+          const staff = appointment.staff_id ? staffMap[appointment.staff_id] : null;
+          return {
+            ...appointment,
+            customer,
+            staff
+          };
+        });
+        setAppointments(enhancedAppointments);
+        setCustomers(customersMap);
+        setStaffMembers(staffMap);
         setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching schedule data:", error);
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: "Failed to load appointments",
+          variant: "destructive"
+        });
       }
     };
-
     fetchData();
   }, []);
-
-  const handleEdit = (appointment) => {
+  const handleEdit = appointment => {
     navigate(`/schedule/edit/${appointment.id}`);
   };
+  const handleMarkAsCompleted = async (appointment: Appointment) => {
+    try {
+      await appointmentService.update(appointment.id, {
+        status: 'Completed'
+      });
 
-  const handleMarkAsCompleted = (appointment) => {
-    // Implement mark as completed logic here
-    console.log("Mark as completed:", appointment);
+      // Update local state
+      setAppointments(prev => prev.map(app => app.id === appointment.id ? {
+        ...app,
+        status: 'Completed'
+      } : app));
+      toast({
+        title: "Appointment Completed",
+        description: "Appointment has been marked as completed."
+      });
+    } catch (error) {
+      console.error("Error marking appointment as completed:", error);
+      toast({
+        title: "Error",
+        description: "Could not mark appointment as completed",
+        variant: "destructive"
+      });
+    }
   };
+  const handleMarkAsInProgress = async (appointment: Appointment) => {
+    try {
+      await appointmentService.update(appointment.id, {
+        status: 'In Progress'
+      });
 
-  const handleMarkAsInProgress = (appointment) => {
-    // Implement mark as in progress logic here
-    console.log("Mark as in progress:", appointment);
+      // Update local state
+      setAppointments(prev => prev.map(app => app.id === appointment.id ? {
+        ...app,
+        status: 'In Progress'
+      } : app));
+      toast({
+        title: "Appointment In Progress",
+        description: "Appointment has been marked as in progress."
+      });
+    } catch (error) {
+      console.error("Error marking appointment as in progress:", error);
+      toast({
+        title: "Error",
+        description: "Could not mark appointment as in progress",
+        variant: "destructive"
+      });
+    }
   };
 
   // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
-    const normalizedStatus = appointment.status?.toLowerCase().replace(/\s+/g, '');
-    
     if (activeTab === "upcoming") {
-      return ["confirmed", "scheduled", "pending"].includes(normalizedStatus) && normalizedStatus !== "cancelled";
-    } else if (activeTab === "inprogress") {
-      return normalizedStatus === "inprogress";
+      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status) && appointment.status !== "Cancelled";
     } else if (activeTab === "completed") {
-      return normalizedStatus === "completed" || normalizedStatus === "cancelled";
+      return appointment.status === "Completed" || appointment.status === "Cancelled";
     }
     return true;
   });
-
   return <div className="page-container">
       <PageHeader title="Schedule" description="" actions={<Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -89,9 +132,6 @@ export default function Schedule() {
         <div className="flex border-b border-gray-200 rounded-t-lg">
           <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Upcoming
-          </button>
-          <button onClick={() => setActiveTab("inprogress")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "inprogress" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
-            In Progress
           </button>
           <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Completed
