@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -13,8 +12,9 @@ import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { invoiceService, customerService } from "@/services";
-import { Customer, Invoice } from "@/types/database";
+import { Customer, Invoice, InvoiceImage } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
@@ -49,9 +49,11 @@ export default function EditInvoice() {
   });
   const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
   
-  // Work Photos states
+  // Work Photos states (new uploads)
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  // Saved images (already uploaded for this invoice)
+  const [savedImages, setSavedImages] = useState<InvoiceImage[]>([]);
 
   // Check if invoice is overdue
   const isOverdue = () => {
@@ -65,10 +67,19 @@ export default function EditInvoice() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const fileArray = Array.from(e.target.files);
-      setImages(prev => [...prev, ...fileArray]);
+      // Only accept image files
+      const validFiles = fileArray.filter(file => file.type.startsWith('image/'));
+      if (validFiles.length !== fileArray.length) {
+        toast({
+          title: "Invalid Files",
+          description: "Only image files are allowed.",
+          variant: "destructive"
+        });
+      }
+      setImages(prev => [...prev, ...validFiles]);
       
       // Create URLs for preview
-      fileArray.forEach(file => {
+      validFiles.forEach(file => {
         const url = URL.createObjectURL(file);
         setImageUrls(prev => [...prev, url]);
       });
@@ -84,7 +95,46 @@ export default function EditInvoice() {
     });
   };
 
-  // ... keep existing code (useEffect and other handlers)
+  // Upload selected images to Supabase Storage and return public URLs
+  const uploadImages = async (invoiceId: string): Promise<string[]> => {
+    if (images.length === 0) return [];
+    
+    const uploadedUrls: string[] = [];
+    console.log("EditInvoice: Starting image upload for invoice:", invoiceId);
+
+    for (const file of images) {
+      // Sanitize filename similar to receipts
+      const sanitizedFileName = file.name
+        .replace(/\s+/g, '_')
+        .replace(/[^\w\-_.]/g, '')
+        .replace(/_{2,}/g, '_')
+        .toLowerCase();
+      const fileName = `${invoiceId}/${Date.now()}-${sanitizedFileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('invoice-images')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error("EditInvoice: Error uploading image:", error);
+        toast({
+          title: "Upload Error",
+          description: `Failed to upload an image: ${error.message}`,
+          variant: "destructive"
+        });
+        continue;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('invoice-images')
+        .getPublicUrl(data.path);
+
+      console.log("EditInvoice: Uploaded image public URL:", urlData.publicUrl);
+      uploadedUrls.push(urlData.publicUrl);
+    }
+
+    return uploadedUrls;
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -155,6 +205,16 @@ export default function EditInvoice() {
               amount: item.amount
             })));
           }
+
+          // NEW: Fetch saved work photos for this invoice
+          try {
+            const imgs = await invoiceService.getInvoiceImages(id);
+            console.log("EditInvoice: fetched saved images:", imgs?.length || 0);
+            setSavedImages(imgs || []);
+          } catch (imgErr) {
+            console.error("EditInvoice: error fetching saved images:", imgErr);
+          }
+
         } else {
           console.error("Invoice not found");
           toast({
@@ -254,6 +314,25 @@ export default function EditInvoice() {
             unit_price: item.unitPrice,
             amount: qty * item.unitPrice,
             category: item.category
+          });
+        }
+      }
+
+      // NEW: Upload work photos and save their URLs to invoice_images
+      if (images.length > 0) {
+        const uploadedImageUrls = await uploadImages(id);
+        if (uploadedImageUrls.length > 0) {
+          for (const imageUrl of uploadedImageUrls) {
+            await invoiceService.addInvoiceImage(id, imageUrl);
+          }
+          // Refresh saved images list
+          const imgs = await invoiceService.getInvoiceImages(id);
+          setSavedImages(imgs || []);
+          // Clear local selection
+          setImages([]);
+          setImageUrls((prev) => {
+            prev.forEach((u) => URL.revokeObjectURL(u));
+            return [];
           });
         }
       }
@@ -406,7 +485,6 @@ export default function EditInvoice() {
         } 
       />
 
-      {/* Status sections for different invoice statuses */}
       {(status === "Sent" || status === "Overdue" || status === "Paid" || paymentStatus === "Partial") && (
         <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col gap-3">
@@ -613,6 +691,25 @@ export default function EditInvoice() {
                       </Button>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Saved images for this invoice (already uploaded) */}
+              {savedImages.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Saved Work Photos</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {savedImages.map((img, index) => (
+                      <div key={img.id || index} className="relative">
+                        <img
+                          src={img.image_url}
+                          alt={`Saved photo ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(img.image_url, '_blank')}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
