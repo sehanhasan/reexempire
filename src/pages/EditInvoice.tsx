@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/common/PageHeader";
-import { CustomerInfoCard } from "@/components/invoices/CustomerInfoCard";
-import { InvoiceItemsCard } from "@/components/invoices/InvoiceItemsCard";
-import { AdditionalInfoCard } from "@/components/invoices/AdditionalInfoCard";
+import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
+import { InvoiceItemsCard } from "@/components/quotations/InvoiceItemsCard";
+import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { invoiceService, customerService } from "@/services";
 import { Customer, Invoice, InvoiceItem } from "@/types/database";
 import { WorkPhotosCard } from "@/components/invoices/WorkPhotosCard";
@@ -22,7 +23,7 @@ export default function EditInvoice() {
   const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-    const [workPhotos, setWorkPhotos] = useState<string[]>([]);
+  const [workPhotos, setWorkPhotos] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
@@ -39,7 +40,7 @@ export default function EditInvoice() {
           const customerData = await customerService.getById(invoiceData.customer_id);
           setCustomer(customerData);
 
-          const invoiceItems = await invoiceService.getInvoiceItems(id);
+          const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
           setItems(invoiceItems);
         } catch (error) {
           console.error("Error fetching invoice data:", error);
@@ -56,7 +57,7 @@ export default function EditInvoice() {
   }, [id]);
 
   const calculateItemAmount = (item: InvoiceItem) => {
-    return item.quantity * item.unitPrice;
+    return item.quantity * item.unit_price;
   };
 
   const handleSave = async () => {
@@ -81,7 +82,7 @@ export default function EditInvoice() {
 
       // Update or create invoice items
       for (const item of items) {
-        await invoiceService.updateInvoiceItem(item.id, item);
+        await invoiceService.updateItem(item.id, item);
       }
 
       toast({
