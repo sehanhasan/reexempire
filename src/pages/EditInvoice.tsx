@@ -10,13 +10,14 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { invoiceService, customerService } from "@/services";
 import { Customer, Invoice, InvoiceItem } from "@/types/database";
 import { WorkPhotosCard } from "@/components/invoices/WorkPhotosCard";
+import { InvoiceItem as InvoiceItemType } from "./types";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [items, setItems] = useState<InvoiceItemType[]>([]);
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30);
@@ -41,7 +42,17 @@ export default function EditInvoice() {
           setCustomer(customerData);
 
           const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
-          setItems(invoiceItems);
+          // Convert InvoiceItem to InvoiceItemType format
+          const convertedItems = invoiceItems.map(item => ({
+            id: parseInt(item.id),
+            description: item.description,
+            category: item.category || "Other Items",
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unit_price,
+            amount: item.amount
+          }));
+          setItems(convertedItems);
         } catch (error) {
           console.error("Error fetching invoice data:", error);
           toast({
@@ -56,8 +67,8 @@ export default function EditInvoice() {
     fetchInvoiceData();
   }, [id]);
 
-  const calculateItemAmount = (item: InvoiceItem) => {
-    return item.quantity * item.unit_price;
+  const calculateItemAmount = (item: InvoiceItemType) => {
+    return item.quantity * item.unitPrice;
   };
 
   const handleSave = async () => {
@@ -82,7 +93,20 @@ export default function EditInvoice() {
 
       // Update or create invoice items
       for (const item of items) {
-        await invoiceService.updateItem(item.id, item);
+        // Convert back to database format
+        const dbItem = {
+          id: item.id.toString(),
+          invoice_id: id!,
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unit_price: item.unitPrice,
+          amount: item.amount,
+          category: item.category,
+          created_at: "",
+          updated_at: ""
+        };
+        await invoiceService.updateItem(item.id.toString(), dbItem);
       }
 
       toast({
@@ -100,6 +124,11 @@ export default function EditInvoice() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const setCustomerId = (customerId: string) => {
+    // This function is required by CustomerInfoCard but not used in edit mode
+    // since customer is already set and shouldn't change
   };
 
   if (!invoice || !customer) {
@@ -124,7 +153,20 @@ export default function EditInvoice() {
       />
 
       <div className="space-y-6">
-        <CustomerInfoCard customer={customer} />
+        <CustomerInfoCard 
+          customerId={customer.id}
+          setCustomer={setCustomerId}
+          documentType="invoice"
+          documentNumber={invoice.reference_number}
+          setDocumentNumber={() => {}} // Read-only in edit mode
+          documentDate={invoice.issue_date}
+          setDocumentDate={() => {}} // Read-only in edit mode
+          expiryDate={invoice.due_date}
+          setExpiryDate={() => {}} // Read-only in edit mode
+          paymentMethod=""
+          setPaymentMethod={() => {}}
+          quotationReference={invoice.quotation_ref_number || ""}
+        />
 
         <InvoiceItemsCard
           items={items}
@@ -143,7 +185,10 @@ export default function EditInvoice() {
           onImagesChange={setWorkPhotos}
         />
 
-        <AdditionalInfoCard notes={notes} setNotes={setNotes} terms={terms} setTerms={setTerms} />
+        <AdditionalInfoCard 
+          subject={invoice.subject || undefined}
+          terms={terms || undefined}
+        />
       </div>
     </div>
   );
