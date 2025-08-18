@@ -209,7 +209,7 @@ export function QuotationItemsCard({
                           type="number" 
                           min="0" 
                           max="100" 
-                          value={depositInfo.depositPercentage.toFixed(0)} 
+                          value={Number(depositInfo.depositPercentage).toFixed(0)} 
                           onChange={e => handleDepositPercentageChange(parseFloat(e.target.value))} 
                           className="pr-7 h-10 text-sm" 
                         />
