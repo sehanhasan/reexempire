@@ -121,7 +121,7 @@ export default function StaffPage() {
             {!searchTerm && <p className="text-muted-foreground text-sm mt-2">
                 Get started by adding your first team member.
               </p>}
-          </div> : <div className="space-y-4">
+          </div> : <div className="px-2 space-y-4">
             {filteredStaff.map(staffMember => <Card key={staffMember.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(staffMember)}>
                 <CardContent className="p-0">
                   <div className="p-2 border-b bg-blue-50/30">
