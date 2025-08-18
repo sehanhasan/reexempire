@@ -114,7 +114,7 @@ export default function Customers() {
             {!searchTerm && <p className="text-muted-foreground text-sm mt-2">
                 Get started by adding your first customer.
               </p>}
-          </div> : <div className="space-y-4">
+          </div> : <div className="space-y-4 px-2">
             {filteredCustomers.map(customer => <Card key={customer.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(customer)}>
                 <CardContent className="p-0">
                   <div className="p-2 border-b bg-blue-50/30">
