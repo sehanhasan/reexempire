@@ -211,20 +211,13 @@ export function QuotationItemsCard({
                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">%</span>
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
-                        <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
-                          <Input 
-                            id="depositAmount" 
-                            type="number" 
-                            min="0" 
-                            value={depositInfo.depositAmount.toFixed(2)} 
-                            onChange={e => handleDepositAmountChange(parseFloat(e.target.value) || 0)} 
-                            className="pl-8 h-10 text-sm" 
-                          />
-                        </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="depositAmount" className="text-xs">Amount</Label>
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">RM</span>
+                        <Input id="depositAmount" type="number" min="0" value={depositAmount.toFixed(2)} onChange={e => handleDepositAmountChange(parseFloat(e.target.value))} className="pl-8 h-10 text-sm" />
                       </div>
+                    </div>
                     </div>
                     <div className="flex justify-between text-sm py-1">
                       <span>Balance Due:</span>
