@@ -28,7 +28,7 @@ export function SearchButton({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input type="search" placeholder={placeholder} className="pl-10 h-9 w-48" value={searchTerm} onChange={handleSearchChange} autoFocus />
           </div>
-          <Button variant="ghost" size="sm" onClick={handleToggle} className="">
+          <Button variant="ghost" size="sm" onClick={handleToggle} className="px-2">
             <X className="h-4 w-4" />
           </Button>
         </div> : <Button variant="ghost" size="sm" onClick={handleToggle} className="p-2">
