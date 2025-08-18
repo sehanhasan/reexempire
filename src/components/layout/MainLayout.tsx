@@ -4,6 +4,7 @@ import { MobileHeader } from "./MobileHeader";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/auth/LoadingSpinner";
+
 interface MainLayoutProps {
   children: ReactNode;
   searchProps?: {
@@ -12,10 +13,8 @@ interface MainLayoutProps {
     placeholder?: string;
   };
 }
-export function MainLayout({
-  children,
-  searchProps
-}: MainLayoutProps) {
+
+export function MainLayout({ children, searchProps }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileActions, setMobileActions] = useState<ReactNode[]>([]);
   const [mobileSearchProps, setMobileSearchProps] = useState<{
@@ -27,14 +26,8 @@ export function MainLayout({
   const isMobile = true;
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    user,
-    isAdmin,
-    isStaff,
-    isLoading,
-    signOut
-  } = useAuth();
-
+  const { user, isAdmin, isStaff, isLoading, signOut } = useAuth();
+  
   // If user is not authenticated, redirect to login
   useEffect(() => {
     if (!isLoading && !user) {
@@ -49,7 +42,7 @@ export function MainLayout({
       }
     }
   }, [user, isLoading, location.pathname, navigate, isStaff, isAdmin]);
-
+  
   // Get mobile header actions using custom event
   useEffect(() => {
     const handleGetMobileActions = (event: CustomEvent) => {
@@ -57,11 +50,13 @@ export function MainLayout({
         setMobileActions(event.detail);
       }
     };
+
     const handleSetupMobileSearch = (event: CustomEvent) => {
       if (event.detail) {
         setMobileSearchProps(event.detail);
       }
     };
+
     const handleClearMobileSearch = () => {
       setMobileSearchProps(null);
     };
@@ -70,16 +65,18 @@ export function MainLayout({
     window.addEventListener('get-mobile-actions', handleGetMobileActions as EventListener);
     window.addEventListener('setup-mobile-search', handleSetupMobileSearch as EventListener);
     window.addEventListener('clear-mobile-search', handleClearMobileSearch as EventListener);
+    
     return () => {
       window.removeEventListener('get-mobile-actions', handleGetMobileActions as EventListener);
       window.removeEventListener('setup-mobile-search', handleSetupMobileSearch as EventListener);
       window.removeEventListener('clear-mobile-search', handleClearMobileSearch as EventListener);
     };
   }, []);
-
+  
   // Get page title based on route
   const getPageTitle = () => {
     const path = location.pathname;
+    
     if (path === "/" || path === "/dashboard") return "Dashboard";
     if (path.includes("/categories")) return "Categories";
     if (path.includes("/customers")) return "Customers";
@@ -99,36 +96,58 @@ export function MainLayout({
       return "Schedule";
     }
     if (path.includes("/profile")) return "Profile";
+    
     return "Reex Empire";
   };
+
   const handleLogout = async () => {
     await signOut();
     navigate('/auth/login');
   };
-
+  
   // Toggle sidebar function - simplified but reliable
   const toggleSidebar = () => {
     setSidebarOpen(prevState => !prevState);
   };
+
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">
+    return (
+      <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner />
-      </div>;
+      </div>
+    );
   }
-  return <div className="flex min-h-screen bg-background overflow-hidden max-w-full">
-      <div className={`fixed inset-0 bg-black/50 z-40 transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)} />
+  
+  return (
+    <div className="flex min-h-screen bg-background overflow-hidden max-w-full">
+      <div 
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        onClick={() => setSidebarOpen(false)} 
+      />
       
       {/* Fixed sidebar wrapper to prevent scrolling */}
       <div className="h-screen sticky top-0 z-50 flex-shrink-0">
-        <AppSidebar open={sidebarOpen} setOpen={setSidebarOpen} isAdmin={isAdmin} isStaff={isStaff} onLogout={handleLogout} />
+        <AppSidebar 
+          open={sidebarOpen} 
+          setOpen={setSidebarOpen} 
+          isAdmin={isAdmin}
+          isStaff={isStaff}
+          onLogout={handleLogout}
+        />
       </div>
       
       <div className="flex-1 flex flex-col overflow-auto relative max-w-full">
-        <MobileHeader title={getPageTitle()} onMenuClick={toggleSidebar} actions={mobileActions} searchProps={mobileSearchProps} />
+        <MobileHeader 
+          title={getPageTitle()} 
+          onMenuClick={toggleSidebar} 
+          actions={mobileActions}
+          searchProps={mobileSearchProps}
+        />
         
-        <main className="px-2 pt-16 pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50">
+        <main className="px-0 pt-16 pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50">
           {children}
         </main>
       </div>
-    </div>;
+    </div>
+  );
 }
