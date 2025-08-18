@@ -9,7 +9,6 @@ import { PlusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { Appointment, Staff } from "@/types/database";
-
 export default function Schedule() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -18,33 +17,34 @@ export default function Schedule() {
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("upcoming");
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [appointmentsData, customersData, staffData] = await Promise.all([
-          appointmentService.getAll(),
-          customerService.getAll(),
-          staffService.getAll()
-        ]);
+        const [appointmentsData, customersData, staffData] = await Promise.all([appointmentService.getAll(), customerService.getAll(), staffService.getAll()]);
 
+        // Create a customer lookup map for quick access
         const customersMap = {};
         customersData.forEach(customer => {
           customersMap[customer.id] = customer;
         });
 
+        // Create a staff lookup map for quick access
         const staffMap = {};
         staffData.forEach(staff => {
           staffMap[staff.id] = staff;
         });
 
+        // Enhance appointments with customer data
         const enhancedAppointments = appointmentsData.map(appointment => {
           const customer = customersMap[appointment.customer_id] || null;
           const staff = appointment.staff_id ? staffMap[appointment.staff_id] : null;
-          return { ...appointment, customer, staff };
+          return {
+            ...appointment,
+            customer,
+            staff
+          };
         });
-
         setAppointments(enhancedAppointments);
         setCustomers(customersMap);
         setStaffMembers(staffMap);
@@ -61,19 +61,20 @@ export default function Schedule() {
     };
     fetchData();
   }, []);
-
   const handleEdit = appointment => {
     navigate(`/schedule/edit/${appointment.id}`);
   };
-
   const handleMarkAsCompleted = async (appointment: Appointment) => {
     try {
-      await appointmentService.update(appointment.id, { status: "Completed" });
-      setAppointments(prev =>
-        prev.map(app =>
-          app.id === appointment.id ? { ...app, status: "Completed" } : app
-        )
-      );
+      await appointmentService.update(appointment.id, {
+        status: 'Completed'
+      });
+
+      // Update local state
+      setAppointments(prev => prev.map(app => app.id === appointment.id ? {
+        ...app,
+        status: 'Completed'
+      } : app));
       toast({
         title: "Appointment Completed",
         description: "Appointment has been marked as completed."
@@ -87,15 +88,17 @@ export default function Schedule() {
       });
     }
   };
-
   const handleMarkAsInProgress = async (appointment: Appointment) => {
     try {
-      await appointmentService.update(appointment.id, { status: "In Progress" });
-      setAppointments(prev =>
-        prev.map(app =>
-          app.id === appointment.id ? { ...app, status: "In Progress" } : app
-        )
-      );
+      await appointmentService.update(appointment.id, {
+        status: 'In Progress'
+      });
+
+      // Update local state
+      setAppointments(prev => prev.map(app => app.id === appointment.id ? {
+        ...app,
+        status: 'In Progress'
+      } : app));
       toast({
         title: "Appointment In Progress",
         description: "Appointment has been marked as in progress."
@@ -110,78 +113,36 @@ export default function Schedule() {
     }
   };
 
-  // 🔹 Filter appointments based on active tab
+  // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
     if (activeTab === "upcoming") {
       return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status) && appointment.status !== "Cancelled";
     } else if (activeTab === "completed") {
       return appointment.status === "Completed" || appointment.status === "Cancelled";
-    } else if (activeTab === "inprogress") {
-      return appointment.status === "In Progress";
     }
     return true;
   });
-
-  return (
-    <div className="page-container">
-      <PageHeader
-        title="Schedule"
-        description=""
-        actions={
-          <Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
+  return <div className="page-container">
+      <PageHeader title="Schedule" description="" actions={<Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Appointment
-          </Button>
-        }
-      />
-
+          </Button>} />
+      
       <div className="mt-0">
-        {/* 🔹 Tabs */}
         <div className="flex border-b border-gray-200 rounded-t-lg">
-          <button
-            onClick={() => setActiveTab("upcoming")}
-            className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${
-              activeTab === "upcoming"
-                ? "text-cyan-600 border-b-2 border-cyan-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
+          <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "upcoming" ? "text-cyan-600 border-b-2 border-cyan-600" : "text-gray-500 hover:text-gray-700"}`}>
             Upcoming
           </button>
-          <button
-            onClick={() => setActiveTab("inprogress")}
-            className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${
-              activeTab === "inprogress"
-                ? "text-cyan-600 border-b-2 border-cyan-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            In Progress
-          </button>
-          <button
-            onClick={() => setActiveTab("completed")}
-            className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${
-              activeTab === "completed"
-                ? "text-cyan-600 border-b-2 border-cyan-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
+          <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-6 text-center font-medium transition-colors duration-200 ${activeTab === "completed" ? "text-cyan-600 border-b-2 border-cyan-600" : "text-gray-500 hover:text-gray-700"}`}>
             Completed
           </button>
         </div>
-
-        {/* ListView */}
+        
         <div className="mt-4">
-          <ListView
-            appointments={filteredAppointments}
-            onEdit={handleEdit}
-            onMarkAsCompleted={handleMarkAsCompleted}
-            onMarkAsInProgress={handleMarkAsInProgress}
-          />
+          <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} />
         </div>
       </div>
-
+      
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />
-    </div>
-  );
+    </div>;
 }
