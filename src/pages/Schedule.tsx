@@ -1,5 +1,11 @@
-
-// ... keep existing code (imports and component start)
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { PageHeader } from "@/components/common/PageHeader";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import { FloatingActionButton } from "@/components/common/FloatingActionButton";
+import { ListView } from "@/components/schedule/ListView";
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -10,7 +16,54 @@ export default function Schedule() {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("upcoming");
 
-  // ... keep existing code (useEffect and handler functions)
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Simulate fetching appointments, customers, and staff members
+        const appointmentsData = [
+          { id: "1", appointment_date: "2024-08-10T00:00:00.000Z", start_time: "09:00", end_time: "10:00", status: "confirmed", customer_id: "1", staff_id: "1", title: "Service 1" },
+          { id: "2", appointment_date: "2024-08-11T00:00:00.000Z", start_time: "11:00", end_time: "12:00", status: "in progress", customer_id: "2", staff_id: "2", title: "Service 2" },
+          { id: "3", appointment_date: "2024-08-10T00:00:00.000Z", start_time: "14:00", end_time: "15:00", status: "completed", customer_id: "1", staff_id: "1", title: "Service 3" },
+          { id: "4", appointment_date: "2024-08-12T00:00:00.000Z", start_time: "16:00", end_time: "17:00", status: "scheduled", customer_id: "3", staff_id: "3", title: "Service 4" },
+        ];
+        const customersData = {
+          "1": { id: "1", name: "Customer 1" },
+          "2": { id: "2", name: "Customer 2" },
+          "3": { id: "3", name: "Customer 3" },
+        };
+        const staffMembersData = {
+          "1": { id: "1", name: "Staff 1" },
+          "2": { id: "2", name: "Staff 2" },
+          "3": { id: "3", name: "Staff 3" },
+        };
+
+        setAppointments(appointmentsData);
+        setCustomers(customersData);
+        setStaffMembers(staffMembersData);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleEdit = (appointment) => {
+    navigate(`/schedule/edit/${appointment.id}`);
+  };
+
+  const handleMarkAsCompleted = (appointment) => {
+    // Implement mark as completed logic here
+    console.log("Mark as completed:", appointment);
+  };
+
+  const handleMarkAsInProgress = (appointment) => {
+    // Implement mark as in progress logic here
+    console.log("Mark as in progress:", appointment);
+  };
 
   // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
