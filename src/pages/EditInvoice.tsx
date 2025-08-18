@@ -1,16 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { ArrowLeft, CheckCircle, XCircle, Share2, Clock, DollarSign, Image, X } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2, Clock, DollarSign } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { invoiceService, customerService } from "@/services";
 import { Customer, Invoice } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -47,10 +45,6 @@ export default function EditInvoice() {
     depositPercentage: 50
   });
   const [originalItemOrder, setOriginalItemOrder] = useState<{[key: number]: number}>({});
-  
-  // Work Photos states
-  const [images, setImages] = useState<File[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   // Check if invoice is overdue
   const isOverdue = () => {
@@ -58,29 +52,6 @@ export default function EditInvoice() {
     const today = new Date();
     const due = new Date(invoiceData.due_date);
     return today > due;
-  };
-
-  // Work Photos handlers
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const fileArray = Array.from(e.target.files);
-      setImages(prev => [...prev, ...fileArray]);
-      
-      // Create URLs for preview
-      fileArray.forEach(file => {
-        const url = URL.createObjectURL(file);
-        setImageUrls(prev => [...prev, url]);
-      });
-    }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => {
-      // Revoke the URL to prevent memory leaks
-      URL.revokeObjectURL(prev[index]);
-      return prev.filter((_, i) => i !== index);
-    });
   };
 
   useEffect(() => {
@@ -560,61 +531,6 @@ export default function EditInvoice() {
           setDepositInfo={setDepositInfo} 
           calculateItemAmount={calculateItemAmount} 
         />
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Work Photos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Label htmlFor="image-upload">Upload images to include in the invoice PDF</Label>
-              <div className="flex items-center gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => document.getElementById('image-upload')?.click()}
-                >
-                  <Image className="mr-2 h-4 w-4" />
-                  Add Images
-                </Button>
-                <Input 
-                  id="image-upload" 
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={handleFileChange}
-                />
-                <p className="text-sm text-muted-foreground">
-                  {images.length} {images.length === 1 ? 'image' : 'images'} selected
-                </p>
-              </div>
-              
-              {imageUrls.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                  {imageUrls.map((url, index) => (
-                    <div key={index} className="relative">
-                      <img 
-                        src={url} 
-                        alt={`Preview ${index + 1}`} 
-                        className="w-full h-32 object-cover rounded-md" 
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-1 right-1 h-6 w-6"
-                        onClick={() => removeImage(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
         
         <AdditionalInfoForm 
           terms={terms}
