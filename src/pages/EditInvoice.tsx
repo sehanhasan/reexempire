@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -10,7 +9,7 @@ import { AdditionalInfoCard } from "@/components/quotations/AdditionalInfoCard";
 import { invoiceService, customerService } from "@/services";
 import { Customer, Invoice, InvoiceItem } from "@/types/database";
 import { WorkPhotosCard } from "@/components/invoices/WorkPhotosCard";
-import { InvoiceItem as InvoiceItemType } from "./types";
+import { InvoiceItem as InvoiceItemType } from "./EditInvoice/types";
 
 export default function EditInvoice() {
   const navigate = useNavigate();
