@@ -65,8 +65,9 @@ export function QuotationItemsCard({
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
-    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-    return sum + (qty * item.unitPrice);
+    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : Number(item.quantity);
+    const unitPrice = Number(item.unitPrice) || 0;
+    return sum + (qty * unitPrice);
   }, 0);
   
   const depositAmount = depositInfo.requiresDeposit ? 
@@ -106,17 +107,19 @@ export function QuotationItemsCard({
             </Button>
             
             <CategoryItemSelector 
-              onItemsSelected={(selectedItems) => {
+              open={false}
+              onOpenChange={() => {}}
+              onSelectItems={(selectedItems) => {
                 const newItems = selectedItems.map(selectedItem => {
                   const newId = Math.max(...items.map(item => item.id), 0) + 1 + selectedItems.indexOf(selectedItem);
                   return {
                     id: newId,
                     description: selectedItem.description,
-                    category: selectedItem.category,
+                    category: selectedItem.category || "",
                     quantity: selectedItem.quantity,
                     unit: selectedItem.unit,
-                    unitPrice: selectedItem.unitPrice,
-                    amount: selectedItem.quantity * selectedItem.unitPrice
+                    unitPrice: selectedItem.price,
+                    amount: selectedItem.quantity * selectedItem.price
                   };
                 });
                 setItems(prevItems => [...prevItems, ...newItems]);
