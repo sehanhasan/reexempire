@@ -10,22 +10,27 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface QuotationItemsCardProps {
   items: QuotationItem[];
   setItems: React.Dispatch<React.SetStateAction<QuotationItem[]>>;
   depositInfo: DepositInfo;
   setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
+  documentType?: 'quotation' | 'invoice';
 }
+
 export function QuotationItemsCard({
   items,
   setItems,
   depositInfo,
   setDepositInfo,
-  calculateItemAmount
+  calculateItemAmount,
+  documentType = 'quotation'
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
+
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -39,6 +44,7 @@ export function QuotationItemsCard({
       return item;
     }));
   };
+
   const addItem = () => {
     console.log("🔥 Add Item button clicked!");
     console.log("Current items before adding:", items);
@@ -59,14 +65,17 @@ export function QuotationItemsCard({
       return updatedItems;
     });
   };
+
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
+
   const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + item.amount, 0);
+    return items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0);
   };
+
   const handleDepositPercentageChange = (value: number) => {
     const total = calculateTotal();
     const newDepositAmount = total * (value / 100);
@@ -76,6 +85,7 @@ export function QuotationItemsCard({
       depositAmount: newDepositAmount
     });
   };
+
   const handleDepositAmountChange = (value: number) => {
     const total = calculateTotal();
     setDepositInfo({
@@ -84,6 +94,7 @@ export function QuotationItemsCard({
       depositPercentage: total > 0 ? value / total * 100 : 0
     });
   };
+
   const handleDepositCheckboxChange = (checked: boolean) => {
     if (checked) {
       const total = calculateTotal();
@@ -103,6 +114,7 @@ export function QuotationItemsCard({
       });
     }
   };
+
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     const validSelectedItems = selectedItems.filter(item => item.description && item.description.trim() !== '' && item.price > 0);
     if (validSelectedItems.length === 0) {
@@ -130,10 +142,15 @@ export function QuotationItemsCard({
       description: `${newItems.length} item(s) have been added to the quotation.`
     });
   };
+
+  const getCardTitle = () => {
+    return documentType === 'invoice' ? 'Invoice Items' : 'Quotation Items';
+  };
+
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">
-          <CardTitle className="text-lg text-cyan-600">Quotation Items</CardTitle>
+          <CardTitle className="text-lg text-cyan-600">{getCardTitle()}</CardTitle>
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
