@@ -1,13 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Invoice } from '@/types/database';
+import { Invoice, Customer } from '@/types/database';
 import { invoiceService } from '@/services/invoiceService';
 import { customerService } from '@/services/customerService';
-import { Customer } from '@/types/database';
-import { PageHeader } from '@/components/ui/page-header';
-import { CustomerInfoCard } from '@/components/invoices/CustomerInfoCard';
+import { PageHeader } from '@/components/common/PageHeader';
+import { CustomerInfoCard } from '@/components/quotations/CustomerInfoCard';
 import { QuotationItemsCard } from '@/components/quotations/QuotationItemsCard';
 import { AdditionalInfoForm } from '@/components/quotations/AdditionalInfoForm';
 import { InvoiceItem, DepositInfo } from '@/components/quotations/types';
@@ -16,17 +16,20 @@ export default function EditInvoice() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  const [customerId, setCustomerId] = useState<string>('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [issueDate, setIssueDate] = useState<Date | null>(new Date());
-  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [issueDate, setIssueDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState<string>('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [terms, setTerms] = useState<string>('');
+  const [subject, setSubject] = useState<string>('');
   const [depositInfo, setDepositInfo] = useState<DepositInfo>({
     requiresDeposit: false,
     depositAmount: 0,
     depositPercentage: 50,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [documentNumber, setDocumentNumber] = useState<string>('');
 
   const { data: invoice, isLoading, refetch } = useQuery({
     queryKey: ['invoice', id],
@@ -37,26 +40,33 @@ export default function EditInvoice() {
     refetchOnWindowFocus: true,
   });
 
+  const { data: customer } = useQuery({
+    queryKey: ['customer', customerId],
+    queryFn: () => customerService.getById(customerId),
+    enabled: !!customerId,
+  });
+
   useEffect(() => {
     if (invoice) {
-      setSelectedCustomer({
-        id: invoice.customer_id,
-        name: invoice.customer_name,
-        email: invoice.customer_email,
-        address: invoice.customer_address,
-        unit_number: invoice.customer_unit_number,
-        phone: invoice.customer_phone,
-      });
-      setIssueDate(new Date(invoice.issue_date));
-      setDueDate(invoice.due_date ? new Date(invoice.due_date) : null);
+      setCustomerId(invoice.customer_id);
+      setIssueDate(invoice.issue_date);
+      setDueDate(invoice.due_date || '');
       setTerms(invoice.terms || '');
+      setSubject(invoice.subject || '');
+      setDocumentNumber(invoice.reference_number);
       setDepositInfo({
-        requiresDeposit: invoice.requires_deposit,
-        depositAmount: invoice.deposit_amount,
-        depositPercentage: invoice.deposit_percentage,
+        requiresDeposit: invoice.is_deposit_invoice || false,
+        depositAmount: Number(invoice.deposit_amount) || 0,
+        depositPercentage: Number(invoice.deposit_percentage) || 50,
       });
     }
   }, [invoice]);
+
+  useEffect(() => {
+    if (customer) {
+      setSelectedCustomer(customer);
+    }
+  }, [customer]);
 
   const { data: invoiceItems } = useQuery({
     queryKey: ['invoice-items', id],
@@ -67,7 +77,16 @@ export default function EditInvoice() {
 
   useEffect(() => {
     if (invoiceItems) {
-      setItems(invoiceItems);
+      const formattedItems = invoiceItems.map(item => ({
+        id: parseInt(item.id),
+        description: item.description,
+        category: item.category || 'Other Items',
+        quantity: Number(item.quantity),
+        unit: item.unit,
+        unitPrice: Number(item.unit_price),
+        amount: Number(item.amount)
+      }));
+      setItems(formattedItems);
     }
   }, [invoiceItems]);
 
@@ -77,7 +96,8 @@ export default function EditInvoice() {
   };
 
   const updateInvoiceMutation = useMutation({
-    mutationFn: invoiceService.update,
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Invoice> }) => 
+      invoiceService.update(id, updates),
     onSuccess: () => {
       toast.success('Invoice updated successfully!');
       refetch();
@@ -97,27 +117,24 @@ export default function EditInvoice() {
 
     setIsSubmitting(true);
     try {
-      const total = items.reduce((sum, item) => sum + item.amount, 0);
+      const total = items.reduce((sum, item) => sum + Number(item.amount), 0);
 
       const invoiceData: Partial<Invoice> = {
         customer_id: selectedCustomer.id,
-        customer_name: selectedCustomer.name,
-        customer_email: selectedCustomer.email,
-        customer_address: selectedCustomer.address,
-        customer_unit_number: selectedCustomer.unit_number,
-        customer_phone: selectedCustomer.phone,
-        issue_date: issueDate ? issueDate.toISOString() : new Date().toISOString(),
-        due_date: dueDate ? dueDate.toISOString() : null,
+        issue_date: issueDate,
+        due_date: dueDate || null,
         subtotal: total,
         total: total,
         terms: terms,
-        requires_deposit: depositInfo.requiresDeposit,
-        deposit_amount: depositInfo.depositAmount,
-        deposit_percentage: depositInfo.depositPercentage,
+        subject: subject,
+        is_deposit_invoice: depositInfo.requiresDeposit,
+        deposit_amount: Number(depositInfo.depositAmount),
+        deposit_percentage: Number(depositInfo.depositPercentage),
         status: status || 'Sent',
+        reference_number: documentNumber,
       };
 
-      await updateInvoiceMutation.mutateAsync([id!, invoiceData]);
+      await updateInvoiceMutation.mutateAsync({ id: id!, updates: invoiceData });
 
       // Update items
       await invoiceService.updateItems(id!, items);
@@ -131,18 +148,26 @@ export default function EditInvoice() {
     }
   };
 
+  const handleCustomerChange = (newCustomerId: string) => {
+    setCustomerId(newCustomerId);
+  };
+
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">
       <PageHeader title="Edit Invoice" />
       <div className="space-y-6">
         <CustomerInfoCard
-          selectedCustomer={selectedCustomer}
-          setSelectedCustomer={setSelectedCustomer}
-          issueDate={issueDate}
-          setIssueDate={setIssueDate}
-          dueDate={dueDate}
-          setDueDate={setDueDate}
+          customerId={customerId}
+          setCustomer={handleCustomerChange}
           documentType="invoice"
+          documentNumber={documentNumber}
+          setDocumentNumber={setDocumentNumber}
+          documentDate={issueDate}
+          setDocumentDate={setIssueDate}
+          expiryDate={dueDate}
+          setExpiryDate={setDueDate}
+          subject={subject}
+          setSubject={setSubject}
         />
 
         <QuotationItemsCard
