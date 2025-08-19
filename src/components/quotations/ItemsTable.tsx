@@ -98,10 +98,6 @@ export function ItemsTable({
     setSwipedItemId(null);
   };
 
-  const handleCancelSwipe = () => {
-    setSwipedItemId(null);
-  };
-
   const {
     groupedItems,
     orderedCategories
@@ -156,37 +152,24 @@ export function ItemsTable({
               {groupedItems[category].map((item, index) => <div 
                 key={item.id} 
                 className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white transition-transform duration-200 ${
-                  swipedItemId === item.id ? 'transform -translate-x-20' : ''
+                  swipedItemId === item.id ? 'transform -translate-x-16' : ''
                 }`}
                 onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
                 onClick={(e) => e.stopPropagation()}
               >
-                  {/* Action buttons revealed by swipe */}
+                  {/* Delete button revealed by swipe */}
                   {swipedItemId === item.id && (
-                    <div className="absolute right-0 top-0 h-full w-20 flex rounded-r-md overflow-hidden">
-                      <div className="w-12 bg-gray-400 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-gray-500" 
-                          onClick={handleCancelSwipe}
-                        >
-                          <X className="h-5 w-5" />
-                        </Button>
-                      </div>
-                      <div className="w-12 bg-red-500 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-red-600" 
-                          onClick={() => removeItem(item.id)} 
-                          disabled={items.length <= 1}
-                        >
-                          <Trash className="h-5 w-5" />
-                        </Button>
-                      </div>
+                    <div className="absolute right-0 top-0 h-full w-16 bg-red-500 flex items-center justify-center rounded-r-md">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-12 w-12 text-white hover:text-white hover:bg-red-600" 
+                        onClick={() => removeItem(item.id)} 
+                        disabled={items.length <= 1}
+                      >
+                        <Trash className="h-6 w-6" />
+                      </Button>
                     </div>
                   )}
                   
