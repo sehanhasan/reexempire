@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -77,10 +76,8 @@ export default function ViewQuotation() {
   }, [quotation]);
 
   useEffect(() => {
-    if (quotation?.signature_data && quotation.status === 'Accepted') {
+    if (quotation?.signature_data) {
       setSignatureData(quotation.signature_data);
-    } else {
-      setSignatureData('');
     }
   }, [quotation]);
 
@@ -219,7 +216,7 @@ export default function ViewQuotation() {
   }
 
   const isAccepted = quotation.status === 'Accepted';
-  const hasSignature = signatureData && isAccepted;
+  const hasSignature = signatureData || quotation.signature_data;
 
   const groupedItems: { [key: string]: any[] } = {};
   items.forEach((item) => {
@@ -461,7 +458,7 @@ export default function ViewQuotation() {
                     <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <img 
-                        src={signatureData} 
+                        src={signatureData || quotation.signature_data} 
                         alt="Customer Signature" 
                         className="max-w-full h-auto border border-gray-200 rounded bg-white"
                         style={{ maxHeight: '150px' }}

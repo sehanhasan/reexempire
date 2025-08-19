@@ -425,43 +425,6 @@ const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   }
 };
 
-const updateItems = async (invoiceId: string, items: any[]): Promise<void> => {
-  try {
-    console.log(`InvoiceService: Updating items for invoice ${invoiceId}`);
-    
-    // First, delete all existing items
-    await deleteItemsByInvoiceId(invoiceId);
-    
-    // Then insert the new items
-    if (items.length > 0) {
-      const itemsToInsert = items.map((item, index) => ({
-        invoice_id: invoiceId,
-        description: item.description,
-        quantity: Number(item.quantity),
-        unit: item.unit,
-        unit_price: Number(item.unitPrice),
-        amount: Number(item.amount),
-        category: item.category || null,
-        display_order: index + 1
-      }));
-
-      const { error } = await supabase
-        .from('invoice_items')
-        .insert(itemsToInsert);
-
-      if (error) {
-        console.error(`InvoiceService: Error inserting items for invoice ${invoiceId}:`, error);
-        throw new Error(`Failed to update invoice items: ${error.message}`);
-      }
-    }
-
-    console.log(`InvoiceService: Successfully updated items for invoice ${invoiceId}`);
-  } catch (error) {
-    console.error("InvoiceService: Unexpected error in updateItems:", error);
-    throw error;
-  }
-};
-
 const generateWhatsAppShareUrl = (invoiceId: string, referenceNumber: string, customerName: string, invoiceUrl: string): string => {
   const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
   const encodedMessage = encodeURIComponent(message);
@@ -482,7 +445,6 @@ export const invoiceService = {
   addInvoiceImage,
   getInvoiceImages,
   deleteItemsByInvoiceId,
-  updateItems,
   generateWhatsAppShareUrl
 };
 
