@@ -65,7 +65,7 @@ export function QuotationItemsCard({
 
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
-    const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : Number(item.quantity) || 1;
+    const qty = Number(item.quantity) || 1;
     const unitPrice = Number(item.unitPrice) || 0;
     return sum + (qty * unitPrice);
   }, 0);
