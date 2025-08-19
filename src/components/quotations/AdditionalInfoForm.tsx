@@ -19,6 +19,7 @@ interface AdditionalInfoFormProps {
   documentId?: string;
   documentNumber?: string;
   customerName?: string;
+  isEditMode?: boolean;
 }
 
 export function AdditionalInfoForm({
@@ -32,7 +33,8 @@ export function AdditionalInfoForm({
   onSendWhatsapp,
   documentId,
   documentNumber,
-  customerName
+  customerName,
+  isEditMode = false
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
 
@@ -57,6 +59,13 @@ export function AdditionalInfoForm({
     }
   };
 
+  const getSendButtonText = () => {
+    if (isEditMode) {
+      return documentType === "quotation" ? "Send Updated Quotation" : "Send Updated Invoice";
+    }
+    return `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`;
+  };
+
   return <Card className="shadow-sm">
       
       <CardContent className="py-4 px-4 space-y-4">
@@ -75,7 +84,7 @@ export function AdditionalInfoForm({
             </Button>}
 
           <Button type="button" onClick={handleSendWithShare} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
-            {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`}
+            {isSubmitting ? "Processing..." : getSendButtonText()}
           </Button>
         </div>
       </CardContent>

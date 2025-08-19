@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -193,7 +192,7 @@ export default function EditQuotation() {
       if (newStatus === "Sent") {
         toast({
           title: "Quotation Update Sent",
-          description: `Quotation for ${customer?.name} has been updated and sent successfully.`
+          description: `Updated quotation for ${customer?.name} has been sent successfully.`
         });
 
         // Use window.location.href for better WebView/APK compatibility
@@ -421,7 +420,19 @@ export default function EditQuotation() {
         
         <QuotationItemsCard items={items} setItems={setItems} depositInfo={depositInfo} setDepositInfo={setDepositInfo} calculateItemAmount={calculateItemAmount} />
         
-        <AdditionalInfoForm terms={terms} setTerms={setTerms} onSubmit={handleSubmit} onCancel={() => navigate("/quotations")} documentType="quotation" isSubmitting={isSubmitting} showDraft={false} />
+        <AdditionalInfoForm 
+          terms={terms} 
+          setTerms={setTerms} 
+          onSubmit={handleSubmit} 
+          onCancel={() => navigate("/quotations")} 
+          documentType="quotation" 
+          isSubmitting={isSubmitting} 
+          showDraft={false}
+          documentId={id}
+          documentNumber={documentNumber}
+          customerName={customer?.name}
+          isEditMode={true}
+        />
       </form>
     </div>;
 }
