@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash, Pencil, Check, X } from "lucide-react";
@@ -21,7 +21,7 @@ export function ItemsTable({
   const isMobile = useIsMobile();
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
-
+  const itemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   // Scroll to the last item when a new item is added
   useEffect(() => {
