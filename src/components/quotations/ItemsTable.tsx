@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash, Pencil, Check, X } from "lucide-react";
@@ -23,6 +23,24 @@ export function ItemsTable({
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
   const [swipedItemId, setSwipedItemId] = useState<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState<number>(0);
+  const itemRefs = useRef<{[key: number]: HTMLDivElement | null}>({});
+
+  // Scroll to the last item when a new item is added
+  useEffect(() => {
+    if (items.length > 0) {
+      const lastItemId = Math.max(...items.map(item => item.id));
+      const lastItemRef = itemRefs.current[lastItemId];
+      if (lastItemRef) {
+        setTimeout(() => {
+          lastItemRef.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 100);
+      }
+    }
+  }, [items.length]);
 
   // Format currency without RM symbol for items table
   const formatAmount = (amount: number) => {
@@ -73,19 +91,31 @@ export function ItemsTable({
   const handleTouchStart = (e: React.TouchEvent, itemId: number) => {
     const touch = e.touches[0];
     const startX = touch.clientX;
+    let currentOffset = 0;
     
     const handleTouchMove = (moveEvent: TouchEvent) => {
       const currentTouch = moveEvent.touches[0];
       const diffX = startX - currentTouch.clientX;
       
-      if (diffX > 50) { // Swipe left threshold
+      // Limit swipe to reasonable bounds
+      currentOffset = Math.max(0, Math.min(diffX, 120));
+      setSwipeOffset(currentOffset);
+      
+      if (diffX > 20) { // Start revealing actions after 20px swipe
         setSwipedItemId(itemId);
-        document.removeEventListener('touchmove', handleTouchMove);
-        document.removeEventListener('touchend', handleTouchEnd);
       }
     };
     
     const handleTouchEnd = () => {
+      // Snap to position based on final offset
+      if (currentOffset > 60) {
+        setSwipeOffset(80); // Fully reveal actions
+        setSwipedItemId(itemId);
+      } else {
+        setSwipeOffset(0); // Snap back
+        setSwipedItemId(null);
+      }
+      
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
@@ -96,10 +126,13 @@ export function ItemsTable({
 
   const handleTouchOutside = () => {
     setSwipedItemId(null);
+    setSwipeOffset(0);
   };
 
-  const handleCancelSwipe = () => {
+  const handleDeleteAction = (itemId: number) => {
+    removeItem(itemId);
     setSwipedItemId(null);
+    setSwipeOffset(0);
   };
 
   const {
@@ -155,62 +188,56 @@ export function ItemsTable({
               </div>
               {groupedItems[category].map((item, index) => <div 
                 key={item.id} 
-                className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white transition-transform duration-200 ${
-                  swipedItemId === item.id ? 'transform -translate-x-20' : ''
-                }`}
+                ref={(el) => itemRefs.current[item.id] = el}
+                className="relative overflow-hidden rounded-md bg-white"
                 onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
                 onClick={(e) => e.stopPropagation()}
               >
-                  {/* Action buttons revealed by swipe */}
-                  {swipedItemId === item.id && (
-                    <div className="absolute right-0 top-0 h-full w-20 flex rounded-r-md overflow-hidden">
-                      <div className="w-12 bg-gray-400 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-gray-500" 
-                          onClick={handleCancelSwipe}
-                        >
-                          <X className="h-5 w-5" />
-                        </Button>
-                      </div>
-                      <div className="w-12 bg-red-500 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-red-600" 
-                          onClick={() => removeItem(item.id)} 
-                          disabled={items.length <= 1}
-                        >
-                          <Trash className="h-5 w-5" />
-                        </Button>
-                      </div>
+                  {/* Native iOS-style action buttons behind the card */}
+                  <div className="absolute right-0 top-0 h-full w-20 flex">
+                    <div className="w-full bg-red-500 flex items-center justify-center">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-10 w-10 text-white hover:text-white hover:bg-red-600" 
+                        onClick={() => handleDeleteAction(item.id)} 
+                        disabled={items.length <= 1}
+                      >
+                        <Trash className="h-5 w-5" />
+                      </Button>
                     </div>
-                  )}
+                  </div>
                   
-                  <div className="space-y-3 pb-1">
-                    <div className="space-y-2">
-                      <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
-                      <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2">
+                  {/* Main card content that slides over the action buttons */}
+                  <div 
+                    className="mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 bg-white transition-transform duration-200 ease-out"
+                    style={{ 
+                      transform: swipedItemId === item.id ? `translateX(-${swipeOffset}px)` : 'translateX(0px)' 
+                    }}
+                  >
+                    <div className="space-y-3 pb-1">
                       <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
-                        <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
+                        <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                       </div>
                       
-                      <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
-                        <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
-                        <div className="p-2 h-10 text-right text-gray-800">
-                          {formatAmount(item.amount)}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                          <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
+                          <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
+                          <div className="p-2 h-10 text-right text-gray-800">
+                            {formatAmount(item.amount)}
+                          </div>
                         </div>
                       </div>
                     </div>
