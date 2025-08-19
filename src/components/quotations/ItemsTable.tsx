@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ export function ItemsTable({
   const isMobile = useIsMobile();
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
-  const [swipedItemId, setSwipedItemId] = useState<number | null>(null);
 
   // Format currency without RM symbol for items table
   const formatAmount = (amount: number) => {
@@ -68,18 +66,6 @@ export function ItemsTable({
   const handleCancelEdit = () => {
     setEditingCategory(null);
     setEditCategoryValue("");
-  };
-
-  const handleSwipe = (itemId: number, direction: 'left' | 'right') => {
-    if (direction === 'left') {
-      setSwipedItemId(itemId);
-      setTimeout(() => setSwipedItemId(null), 3000); // Auto-hide after 3 seconds
-    }
-  };
-
-  const handleDeleteSwipe = (itemId: number) => {
-    removeItem(itemId);
-    setSwipedItemId(null);
   };
 
   const {
@@ -133,41 +119,18 @@ export function ItemsTable({
                   </div>
                 )}
               </div>
-              {groupedItems[category].map((item, index) => <div 
-                key={item.id} 
-                className="relative overflow-hidden"
-                onTouchStart={(e) => {
-                  const touch = e.touches[0];
-                  const startX = touch.clientX;
+              {groupedItems[category].map((item, index) => <div key={item.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white">
+                  <div className="absolute top-2 right-2">
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
                   
-                  const handleTouchMove = (e: TouchEvent) => {
-                    const currentX = e.touches[0].clientX;
-                    const diffX = startX - currentX;
-                    
-                    if (diffX > 50) { // Swipe left threshold
-                      handleSwipe(item.id, 'left');
-                      document.removeEventListener('touchmove', handleTouchMove);
-                      document.removeEventListener('touchend', handleTouchEnd);
-                    }
-                  };
-                  
-                  const handleTouchEnd = () => {
-                    document.removeEventListener('touchmove', handleTouchMove);
-                    document.removeEventListener('touchend', handleTouchEnd);
-                  };
-                  
-                  document.addEventListener('touchmove', handleTouchMove);
-                  document.addEventListener('touchend', handleTouchEnd);
-                }}
-              >
-                <div className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 bg-white transition-transform duration-300 ${
-                  swipedItemId === item.id ? 'transform -translate-x-16' : ''
-                }`}>
                   <div className="space-y-3 pb-1">
+                    <div className="mb-1 font-medium text-sm text-slate-500">Item #{index + 1}</div>
+                    
                     <div className="space-y-2">
-                      <label className="block text-xs mb-1 text-slate-600 font-medium">
-                        Item #{index + 1} - Description
-                      </label>
+                      <label className="block text-xs mb-1 text-slate-600 font-medium">Description</label>
                       <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                     </div>
                     
@@ -190,24 +153,7 @@ export function ItemsTable({
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Delete button revealed on swipe */}
-                {swipedItemId === item.id && (
-                  <div className="absolute top-0 right-0 h-full w-16 bg-red-500 flex items-center justify-center">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-white hover:text-white hover:bg-red-600"
-                      onClick={() => handleDeleteSwipe(item.id)}
-                      disabled={items.length <= 1}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>)}
+                </div>)}
             </div>)}
         </div> : <table className="w-full">
           <thead>

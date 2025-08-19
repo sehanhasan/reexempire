@@ -75,7 +75,7 @@ export function AdditionalInfoForm({
             </Button>}
 
           <Button type="button" onClick={handleSendWithShare} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
-            {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Updated Quotation" : "Invoice"}`}
+            {isSubmitting ? "Processing..." : `Send ${documentType === "quotation" ? "Quotation" : "Invoice"}`}
           </Button>
         </div>
       </CardContent>

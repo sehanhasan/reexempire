@@ -217,11 +217,6 @@ export default function ViewQuotation() {
 
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData || quotation.signature_data;
-  
-  // Show signature section only if status is Accepted and has signature
-  const showSignatureSection = isAccepted && hasSignature;
-  // Show acceptance section only if status is Sent and no signature
-  const showAcceptanceSection = quotation.status === 'Sent' && !hasSignature;
 
   const groupedItems: { [key: string]: any[] } = {};
   items.forEach((item) => {
@@ -267,10 +262,15 @@ export default function ViewQuotation() {
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
                   <div className="flex items-center gap-2 mb-1">
-                    {/* Show "Signed" instead of "Sent" when accepted and has signature */}
                     <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
-                      {showSignatureSection ? 'Signed' : quotation.status}
+                      {quotation.status}
                     </Badge>
+                      {hasSignature && (
+                        <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200 flex items-center">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Signed
+                        </Badge>
+                      )}
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
@@ -382,7 +382,7 @@ export default function ViewQuotation() {
 
             {/* Right Column - Acceptance Section */}
             <div>
-              {showAcceptanceSection && (
+              {!isAccepted && (
                 <Card className="shadow-sm print:hidden">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
@@ -451,8 +451,8 @@ export default function ViewQuotation() {
                 </Card>
               )}
 
-              {/* Show signature if accepted and has signature */}
-              {showSignatureSection && (
+              {/* Show signature if accepted */}
+              {hasSignature && (
                 <Card className="shadow-sm">
                   <CardContent className="p-4">
                     <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
