@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,7 @@ export function ItemsTable({
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
   const [swipedItemId, setSwipedItemId] = useState<number | null>(null);
+  const itemRefs = useRef<{ [key: number]: HTMLElement | null }>({});
 
   // Scroll to the last item when a new item is added
   useEffect(() => {
