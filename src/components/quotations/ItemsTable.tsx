@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash, Pencil, Check, X } from "lucide-react";
@@ -23,6 +23,23 @@ export function ItemsTable({
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
   const [swipedItemId, setSwipedItemId] = useState<number | null>(null);
+  const itemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+
+  // Scroll to the last item when a new item is added
+  useEffect(() => {
+    if (items.length > 0) {
+      const lastItemId = Math.max(...items.map(item => item.id));
+      const lastItemRef = itemRefs.current[lastItemId];
+      if (lastItemRef) {
+        setTimeout(() => {
+          lastItemRef.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 100);
+      }
+    }
+  }, [items.length]);
 
   // Format currency without RM symbol for items table
   const formatAmount = (amount: number) => {
