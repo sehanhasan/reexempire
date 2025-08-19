@@ -133,7 +133,7 @@ export function QuotationItemsCard({
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">
-          <CardTitle className="text-lg text-cyan-600">Items</CardTitle>
+          <CardTitle className="text-lg text-cyan-600">Quotation Items</CardTitle>
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
