@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash, Pencil, Check, X } from "lucide-react";
@@ -22,8 +21,24 @@ export function ItemsTable({
   const isMobile = useIsMobile();
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryValue, setEditCategoryValue] = useState("");
-  const [swipedItemId, setSwipedItemId] = useState<number | null>(null);
 
+
+  // Scroll to the last item when a new item is added
+  useEffect(() => {
+    if (items.length > 0) {
+      const lastItemId = Math.max(...items.map(item => item.id));
+      const lastItemRef = itemRefs.current[lastItemId];
+      if (lastItemRef) {
+        setTimeout(() => {
+          lastItemRef.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 100);
+      }
+    }
+  }, [items.length]);
+  
   // Format currency without RM symbol for items table
   const formatAmount = (amount: number) => {
     return amount.toFixed(2);
@@ -70,44 +85,12 @@ export function ItemsTable({
     setEditCategoryValue("");
   };
 
-  const handleTouchStart = (e: React.TouchEvent, itemId: number) => {
-    const touch = e.touches[0];
-    const startX = touch.clientX;
-    
-    const handleTouchMove = (moveEvent: TouchEvent) => {
-      const currentTouch = moveEvent.touches[0];
-      const diffX = startX - currentTouch.clientX;
-      
-      if (diffX > 50) { // Swipe left threshold
-        setSwipedItemId(itemId);
-        document.removeEventListener('touchmove', handleTouchMove);
-        document.removeEventListener('touchend', handleTouchEnd);
-      }
-    };
-    
-    const handleTouchEnd = () => {
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-    
-    document.addEventListener('touchmove', handleTouchMove);
-    document.addEventListener('touchend', handleTouchEnd);
-  };
-
-  const handleTouchOutside = () => {
-    setSwipedItemId(null);
-  };
-
-  const handleCancelSwipe = () => {
-    setSwipedItemId(null);
-  };
-
   const {
     groupedItems,
     orderedCategories
   } = groupItemsByCategory();
 
-  return <div className="w-full overflow-auto" onClick={isMobile ? handleTouchOutside : undefined}>
+  return <div className="w-full overflow-auto">
       {isMobile ? <div className="space-y-5">
           {orderedCategories.map(category => <div key={category} className="space-y-3">
               <div className="flex items-center gap-2">
@@ -153,46 +136,18 @@ export function ItemsTable({
                   </div>
                 )}
               </div>
-              {groupedItems[category].map((item, index) => <div 
-                key={item.id} 
-                className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white transition-transform duration-200 ${
-                  swipedItemId === item.id ? 'transform -translate-x-20' : ''
-                }`}
-                onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
-                onClick={(e) => e.stopPropagation()}
-              >
-                  {/* Action buttons revealed by swipe */}
-                  {swipedItemId === item.id && (
-                    <div className="absolute right-0 top-0 h-full w-20 flex rounded-r-md overflow-hidden">
-                      <div className="w-12 bg-gray-400 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-gray-500" 
-                          onClick={handleCancelSwipe}
-                        >
-                          <X className="h-5 w-5" />
-                        </Button>
-                      </div>
-                      <div className="w-12 bg-red-500 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-red-600" 
-                          onClick={() => removeItem(item.id)} 
-                          disabled={items.length <= 1}
-                        >
-                          <Trash className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+              {groupedItems[category].map((item, index) => <div key={item.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white">
+                  <div className="absolute top-2 right-2">
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
                   
                   <div className="space-y-3 pb-1">
+                    <div className="mb-1 font-medium text-sm text-slate-500">Item #{index + 1}</div>
+                    
                     <div className="space-y-2">
-                      <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
+                      <label className="block text-xs mb-1 text-slate-600 font-medium">Description</label>
                       <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                     </div>
                     
