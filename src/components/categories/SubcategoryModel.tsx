@@ -12,9 +12,8 @@ interface Subcategory {
   id?: string;
   category_id: string;
   name: string;
-  description: string;
+  description: string; // Changed from optional to required to match the API expectations
   price?: number;
-  unit?: string;
 }
 
 interface SubcategoryModelProps {
@@ -37,9 +36,8 @@ export function SubcategoryModel({
   const [formData, setFormData] = useState<Subcategory>({
     category_id: parentId,
     name: '',
-    description: '',
+    description: '', // Initialize with empty string since it's required
     price: 0,
-    unit: '',
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,9 +51,8 @@ export function SubcategoryModel({
       setFormData({
         category_id: parentId,
         name: '',
-        description: '',
+        description: '', // Initialize with empty string
         price: 0,
-        unit: '',
       });
     }
   }, [initialData, parentId, open]);
@@ -64,6 +61,7 @@ export function SubcategoryModel({
     const { name, value } = e.target;
     
     if (name === 'price') {
+      // Only allow numbers and decimals for price
       const numValue = parseFloat(value);
       setFormData({
         ...formData,
@@ -151,34 +149,21 @@ export function SubcategoryModel({
                 value={formData.description || ''}
                 onChange={handleChange}
                 rows={3}
-                required
+                required // Added required attribute to match type requirement
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="price">Price (RM)</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price || ''}
-                  onChange={handleChange}
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="unit">Unit</Label>
-                <Input
-                  id="unit"
-                  name="unit"
-                  placeholder="e.g. ft, sqft, piece"
-                  value={formData.unit || ''}
-                  onChange={handleChange}
-                />
-              </div>
+            <div className="grid gap-2">
+              <Label htmlFor="price">Price (RM)</Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.price || ''}
+                onChange={handleChange}
+              />
             </div>
           </div>
           
