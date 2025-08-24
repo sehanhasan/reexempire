@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,7 +11,6 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { categoryService } from "@/services/categoryService";
 
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
@@ -36,28 +36,7 @@ export function InvoiceItemsCard({
   calculateItemAmount
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [categoryUnits, setCategoryUnits] = useState<{ [categoryName: string]: string }>({});
   const isMobile = useIsMobile();
-
-  // Fetch category units when component mounts
-  useEffect(() => {
-    const fetchCategoryUnits = async () => {
-      try {
-        const categories = await categoryService.getAll();
-        const unitsMap: { [categoryName: string]: string } = {};
-        categories.forEach(category => {
-          if (category.unit) {
-            unitsMap[category.name] = category.unit;
-          }
-        });
-        setCategoryUnits(unitsMap);
-      } catch (error) {
-        console.error("Error fetching category units:", error);
-      }
-    };
-
-    fetchCategoryUnits();
-  }, []);
 
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
@@ -74,10 +53,8 @@ export function InvoiceItemsCard({
   };
   
   const addItem = () => {
-    console.log("🔥 Add Item button clicked!");
-    console.log("Current items before adding:", items);
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
-    const newItem: InvoiceItem = {
+    setItems([...items, {
       id: newId,
       description: "",
       category: "Other Items",
@@ -85,26 +62,7 @@ export function InvoiceItemsCard({
       unit: "Unit",
       unitPrice: 0,
       amount: 0
-    };
-    console.log("New item to add:", newItem);
-    setItems(prevItems => {
-      const updatedItems = [...prevItems, newItem];
-      console.log("Updated items array:", updatedItems);
-      
-      // Scroll to the newly added item after a short delay
-      setTimeout(() => {
-        const newItemElement = document.getElementById(`item-${newId}`);
-        if (newItemElement) {
-          newItemElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
-          });
-        }
-      }, 100);
-      
-      return updatedItems;
-    });
+    }]);
   };
   
   const removeItem = (id: number) => {
@@ -192,13 +150,7 @@ export function InvoiceItemsCard({
             </Button>
           </div>
 
-          <ItemsTable 
-            items={items} 
-            handleItemChange={handleItemChange} 
-            removeItem={removeItem} 
-            showDescription={true} 
-            categoryUnits={categoryUnits}
-          />
+          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
             <div className={isMobile ? "w-full" : "w-72"}>

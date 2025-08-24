@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -17,8 +16,6 @@ interface SubcategoryForm {
   tempId: number | string;
   price: string;
   description: string;
-  unit: string;
-  markedForDeletion?: boolean;
 }
 
 export default function AddCategory() {
@@ -33,11 +30,9 @@ export default function AddCategory() {
   const [subcategories, setSubcategories] = useState<SubcategoryForm[]>([{
     tempId: Date.now(),
     price: "",
-    description: "",
-    unit: ""
+    description: ""
   }]);
   const [edit, setEdit] = useState(false);
-  const [subcategoriesToDelete, setSubcategoriesToDelete] = useState<string[]>([]);
 
   useEffect(() => {
     if (categoryId) {
@@ -64,8 +59,7 @@ export default function AddCategory() {
                 id: sub.id,
                 tempId: Date.now() + Math.random(),
                 price: sub.price ? sub.price.toString() : "",
-                description: sub.description || "",
-                unit: sub.unit || ""
+                description: sub.description || ""
               });
             }
           });
@@ -99,7 +93,7 @@ export default function AddCategory() {
 
   const handleSubcategoryChange = (index: number, field: keyof SubcategoryForm, value: string) => {
     const updatedSubcategories = [...subcategories];
-    (updatedSubcategories[index] as any)[field] = value;
+    updatedSubcategories[index][field] = value;
     setSubcategories(updatedSubcategories);
   };
 
@@ -107,25 +101,16 @@ export default function AddCategory() {
     setSubcategories([...subcategories, {
       tempId: Date.now(),
       price: "",
-      description: "",
-      unit: ""
+      description: ""
     }]);
   };
 
   const removeSubcategory = (index: number) => {
-    const subcategoryToRemove = subcategories[index];
-    
-    // If it's an existing subcategory (has an ID), mark it for deletion
-    if (subcategoryToRemove.id) {
-      setSubcategoriesToDelete(prev => [...prev, subcategoryToRemove.id!]);
-    }
-    
     if (subcategories.length === 1) {
       setSubcategories([{
         tempId: Date.now(),
         price: "",
-        description: "",
-        unit: ""
+        description: ""
       }]);
     } else {
       const updated = subcategories.filter((_, i) => i !== index);
@@ -169,14 +154,6 @@ export default function AddCategory() {
     if (!validate()) return;
     try {
       setLoading(true);
-
-      // First, delete marked subcategories if this is an edit operation
-      if (edit && subcategoriesToDelete.length > 0) {
-        for (const subcategoryId of subcategoriesToDelete) {
-          await categoryService.deleteSubcategory(subcategoryId);
-        }
-      }
-
       const formattedData = {
         name: category.name,
         description: category.description,
@@ -186,11 +163,9 @@ export default function AddCategory() {
           } : {}),
           description: sub.description,
           price: sub.price ? parseFloat(sub.price) : 0,
-          name: sub.description,
-          unit: sub.unit || ""
+          name: sub.description
         }))
       };
-      
       if (edit && categoryId) {
         await categoryService.update(categoryId, formattedData);
         toast({
@@ -256,22 +231,15 @@ export default function AddCategory() {
                     </Button>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor={`subcategory-description-${index}`}>Description*</Label>
                       <Textarea id={`subcategory-description-${index}`} placeholder="e.g. Complete bathroom renovation" value={subcategory.description} onChange={e => handleSubcategoryChange(index, 'description', e.target.value)} rows={3} required />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
-                        <Input id={`subcategory-price-${index}`} type="number" min="0" step="0.01" placeholder="Enter price" value={subcategory.price} onChange={e => handleSubcategoryChange(index, 'price', e.target.value)} />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor={`subcategory-unit-${index}`}>Unit</Label>
-                        <Input id={`subcategory-unit-${index}`} placeholder="e.g. ft, sqm, pcs" value={subcategory.unit} onChange={e => handleSubcategoryChange(index, 'unit', e.target.value)} />
-                      </div>
+                    <div>
+                      <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
+                      <Input id={`subcategory-price-${index}`} type="number" min="0" step="0.01" placeholder="Enter price" value={subcategory.price} onChange={e => handleSubcategoryChange(index, 'price', e.target.value)} />
                     </div>
                   </div>
                 </div>)}

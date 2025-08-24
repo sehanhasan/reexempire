@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,6 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { categoryService } from "@/services/categoryService";
 
 interface QuotationItemsCardProps {
   items: QuotationItem[];
@@ -28,28 +28,7 @@ export function QuotationItemsCard({
   calculateItemAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
-  const [categoryUnits, setCategoryUnits] = useState<{ [categoryName: string]: string }>({});
   const isMobile = useIsMobile();
-
-  // Fetch category units when component mounts
-  useEffect(() => {
-    const fetchCategoryUnits = async () => {
-      try {
-        const categories = await categoryService.getAll();
-        const unitsMap: { [categoryName: string]: string } = {};
-        categories.forEach(category => {
-          if (category.unit) {
-            unitsMap[category.name] = category.unit;
-          }
-        });
-        setCategoryUnits(unitsMap);
-      } catch (error) {
-        console.error("Error fetching category units:", error);
-      }
-    };
-
-    fetchCategoryUnits();
-  }, []);
 
   const calculateTotal = () => {
     return items.reduce((sum, item) => sum + item.amount, 0);
@@ -108,19 +87,6 @@ export function QuotationItemsCard({
     setItems(prevItems => {
       const updatedItems = [...prevItems, newItem];
       console.log("Updated items array:", updatedItems);
-      
-      // Scroll to the newly added item after a short delay
-      setTimeout(() => {
-        const newItemElement = document.getElementById(`item-${newId}`);
-        if (newItemElement) {
-          newItemElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
-          });
-        }
-      }, 100);
-      
       return updatedItems;
     });
   };
@@ -216,13 +182,7 @@ export function QuotationItemsCard({
             </Button>
           </div>
 
-          <ItemsTable 
-            items={items} 
-            handleItemChange={handleItemChange} 
-            removeItem={removeItem} 
-            showDescription={true} 
-            categoryUnits={categoryUnits}
-          />
+          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
             <div className={isMobile ? "w-full" : "w-72"}>

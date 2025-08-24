@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Category, Subcategory, PricingOption, CategoryItem } from "@/types/database";
 
@@ -104,15 +105,11 @@ export const categoryService = {
     return data || [];
   },
 
-  async create(category: { name: string; description: string; unit?: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
+  async create(category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
     // First create the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
-      .insert([{ 
-        name: category.name, 
-        description: category.description,
-        unit: category.unit // Added unit field
-      }])
+      .insert([{ name: category.name, description: category.description }])
       .select()
       .single();
 
@@ -146,15 +143,11 @@ export const categoryService = {
     return categoryData;
   },
 
-  async update(id: string, category: { name: string; description: string; unit?: string; subcategories?: { name: string; description: string; price: number; unit?: string; id?: string }[] }): Promise<Category> {
+  async update(id: string, category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
     // Update the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
-      .update({ 
-        name: category.name, 
-        description: category.description,
-        unit: category.unit // Added unit field
-      })
+      .update({ name: category.name, description: category.description })
       .eq("id", id)
       .select()
       .single();
@@ -174,8 +167,7 @@ export const categoryService = {
             .update({
               name: sub.name || sub.description,
               description: sub.description,
-              price: sub.price || 0, // Add default price
-              unit: sub.unit || null // Add unit field
+              price: sub.price || 0 // Add default price
             })
             .eq("id", sub.id);
 
@@ -189,8 +181,7 @@ export const categoryService = {
             category_id: id,
             name: sub.name || sub.description,
             description: sub.description,
-            price: sub.price || 0, // Add default price
-            unit: sub.unit || null // Add unit field
+            price: sub.price || 0 // Add default price
           };
 
           const { error: createError } = await supabase
@@ -240,8 +231,7 @@ export const categoryService = {
     // Ensure price is provided
     const subcategoryData = {
       ...subcategory,
-      price: subcategory.price || 0, // Add default price if not provided
-      unit: subcategory.unit || null // Add unit field
+      price: subcategory.price || 0 // Add default price if not provided
     };
 
     const { data, error } = await supabase
@@ -261,10 +251,7 @@ export const categoryService = {
   async updateSubcategory(id: string, subcategory: Partial<Omit<Subcategory, "id" | "created_at" | "updated_at">>): Promise<Subcategory> {
     const { data, error } = await supabase
       .from("subcategories")
-      .update({
-        ...subcategory,
-        unit: subcategory.unit || null // Add unit field handling
-      })
+      .update(subcategory)
       .eq("id", id)
       .select()
       .single();
