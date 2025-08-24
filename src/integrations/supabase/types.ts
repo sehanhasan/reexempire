@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -676,6 +676,7 @@ export type Database = {
           id: string
           name: string
           price: number
+          unit: string | null
           updated_at: string
         }
         Insert: {
@@ -685,6 +686,7 @@ export type Database = {
           id?: string
           name: string
           price: number
+          unit?: string | null
           updated_at?: string
         }
         Update: {
@@ -694,6 +696,7 @@ export type Database = {
           id?: string
           name?: string
           price?: number
+          unit?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -712,16 +715,16 @@ export type Database = {
     }
     Functions: {
       add_invoice_image: {
-        Args: { p_invoice_id: string; p_image_url: string }
+        Args: { p_image_url: string; p_invoice_id: string }
         Returns: Json
       }
       create_notification: {
         Args: {
-          p_user_id: string
-          p_title: string
           p_message: string
-          p_type: string
           p_reference_id?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
         }
         Returns: string
       }

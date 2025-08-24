@@ -105,7 +105,7 @@ export const categoryService = {
     return data || [];
   },
 
-  async create(category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
+  async create(category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; unit?: string; id?: string }[] }): Promise<Category> {
     // First create the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
@@ -126,7 +126,8 @@ export const categoryService = {
           category_id: categoryData.id,  // Make sure category_id is set
           name: sub.name || sub.description, // Ensure name is set
           description: sub.description,
-          price: sub.price || 0 // Add default price
+          price: sub.price || 0, // Add default price
+          unit: sub.unit || ""
         };
 
         const { error: subcatError } = await supabase
@@ -143,7 +144,7 @@ export const categoryService = {
     return categoryData;
   },
 
-  async update(id: string, category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
+  async update(id: string, category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; unit?: string; id?: string }[]; deletedSubcategories?: string[] }): Promise<Category> {
     // Update the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
@@ -157,6 +158,21 @@ export const categoryService = {
       throw categoryError;
     }
 
+    // Handle deleted subcategories
+    if (category.deletedSubcategories && category.deletedSubcategories.length > 0) {
+      for (const subcatId of category.deletedSubcategories) {
+        const { error: deleteError } = await supabase
+          .from("subcategories")
+          .delete()
+          .eq("id", subcatId);
+
+        if (deleteError) {
+          console.error(`Error deleting subcategory with id ${subcatId}:`, deleteError);
+          throw deleteError;
+        }
+      }
+    }
+
     // Handle subcategories - this is a simplified approach
     if (category.subcategories && category.subcategories.length > 0) {
       for (const sub of category.subcategories) {
@@ -167,7 +183,8 @@ export const categoryService = {
             .update({
               name: sub.name || sub.description,
               description: sub.description,
-              price: sub.price || 0 // Add default price
+              price: sub.price || 0, // Add default price
+              unit: sub.unit || ""
             })
             .eq("id", sub.id);
 
@@ -181,7 +198,8 @@ export const categoryService = {
             category_id: id,
             name: sub.name || sub.description,
             description: sub.description,
-            price: sub.price || 0 // Add default price
+            price: sub.price || 0, // Add default price
+            unit: sub.unit || ""
           };
 
           const { error: createError } = await supabase

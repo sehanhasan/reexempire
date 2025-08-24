@@ -14,6 +14,7 @@ interface Subcategory {
   name: string;
   description: string; // Changed from optional to required to match the API expectations
   price?: number;
+  unit?: string;
 }
 
 interface SubcategoryModelProps {
@@ -38,6 +39,7 @@ export function SubcategoryModel({
     name: '',
     description: '', // Initialize with empty string since it's required
     price: 0,
+    unit: '',
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,6 +55,7 @@ export function SubcategoryModel({
         name: '',
         description: '', // Initialize with empty string
         price: 0,
+        unit: '',
       });
     }
   }, [initialData, parentId, open]);
@@ -153,17 +156,29 @@ export function SubcategoryModel({
               />
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor="price">Price (RM)</Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price || ''}
-                onChange={handleChange}
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2">
+                <Label htmlFor="price">Price (RM)</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price || ''}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="unit">Unit</Label>
+                <Input
+                  id="unit"
+                  name="unit"
+                  value={formData.unit || ''}
+                  onChange={handleChange}
+                  placeholder="e.g. ft, sqft, unit"
+                />
+              </div>
             </div>
           </div>
           

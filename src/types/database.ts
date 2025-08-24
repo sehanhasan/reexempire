@@ -17,6 +17,7 @@ export interface Subcategory {
   updated_at?: string;
   price_options?: PricingOption[];
   price?: number;
+  unit?: string;
   tempId?: number | string;
 }
 

@@ -176,7 +176,22 @@ export function ItemsTable({
                         
                         <div className="space-y-2">
                           <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
-                          <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                          <div className="relative">
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              step="0.01" 
+                              className="h-10" 
+                              value={item.unitPrice === 0 ? '' : item.unitPrice} 
+                              placeholder="0.00"
+                              onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
+                            />
+                            {item.unit && (
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
+                                {item.unit}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         
                         <div className="space-y-2">
@@ -284,7 +299,22 @@ export function ItemsTable({
                       <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-right h-10" />
                     </td>
                     <td className="py-3 px-2">
-                      <Input type="number" min="0" step="0.01" className="text-right h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                      <div className="relative">
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01" 
+                          className="text-right h-10" 
+                          value={item.unitPrice === 0 ? '' : item.unitPrice} 
+                          placeholder="0.00"
+                          onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
+                        />
+                        {item.unit && (
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
+                            {item.unit}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-2 text-right text-gray-600">
                       {formatAmount(item.amount)}
