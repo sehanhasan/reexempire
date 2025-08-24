@@ -176,7 +176,7 @@ export function ItemsTable({
                         </div>
                         
                         <div className="space-y-2">
-                          <label className="block text-xs mb-1 text-slate-600 font-medium">Price (RM)</label>
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
                           <div className="relative">
                             <Input 
                               type="number" 
@@ -235,7 +235,7 @@ export function ItemsTable({
               <th className="py-2 px-1 text-left font-medium text-sm w-6">#</th>
               <th className="py-2 px-2 text-left font-medium text-sm">Description</th>
               <th className="py-2 px-2 text-right font-medium text-sm w-20">Qty</th>
-              <th className="py-2 px-2 text-right font-medium text-sm w-32">Price (RM)</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-32">Unit Price (RM)</th>
               <th className="py-2 px-2 text-right font-medium text-sm w-32">Amount (RM)</th>
               <th className="py-2 px-1 w-12"></th>
             </tr>
