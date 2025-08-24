@@ -10,13 +10,15 @@ interface ItemsTableProps {
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
   showDescription?: boolean;
+  categoryUnits?: { [categoryName: string]: string }; // Added to pass category units
 }
 
 export function ItemsTable({
   items,
   handleItemChange,
   removeItem,
-  showDescription = true
+  showDescription = true,
+  categoryUnits = {} // Default empty object
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
@@ -26,6 +28,11 @@ export function ItemsTable({
   // Format currency without RM symbol for items table
   const formatAmount = (amount: number) => {
     return amount.toFixed(2);
+  };
+
+  // Get unit for a category
+  const getUnitForCategory = (categoryName: string) => {
+    return categoryUnits[categoryName] || "";
   };
 
   // Group items by category
@@ -175,8 +182,21 @@ export function ItemsTable({
                         </div>
                         
                         <div className="space-y-2">
-                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
-                          <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM{getUnitForCategory(item.category || "") ? `/${getUnitForCategory(item.category || "")}` : ''})</label>
+                          <div className="relative">
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              step="0.01" 
+                              className="h-10 pr-8" 
+                              value={item.unitPrice === 0 ? "" : item.unitPrice} 
+                              onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                            />
+                            {getUnitForCategory(item.category || "") && (
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{getUnitForCategory(item.category || "")}</span>
+                            )}
+                          </div>
                         </div>
                         
                         <div className="space-y-2">
@@ -273,7 +293,9 @@ export function ItemsTable({
                     </div>
                   </td>
                 </tr>
-                {groupedItems[category].map((item, index) => <tr key={item.id} className="border-b last:border-b-0">
+                {groupedItems[category].map((item, index) => {
+                  const categoryUnit = getUnitForCategory(item.category || "");
+                  return <tr key={item.id} className="border-b last:border-b-0">
                     <td className="py-3 px-1 align-top">
                       {index + 1}
                     </td>
@@ -284,7 +306,20 @@ export function ItemsTable({
                       <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-right h-10" />
                     </td>
                     <td className="py-3 px-2">
-                      <Input type="number" min="0" step="0.01" className="text-right h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                      <div className="relative">
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01" 
+                          className="text-right h-10 pr-8" 
+                          value={item.unitPrice === 0 ? "" : item.unitPrice} 
+                          onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                        />
+                        {categoryUnit && (
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{categoryUnit}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-2 text-right text-gray-600">
                       {formatAmount(item.amount)}
@@ -294,7 +329,8 @@ export function ItemsTable({
                         <Trash className="h-4 w-4" />
                       </Button>
                     </td>
-                  </tr>)}
+                  </tr>
+                })}
               </React.Fragment>)}
           </tbody>
         </table>}

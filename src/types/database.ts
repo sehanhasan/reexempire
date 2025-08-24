@@ -1,8 +1,10 @@
+
 // Database Types
 export interface Category {
   id: string;
   name: string;
   description: string | null;
+  unit?: string | null; // Added unit field
   created_at: string;
   updated_at: string;
   subcategories?: Subcategory[];
