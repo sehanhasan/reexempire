@@ -187,7 +187,7 @@ export function ItemsTable({
                               placeholder="0.00"
                               onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
                             />
-                            {item.unit && item.unit.trim() !== "" && (
+                            {item.unit && item.unit.trim() !== "" && item.unit.trim().toLowerCase() !== "unit" && (
                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
                                 {item.unit}
                               </span>
@@ -310,7 +310,7 @@ export function ItemsTable({
                           placeholder="0.00"
                           onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
                         />
-                        {item.unit && item.unit.trim() !== "" && (
+                        {item.unit && item.unit.trim() !== "" && item.unit.trim().toLowerCase() !== "unit" && (
                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
                             {item.unit}
                           </span>

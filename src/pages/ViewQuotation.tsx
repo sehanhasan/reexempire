@@ -321,7 +321,7 @@ export default function ViewQuotation() {
                              <td className="p-2 text-gray-800">{item.description}</td>
                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
                               <td className="text-right p-2 text-gray-800">
-                                {item.unit_price.toFixed(2)}{item.unit ? ` ${item.unit}` : ''}
+                                {item.unit_price.toFixed(2)}{item.unit && item.unit.trim() !== '' && item.unit.trim().toLowerCase() !== 'unit' ? ` ${item.unit}` : ''}
                               </td>
                              <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
                            </tr>
