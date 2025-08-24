@@ -5,15 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { InvoiceItem } from "./types";
-import { CategoryItemSelector } from "./CategoryItemSelector";
 import { categoryService } from "@/services";
 
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
-  onItemsChange: (items: InvoiceItem[]) => void;
+  setItems?: React.Dispatch<React.SetStateAction<InvoiceItem[]>>;
+  isDepositInvoice?: boolean;
+  setIsDepositInvoice?: React.Dispatch<React.SetStateAction<boolean>>;
+  calculateItemAmount?: (item: InvoiceItem) => number;
+  onItemsChange?: (items: InvoiceItem[]) => void; // keep backward compatibility
 }
 
-export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps) {
+export function InvoiceItemsCard({ items, setItems, onItemsChange }: InvoiceItemsCardProps) {
   const [categoryUnits, setCategoryUnits] = useState<{ [key: string]: string }>({});
   
   useEffect(() => {
@@ -37,6 +40,14 @@ export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps
     fetchCategoryUnits();
   }, []);
 
+  const updateItems = (updated: InvoiceItem[]) => {
+    if (setItems) {
+      setItems(updated);
+    } else if (onItemsChange) {
+      onItemsChange(updated);
+    }
+  };
+
   const addNewItem = () => {
     const newItem: InvoiceItem = {
       id: Date.now(),
@@ -48,9 +59,8 @@ export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps
       amount: 0
     };
     const updatedItems = [...items, newItem];
-    onItemsChange(updatedItems);
+    updateItems(updatedItems);
     
-    // Scroll to the new item after a brief delay to ensure it's rendered
     setTimeout(() => {
       const newItemElement = document.querySelector(`[data-item-id="${newItem.id}"]`);
       if (newItemElement) {
@@ -64,10 +74,11 @@ export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         
-        // Recalculate amount when quantity or unitPrice changes
         if (field === 'quantity' || field === 'unitPrice') {
-          const quantity = field === 'quantity' ? parseFloat(value) || 0 : updatedItem.quantity;
-          const unitPrice = field === 'unitPrice' ? value : updatedItem.unitPrice;
+          const quantity = field === 'quantity'
+            ? (typeof value === 'string' ? parseFloat(value) || 0 : Number(value))
+            : (typeof updatedItem.quantity === 'string' ? parseFloat(updatedItem.quantity as string) || 0 : Number(updatedItem.quantity));
+          const unitPrice = field === 'unitPrice' ? Number(value) : Number(updatedItem.unitPrice);
           updatedItem.amount = quantity * unitPrice;
         }
         
@@ -75,34 +86,12 @@ export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps
       }
       return item;
     });
-    onItemsChange(updatedItems);
+    updateItems(updatedItems);
   };
 
   const removeItem = (id: number) => {
     const filteredItems = items.filter(item => item.id !== id);
-    onItemsChange(filteredItems);
-  };
-
-  const handleCategoryItemSelect = (categoryItem: any) => {
-    const newItem: InvoiceItem = {
-      id: Date.now(),
-      description: categoryItem.name,
-      category: categoryItem.category,
-      quantity: 1,
-      unit: categoryItem.unit,
-      unitPrice: categoryItem.price,
-      amount: categoryItem.price
-    };
-    const updatedItems = [...items, newItem];
-    onItemsChange(updatedItems);
-    
-    // Scroll to the new item after a brief delay to ensure it's rendered
-    setTimeout(() => {
-      const newItemElement = document.querySelector(`[data-item-id="${newItem.id}"]`);
-      if (newItemElement) {
-        newItemElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
+    updateItems(filteredItems);
   };
 
   return (
@@ -114,7 +103,6 @@ export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps
             <CardDescription>Add items and services for this invoice.</CardDescription>
           </div>
           <div className="flex gap-2">
-            <CategoryItemSelector onItemSelect={handleCategoryItemSelect} />
             <Button type="button" onClick={addNewItem} size="sm">
               <Plus className="mr-2 h-4 w-4" />
               Add Item
@@ -124,8 +112,8 @@ export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps
       </CardHeader>
       <CardContent>
         <ItemsTable
-          items={items}
-          handleItemChange={handleItemChange}
+          items={items as any} // structurally compatible with QuotationItem
+          handleItemChange={handleItemChange as any}
           removeItem={removeItem}
           categoryUnits={categoryUnits}
         />
@@ -133,3 +121,4 @@ export function InvoiceItemsCard({ items, onItemsChange }: InvoiceItemsCardProps
     </Card>
   );
 }
+

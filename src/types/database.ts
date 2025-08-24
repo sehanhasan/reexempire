@@ -1,3 +1,4 @@
+
 // Database Types
 export interface Category {
   id: string;
@@ -18,6 +19,8 @@ export interface Subcategory {
   price_options?: PricingOption[];
   price?: number;
   tempId?: number | string;
+  // Added unit to support displaying units across the app
+  unit?: string;
 }
 
 export interface PricingOption {
@@ -193,3 +196,4 @@ export interface Appointment {
   created_at: string;
   updated_at: string;
 }
+
