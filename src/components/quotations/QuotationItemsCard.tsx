@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -37,8 +38,16 @@ export function QuotationItemsCard({
   useEffect(() => {
     if (depositInfo.requiresDeposit) {
       const total = calculateTotal();
-      const newDepositAmount = total * (depositInfo.depositPercentage / 100);
-      if (Math.abs(newDepositAmount - depositInfo.depositAmount) > 0.01) { // Avoid unnecessary updates
+
+      // Coerce percentage to a number to avoid TS2362 and ensure correct math
+      const percentage =
+        typeof depositInfo.depositPercentage === "string"
+          ? parseFloat(depositInfo.depositPercentage) || 0
+          : depositInfo.depositPercentage;
+
+      const newDepositAmount = total * (percentage / 100);
+
+      if (Math.abs(newDepositAmount - depositInfo.depositAmount) > 0.01) {
         setDepositInfo(prev => ({
           ...prev,
           depositAmount: newDepositAmount
