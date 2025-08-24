@@ -232,36 +232,6 @@ export const quotationService = {
     }
   },
 
-  async getCustomerByQuotationId(quotationId: string) {
-    try {
-      console.log(`QuotationService: Fetching customer for quotation ${quotationId}`);
-      
-      const { data, error } = await supabase
-        .from("quotations")
-        .select(`
-          *,
-          customers (*)
-        `)
-        .eq("id", quotationId)
-        .single();
-
-      if (error) {
-        console.error(`QuotationService: Error fetching customer for quotation ${quotationId}:`, error);
-        throw new Error(`Failed to fetch customer: ${error.message}`);
-      }
-
-      console.log(`QuotationService: Successfully fetched customer for quotation ${quotationId}`);
-      return data?.customers;
-    } catch (error) {
-      console.error(`QuotationService: Unexpected error in getCustomerByQuotationId:`, error);
-      throw error;
-    }
-  },
-
-  async getQuotationItems(quotationId: string): Promise<QuotationItem[]> {
-    return this.getItemsByQuotationId(quotationId);
-  },
-
   async createItem(item: QuotationItemInput): Promise<QuotationItem> {
     try {
       console.log("QuotationService: Creating quotation item:", item);

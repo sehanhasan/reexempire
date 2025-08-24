@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { categoryService } from "@/services/categoryService";
 
 interface QuotationItemsCardProps {
   items: QuotationItem[];
@@ -27,7 +29,28 @@ export function QuotationItemsCard({
   calculateItemAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [categoryUnits, setCategoryUnits] = useState<{ [categoryName: string]: string }>({});
   const isMobile = useIsMobile();
+
+  // Fetch category units when component mounts
+  useEffect(() => {
+    const fetchCategoryUnits = async () => {
+      try {
+        const categories = await categoryService.getAll();
+        const unitsMap: { [categoryName: string]: string } = {};
+        categories.forEach(category => {
+          if (category.unit) {
+            unitsMap[category.name] = category.unit;
+          }
+        });
+        setCategoryUnits(unitsMap);
+      } catch (error) {
+        console.error("Error fetching category units:", error);
+      }
+    };
+
+    fetchCategoryUnits();
+  }, []);
 
   const calculateTotal = () => {
     return items.reduce((sum, item) => sum + item.amount, 0);
@@ -55,9 +78,9 @@ export function QuotationItemsCard({
     }
   }, [items, depositInfo.requiresDeposit, depositInfo.depositPercentage]);
 
-  const handleItemChange = (index: number, field: keyof QuotationItem, value: any) => {
-    setItems(prevItems => prevItems.map((item, i) => {
-      if (i === index) {
+  const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
+    setItems(prevItems => prevItems.map(item => {
+      if (item.id === id) {
         const updatedItem = {
           ...item,
           [field]: value
@@ -90,9 +113,9 @@ export function QuotationItemsCard({
     });
   };
 
-  const removeItem = (index: number) => {
+  const removeItem = (id: number) => {
     if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index));
+      setItems(items.filter(item => item.id !== id));
     }
   };
 
@@ -186,6 +209,7 @@ export function QuotationItemsCard({
             handleItemChange={handleItemChange} 
             removeItem={removeItem} 
             showDescription={true} 
+            categoryUnits={categoryUnits}
           />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>

@@ -32,6 +32,7 @@ export const categoryService = {
     return data;
   },
 
+  // Add the missing getItemsByCategoryId method
   async getItemsByCategoryId(categoryId: string): Promise<CategoryItem[]> {
     try {
       // First get all subcategories for this category
@@ -74,6 +75,7 @@ export const categoryService = {
     }
   },
 
+  // Add new methods to get all subcategories and pricing options
   async getAllSubcategories(): Promise<Subcategory[]> {
     const { data, error } = await supabase
       .from("subcategories")
@@ -102,11 +104,15 @@ export const categoryService = {
     return data || [];
   },
 
-  async create(category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; unit?: string | null; id?: string }[] }): Promise<Category> {
+  async create(category: { name: string; description: string; unit?: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
     // First create the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
-      .insert([{ name: category.name, description: category.description }])
+      .insert([{ 
+        name: category.name, 
+        description: category.description,
+        unit: category.unit // Added unit field
+      }])
       .select()
       .single();
 
@@ -120,11 +126,10 @@ export const categoryService = {
       // Insert each subcategory individually
       for (const sub of category.subcategories) {
         const subcategoryData = {
-          category_id: categoryData.id,
-          name: sub.name || sub.description,
+          category_id: categoryData.id,  // Make sure category_id is set
+          name: sub.name || sub.description, // Ensure name is set
           description: sub.description,
-          price: sub.price || 0,
-          unit: sub.unit || null
+          price: sub.price || 0 // Add default price
         };
 
         const { error: subcatError } = await supabase
@@ -141,11 +146,15 @@ export const categoryService = {
     return categoryData;
   },
 
-  async update(id: string, category: { name: string; description: string; subcategories?: { name: string; description: string; price: number; unit?: string | null; id?: string }[] }): Promise<Category> {
+  async update(id: string, category: { name: string; description: string; unit?: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
     // Update the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
-      .update({ name: category.name, description: category.description })
+      .update({ 
+        name: category.name, 
+        description: category.description,
+        unit: category.unit // Added unit field
+      })
       .eq("id", id)
       .select()
       .single();
@@ -155,7 +164,7 @@ export const categoryService = {
       throw categoryError;
     }
 
-    // Handle subcategories
+    // Handle subcategories - this is a simplified approach
     if (category.subcategories && category.subcategories.length > 0) {
       for (const sub of category.subcategories) {
         if (sub.id) {
@@ -165,8 +174,7 @@ export const categoryService = {
             .update({
               name: sub.name || sub.description,
               description: sub.description,
-              price: sub.price || 0,
-              unit: sub.unit || null
+              price: sub.price || 0 // Add default price
             })
             .eq("id", sub.id);
 
@@ -180,8 +188,7 @@ export const categoryService = {
             category_id: id,
             name: sub.name || sub.description,
             description: sub.description,
-            price: sub.price || 0,
-            unit: sub.unit || null
+            price: sub.price || 0 // Add default price
           };
 
           const { error: createError } = await supabase
@@ -228,10 +235,10 @@ export const categoryService = {
   },
 
   async createSubcategory(subcategory: Omit<Subcategory, "id" | "created_at" | "updated_at">): Promise<Subcategory> {
+    // Ensure price is provided
     const subcategoryData = {
       ...subcategory,
-      price: subcategory.price || 0,
-      unit: subcategory.unit || null
+      price: subcategory.price || 0 // Add default price if not provided
     };
 
     const { data, error } = await supabase

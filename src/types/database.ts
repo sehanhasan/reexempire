@@ -4,6 +4,7 @@ export interface Category {
   id: string;
   name: string;
   description: string | null;
+  unit?: string | null; // Added unit field
   created_at: string;
   updated_at: string;
   subcategories?: Subcategory[];
@@ -18,7 +19,6 @@ export interface Subcategory {
   updated_at?: string;
   price_options?: PricingOption[];
   price?: number;
-  unit?: string; // Added unit field
   tempId?: number | string;
 }
 

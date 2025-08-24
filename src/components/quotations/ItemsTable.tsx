@@ -1,246 +1,338 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { X, Trash2 } from 'lucide-react';
-import { QuotationItem } from './types';
+import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash, Pencil, Check, X } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { QuotationItem } from "./types";
 
 interface ItemsTableProps {
   items: QuotationItem[];
-  onItemChange: (index: number, field: keyof QuotationItem, value: string | number) => void;
-  onRemoveItem: (index: number) => void;
+  handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
+  removeItem: (id: number) => void;
   showDescription?: boolean;
-  categories?: Array<{id: string, name: string, unit?: string}>;
+  categoryUnits?: { [categoryName: string]: string }; // Added to pass category units
 }
 
-export function ItemsTable({ items, onItemChange, onRemoveItem, showDescription = true, categories = [] }: ItemsTableProps) {
-  const [swipeStates, setSwipeStates] = useState<{ [key: number]: boolean }>({});
-  const [touchStart, setTouchStart] = useState<{ [key: number]: { x: number, y: number } }>({});
-  const [isDragging, setIsDragging] = useState<{ [key: number]: boolean }>({});
-  
-  const itemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+export function ItemsTable({
+  items,
+  handleItemChange,
+  removeItem,
+  showDescription = true,
+  categoryUnits = {} // Default empty object
+}: ItemsTableProps) {
+  const isMobile = useIsMobile();
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editCategoryValue, setEditCategoryValue] = useState("");
+  const [swipedItemId, setSwipedItemId] = useState<number | null>(null);
 
-  const getCategoryUnit = (categoryName: string) => {
-    const category = categories.find(cat => cat.name === categoryName);
-    return category?.unit || '';
+  // Format currency without RM symbol for items table
+  const formatAmount = (amount: number) => {
+    return amount.toFixed(2);
   };
 
-  const resetSwipeState = (index: number) => {
-    setSwipeStates(prev => ({
-      ...prev,
-      [index]: false
-    }));
-    setIsDragging(prev => ({
-      ...prev,
-      [index]: false
-    }));
+  // Get unit for a category
+  const getUnitForCategory = (categoryName: string) => {
+    return categoryUnits[categoryName] || "";
   };
 
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    const touch = e.touches[0];
-    setTouchStart(prev => ({
-      ...prev,
-      [index]: { x: touch.clientX, y: touch.clientY }
-    }));
-    setIsDragging(prev => ({
-      ...prev,
-      [index]: false
-    }));
-  };
-
-  const handleTouchMove = (e: React.TouchEvent, index: number) => {
-    if (!touchStart[index]) return;
-
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - touchStart[index].x;
-    const deltaY = touch.clientY - touchStart[index].y;
-
-    // Only start dragging if horizontal movement is significant and greater than vertical
-    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
-      setIsDragging(prev => ({
-        ...prev,
-        [index]: true
-      }));
-
-      // Reveal actions when swiping left (deltaX < 0)
-      if (deltaX < -50) {
-        setSwipeStates(prev => ({
-          ...prev,
-          [index]: true
-        }));
-      } else if (deltaX > 50) {
-        // Hide actions when swiping right
-        setSwipeStates(prev => ({
-          ...prev,
-          [index]: false
-        }));
+  // Group items by category
+  const groupItemsByCategory = () => {
+    const groupedItems: {
+      [key: string]: QuotationItem[];
+    } = {};
+    const orderedCategories: string[] = [];
+    items.forEach(item => {
+      const category = item.category && item.category.trim() || 'Other Items';
+      if (!groupedItems[category]) {
+        groupedItems[category] = [];
+        orderedCategories.push(category);
       }
-
-      // Apply transform to the item
-      const itemRef = itemRefs.current[index];
-      if (itemRef) {
-        const clampedDelta = Math.max(deltaX, -120); // Limit left swipe to reveal actions
-        itemRef.style.transform = `translateX(${clampedDelta}px)`;
-        itemRef.style.transition = 'none';
-      }
-    }
-  };
-
-  const handleTouchEnd = (index: number) => {
-    const itemRef = itemRefs.current[index];
-    if (itemRef) {
-      // Snap to final position with animation
-      itemRef.style.transition = 'transform 0.2s ease-out';
-      
-      if (swipeStates[index]) {
-        itemRef.style.transform = 'translateX(-120px)';
-      } else {
-        itemRef.style.transform = 'translateX(0px)';
-      }
-    }
-
-    setTouchStart(prev => {
-      const newState = { ...prev };
-      delete newState[index];
-      return newState;
+      groupedItems[category].push(item);
     });
-    
-    setIsDragging(prev => ({
-      ...prev,
-      [index]: false
-    }));
-  };
-
-  const handleDeleteItem = (index: number) => {
-    resetSwipeState(index);
-    onRemoveItem(index);
-  };
-
-  const handleCancelSwipe = (index: number) => {
-    resetSwipeState(index);
-  };
-
-  // Close all swipe actions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      Object.keys(swipeStates).forEach(key => {
-        const index = parseInt(key);
-        if (swipeStates[index]) {
-          resetSwipeState(index);
-        }
-      });
+    return {
+      groupedItems,
+      orderedCategories
     };
+  };
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [swipeStates]);
+  const handleEditCategory = (category: string) => {
+    setEditingCategory(category);
+    setEditCategoryValue(category);
+  };
 
-  return (
-    <div className="space-y-3">
-      {items.map((item, index) => {
-        const categoryUnit = getCategoryUnit(item.category || '');
-        
-        return (
-          <div key={index} className="relative">
-            {/* Main item card */}
-            <div
-              ref={(el) => (itemRefs.current[index] = el)}
-              className="bg-white border rounded-lg p-4 shadow-sm relative z-10 touch-manipulation"
-              onTouchStart={(e) => handleTouchStart(e, index)}
-              onTouchMove={(e) => handleTouchMove(e, index)}
-              onTouchEnd={() => handleTouchEnd(index)}
-              onClick={(e) => {
-                if (!isDragging[index]) {
-                  // Allow normal interactions when not dragging
-                } else {
-                  e.preventDefault();
-                }
-              }}
-            >
-              <div className="space-y-3">
-                {showDescription && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Description
-                    </label>
-                    <Textarea
-                      value={item.description}
-                      onChange={(e) => onItemChange(index, 'description', e.target.value)}
-                      placeholder="Item description"
-                      rows={2}
-                      className="resize-none"
+  const handleSaveCategory = (oldCategory: string) => {
+    // Update all items in this category with the new category name
+    items.forEach(item => {
+      if ((item.category || 'Other Items') === oldCategory) {
+        handleItemChange(item.id, 'category', editCategoryValue || 'Other Items');
+      }
+    });
+    setEditingCategory(null);
+    setEditCategoryValue("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategory(null);
+    setEditCategoryValue("");
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, itemId: number) => {
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      const currentTouch = moveEvent.touches[0];
+      const diffX = startX - currentTouch.clientX;
+      
+      if (diffX > 50) { // Swipe left threshold
+        setSwipedItemId(itemId);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+    
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
+  const handleTouchOutside = () => {
+    setSwipedItemId(null);
+  };
+
+  const handleCancelSwipe = () => {
+    setSwipedItemId(null);
+  };
+
+  const {
+    groupedItems,
+    orderedCategories
+  } = groupItemsByCategory();
+
+  return <div className="w-full overflow-auto" onClick={isMobile ? handleTouchOutside : undefined}>
+      {isMobile ? <div className="space-y-5">
+          {orderedCategories.map(category => <div key={category} className="space-y-3">
+              <div className="flex items-center gap-2">
+                {editingCategory === category ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <Input
+                      value={editCategoryValue}
+                      onChange={(e) => setEditCategoryValue(e.target.value)}
+                      className="text-blue-600 font-medium text-base h-8"
+                      autoFocus
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-green-600 hover:text-green-700"
+                      onClick={() => handleSaveCategory(category)}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-red-600 hover:text-red-700"
+                      onClick={handleCancelEdit}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="font-medium text-base text-blue-600">{category}</div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-gray-500 hover:text-blue-600"
+                      onClick={() => handleEditCategory(category)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
                   </div>
                 )}
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Quantity
-                    </label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.quantity || ''}
-                      onChange={(e) => onItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                    />
+              </div>
+              {groupedItems[category].map((item, index) => <div 
+                key={item.id} 
+                className="relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                  <div className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 bg-white transition-transform duration-200 ${
+                    swipedItemId === item.id ? 'transform -translate-x-24' : ''
+                  }`}
+                  onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
+                  >
+                    <div className="space-y-3 pb-1">
+                      <div className="space-y-2">
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
+                        <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                          <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM{getUnitForCategory(item.category || "") ? `/${getUnitForCategory(item.category || "")}` : ''})</label>
+                          <div className="relative">
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              step="0.01" 
+                              className="h-10 pr-8" 
+                              value={item.unitPrice === 0 ? "" : item.unitPrice} 
+                              onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                            />
+                            {getUnitForCategory(item.category || "") && (
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{getUnitForCategory(item.category || "")}</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
+                          <div className="p-2 h-10 text-right text-gray-800">
+                            {formatAmount(item.amount)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Unit Price (RM)
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.unitPrice === 0 ? '' : item.unitPrice}
-                        onChange={(e) => onItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                        placeholder="0.00"
-                        className={categoryUnit ? "pr-8" : ""}
-                      />
-                      {categoryUnit && (
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
-                          {categoryUnit}
-                        </span>
+                  {/* Circular action buttons revealed by swipe - positioned outside the card */}
+                  {swipedItemId === item.id && (
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex gap-3 pr-4">
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-full bg-gray-400 hover:bg-gray-500 text-white border-0 shadow-lg" 
+                        onClick={handleCancelSwipe}
+                      >
+                        <X className="h-6 w-6" />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-full bg-red-500 hover:bg-red-600 text-white border-0 shadow-lg" 
+                        onClick={() => removeItem(item.id)} 
+                        disabled={items.length <= 1}
+                      >
+                        <Trash className="h-6 w-6" />
+                      </Button>
+                    </div>
+                  )}
+                </div>)}
+            </div>)}
+        </div> : <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="py-2 px-1 text-left font-medium text-sm w-6">#</th>
+              <th className="py-2 px-2 text-left font-medium text-sm">Description</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-20">Qty</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-32">Unit Price (RM)</th>
+              <th className="py-2 px-2 text-right font-medium text-sm w-32">Amount (RM)</th>
+              <th className="py-2 px-1 w-12"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderedCategories.map(category => <React.Fragment key={category}>
+                <tr className="bg-gray-50">
+                  <td colSpan={6} className="py-2 px-2 font-small text-blue-600 border-t">
+                    <div className="flex items-center gap-2">
+                      {editingCategory === category ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={editCategoryValue}
+                            onChange={(e) => setEditCategoryValue(e.target.value)}
+                            className="text-blue-600 font-medium h-7 text-sm"
+                            autoFocus
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-green-600 hover:text-green-700"
+                            onClick={() => handleSaveCategory(category)}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-red-600 hover:text-red-700"
+                            onClick={handleCancelEdit}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>{category}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-gray-500 hover:text-blue-600"
+                            onClick={() => handleEditCategory(category)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
                       )}
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Amount (RM)
-                    </label>
-                    <div className="h-9 px-3 py-1 bg-gray-50 border border-gray-200 rounded-md flex items-center text-sm text-gray-600">
-                      {(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action buttons - positioned outside the card */}
-            <div className="absolute right-0 top-0 h-full flex items-center space-x-2 pr-4 z-0">
-              <button
-                onClick={() => handleCancelSwipe(index)}
-                className="w-10 h-10 bg-gray-500 text-white rounded-full flex items-center justify-center shadow-lg"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleDeleteItem(index)}
-                className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+                  </td>
+                </tr>
+                {groupedItems[category].map((item, index) => {
+                  const categoryUnit = getUnitForCategory(item.category || "");
+                  return <tr key={item.id} className="border-b last:border-b-0">
+                    <td className="py-3 px-1 align-top">
+                      {index + 1}
+                    </td>
+                    <td className="py-3 px-2">
+                      <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
+                    </td>
+                    <td className="py-3 px-2">
+                      <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-right h-10" />
+                    </td>
+                    <td className="py-3 px-2">
+                      <div className="relative">
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01" 
+                          className="text-right h-10 pr-8" 
+                          value={item.unitPrice === 0 ? "" : item.unitPrice} 
+                          onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                        />
+                        {categoryUnit && (
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{categoryUnit}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-2 text-right text-gray-600">
+                      {formatAmount(item.amount)}
+                    </td>
+                    <td className="py-3 px-1">
+                      <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                })}
+              </React.Fragment>)}
+          </tbody>
+        </table>}
+    </div>;
 }
