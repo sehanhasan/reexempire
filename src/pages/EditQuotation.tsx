@@ -35,7 +35,7 @@ export default function EditQuotation() {
     description: "",
     category: "",
     quantity: 1,
-    unit: "Unit",
+    unit: "",
     unitPrice: 0,
     amount: 0
   }]);

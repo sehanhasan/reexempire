@@ -320,9 +320,9 @@ export default function ViewQuotation() {
                            <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
                              <td className="p-2 text-gray-800">{item.description}</td>
                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                             <td className="text-right p-2 text-gray-800">
-                               {item.unit_price.toFixed(2)}{item.unit ? `/${item.unit}` : ''}
-                             </td>
+                              <td className="text-right p-2 text-gray-800">
+                                {item.unit_price.toFixed(2)}{item.unit ? ` ${item.unit}` : ''}
+                              </td>
                              <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
                            </tr>
                         ))}
