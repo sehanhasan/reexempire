@@ -155,6 +155,7 @@ export function ItemsTable({
               {groupedItems[category].map((item, index) => <div 
                 key={item.id} 
                 className="relative"
+                data-item-id={item.id}
                 onClick={(e) => e.stopPropagation()}
               >
                   <div className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 bg-white transition-transform duration-200 ${
@@ -186,7 +187,7 @@ export function ItemsTable({
                               placeholder="0.00"
                               onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
                             />
-                            {item.unit && (
+                            {item.unit && item.unit.trim() !== "" && (
                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
                                 {item.unit}
                               </span>
@@ -288,7 +289,7 @@ export function ItemsTable({
                     </div>
                   </td>
                 </tr>
-                {groupedItems[category].map((item, index) => <tr key={item.id} className="border-b last:border-b-0">
+                {groupedItems[category].map((item, index) => <tr key={item.id} className="border-b last:border-b-0" data-item-id={item.id}>
                     <td className="py-3 px-1 align-top">
                       {index + 1}
                     </td>
@@ -309,7 +310,7 @@ export function ItemsTable({
                           placeholder="0.00"
                           onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
                         />
-                        {item.unit && (
+                        {item.unit && item.unit.trim() !== "" && (
                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
                             {item.unit}
                           </span>

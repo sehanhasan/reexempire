@@ -79,7 +79,7 @@ export function QuotationItemsCard({
       description: "",
       category: "Other Items",
       quantity: 1,
-      unit: "Unit",
+      unit: "", // Empty string instead of "Unit"
       unitPrice: 0,
       amount: 0
     };
@@ -87,6 +87,15 @@ export function QuotationItemsCard({
     setItems(prevItems => {
       const updatedItems = [...prevItems, newItem];
       console.log("Updated items array:", updatedItems);
+      
+      // Auto-scroll to the new item after state update
+      setTimeout(() => {
+        const newItemElement = document.querySelector(`[data-item-id="${newId}"]`);
+        if (newItemElement) {
+          newItemElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
       return updatedItems;
     });
   };
