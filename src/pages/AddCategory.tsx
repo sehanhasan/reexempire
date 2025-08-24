@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -26,8 +25,7 @@ export default function AddCategory() {
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState({
     name: "",
-    description: "",
-    unit: "" // Added unit field
+    description: ""
   });
   const [subcategories, setSubcategories] = useState<SubcategoryForm[]>([{
     tempId: Date.now(),
@@ -50,8 +48,7 @@ export default function AddCategory() {
       if (data) {
         setCategory({
           name: data.name || "",
-          description: data.description || "",
-          unit: data.unit || "" // Added unit field
+          description: data.description || ""
         });
         
         if (data.subcategories && data.subcategories.length > 0) {
@@ -160,7 +157,6 @@ export default function AddCategory() {
       const formattedData = {
         name: category.name,
         description: category.description,
-        unit: category.unit, // Added unit field
         subcategories: subcategories.map(sub => ({
           ...(sub.id ? {
             id: sub.id
@@ -215,11 +211,6 @@ export default function AddCategory() {
               <div>
                 <Label htmlFor="name">Category Name*</Label>
                 <Input id="name" name="name" placeholder="e.g. Bathroom Renovation" value={category.name} onChange={handleCategoryChange} required />
-              </div>
-              
-              <div>
-                <Label htmlFor="unit">Unit (Optional)</Label>
-                <Input id="unit" name="unit" placeholder="e.g. ft, sqm, pcs" value={category.unit} onChange={handleCategoryChange} />
               </div>
             </CardContent>
           </Card>
