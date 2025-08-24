@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,6 +10,7 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface QuotationItemsCardProps {
   items: QuotationItem[];
   setItems: React.Dispatch<React.SetStateAction<QuotationItem[]>>;
@@ -17,6 +18,7 @@ interface QuotationItemsCardProps {
   setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
 }
+
 export function QuotationItemsCard({
   items,
   setItems,
@@ -26,6 +28,25 @@ export function QuotationItemsCard({
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
+
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => sum + item.amount, 0);
+  };
+
+  // Update deposit amount automatically when total changes and deposit is required
+  useEffect(() => {
+    if (depositInfo.requiresDeposit) {
+      const total = calculateTotal();
+      const newDepositAmount = total * (depositInfo.depositPercentage / 100);
+      if (Math.abs(newDepositAmount - depositInfo.depositAmount) > 0.01) { // Avoid unnecessary updates
+        setDepositInfo(prev => ({
+          ...prev,
+          depositAmount: newDepositAmount
+        }));
+      }
+    }
+  }, [items, depositInfo.requiresDeposit, depositInfo.depositPercentage]);
+
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -39,6 +60,7 @@ export function QuotationItemsCard({
       return item;
     }));
   };
+
   const addItem = () => {
     console.log("🔥 Add Item button clicked!");
     console.log("Current items before adding:", items);
@@ -59,14 +81,13 @@ export function QuotationItemsCard({
       return updatedItems;
     });
   };
+
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + item.amount, 0);
-  };
+
   const handleDepositPercentageChange = (value: number) => {
     const total = calculateTotal();
     const newDepositAmount = total * (value / 100);
@@ -76,6 +97,7 @@ export function QuotationItemsCard({
       depositAmount: newDepositAmount
     });
   };
+
   const handleDepositAmountChange = (value: number) => {
     const total = calculateTotal();
     setDepositInfo({
@@ -84,6 +106,7 @@ export function QuotationItemsCard({
       depositPercentage: total > 0 ? value / total * 100 : 0
     });
   };
+
   const handleDepositCheckboxChange = (checked: boolean) => {
     if (checked) {
       const total = calculateTotal();
@@ -103,6 +126,7 @@ export function QuotationItemsCard({
       });
     }
   };
+
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     const validSelectedItems = selectedItems.filter(item => item.description && item.description.trim() !== '' && item.price > 0);
     if (validSelectedItems.length === 0) {
@@ -130,6 +154,7 @@ export function QuotationItemsCard({
       description: `${newItems.length} item(s) have been added to the quotation.`
     });
   };
+
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">
