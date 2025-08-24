@@ -76,7 +76,7 @@ export function CategoryItemSelector({
           description: subcategory.name,
           category: categoryName,
           quantity: 1,
-          unit: "Unit",
+          unit: subcategory.unit || "",
           price: subcategory.price || 0
         }];
       }

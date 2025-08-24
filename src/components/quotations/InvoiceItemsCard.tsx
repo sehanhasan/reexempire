@@ -59,7 +59,7 @@ export function InvoiceItemsCard({
       description: "",
       category: "Other Items",
       quantity: 1,
-      unit: "Unit",
+      unit: "",
       unitPrice: 0,
       amount: 0
     }]);
