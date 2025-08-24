@@ -17,6 +17,7 @@ interface SubcategoryForm {
   tempId: number | string;
   price: string;
   description: string;
+  unit: string;
 }
 
 export default function AddCategory() {
@@ -26,13 +27,13 @@ export default function AddCategory() {
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState({
     name: "",
-    description: "",
-    unit: "" // Added unit field
+    description: ""
   });
   const [subcategories, setSubcategories] = useState<SubcategoryForm[]>([{
     tempId: Date.now(),
     price: "",
-    description: ""
+    description: "",
+    unit: ""
   }]);
   const [edit, setEdit] = useState(false);
 
@@ -50,8 +51,7 @@ export default function AddCategory() {
       if (data) {
         setCategory({
           name: data.name || "",
-          description: data.description || "",
-          unit: data.unit || "" // Added unit field
+          description: data.description || ""
         });
         
         if (data.subcategories && data.subcategories.length > 0) {
@@ -62,7 +62,8 @@ export default function AddCategory() {
                 id: sub.id,
                 tempId: Date.now() + Math.random(),
                 price: sub.price ? sub.price.toString() : "",
-                description: sub.description || ""
+                description: sub.description || "",
+                unit: sub.unit || ""
               });
             }
           });
@@ -104,7 +105,8 @@ export default function AddCategory() {
     setSubcategories([...subcategories, {
       tempId: Date.now(),
       price: "",
-      description: ""
+      description: "",
+      unit: ""
     }]);
   };
 
@@ -113,7 +115,8 @@ export default function AddCategory() {
       setSubcategories([{
         tempId: Date.now(),
         price: "",
-        description: ""
+        description: "",
+        unit: ""
       }]);
     } else {
       const updated = subcategories.filter((_, i) => i !== index);
@@ -160,14 +163,14 @@ export default function AddCategory() {
       const formattedData = {
         name: category.name,
         description: category.description,
-        unit: category.unit, // Added unit field
         subcategories: subcategories.map(sub => ({
           ...(sub.id ? {
             id: sub.id
           } : {}),
           description: sub.description,
           price: sub.price ? parseFloat(sub.price) : 0,
-          name: sub.description
+          name: sub.description,
+          unit: sub.unit || ""
         }))
       };
       if (edit && categoryId) {
@@ -216,11 +219,6 @@ export default function AddCategory() {
                 <Label htmlFor="name">Category Name*</Label>
                 <Input id="name" name="name" placeholder="e.g. Bathroom Renovation" value={category.name} onChange={handleCategoryChange} required />
               </div>
-              
-              <div>
-                <Label htmlFor="unit">Unit (Optional)</Label>
-                <Input id="unit" name="unit" placeholder="e.g. ft, sqm, pcs" value={category.unit} onChange={handleCategoryChange} />
-              </div>
             </CardContent>
           </Card>
           
@@ -240,15 +238,22 @@ export default function AddCategory() {
                     </Button>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div>
                       <Label htmlFor={`subcategory-description-${index}`}>Description*</Label>
                       <Textarea id={`subcategory-description-${index}`} placeholder="e.g. Complete bathroom renovation" value={subcategory.description} onChange={e => handleSubcategoryChange(index, 'description', e.target.value)} rows={3} required />
                     </div>
                     
-                    <div>
-                      <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
-                      <Input id={`subcategory-price-${index}`} type="number" min="0" step="0.01" placeholder="Enter price" value={subcategory.price} onChange={e => handleSubcategoryChange(index, 'price', e.target.value)} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`subcategory-price-${index}`}>Price (RM)</Label>
+                        <Input id={`subcategory-price-${index}`} type="number" min="0" step="0.01" placeholder="Enter price" value={subcategory.price} onChange={e => handleSubcategoryChange(index, 'price', e.target.value)} />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor={`subcategory-unit-${index}`}>Unit</Label>
+                        <Input id={`subcategory-unit-${index}`} placeholder="e.g. ft, sqm, pcs" value={subcategory.unit} onChange={e => handleSubcategoryChange(index, 'unit', e.target.value)} />
+                      </div>
                     </div>
                   </div>
                 </div>)}
