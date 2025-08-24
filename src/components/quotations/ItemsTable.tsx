@@ -10,7 +10,7 @@ interface ItemsTableProps {
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
   showDescription?: boolean;
-  categoryUnits?: { [categoryName: string]: string }; // Added to pass category units
+  categoryUnits?: { [categoryName: string]: string };
 }
 
 export function ItemsTable({
@@ -18,7 +18,7 @@ export function ItemsTable({
   handleItemChange,
   removeItem,
   showDescription = true,
-  categoryUnits = {} // Default empty object
+  categoryUnits = {}
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
@@ -30,9 +30,20 @@ export function ItemsTable({
     return amount.toFixed(2);
   };
 
-  // Get unit for a category
+  // Get unit for a category - improved to handle exact matches and fallbacks
   const getUnitForCategory = (categoryName: string) => {
-    return categoryUnits[categoryName] || "";
+    if (!categoryName || categoryName.trim() === '') return "";
+    
+    // Try exact match first
+    const exactMatch = categoryUnits[categoryName];
+    if (exactMatch) return exactMatch;
+    
+    // Try case-insensitive match
+    const categoryKey = Object.keys(categoryUnits).find(
+      key => key.toLowerCase() === categoryName.toLowerCase()
+    );
+    
+    return categoryKey ? categoryUnits[categoryKey] : "";
   };
 
   // Group items by category
@@ -159,79 +170,85 @@ export function ItemsTable({
                   </div>
                 )}
               </div>
-              {groupedItems[category].map((item, index) => <div 
-                key={item.id} 
-                className="relative"
-                onClick={(e) => e.stopPropagation()}
-              >
-                  <div className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 bg-white transition-transform duration-200 ${
-                    swipedItemId === item.id ? 'transform -translate-x-24' : ''
-                  }`}
-                  onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
-                  >
-                    <div className="space-y-3 pb-1">
-                      <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
-                        <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-2">
+              {groupedItems[category].map((item, index) => {
+                const categoryUnit = getUnitForCategory(item.category || "");
+                return <div 
+                  key={item.id} 
+                  className="relative"
+                  onClick={(e) => e.stopPropagation()}
+                  id={`item-${item.id}`}
+                >
+                    <div className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 bg-white transition-transform duration-200 ${
+                      swipedItemId === item.id ? 'transform -translate-x-24' : ''
+                    }`}
+                    onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
+                    >
+                      <div className="space-y-3 pb-1">
                         <div className="space-y-2">
-                          <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
-                          <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
+                          <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                         </div>
                         
-                        <div className="space-y-2">
-                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM{getUnitForCategory(item.category || "") ? `/${getUnitForCategory(item.category || "")}` : ''})</label>
-                          <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              step="0.01" 
-                              className="h-10 pr-8" 
-                              value={item.unitPrice === 0 ? "" : item.unitPrice} 
-                              onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                              placeholder="0.00"
-                            />
-                            {getUnitForCategory(item.category || "") && (
-                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{getUnitForCategory(item.category || "")}</span>
-                            )}
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-2">
+                            <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                            <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
                           </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
-                          <div className="p-2 h-10 text-right text-gray-800">
-                            {formatAmount(item.amount)}
+                          
+                          <div className="space-y-2">
+                            <label className="block text-xs mb-1 text-slate-600 font-medium">
+                              Unit Price (RM{categoryUnit ? `/${categoryUnit}` : ''})
+                            </label>
+                            <div className="relative">
+                              <Input 
+                                type="number" 
+                                min="0" 
+                                step="0.01" 
+                                className="h-10 pr-8" 
+                                value={item.unitPrice === 0 ? "" : item.unitPrice} 
+                                onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                placeholder="0.00"
+                              />
+                              {categoryUnit && (
+                                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">{categoryUnit}</span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
+                            <div className="p-2 h-10 text-right text-gray-800">
+                              {formatAmount(item.amount)}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Circular action buttons revealed by swipe - positioned outside the card */}
-                  {swipedItemId === item.id && (
-                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex gap-3 pr-4">
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        className="h-12 w-12 rounded-full bg-gray-400 hover:bg-gray-500 text-white border-0 shadow-lg" 
-                        onClick={handleCancelSwipe}
-                      >
-                        <X className="h-6 w-6" />
-                      </Button>
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        className="h-12 w-12 rounded-full bg-red-500 hover:bg-red-600 text-white border-0 shadow-lg" 
-                        onClick={() => removeItem(item.id)} 
-                        disabled={items.length <= 1}
-                      >
-                        <Trash className="h-6 w-6" />
-                      </Button>
-                    </div>
-                  )}
-                </div>)}
+                    {/* Circular action buttons revealed by swipe - positioned outside the card */}
+                    {swipedItemId === item.id && (
+                      <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex gap-3 pr-4">
+                        <Button 
+                          type="button" 
+                          size="icon" 
+                          className="h-12 w-12 rounded-full bg-gray-400 hover:bg-gray-500 text-white border-0 shadow-lg" 
+                          onClick={handleCancelSwipe}
+                        >
+                          <X className="h-6 w-6" />
+                        </Button>
+                        <Button 
+                          type="button" 
+                          size="icon" 
+                          className="h-12 w-12 rounded-full bg-red-500 hover:bg-red-600 text-white border-0 shadow-lg" 
+                          onClick={() => removeItem(item.id)} 
+                          disabled={items.length <= 1}
+                        >
+                          <Trash className="h-6 w-6" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+              })}
             </div>)}
         </div> : <table className="w-full">
           <thead>
@@ -295,7 +312,7 @@ export function ItemsTable({
                 </tr>
                 {groupedItems[category].map((item, index) => {
                   const categoryUnit = getUnitForCategory(item.category || "");
-                  return <tr key={item.id} className="border-b last:border-b-0">
+                  return <tr key={item.id} className="border-b last:border-b-0" id={`item-${item.id}`}>
                     <td className="py-3 px-1 align-top">
                       {index + 1}
                     </td>

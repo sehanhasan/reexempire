@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -109,6 +108,19 @@ export function QuotationItemsCard({
     setItems(prevItems => {
       const updatedItems = [...prevItems, newItem];
       console.log("Updated items array:", updatedItems);
+      
+      // Scroll to the newly added item after a short delay
+      setTimeout(() => {
+        const newItemElement = document.getElementById(`item-${newId}`);
+        if (newItemElement) {
+          newItemElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 100);
+      
       return updatedItems;
     });
   };
