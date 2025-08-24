@@ -18,6 +18,7 @@ interface SubcategoryForm {
   price: string;
   description: string;
   unit: string;
+  markedForDeletion?: boolean;
 }
 
 export default function AddCategory() {
@@ -36,6 +37,7 @@ export default function AddCategory() {
     unit: ""
   }]);
   const [edit, setEdit] = useState(false);
+  const [subcategoriesToDelete, setSubcategoriesToDelete] = useState<string[]>([]);
 
   useEffect(() => {
     if (categoryId) {
@@ -111,6 +113,13 @@ export default function AddCategory() {
   };
 
   const removeSubcategory = (index: number) => {
+    const subcategoryToRemove = subcategories[index];
+    
+    // If it's an existing subcategory (has an ID), mark it for deletion
+    if (subcategoryToRemove.id) {
+      setSubcategoriesToDelete(prev => [...prev, subcategoryToRemove.id!]);
+    }
+    
     if (subcategories.length === 1) {
       setSubcategories([{
         tempId: Date.now(),
@@ -160,6 +169,14 @@ export default function AddCategory() {
     if (!validate()) return;
     try {
       setLoading(true);
+
+      // First, delete marked subcategories if this is an edit operation
+      if (edit && subcategoriesToDelete.length > 0) {
+        for (const subcategoryId of subcategoriesToDelete) {
+          await categoryService.deleteSubcategory(subcategoryId);
+        }
+      }
+
       const formattedData = {
         name: category.name,
         description: category.description,
@@ -173,6 +190,7 @@ export default function AddCategory() {
           unit: sub.unit || ""
         }))
       };
+      
       if (edit && categoryId) {
         await categoryService.update(categoryId, formattedData);
         toast({

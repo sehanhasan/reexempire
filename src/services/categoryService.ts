@@ -146,7 +146,7 @@ export const categoryService = {
     return categoryData;
   },
 
-  async update(id: string, category: { name: string; description: string; unit?: string; subcategories?: { name: string; description: string; price: number; id?: string }[] }): Promise<Category> {
+  async update(id: string, category: { name: string; description: string; unit?: string; subcategories?: { name: string; description: string; price: number; unit?: string; id?: string }[] }): Promise<Category> {
     // Update the category
     const { data: categoryData, error: categoryError } = await supabase
       .from("categories")
@@ -174,7 +174,8 @@ export const categoryService = {
             .update({
               name: sub.name || sub.description,
               description: sub.description,
-              price: sub.price || 0 // Add default price
+              price: sub.price || 0, // Add default price
+              unit: sub.unit || null // Add unit field
             })
             .eq("id", sub.id);
 
@@ -188,7 +189,8 @@ export const categoryService = {
             category_id: id,
             name: sub.name || sub.description,
             description: sub.description,
-            price: sub.price || 0 // Add default price
+            price: sub.price || 0, // Add default price
+            unit: sub.unit || null // Add unit field
           };
 
           const { error: createError } = await supabase
@@ -238,7 +240,8 @@ export const categoryService = {
     // Ensure price is provided
     const subcategoryData = {
       ...subcategory,
-      price: subcategory.price || 0 // Add default price if not provided
+      price: subcategory.price || 0, // Add default price if not provided
+      unit: subcategory.unit || null // Add unit field
     };
 
     const { data, error } = await supabase
@@ -258,7 +261,10 @@ export const categoryService = {
   async updateSubcategory(id: string, subcategory: Partial<Omit<Subcategory, "id" | "created_at" | "updated_at">>): Promise<Subcategory> {
     const { data, error } = await supabase
       .from("subcategories")
-      .update(subcategory)
+      .update({
+        ...subcategory,
+        unit: subcategory.unit || null // Add unit field handling
+      })
       .eq("id", id)
       .select()
       .single();
