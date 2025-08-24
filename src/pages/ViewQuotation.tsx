@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { quotationService, categoryService } from '@/services';
 import { Quotation, Customer, QuotationItem, Subcategory } from '@/types/database';
 
-export function ViewQuotation() {
+export default function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
   const [quotation, setQuotation] = useState<Quotation | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -200,3 +200,5 @@ export function ViewQuotation() {
     </div>
   );
 }
+
+export { ViewQuotation };
