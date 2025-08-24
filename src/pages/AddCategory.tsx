@@ -99,7 +99,7 @@ export default function AddCategory() {
 
   const handleSubcategoryChange = (index: number, field: keyof SubcategoryForm, value: string) => {
     const updatedSubcategories = [...subcategories];
-    updatedSubcategories[index][field] = value;
+    (updatedSubcategories[index] as any)[field] = value;
     setSubcategories(updatedSubcategories);
   };
 
