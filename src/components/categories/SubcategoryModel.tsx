@@ -12,8 +12,9 @@ interface Subcategory {
   id?: string;
   category_id: string;
   name: string;
-  description: string; // Changed from optional to required to match the API expectations
+  description: string;
   price?: number;
+  unit?: string;
 }
 
 interface SubcategoryModelProps {
@@ -36,8 +37,9 @@ export function SubcategoryModel({
   const [formData, setFormData] = useState<Subcategory>({
     category_id: parentId,
     name: '',
-    description: '', // Initialize with empty string since it's required
+    description: '',
     price: 0,
+    unit: '',
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -51,8 +53,9 @@ export function SubcategoryModel({
       setFormData({
         category_id: parentId,
         name: '',
-        description: '', // Initialize with empty string
+        description: '',
         price: 0,
+        unit: '',
       });
     }
   }, [initialData, parentId, open]);
@@ -149,21 +152,34 @@ export function SubcategoryModel({
                 value={formData.description || ''}
                 onChange={handleChange}
                 rows={3}
-                required // Added required attribute to match type requirement
+                required
               />
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor="price">Price (RM)</Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price || ''}
-                onChange={handleChange}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="price">Price (RM)</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price || ''}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="unit">Unit (Optional)</Label>
+                <Input
+                  id="unit"
+                  name="unit"
+                  placeholder="e.g. ft, sqm, piece"
+                  value={formData.unit || ''}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
           </div>
           

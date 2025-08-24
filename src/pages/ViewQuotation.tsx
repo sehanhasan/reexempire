@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -7,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { quotationService } from '@/services/quotationService';
 import { customerService } from '@/services/customerService';
+import { categoryService } from '@/services/categoryService';
 import { Download, FileText, CheckCircle, X, Pen } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { toast } from 'sonner';
@@ -66,6 +66,34 @@ export default function ViewQuotation() {
     enabled: !!id,
     staleTime: 0,
   });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories-with-subcategories'],
+    queryFn: async () => {
+      const cats = await categoryService.getAll();
+      const catsWithSubcategories = await Promise.all(
+        cats.map(async (cat) => {
+          const subcategories = await categoryService.getSubcategoriesByCategoryId(cat.id);
+          return { ...cat, subcategories };
+        })
+      );
+      return catsWithSubcategories;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const getCategoryUnit = (categoryName: string) => {
+    for (const category of categories) {
+      if (category.name === categoryName && category.subcategories) {
+        // Find the first subcategory with a unit
+        const subcategoryWithUnit = category.subcategories.find(sub => sub.unit);
+        if (subcategoryWithUnit?.unit) {
+          return subcategoryWithUnit.unit;
+        }
+      }
+    }
+    return '';
+  };
 
   useEffect(() => {
     if (quotation) {
@@ -230,7 +258,7 @@ export default function ViewQuotation() {
     groupedItems[category].push(item);
   });
 
-  const categories = Object.keys(groupedItems).sort();
+  const categories_list = Object.keys(groupedItems).sort();
 
   return (
     <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }} id="quotation-view">
@@ -309,28 +337,33 @@ export default function ViewQuotation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category, categoryIndex) => (
+                    {categories_list.map((category, categoryIndex) => (
                       <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
                             {categoryIndex + 1}- {category}
                           </td>
                         </tr>
-                        {groupedItems[category].map((item, index) => (
-                          <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
-                            <td className="p-2 text-gray-800">{item.description}</td>
-                            <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                            <td className="text-right p-2 text-gray-800">{item.unit_price.toFixed(2)}</td>
-                            <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
-                          </tr>
-                        ))}
+                        {groupedItems[category].map((item, index) => {
+                          const categoryUnit = getCategoryUnit(category);
+                          return (
+                            <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
+                              <td className="p-2 text-gray-800">{item.description}</td>
+                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
+                              <td className="text-right p-2 text-gray-800">
+                                {item.unit_price.toFixed(2)}
+                                {categoryUnit && <span className="text-gray-500">/{categoryUnit}</span>}
+                              </td>
+                              <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
+                            </tr>
+                          );
+                        })}
                       </React.Fragment>
                     ))}
                   </tbody>
                 </table>
               </div>
               
-              {/* Compact Subtotal, Deposit and Total Information */}
               <div className="p-3 bg-gray-50 border-t">
                 <div className="flex justify-end">
                   <div className="w-64 space-y-1 text-sm">
@@ -358,7 +391,6 @@ export default function ViewQuotation() {
             </CardContent>
           </Card>
 
-          {/* Two-Column Bottom Section */}
           <div className="grid grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-4">
@@ -476,7 +508,6 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Download & Print Buttons */}
           <div className="text-center flex gap-4 justify-center">
             <Button 
               onClick={handleDownloadPDF}
