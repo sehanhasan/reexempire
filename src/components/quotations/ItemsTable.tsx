@@ -189,7 +189,7 @@ export function ItemsTable({
                             />
                             {item.unit && item.unit.trim() !== "" && (
                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
-                                {item.unit}
+                                /{item.unit}
                               </span>
                             )}
                           </div>
@@ -312,7 +312,7 @@ export function ItemsTable({
                         />
                         {item.unit && item.unit.trim() !== "" && (
                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
-                            {item.unit}
+                            /{item.unit}
                           </span>
                         )}
                       </div>
