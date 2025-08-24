@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -38,9 +37,9 @@ export function InvoiceItemsCard({
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
 
-  const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
-    setItems(prevItems => prevItems.map(item => {
-      if (item.id === id) {
+  const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
+    setItems(prevItems => prevItems.map((item, i) => {
+      if (i === index) {
         const updatedItem = {
           ...item,
           [field]: value
@@ -150,7 +149,16 @@ export function InvoiceItemsCard({
             </Button>
           </div>
 
-          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
+          <ItemsTable 
+            items={items} 
+            handleItemChange={handleItemChange} 
+            removeItem={(index) => {
+              if (items.length > 1) {
+                setItems(items.filter((_, i) => i !== index));
+              }
+            }} 
+            showDescription={true} 
+          />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
             <div className={isMobile ? "w-full" : "w-72"}>

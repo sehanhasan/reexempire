@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -56,9 +55,9 @@ export function QuotationItemsCard({
     }
   }, [items, depositInfo.requiresDeposit, depositInfo.depositPercentage]);
 
-  const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
-    setItems(prevItems => prevItems.map(item => {
-      if (item.id === id) {
+  const handleItemChange = (index: number, field: keyof QuotationItem, value: any) => {
+    setItems(prevItems => prevItems.map((item, i) => {
+      if (i === index) {
         const updatedItem = {
           ...item,
           [field]: value
@@ -91,9 +90,9 @@ export function QuotationItemsCard({
     });
   };
 
-  const removeItem = (id: number) => {
+  const removeItem = (index: number) => {
     if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
+      setItems(items.filter((_, i) => i !== index));
     }
   };
 
@@ -182,7 +181,12 @@ export function QuotationItemsCard({
             </Button>
           </div>
 
-          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
+          <ItemsTable 
+            items={items} 
+            handleItemChange={handleItemChange} 
+            removeItem={removeItem} 
+            showDescription={true} 
+          />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
             <div className={isMobile ? "w-full" : "w-72"}>

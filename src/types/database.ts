@@ -1,3 +1,4 @@
+
 // Database Types
 export interface Category {
   id: string;
@@ -17,6 +18,7 @@ export interface Subcategory {
   updated_at?: string;
   price_options?: PricingOption[];
   price?: number;
+  unit?: string; // Added unit field
   tempId?: number | string;
 }
 

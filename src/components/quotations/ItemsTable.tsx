@@ -8,12 +8,13 @@ import { QuotationItem } from './types';
 
 interface ItemsTableProps {
   items: QuotationItem[];
-  onUpdateItem: (index: number, field: keyof QuotationItem, value: string | number) => void;
-  onRemoveItem: (index: number) => void;
+  handleItemChange: (index: number, field: keyof QuotationItem, value: string | number) => void;
+  removeItem: (index: number) => void;
+  showDescription?: boolean;
   categories?: Array<{id: string, name: string, unit?: string}>;
 }
 
-export function ItemsTable({ items, onUpdateItem, onRemoveItem, categories = [] }: ItemsTableProps) {
+export function ItemsTable({ items, handleItemChange, removeItem, showDescription = true, categories = [] }: ItemsTableProps) {
   const [swipeStates, setSwipeStates] = useState<{ [key: number]: boolean }>({});
   const [touchStart, setTouchStart] = useState<{ [key: number]: { x: number, y: number } }>({});
   const [isDragging, setIsDragging] = useState<{ [key: number]: boolean }>({});
@@ -113,7 +114,7 @@ export function ItemsTable({ items, onUpdateItem, onRemoveItem, categories = [] 
 
   const handleDeleteItem = (index: number) => {
     resetSwipeState(index);
-    onRemoveItem(index);
+    removeItem(index);
   };
 
   const handleCancelSwipe = (index: number) => {
@@ -158,18 +159,20 @@ export function ItemsTable({ items, onUpdateItem, onRemoveItem, categories = [] 
               }}
             >
               <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Description
-                  </label>
-                  <Textarea
-                    value={item.description}
-                    onChange={(e) => onUpdateItem(index, 'description', e.target.value)}
-                    placeholder="Item description"
-                    rows={2}
-                    className="resize-none"
-                  />
-                </div>
+                {showDescription && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      Description
+                    </label>
+                    <Textarea
+                      value={item.description}
+                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                      placeholder="Item description"
+                      rows={2}
+                      className="resize-none"
+                    />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
@@ -181,7 +184,7 @@ export function ItemsTable({ items, onUpdateItem, onRemoveItem, categories = [] 
                       min="0"
                       step="0.01"
                       value={item.quantity || ''}
-                      onChange={(e) => onUpdateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
                       placeholder="0"
                     />
                   </div>
@@ -195,8 +198,8 @@ export function ItemsTable({ items, onUpdateItem, onRemoveItem, categories = [] 
                         type="number"
                         min="0"
                         step="0.01"
-                        value={item.unit_price === 0 ? '' : item.unit_price}
-                        onChange={(e) => onUpdateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                        value={item.unitPrice === 0 ? '' : item.unitPrice}
+                        onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
                         placeholder="0.00"
                         className={categoryUnit ? "pr-8" : ""}
                       />
@@ -213,7 +216,7 @@ export function ItemsTable({ items, onUpdateItem, onRemoveItem, categories = [] 
                       Amount (RM)
                     </label>
                     <div className="h-9 px-3 py-1 bg-gray-50 border border-gray-200 rounded-md flex items-center text-sm text-gray-600">
-                      {((item.quantity || 0) * (item.unit_price || 0)).toFixed(2)}
+                      {((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2)}
                     </div>
                   </div>
                 </div>

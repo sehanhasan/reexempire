@@ -1,530 +1,200 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { quotationService } from '@/services/quotationService';
-import { customerService } from '@/services/customerService';
-import { categoryService } from '@/services/categoryService';
-import { Download, FileText, CheckCircle, X, Pen } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/utils/formatters';
-import { toast } from 'sonner';
-import SignatureCanvas from 'react-signature-canvas';
-import { shareQuotation } from '@/utils/mobileShare';
-import html2pdf from 'html2pdf.js';
-import '@/styles/zoom.css';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { toast } from "@/components/ui/use-toast"
+import { Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { CopyButton } from "@/components/CopyButton"
+import { format } from 'date-fns';
 
-export default function ViewQuotation() {
+import { quotationService, categoryService } from '@/services';
+import { Quotation, Customer, QuotationItem, Subcategory } from '@/types/database';
+
+export function ViewQuotation() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [isSigning, setIsSigning] = useState(false);
-  const [signatureData, setSignatureData] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const sigCanvasRef = useRef<SignatureCanvas>(null);
+  const [quotation, setQuotation] = useState<Quotation | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [quotationItems, setQuotationItems] = useState<QuotationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
-  // Pinch-to-zoom effect for this page only
   useEffect(() => {
-    const viewport = document.querySelector('meta[name=viewport]');
-    let original = '';
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load quotation
+        const quotationData = await quotationService.getById(id as string);
+        setQuotation(quotationData);
 
-    if (viewport) {
-      original = viewport.getAttribute('content') || '';
-      viewport.setAttribute(
-        'content',
-        'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes'
-      );
-    }
+        // Load customer
+        const customerData = await quotationService.getCustomerByQuotationId(id as string);
+        setCustomer(customerData);
 
-    return () => {
-      if (viewport && original) {
-        viewport.setAttribute('content', original);
+        // Load quotation items
+        const itemsData = await quotationService.getQuotationItems(id as string);
+        setQuotationItems(itemsData);
+
+        // Load subcategories with units
+        const subcategoriesData = await categoryService.getAllSubcategories();
+        setSubcategories(subcategoriesData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load quotation details.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
     };
-  }, []);
 
-  const { data: quotation, isLoading, refetch } = useQuery({
-    queryKey: ['quotation', id],
-    queryFn: () => quotationService.getById(id!),
-    enabled: !!id,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
+    loadData();
+  }, [id]);
 
-  const { data: customer } = useQuery({
-    queryKey: ['customer', quotation?.customer_id],
-    queryFn: () => customerService.getById(quotation!.customer_id),
-    enabled: !!quotation?.customer_id,
-    staleTime: 0,
-  });
-
-  const { data: items = [] } = useQuery({
-    queryKey: ['quotation-items', id],
-    queryFn: () => quotationService.getItemsByQuotationId(id!),
-    enabled: !!id,
-    staleTime: 0,
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories-with-subcategories'],
-    queryFn: async () => {
-      const cats = await categoryService.getAll();
-      const catsWithSubcategories = await Promise.all(
-        cats.map(async (cat) => {
-          const subcategories = await categoryService.getSubcategoriesByCategoryId(cat.id);
-          return { ...cat, subcategories };
-        })
-      );
-      return catsWithSubcategories;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const getCategoryUnit = (categoryName: string) => {
-    for (const category of categories) {
-      if (category.name === categoryName && category.subcategories) {
-        // Find the first subcategory with a unit
-        const subcategoryWithUnit = category.subcategories.find(sub => sub.unit);
-        if (subcategoryWithUnit?.unit) {
-          return subcategoryWithUnit.unit;
-        }
-      }
-    }
-    return '';
+  const getItemUnit = (category: string) => {
+    const subcategory = subcategories.find(sub => sub.name === category);
+    return subcategory?.unit || '';
   };
 
-  useEffect(() => {
-    if (quotation) {
-      document.title = `Quotation #${quotation.reference_number} - Reex Empire`;
-    }
-    return () => {
-      document.title = 'Reex Empire';
-    };
-  }, [quotation]);
+  const formatUnitPrice = (price: number, category: string) => {
+    const unit = getItemUnit(category);
+    return unit ? `${price.toFixed(2)}/${unit}` : price.toFixed(2);
+  };
 
-  useEffect(() => {
-    if (quotation?.signature_data && quotation.status === 'Accepted') {
-      setSignatureData(quotation.signature_data);
-    } else {
-      setSignatureData('');
-    }
-  }, [quotation]);
-
-  const handleClearSignature = () => {
-    if (sigCanvasRef.current) {
-      sigCanvasRef.current.clear();
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Draft':
+        return <Badge variant="secondary">Draft</Badge>;
+      case 'Sent':
+        return <Badge variant="default">Sent</Badge>;
+      case 'Viewed':
+        return <Badge variant="outline">Viewed</Badge>;
+      case 'Accepted':
+        return <Badge>Accepted</Badge>;
+      case 'Rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
     }
   };
 
-  const handleAcceptQuotation = async () => {
-    if (!sigCanvasRef.current || !quotation) return;
-
-    const signatureDataUrl = sigCanvasRef.current.toDataURL();
-    if (
-      !signatureDataUrl ||
-      signatureDataUrl ===
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-    ) {
-      toast.error('Please provide a signature before accepting');
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      await quotationService.update(quotation.id, {
-        status: 'Accepted',
-        signature_data: signatureDataUrl,
-      });
-      setSignatureData(signatureDataUrl);
-      setIsSigning(false);
-      toast.success('Quotation accepted successfully!');
-      refetch();
-    } catch (error) {
-      console.error('Error accepting quotation:', error);
-      toast.error('Failed to accept quotation');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!quotation) return;
-
-    try {
-      setIsDownloading(true);
-      const element = document.querySelector('.quotation-content');
-      if (!element) {
-        toast.error('Could not find quotation content to download');
-        return;
-      }
-
-      const options = {
-        margin: [5, 5, 5, 5],
-        filename: `quotation-${quotation.reference_number}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: {
-          scale: 1.5,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          scrollX: 0,
-          scrollY: 0,
-          height: element.scrollHeight,
-          width: element.scrollWidth,
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait',
-          compress: true,
-        },
-        pagebreak: { mode: 'avoid-all' },
-      };
-
-      await html2pdf().set(options).from(element).save();
-      toast.success('Quotation PDF downloaded successfully!');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast.error('Failed to generate PDF. Please try again.');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!quotation || !customer) {
-      toast.error('Missing quotation or customer information');
-      return;
-    }
-
-    try {
-      await shareQuotation(
-        quotation.id,
-        quotation.reference_number,
-        customer.name
-      );
-      toast.success('Quotation shared successfully!');
-    } catch (error) {
-      console.error('Error sharing quotation:', error);
-      toast.error('Failed to share quotation');
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading quotation...</p>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <div className="container mx-auto p-4 max-w-4xl">Loading quotation details...</div>;
   }
 
-  if (!quotation) {
-    return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
-        <div className="text-center">
-          <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
-          <p className="text-muted-foreground">
-            The quotation you're looking for doesn't exist or may have expired.
-          </p>
-          <Button onClick={() => navigate('/')} className="mt-4">
-            Return Home
-          </Button>
-        </div>
-      </div>
-    );
+  if (!quotation || !customer) {
+    return <div className="container mx-auto p-4 max-w-4xl">Quotation not found.</div>;
   }
-
-  const isAccepted = quotation.status === 'Accepted';
-  const hasSignature = signatureData && isAccepted;
-
-  const groupedItems: { [key: string]: any[] } = {};
-  items.forEach((item) => {
-    const category = item.category || 'Other Items';
-    if (!groupedItems[category]) {
-      groupedItems[category] = [];
-    }
-    groupedItems[category].push(item);
-  });
-
-  const categories_list = Object.keys(groupedItems).sort();
 
   return (
-    <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }} id="quotation-view">
-      <div className="py-4 px-4 quotation-content">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {/* Compact Header with Company and Quotation Info in Columns */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Left Column - Company Logo and Details */}
-              <div>
-                <img 
-                  src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
-                  alt="Reex Empire Logo" 
-                  className="h-16 w-auto mb-3"
-                />
-                <h2 className="text-sm font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
-                  <p>53300 Setapak Kuala Lumpur</p>
-                  <p className="text-gray-800">www.reexempire.com</p>
-                </div>
-                  {/* Subject within customer info */}
-                  {quotation.subject && (
-                    <div className="mt-3 pt-2 border-t">
-                      <p className="text-sm text-gray-800 font-semibold mb-1">Subject: {quotation.subject}</p>
-                    </div>
-                  )}
-              </div>
-              
-              {/* Right Column - Quotation Details and Customer */}
-              <div>
-                <div className="mb-3">
-                  <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
-                      {quotation.status}
-                    </Badge>
-                      {hasSignature && (
-                        <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200 flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Signed
-                        </Badge>
-                      )}
-                  </div>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
-                    <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
-                  </div>
-                </div>
-                
-                {customer && (
-                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
-                    <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
-                    <div className="text-sm text-gray-800 space-y-1">
-                      <p>Attn: {customer.name}</p>
-                      <p className="font-semibold">{customer.unit_number}</p>
-                      <p>{customer.address}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+    <div className="container mx-auto p-4 max-w-4xl">
+      <div className="mb-4">
+        <Link to="/quotations">
+          <Button variant="ghost">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Quotations
+          </Button>
+        </Link>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border p-6 space-y-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold">{quotation.subject}</h2>
+            <div className="text-gray-500">
+              Reference: <CopyButton text={quotation.reference_number} />
             </div>
           </div>
-
-          {/* Compact Items Table with Sequential Category Indexing */}
-          <Card className="shadow-sm">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="text-left p-2 font-semibold text-gray-700">Description</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories_list.map((category, categoryIndex) => (
-                      <React.Fragment key={category}>
-                        <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
-                            {categoryIndex + 1}- {category}
-                          </td>
-                        </tr>
-                        {groupedItems[category].map((item, index) => {
-                          const categoryUnit = getCategoryUnit(category);
-                          return (
-                            <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
-                              <td className="p-2 text-gray-800">{item.description}</td>
-                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                              <td className="text-right p-2 text-gray-800">
-                                {item.unit_price.toFixed(2)}
-                                {categoryUnit && <span className="text-gray-500">/{categoryUnit}</span>}
-                              </td>
-                              <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
-                            </tr>
-                          );
-                        })}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div className="p-3 bg-gray-50 border-t">
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Subtotal:</span>
-                      <span>{formatCurrency(quotation.subtotal)}</span>
-                    </div>
-                    
-                    {quotation.requires_deposit && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">
-                          Deposit ({quotation.deposit_percentage}%):
-                        </span>
-                        <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between text-base font-bold border-t pt-1">
-                      <span>Total:</span>
-                      <span className="text-blue-600">{formatCurrency(quotation.total)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div className="space-y-4">
-              {/* Terms & Conditions */}
-              {quotation.terms && (
-                <Card className="shadow-sm">
-                  <CardContent className="p-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
-                    <p className="text-sm whitespace-pre-wrap">{quotation.terms}</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Contact Info */}
-              <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
-                <p>For all enquiries, please contact Khalil Pasha</p>
-                <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
-                <div className="text-center text-gray-500 text-xs py-3">
-                  <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
-                </div>
-              </div>
-
+          <div className="flex flex-col items-end">
+            {getStatusBadge(quotation.status)}
+            <div className="text-gray-500">
+              Issued: {format(new Date(quotation.issue_date), 'PPP')}
             </div>
-
-            {/* Right Column - Acceptance Section */}
-            <div>
-              {!isAccepted && (
-                <Card className="shadow-sm print:hidden">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
-                    {isSigning && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsSigning(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {!isSigning ? (
-                      <div className="text-center py-8 bg-gray-50 rounded-lg">
-                        <p className="text-gray-600 mb-4 text-base">
-                          Please digitally sign to accept this quotation.
-                        </p>
-                        <Button 
-                          onClick={() => setIsSigning(true)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-                        >
-                          <Pen className="h-4 w-4 mr-2" />
-                          Start Digital Signature
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                          By signing below, you accept the terms and conditions of this quotation.
-                        </div>
-                        
-                        <div className="signature-container">
-                          <SignatureCanvas
-                            ref={sigCanvasRef}
-                            canvasProps={{
-                              className: 'signature-canvas',
-                            }}
-                            backgroundColor="white"
-                          />
-                          <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
-                            Sign here
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between gap-3">
-                          <Button 
-                            variant="outline" 
-                            onClick={handleClearSignature}
-                            className="px-4"
-                          >
-                            Clear
-                          </Button>
-                          <Button 
-                            onClick={handleAcceptQuotation}
-                            disabled={isProcessing}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6"
-                          >
-                            {isProcessing ? 'Processing...' : 'Accept Quotation'}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Show signature if accepted */}
-              {hasSignature && (
-                <Card className="shadow-sm">
-                  <CardContent className="p-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <img 
-                        src={signatureData} 
-                        alt="Customer Signature" 
-                        className="max-w-full h-auto border border-gray-200 rounded bg-white"
-                        style={{ maxHeight: '150px' }}
-                      />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Signed digitally on {new Date().toLocaleDateString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+            <div className="text-gray-500">
+              Expires: {format(new Date(quotation.expiry_date), 'PPP')}
             </div>
           </div>
+        </div>
 
-          <div className="text-center flex gap-4 justify-center">
-            <Button 
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Downloading...' : 'Download'}
-            </Button>
-
-            <Button 
-              onClick={() => window.print()}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-            >
-              Print
-            </Button>
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Customer Information</h3>
+          <div>
+            <strong>{customer.name}</strong>
+            <div className="text-gray-500">{customer.email}</div>
+            <div className="text-gray-500">{customer.phone}</div>
           </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Items</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2 font-medium">Description</th>
+                  <th className="text-center p-2 font-medium">Qty</th>
+                  <th className="text-right p-2 font-medium">Unit Price (RM)</th>
+                  <th className="text-right p-2 font-medium">Amount (RM)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quotationItems.map((item, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="p-2">{item.description}</td>
+                    <td className="text-center p-2">{item.quantity}</td>
+                    <td className="text-right p-2">{formatUnitPrice(item.unit_price, item.category || '')}</td>
+                    <td className="text-right p-2">{item.amount.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <div className="w-72 space-y-2">
+            <div className="flex justify-between">
+              <div className="font-medium">Subtotal:</div>
+              <div>RM {quotation.subtotal.toFixed(2)}</div>
+            </div>
+            <div className="flex justify-between">
+              <div className="font-medium">Total:</div>
+              <div>RM {quotation.total.toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Deposit Information</h3>
+          <div className="flex justify-between">
+            <div className="font-medium">Requires Deposit:</div>
+            <div>{quotation.requires_deposit ? 'Yes' : 'No'}</div>
+          </div>
+          {quotation.requires_deposit && (
+            <>
+              <div className="flex justify-between">
+                <div className="font-medium">Deposit Amount:</div>
+                <div>RM {quotation.deposit_amount.toFixed(2)}</div>
+              </div>
+              <div className="flex justify-between">
+                <div className="font-medium">Deposit Percentage:</div>
+                <div>{quotation.deposit_percentage}%</div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Notes</h3>
+          <div className="text-gray-700">{quotation.notes || 'No notes provided.'}</div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Terms and Conditions</h3>
+          <div className="text-gray-700">{quotation.terms || 'No terms and conditions provided.'}</div>
         </div>
       </div>
     </div>
