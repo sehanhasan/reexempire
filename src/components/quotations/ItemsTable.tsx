@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -155,66 +154,63 @@ export function ItemsTable({
               </div>
               {groupedItems[category].map((item, index) => <div 
                 key={item.id} 
-                className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 relative bg-white transition-transform duration-200 ${
-                  swipedItemId === item.id ? 'transform -translate-x-20' : ''
-                }`}
-                onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
+                className="relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                  {/* Action buttons revealed by swipe */}
-                  {swipedItemId === item.id && (
-                    <div className="absolute right-0 top-0 h-full w-20 flex rounded-r-md overflow-hidden">
-                      <div className="w-12 bg-gray-400 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-gray-500" 
-                          onClick={handleCancelSwipe}
-                        >
-                          <X className="h-5 w-5" />
-                        </Button>
-                      </div>
-                      <div className="w-12 bg-red-500 flex items-center justify-center">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-10 w-10 text-white hover:text-white hover:bg-red-600" 
-                          onClick={() => removeItem(item.id)} 
-                          disabled={items.length <= 1}
-                        >
-                          <Trash className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-3 pb-1">
-                    <div className="space-y-2">
-                      <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
-                      <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2">
+                  <div className={`mobile-card border-l-4 border-l-blue-500 rounded-md p-3 space-y-2 bg-white transition-transform duration-200 ${
+                    swipedItemId === item.id ? 'transform -translate-x-24' : ''
+                  }`}
+                  onTouchStart={isMobile ? (e) => handleTouchStart(e, item.id) : undefined}
+                  >
+                    <div className="space-y-3 pb-1">
                       <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
-                        <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                        <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
+                        <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                       </div>
                       
-                      <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
-                        <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
-                        <div className="p-2 h-10 text-right text-gray-800">
-                          {formatAmount(item.amount)}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                          <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
+                          <Input type="number" min="0" step="0.01" className="h-10" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
+                          <div className="p-2 h-10 text-right text-gray-800">
+                            {formatAmount(item.amount)}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Circular action buttons revealed by swipe - positioned outside the card */}
+                  {swipedItemId === item.id && (
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex gap-3 pr-4">
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-full bg-gray-400 hover:bg-gray-500 text-white border-0 shadow-lg" 
+                        onClick={handleCancelSwipe}
+                      >
+                        <X className="h-6 w-6" />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-full bg-red-500 hover:bg-red-600 text-white border-0 shadow-lg" 
+                        onClick={() => removeItem(item.id)} 
+                        disabled={items.length <= 1}
+                      >
+                        <Trash className="h-6 w-6" />
+                      </Button>
+                    </div>
+                  )}
                 </div>)}
             </div>)}
         </div> : <table className="w-full">
