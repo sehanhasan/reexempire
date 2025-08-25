@@ -1,4 +1,6 @@
-/* Only allow pinch zoom for this page */
+/* Allow smooth scrolling and pinch zoom for this page */
 .zoom-page {
-  touch-action: pinch-zoom !important;
+  touch-action: manipulation !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
 }
