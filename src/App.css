@@ -117,7 +117,7 @@
 /* Custom components styling - Mobile First Only */
 @layer components {
   .page-container {
-    @apply px-0 py-1 mx-0 max-w-full animate-fade-in;
+    @apply px-4 py-0 mx-auto max-w-7xl animate-fade-in;
   }
 
   .table-container {
@@ -168,7 +168,18 @@
   /* Mobile content area */
   .page-container {
     padding-top: 0 !important;
-    margin-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: 100% !important;
+  }
+  
+  /* Desktop content area */
+  @media (min-width: 768px) {
+    .page-container {
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+      padding-top: 0 !important;
+    }
   }
   
   /* Content padding under fixed header */

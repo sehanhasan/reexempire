@@ -4,6 +4,7 @@ import { MobileHeader } from "./MobileHeader";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/auth/LoadingSpinner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -22,8 +23,7 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
     onSearchChange: (value: string) => void;
     placeholder?: string;
   } | null>(null);
-  // Always treat as mobile - force mobile layout
-  const isMobile = true;
+  const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isStaff, isLoading, signOut } = useAuth();
@@ -120,13 +120,15 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
   
   return (
     <div className="flex min-h-screen bg-background overflow-hidden max-w-full">
-      <div 
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
-        onClick={() => setSidebarOpen(false)} 
-      />
+      {isMobile && (
+        <div 
+          className={`fixed inset-0 bg-black/50 z-40 transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+          onClick={() => setSidebarOpen(false)} 
+        />
+      )}
       
-      {/* Fixed sidebar wrapper to prevent scrolling */}
-      <div className="h-screen sticky top-0 z-50 flex-shrink-0">
+      {/* Sidebar wrapper */}
+      <div className={`${isMobile ? 'h-screen z-50 flex-shrink-0' : 'h-screen sticky top-0 flex-shrink-0'}`}>
         <AppSidebar 
           open={sidebarOpen} 
           setOpen={setSidebarOpen} 
@@ -137,14 +139,16 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
       </div>
       
       <div className="flex-1 flex flex-col overflow-auto relative max-w-full">
-        <MobileHeader 
-          title={getPageTitle()} 
-          onMenuClick={toggleSidebar} 
-          actions={mobileActions}
-          searchProps={mobileSearchProps}
-        />
+        {isMobile && (
+          <MobileHeader 
+            title={getPageTitle()} 
+            onMenuClick={toggleSidebar} 
+            actions={mobileActions}
+            searchProps={mobileSearchProps}
+          />
+        )}
         
-        <main className="px-0 pt-16 pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50">
+        <main className={`${isMobile ? 'px-0 pt-16 pb-4' : 'px-6 py-6'} flex-1 max-w-full overflow-x-hidden bg-background`}>
           {children}
         </main>
       </div>

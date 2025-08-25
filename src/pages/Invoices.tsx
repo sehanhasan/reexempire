@@ -280,7 +280,7 @@ export default function Invoices() {
 
   return (
     <div className="page-container">
-      <PageHeader title="Invoices" actions={<div className="hidden md:block"></div>} />
+      <PageHeader title="Invoices" />
 
       <div className="mt-1">
         <div className="p-0">

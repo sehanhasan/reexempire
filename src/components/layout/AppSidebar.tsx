@@ -101,10 +101,10 @@ export function AppSidebar({
   return (
     <aside 
       className={cn(
-        "h-full bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out overflow-hidden",
+        "h-full bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
         isMobile 
-          ? cn("fixed w-[280px]", open ? "translate-x-0" : "-translate-x-full") 
-          : "w-64"
+          ? cn("fixed w-[280px] z-50", open ? "translate-x-0" : "-translate-x-full") 
+          : "w-64 sticky top-0"
       )}
     >
       <div className={cn(

@@ -105,7 +105,7 @@ export default function Customers() {
   return <div className="page-container">
       <PageHeader title="Customers" description="Manage your customer database." />
       
-      <div className="mt-2">
+      <div className="mt-6">
         {filteredCustomers.length === 0 ? <div className="text-center py-12">
             <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-lg">
