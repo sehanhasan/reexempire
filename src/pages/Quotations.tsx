@@ -252,9 +252,8 @@ export default function Quotations() {
     };
   }, [searchTerm]);
   return <div className="page-container">
-      <PageHeader title="Quotations" />
-      
-      <div className="mt-6">
+      <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
+
         <CardContent className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
             <div className="relative flex-1 hidden md:block">
@@ -455,7 +454,6 @@ export default function Quotations() {
                 </Table>}
             </div>}
         </CardContent>
-      </div>
 
       <FloatingActionButton onClick={() => navigate("/quotations/create")} />
 
