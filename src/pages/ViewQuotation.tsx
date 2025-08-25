@@ -388,7 +388,7 @@ export default function ViewQuotation() {
             {/* Right Column - Acceptance Section */}
             <div>
               {!isAccepted && (
-                <Card className="shadow-sm">
+                <Card className="shadow-sm print:hidden">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
                     {isSigning && (
@@ -407,13 +407,9 @@ export default function ViewQuotation() {
                         <p className="text-gray-600 mb-4 text-base">
                           Please digitally sign to accept this quotation.
                         </p>
-                        <div className="print:block hidden mb-4 text-sm text-gray-700">
-                          <p className="font-medium">To sign this quotation, please visit:</p>
-                          <p className="text-blue-600 break-all">{window.location.href}</p>
-                        </div>
                         <Button 
                           onClick={() => setIsSigning(true)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 print:hidden"
+                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
                         >
                           <Pen className="h-4 w-4 mr-2" />
                           Start Digital Signature
