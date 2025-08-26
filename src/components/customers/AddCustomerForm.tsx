@@ -123,6 +123,9 @@ export default function AddCustomerForm({
       </div>;
   }
   return <form onSubmit={handleSubmit} className="space-y-6">
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-lg text-cyan-600">Customer Info</CardTitle>
+        </CardHeader>
         <CardContent className="pt-6 space-y-4 bg-white rounded-lg border shadow-sm">
           {/* <div className="space-y-2">
             
