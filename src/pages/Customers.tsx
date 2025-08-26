@@ -279,6 +279,9 @@ export default function Customers() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Customer Details</DialogTitle>
+              <DialogDescription>
+                Information about this customer.
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
