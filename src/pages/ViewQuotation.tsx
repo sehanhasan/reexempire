@@ -384,35 +384,35 @@ export default function ViewQuotation() {
               {!isAccepted && (
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
+                    <CardTitle className="text-base text-gray-800">Customer Acceptance</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {/* Static acceptance fields */}
                     <div className="space-y-4">
-                      <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                      {/* <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
                         By signing below, you accept the terms and conditions of this quotation.
-                      </div>
+                      </div> */}
                       
                       <div className="space-y-3">
                         <div>
-                          <label className="text-sm font-medium text-gray-700">Signature</label>
-                          <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px] bg-gray-50">
-                            <p className="text-sm text-gray-500 text-center mt-6">Signature area</p>
+                          {/* <label className="text-sm font-medium text-gray-700">Signature</label> */}
+                          <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px]">
+                            <p className="text-sm text-gray-500 text-center mt-6">Signature</p>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Name</label>
-                            <div className="mt-1 p-2 border border-gray-300 rounded bg-gray-50 min-h-[40px]">
-                              <p className="text-sm text-gray-500">Name field</p>
+                            {/* <label className="text-sm font-medium text-gray-700">Name</label> */}
+                            <div className="mt-1 p-2 border border-gray-300 rounded min-h-[40px]">
+                              <p className="text-sm text-gray-500">Name</p>
                             </div>
                           </div>
                           
                           <div>
-                            <label className="text-sm font-medium text-gray-700">Date</label>
-                            <div className="mt-1 p-2 border border-gray-300 rounded bg-gray-50 min-h-[40px]">
-                              <p className="text-sm text-gray-500">Date field</p>
+                            {/* <label className="text-sm font-medium text-gray-700">Date</label> */}
+                            <div className="mt-1 p-2 border border-gray-300 rounded min-h-[40px]">
+                              <p className="text-sm text-gray-500">Date</p>
                             </div>
                           </div>
                         </div>
