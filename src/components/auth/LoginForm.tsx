@@ -74,7 +74,7 @@ export function LoginForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col">
-          <Button type="submit" disabled={isLoading} className="w-full mb-4 bg-sky-600 hover:bg-sky-500">
+          <Button type="submit" disabled={isLoading} className="w-full mb-4 bg-sky-600 hover:bg-sky-700">
             {isLoading ? <LoadingSpinner /> : 'Sign In'}
           </Button>
           
