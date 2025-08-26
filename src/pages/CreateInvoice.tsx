@@ -75,7 +75,7 @@ export default function CreateInvoice() {
     }
   }, [items, depositPercentage, isDepositInvoice]);
 
-  const generateReferenceNumber = async () => {
+  const generateReferenceNumber = async (isDueInvoice = false) => {
     const currentYear = new Date().getFullYear();
     try {
       const invoices = await invoiceService.getAll();
@@ -85,7 +85,15 @@ export default function CreateInvoice() {
       ) || [];
       
       const nextNumber = currentYearInvoices.length + 1;
-      return `INV-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+      const baseRef = `INV-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+      
+      if (isDueInvoice) {
+        return `${baseRef}-F`;
+      } else if (isDepositInvoice) {
+        return `${baseRef}-D`;
+      }
+      
+      return baseRef;
     } catch (error) {
       console.error('Error generating reference number:', error);
       return `INV-${currentYear}-0001`;
@@ -101,6 +109,15 @@ export default function CreateInvoice() {
     };
     initializeReferenceNumber();
   }, []);
+
+  // Update reference number when deposit status changes
+  useEffect(() => {
+    const updateReferenceNumber = async () => {
+      const refNumber = await generateReferenceNumber();
+      setDocumentNumber(refNumber);
+    };
+    updateReferenceNumber();
+  }, [isDepositInvoice]);
 
   useEffect(() => {
     if (customerId) {

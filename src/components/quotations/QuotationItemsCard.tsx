@@ -16,13 +16,15 @@ interface QuotationItemsCardProps {
   depositInfo: DepositInfo;
   setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
+  quotationDepositAmount?: number;
 }
 export function QuotationItemsCard({
   items,
   setItems,
   depositInfo,
   setDepositInfo,
-  calculateItemAmount
+  calculateItemAmount,
+  quotationDepositAmount
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
@@ -185,6 +187,14 @@ export function QuotationItemsCard({
                 <span className="font-medium">Subtotal:</span>
                 <span>RM {calculateTotal().toFixed(2)}</span>
               </div>
+              
+              {/* Show deposit paid amount for due invoices */}
+              {quotationDepositAmount !== undefined && quotationDepositAmount > 0 && (
+                <div className="flex justify-between py-1.5 text-sm text-muted-foreground">
+                  <span>Deposit Paid:</span>
+                  <span>-RM {quotationDepositAmount.toFixed(2)}</span>
+                </div>
+              )}
 
               {/* Deposit Section */}
               <div className="border-t pt-2 mt-1">

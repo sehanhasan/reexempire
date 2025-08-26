@@ -310,7 +310,7 @@ export default function ViewInvoice() {
                       </div>}
                     {invoice.quotation_ref_number && !invoice.is_deposit_invoice && (
                       <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Amount Paid:</span>
+                        <span>Deposit Paid:</span>
                         <span>{formatMoney(invoice.deposit_amount || 0)}</span>
                       </div>
                     )}

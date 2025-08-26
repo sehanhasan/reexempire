@@ -373,8 +373,14 @@ export default function EditInvoice() {
       
       // Update payment status when marking as paid
       if (newStatus === "Paid") {
-        updateData.payment_status = "Paid";
-        setPaymentStatus("Paid");
+        // For deposit invoices, set status to "Partial" instead of "Paid"
+        if (invoiceData?.is_deposit_invoice) {
+          updateData.payment_status = "Partially Paid";
+          setPaymentStatus("Partially Paid");
+        } else {
+          updateData.payment_status = "Paid";
+          setPaymentStatus("Paid");
+        }
       }
       
       await invoiceService.update(id, updateData);
@@ -621,7 +627,8 @@ export default function EditInvoice() {
           setItems={setItems} 
           depositInfo={depositInfo} 
           setDepositInfo={setDepositInfo} 
-          calculateItemAmount={calculateItemAmount} 
+          calculateItemAmount={calculateItemAmount}
+          quotationDepositAmount={invoiceData?.quotation_ref_number && !invoiceData?.is_deposit_invoice ? (invoiceData?.deposit_amount || 0) : undefined}
         />
         
         {/* <Card>

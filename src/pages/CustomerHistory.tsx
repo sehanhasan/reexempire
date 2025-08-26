@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { ArrowLeft, FileText, Eye, Edit, DollarSign, Loader2 } from "lucide-react";
 import { customerService, quotationService, invoiceService } from "@/services";
@@ -126,117 +127,124 @@ export default function CustomerHistory() {
           </CardContent>
         </Card>
 
-        {/* Quotations */}
+        {/* Quotations and Invoices Tabs */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center text-cyan-600">
-              <FileText className="mr-2 h-5 w-5" />
-              Quotations ({quotations.length})
-            </CardTitle>
+            <CardTitle className="text-lg text-cyan-600">Customer Records</CardTitle>
           </CardHeader>
           <CardContent>
-            {quotations.length === 0 ? <p className="text-muted-foreground text-center py-4">No quotations found</p> : <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quotations.map(quotation => <TableRow key={quotation.id} className="h-10">
-                        <TableCell className="font-medium py-1">
-                          <button 
-                            onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')}
-                            className="text-blue-600 hover:underline cursor-pointer"
-                          >
-                            {quotation.reference_number}
-                          </button>
-                        </TableCell>
-                        <TableCell>{format(new Date(quotation.issue_date), "MMM dd, yyyy")}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(quotation.status)}>
-                            {quotation.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatMoney(quotation.total)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="icon" variant="ghost" onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')} title="View">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => navigate(`/quotations/edit/${quotation.id}`)} title="Edit">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>)}
-                  </TableBody>
-                </Table>
-              </div>}
-          </CardContent>
-        </Card>
-
-        {/* Invoices */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center text-cyan-600">
-              <DollarSign className="mr-2 h-5 w-5" />
-              Invoices ({invoices.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {invoices.length === 0 ? <p className="text-muted-foreground text-center py-4">No invoices found</p> : <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Payment Status</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoices.map(invoice => <TableRow key={invoice.id} className="h-10">
-                        <TableCell className="font-medium py-1">
-                          <button 
-                            onClick={() => navigate(`/invoices/view/${invoice.id}`)}
-                            className="text-blue-600 hover:underline cursor-pointer"
-                          >
-                            {invoice.reference_number}
-                          </button>
-                        </TableCell>
-                        <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor((invoice.payment_status === 'Partially Paid') ? 'partial' : (invoice.status === 'Sent' ? 'unpaid' : invoice.status))}>
-                            {(invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(invoice.payment_status)}>
-                            {invoice.payment_status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatMoney(invoice.total)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="icon" variant="ghost" onClick={() => navigate(`/invoices/view/${invoice.id}`)} title="View">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => navigate(`/invoices/edit/${invoice.id}`)} title="Edit">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>)}
-                  </TableBody>
-                </Table>
-              </div>}
+            <Tabs defaultValue="quotations" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="quotations">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Quotations ({quotations.length})
+                </TabsTrigger>
+                <TabsTrigger value="invoices">
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Invoices ({invoices.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="quotations" className="mt-4">
+                {quotations.length === 0 ? 
+                  <p className="text-muted-foreground text-center py-4">No quotations found</p> : 
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Reference</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {quotations.map(quotation => 
+                          <TableRow key={quotation.id} className="h-10">
+                            <TableCell className="font-medium py-1">
+                              <button 
+                                onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')}
+                                className="text-blue-600 hover:underline cursor-pointer"
+                              >
+                                {quotation.reference_number}
+                              </button>
+                            </TableCell>
+                            <TableCell>{format(new Date(quotation.issue_date), "MMM dd, yyyy")}</TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(quotation.status)}>
+                                {quotation.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatMoney(quotation.total)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button size="icon" variant="ghost" onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')} title="View">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => navigate(`/quotations/edit/${quotation.id}`)} title="Edit">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                }
+              </TabsContent>
+              
+              <TabsContent value="invoices" className="mt-4">
+                {invoices.length === 0 ? 
+                  <p className="text-muted-foreground text-center py-4">No invoices found</p> : 
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Reference</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invoices.map(invoice => 
+                          <TableRow key={invoice.id} className="h-10">
+                            <TableCell className="font-medium py-1">
+                              <button 
+                                onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')}
+                                className="text-blue-600 hover:underline cursor-pointer"
+                              >
+                                {invoice.reference_number}
+                              </button>
+                            </TableCell>
+                            <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor((invoice.payment_status === 'Partially Paid') ? 'partial' : (invoice.status === 'Sent' ? 'unpaid' : invoice.status))}>
+                                {(invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatMoney(invoice.total)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button size="icon" variant="ghost" onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')} title="View">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => navigate(`/invoices/edit/${invoice.id}`)} title="Edit">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                }
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
