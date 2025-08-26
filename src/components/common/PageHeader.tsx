@@ -1,18 +1,18 @@
-
 import { ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layout/MobileHeader";
-
 interface PageHeaderProps {
   title: string;
-  description?: string;  // Keeping the prop but not displaying it
+  description?: string; // Keeping the prop but not displaying it
   actions?: ReactNode;
   mobileHeaderActions?: ReactNode[];
 }
-
-export function PageHeader({ title, actions, mobileHeaderActions }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  actions,
+  mobileHeaderActions
+}: PageHeaderProps) {
   const isMobile = useIsMobile();
-
   if (isMobile) {
     return null; // Mobile header is handled in MainLayout
   }
@@ -22,13 +22,10 @@ export function PageHeader({ title, actions, mobileHeaderActions }: PageHeaderPr
   if (hiddenPages.includes(title)) {
     return null;
   }
-
-  return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4 md:mb-4">
+  return <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4 md:mb-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-blue-600">{title}</h1>
       </div>
       {actions && <div>{actions}</div>}
-    </div>
-  );
+    </div>;
 }
