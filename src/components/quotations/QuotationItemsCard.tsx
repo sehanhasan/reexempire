@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,6 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { QuotationItem, DepositInfo } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface QuotationItemsCardProps {
   items: QuotationItem[];
   setItems: React.Dispatch<React.SetStateAction<QuotationItem[]>>;
@@ -19,7 +17,6 @@ interface QuotationItemsCardProps {
   setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
 }
-
 export function QuotationItemsCard({
   items,
   setItems,
@@ -29,7 +26,6 @@ export function QuotationItemsCard({
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
-
   const calculateTotal = () => {
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
@@ -40,13 +36,8 @@ export function QuotationItemsCard({
       const total = calculateTotal();
 
       // Coerce percentage to a number to avoid TS2362 and ensure correct math
-      const percentage =
-        typeof depositInfo.depositPercentage === "string"
-          ? parseFloat(depositInfo.depositPercentage) || 0
-          : depositInfo.depositPercentage;
-
+      const percentage = typeof depositInfo.depositPercentage === "string" ? parseFloat(depositInfo.depositPercentage) || 0 : depositInfo.depositPercentage;
       const newDepositAmount = total * (percentage / 100);
-
       if (Math.abs(newDepositAmount - depositInfo.depositAmount) > 0.01) {
         setDepositInfo(prev => ({
           ...prev,
@@ -55,7 +46,6 @@ export function QuotationItemsCard({
       }
     }
   }, [items, depositInfo.requiresDeposit, depositInfo.depositPercentage]);
-
   const handleItemChange = (id: number, field: keyof QuotationItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -69,7 +59,6 @@ export function QuotationItemsCard({
       return item;
     }));
   };
-
   const addItem = () => {
     console.log("🔥 Add Item button clicked!");
     console.log("Current items before adding:", items);
@@ -79,7 +68,8 @@ export function QuotationItemsCard({
       description: "",
       category: "Other Items",
       quantity: 1,
-      unit: "", // Empty string instead of "Unit"
+      unit: "",
+      // Empty string instead of "Unit"
       unitPrice: 0,
       amount: 0
     };
@@ -87,25 +77,25 @@ export function QuotationItemsCard({
     setItems(prevItems => {
       const updatedItems = [...prevItems, newItem];
       console.log("Updated items array:", updatedItems);
-      
+
       // Auto-scroll to the new item after state update
       setTimeout(() => {
         const newItemElement = document.querySelector(`[data-item-id="${newId}"]`);
         if (newItemElement) {
-          newItemElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          newItemElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
         }
       }, 100);
-      
       return updatedItems;
     });
   };
-
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
-
   const handleDepositPercentageChange = (value: number) => {
     const total = calculateTotal();
     const newDepositAmount = total * (value / 100);
@@ -115,7 +105,6 @@ export function QuotationItemsCard({
       depositAmount: newDepositAmount
     });
   };
-
   const handleDepositAmountChange = (value: number) => {
     const total = calculateTotal();
     setDepositInfo({
@@ -124,7 +113,6 @@ export function QuotationItemsCard({
       depositPercentage: total > 0 ? value / total * 100 : 0
     });
   };
-
   const handleDepositCheckboxChange = (checked: boolean) => {
     if (checked) {
       const total = calculateTotal();
@@ -144,7 +132,6 @@ export function QuotationItemsCard({
       });
     }
   };
-
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     const validSelectedItems = selectedItems.filter(item => item.description && item.description.trim() !== '' && item.price > 0);
     if (validSelectedItems.length === 0) {
@@ -172,11 +159,10 @@ export function QuotationItemsCard({
       description: `${newItems.length} item(s) have been added to the quotation.`
     });
   };
-
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">
-          <CardTitle className="text-lg text-cyan-600">Quotation Items</CardTitle>
+          <CardTitle className="text-lg text-cyan-600">Items</CardTitle>
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
