@@ -69,7 +69,7 @@ export default function ViewQuotation() {
 
   useEffect(() => {
     if (quotation) {
-      document.title = `Quotation #${quotation.reference_number} - Reex Empire`;
+      document.title = `#${quotation.reference_number} - Reex Empire`;
     }
     return () => {
       document.title = 'Reex Empire';
@@ -401,7 +401,7 @@ export default function ViewQuotation() {
                       </div> */}
                       
                       <div className="space-y-3">
-                        <div>
+                        <div className="pt-3">
                           <label className="text-sm font-medium text-gray-700">Signature (Customer Acceptance)</label>
                           <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px]">
                             {/* <p className="text-sm text-gray-500 text-center mt-6">Signature</p> */}
