@@ -93,7 +93,7 @@ export function CustomerInfoCard({
           <CardTitle className="text-lg text-cyan-600">Customer Info</CardTitle>
         </CardHeader>
         <CardContent className="py-4 px-4">
-          <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-3"} gap-4`}>
+          <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-4"} gap-4`}>
             <div className="space-y-2">
               <Label htmlFor="customer">Customer</Label>
               <div className="flex gap-2">
@@ -182,7 +182,7 @@ export function CustomerInfoCard({
                 <Input id="quotationReference" value={quotationReference} readOnly className="h-10 bg-gray-50" />
               </div>}
 
-            {subject !== undefined && setSubject && <div className={`space-y-2 ${isMobile ? "" : "col-span-2 xl:col-span-3"}`}>
+            {subject !== undefined && setSubject && <div className={`space-y-2 ${isMobile ? "" : "col-span-2 xl:col-span-4"}`}>
                 <Label htmlFor="subject">Subject</Label>
                 <Input id="subject" placeholder="e.g. Monthly Maintenance Service" value={subject} onChange={e => setSubject(e.target.value)} className="h-10" />
               </div>}

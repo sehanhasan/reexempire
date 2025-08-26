@@ -14,6 +14,7 @@ import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
 import { Switch } from "@/components/ui/switch";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function AddAppointment() {
   const navigate = useNavigate();
@@ -291,26 +292,27 @@ export default function AddAppointment() {
     }
   };
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="page-container">
+    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <form onSubmit={handleSubmit} className="mt-2 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg text-cyan-600">Appointment Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title/Service</Label>
-                <Input id="title" placeholder="e.g. Kitchen Consultation" value={title} onChange={e => setTitle(e.target.value)} required />
-              </div>
-              
+            <CardContent className="space-y-4 mt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title/Service</Label>
+                  <Input id="title" placeholder="e.g. Kitchen Consultation" value={title} onChange={e => setTitle(e.target.value)} required />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="customer">Customer</Label>
                   <div className="flex space-x-2">
