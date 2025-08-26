@@ -90,11 +90,11 @@ export function DataTable<T extends Record<string, any>>({
   return <div className="space-y-4">
       {searchKey && !isMobile && externalSearchTerm === undefined && <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 max-w-sm h-9" />
+          <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 max-w-sm h-10" />
         </div>}
       {searchKey && !isMobile && externalSearchTerm !== undefined && onExternalSearchChange && <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." value={externalSearchTerm} onChange={e => onExternalSearchChange(e.target.value)} className="pl-10 max-w-sm h-9" />
+          <Input placeholder="Search..." value={externalSearchTerm} onChange={e => onExternalSearchChange(e.target.value)} className="pl-10 max-w-sm h-10" />
         </div>}
       
       {/* Pagination setup */}
