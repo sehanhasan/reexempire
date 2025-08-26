@@ -196,15 +196,16 @@ export function QuotationItemsCard({
                 </div>
               )}
 
-              {/* Deposit Section */}
-              <div className="border-t pt-2 mt-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={handleDepositCheckboxChange} />
-                  <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
-                    <Wallet className="h-3.5 w-3.5 mr-1" />
-                    Require Deposit Payment
-                  </label>
-                </div>
+              {/* Deposit Section - Hide for due invoices */}
+              {!(quotationDepositAmount !== undefined && quotationDepositAmount > 0) && (
+                <div className="border-t pt-2 mt-1">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={handleDepositCheckboxChange} />
+                    <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
+                      <Wallet className="h-3.5 w-3.5 mr-1" />
+                      Require Deposit Payment
+                    </label>
+                  </div>
                 
                 {depositInfo.requiresDeposit && <div className="space-y-2 ml-6">
                     <div className="grid grid-cols-2 gap-2">
@@ -228,7 +229,8 @@ export function QuotationItemsCard({
                       <span>RM {(calculateTotal() - depositInfo.depositAmount).toFixed(2)}</span>
                     </div>
                   </div>}
-              </div>
+                </div>
+              )}
 
               <div className="flex justify-between py-2 border-t mt-1">
                 <span className="font-semibold text-base">Total:</span>
