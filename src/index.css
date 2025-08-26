@@ -107,12 +107,6 @@
       display: none !important;
     }
     
-    /* Reduce print margins */
-    @page {
-      margin: 0.2in 0.2in;
-      size: A4;
-    }
-    
     .quotation-content, .invoice-content {
       padding: 0 !important;
       margin: 0 !important;
