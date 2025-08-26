@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,6 @@ import { CategoryItemSelector, SelectedItem } from "@/components/quotations/Cate
 import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface InvoiceItemsCardProps {
   items: InvoiceItem[];
   setItems: React.Dispatch<React.SetStateAction<InvoiceItem[]>>;
@@ -24,7 +22,6 @@ interface InvoiceItemsCardProps {
   calculateItemAmount: (item: InvoiceItem) => number;
   quotationDepositAmount?: number;
 }
-
 export function InvoiceItemsCard({
   items,
   setItems,
@@ -39,7 +36,6 @@ export function InvoiceItemsCard({
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
-
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -53,7 +49,6 @@ export function InvoiceItemsCard({
       return item;
     }));
   };
-  
   const addItem = () => {
     const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
     setItems([...items, {
@@ -66,29 +61,24 @@ export function InvoiceItemsCard({
       amount: 0
     }]);
   };
-  
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
-  
   const calculateSubtotal = () => {
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
-  
   const calculateTotal = () => {
     if (isDepositInvoice) {
       return depositAmount;
     }
     return calculateSubtotal();
   };
-  
   const handleDepositPercentageChange = (value: number) => {
     setDepositPercentage(value);
     setDepositAmount(calculateSubtotal() * (value / 100));
   };
-  
   const handleDepositAmountChange = (value: number) => {
     setDepositAmount(value);
     const subtotal = calculateSubtotal();
@@ -106,7 +96,6 @@ export function InvoiceItemsCard({
       setDepositAmount(calculateSubtotal() * 0.5);
     }
   };
-  
   const handleItemsFromCategories = (selectedItems: SelectedItem[]) => {
     const newItems = selectedItems.map((selectedItem, index) => ({
       id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
@@ -123,7 +112,6 @@ export function InvoiceItemsCard({
       description: `${newItems.length} item(s) have been added to the invoice.`
     });
   };
-  
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
@@ -161,12 +149,10 @@ export function InvoiceItemsCard({
                 <span>RM {calculateSubtotal().toFixed(2)}</span>
               </div>
 
-              {quotationDepositAmount && quotationDepositAmount > 0 && !isDepositInvoice && (
-                <div className="flex justify-between py-1 text-sm text-muted-foreground border-t pt-1">
+              {quotationDepositAmount && quotationDepositAmount > 0 && !isDepositInvoice && <div className="flex justify-between py-1 text-sm text-muted-foreground border-t pt-1">
                   <span>Amount Paid:</span>
                   <span>RM {quotationDepositAmount.toFixed(2)}</span>
-                </div>
-              )}
+                </div>}
 
               {isDepositInvoice && <div className="space-y-2 border-t pt-2 mt-1">
                   <div className="grid grid-cols-2 gap-2">
@@ -186,7 +172,7 @@ export function InvoiceItemsCard({
                     </div>
                   </div>
                   <div className="flex justify-between text-sm py-1">
-                    <span>Balance Due (Future Invoice):</span>
+                    <span>Balance Due:</span>
                     <span>RM {(calculateSubtotal() - depositAmount).toFixed(2)}</span>
                   </div>
                 </div>}
