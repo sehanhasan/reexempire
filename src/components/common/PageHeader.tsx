@@ -24,7 +24,7 @@ export function PageHeader({ title, actions, mobileHeaderActions }: PageHeaderPr
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4 md:mb-4">
       <div>
         <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{title}</h1>
       </div>
