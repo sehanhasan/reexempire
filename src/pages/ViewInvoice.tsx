@@ -175,9 +175,9 @@ export default function ViewInvoice() {
   };
   const getStatusColor = status => {
     if (status === "Paid") return "bg-green-100 text-green-800 hover:bg-green-100";
-    if (status === "Partial" || status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+    if (status === "Partial" || status === "Partially Paid") return "bg-blue-100 text-blue-800 hover:bg-blue-100";
     if (status === "Overdue") return "bg-red-100 text-red-600 hover:bg-red-100";
-    if (status === "Unpaid") return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+    if (status === "Unpaid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
     return "bg-amber-100 text-amber-800 hover:bg-amber-100";
   };
   if (loading) {
