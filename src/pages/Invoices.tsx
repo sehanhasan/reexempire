@@ -456,7 +456,7 @@ export default function Invoices() {
                             <TableCell>{invoice.unit_number || "-"}</TableCell>
                             <TableCell>{formatDate(invoice.issue_date)}</TableCell>
                             <TableCell>
-                              <StatusBadge status={invoice.payment_status} />
+                              <StatusBadge status={status} />
                             </TableCell>
                             <TableCell className="font-medium">
                               {formatMoney(invoice.total)}
