@@ -359,6 +359,15 @@ export default function EditQuotation() {
                     <Share2 className="mr-2 h-4 w-4" />
                     Share via WhatsApp
                   </Button> */}
+
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+                    onClick={() => navigate(`/quotations/view/${id}`)}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Quotation
+                  </Button>
                 </>
               )}
 
@@ -373,6 +382,15 @@ export default function EditQuotation() {
                     <Share2 className="mr-2 h-4 w-4" />
                     Share via WhatsApp
                   </Button> */}
+
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+                    onClick={() => navigate(`/quotations/view/${id}`)}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Quotation
+                  </Button>
 
                   <Button
                     variant="outline"
@@ -408,6 +426,15 @@ export default function EditQuotation() {
                     <Share2 className="mr-2 h-4 w-4" />
                     Share via WhatsApp
                   </Button> */}
+
+                  <Button
+                    variant="outline"
+                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
+                    onClick={() => navigate(`/quotations/view/${id}`)}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Quotation
+                  </Button>
                 </>
               )}
             </div>
