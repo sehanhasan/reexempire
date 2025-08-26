@@ -388,7 +388,7 @@ export default function ViewQuotation() {
             {/* Right Column - Acceptance Section */}
             <div>
               {!isAccepted && (
-                <Card className="shadow-sm print:hidden">
+                <Card className="shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                     <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
                     {isSigning && (
