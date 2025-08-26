@@ -109,7 +109,7 @@
     
     /* Reduce print margins */
     @page {
-      margin: 0.1in 0.1in;
+      margin: 0.005in 0.05in;
       size: A4;
     }
     

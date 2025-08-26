@@ -47,7 +47,7 @@ export default function ViewInvoice() {
           setInvoice(invoiceData);
           setItems(itemsData || []);
           setImages(imagesData || []);
-          document.title = `Invoice #${invoiceData.reference_number} - Reex Empire`;
+          document.title = `#${invoiceData.reference_number} - Reex Empire`;
           if (invoiceData.customer_id) {
             const customerData = await customerService.getById(invoiceData.customer_id);
             setCustomer(customerData);
