@@ -290,7 +290,7 @@ export function ItemsTable({
                   </td>
                 </tr>
                 {groupedItems[category].map((item, index) => <tr key={item.id} className="border-b last:border-b-0" data-item-id={item.id}>
-                    <td className="py-3 px-1 align-top">
+                    <td className="py-3 px-1">
                       {index + 1}
                     </td>
                     <td className="py-3 px-2">
