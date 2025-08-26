@@ -676,7 +676,6 @@ export default function EditInvoice() {
                 </div>
               )}
 
-              {/* Saved images for this invoice (already uploaded) */}
               {savedImages.length > 0 && (
                 <div className="mt-6">
                   <h4 className="font-medium text-sm text-muted-foreground mb-2">Saved Work Photos</h4>
