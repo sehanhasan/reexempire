@@ -47,8 +47,8 @@ const StatusBadge = ({
       textColor = 'text-red-700';
       break;
     case 'Paid - Partial':
-      bgColor = 'bg-blue-100';
-      textColor = 'text-blue-700';
+      bgColor = 'bg-green-100';
+      textColor = 'text-green-700';
       break;
     default:
       bgColor = 'bg-gray-100';
@@ -74,7 +74,7 @@ const StatusIcon = ({
     case 'Overdue':
       return <XCircle className="h-3.5 w-3.5 mr-1 text-red-600" />;
     case 'Paid - Partial':
-      return <TimerReset className="h-3.5 w-3.5 mr-1 text-amber-600" />;
+      return <TimerReset className="h-3.5 w-3.5 mr-1 text-green-600" />;
     default:
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
   }
