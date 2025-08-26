@@ -286,7 +286,7 @@ export default function CreateInvoice() {
         is_deposit_invoice: isDepositInvoice,
         deposit_amount: isDepositInvoice ? depositAmount : 0,
         deposit_percentage: isDepositInvoice ? depositPercentage : 0,
-        payment_status: "Unpaid",
+        payment_status: isDepositInvoice ? "Partially Paid" : "Unpaid",
         quotation_ref_number: quotationReference || null
       };
       

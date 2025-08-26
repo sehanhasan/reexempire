@@ -341,7 +341,7 @@ export default function Quotations() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
-                                navigate(`/quotations/view/${quotation.id}`);
+                                window.open(`/quotations/view/${quotation.id}`, '_blank');
                               }}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Quotation
@@ -416,7 +416,7 @@ export default function Quotations() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => navigate(`/quotations/view/${quotation.id}`)}>
+                              <DropdownMenuItem onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Quotation
                               </DropdownMenuItem>

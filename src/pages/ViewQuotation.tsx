@@ -269,10 +269,12 @@ export default function ViewQuotation() {
               <div>
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
-                   <div className="flex items-center gap-2 mb-1">
-                     <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
-                       {quotation.status}
-                     </Badge>
+                 <div className="flex items-center gap-2 mb-1">
+                     {quotation.status !== 'Sent' && (
+                       <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
+                         {quotation.status}
+                       </Badge>
+                     )}
                    </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
