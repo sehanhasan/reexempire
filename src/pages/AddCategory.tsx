@@ -229,14 +229,14 @@ export default function AddCategory() {
             </CardContent>
           </Card>
           
-          <Card className="bg-gray-50">
+          <Card>
             <CardHeader>
               <CardTitle className="text-lg text-cyan-600">Subcategories</CardTitle>
               <CardDescription>
                 Add subcategories and pricing for this category.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 bg-gray-50">
               {subcategories.filter(sub => !sub.deleted).map((subcategory, index) => <div key={typeof subcategory.tempId === 'string' ? subcategory.tempId : subcategory.tempId.toString()} className="space-y-4 pb-4 border-b last:border-b-0">
                   <div className="flex justify-between items-center">
                     <h3 className="font-medium text-base">Subcategory {index + 1}</h3>
