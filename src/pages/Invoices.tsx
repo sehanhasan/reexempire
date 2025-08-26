@@ -35,8 +35,8 @@ const StatusBadge = ({
       textColor = 'text-gray-700';
       break;
     case 'Unpaid':
-      bgColor = 'bg-blue-100';
-      textColor = 'text-blue-700';
+      bgColor = 'bg-amber-100';
+      textColor = 'text-amber-700';
       break;
     case 'Paid':
       bgColor = 'bg-green-100';
@@ -47,8 +47,8 @@ const StatusBadge = ({
       textColor = 'text-red-700';
       break;
     case 'Partial':
-      bgColor = 'bg-amber-100';
-      textColor = 'text-amber-700';
+      bgColor = 'bg-blue-100';
+      textColor = 'text-blue-700';
       break;
     default:
       bgColor = 'bg-gray-100';
@@ -360,7 +360,7 @@ export default function Invoices() {
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <Badge className={`flex items-center ${status === 'Paid' ? 'bg-green-100 text-green-700' : status === 'Unpaid' ? 'bg-blue-100 text-blue-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                            <Badge className={`flex items-center ${status === 'Paid' ? 'bg-green-100 text-green-700' : status === 'Unpaid' ? 'bg-amber-100 text-amber-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
                               <StatusIcon status={status} />
                               {status}
                             </Badge>
