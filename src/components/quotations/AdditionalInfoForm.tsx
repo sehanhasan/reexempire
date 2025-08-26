@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { shareQuotation, shareInvoice } from '@/utils/mobileShare';
+
 import { useNavigate } from 'react-router-dom';
 
 interface AdditionalInfoFormProps {
@@ -16,7 +16,7 @@ interface AdditionalInfoFormProps {
   documentType: 'quotation' | 'invoice';
   isSubmitting: boolean;
   showDraft?: boolean;
-  onSendWhatsapp?: () => void;
+  
   documentId?: string;
   documentNumber?: string;
   customerName?: string;
@@ -31,7 +31,7 @@ export function AdditionalInfoForm({
   documentType,
   isSubmitting,
   showDraft = false,
-  onSendWhatsapp,
+  
   documentId,
   documentNumber,
   customerName,

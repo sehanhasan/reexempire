@@ -195,19 +195,9 @@ export default function EditQuotation() {
           description: `Updated quotation for ${customer?.name} has been sent successfully.`
         });
 
-        // Use window.location.href for better WebView/APK compatibility
-        try {
-          const quotationViewUrl = `${window.location.origin}/quotations/view/${id}`;
-          const whatsAppUrl = quotationService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', quotationViewUrl);
-          window.location.href = whatsAppUrl;
-        } catch (error) {
-          console.error("Error opening WhatsApp:", error);
-          toast({
-            title: "WhatsApp Error",
-            description: "Quotation updated successfully, but failed to open WhatsApp. You can share it manually.",
-            variant: "destructive"
-          });
-        }
+        // Navigate to view page
+        navigate(`/quotations/view/${id}`);
+        return;
       } else {
         toast({
           title: "Quotation Updated",

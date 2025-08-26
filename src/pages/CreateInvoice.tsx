@@ -325,28 +325,8 @@ export default function CreateInvoice() {
           description: `Invoice for ${customer?.name} has been sent successfully.`,
         });
         
-        // Only try WhatsApp after successful creation
-        try {
-          const invoiceViewUrl = `${window.location.origin}/invoices/view/${createdInvoice.id}`;
-          
-          const message = `Dear ${customer?.name},\n\n` +
-            `Please find your invoice ${documentNumber} for review at the link below: ` +
-            `${invoiceViewUrl}\n\n` +
-            `You can review the invoice details and make payment.\n\n` +
-            `If you have any questions, please don't hesitate to contact us.\n\n` +
-            `Thank you,\nReex Empire Sdn Bhd`;
-          
-          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-          
-          window.location.href = whatsappUrl;
-        } catch (error) {
-          console.error("Error opening WhatsApp:", error);
-          toast({
-            title: "WhatsApp Error",
-            description: "Invoice saved successfully, but failed to open WhatsApp. You can share it manually from the invoices list.",
-            variant: "destructive"
-          });
-        }
+        // Navigate to view page
+        navigate(`/invoices/view/${createdInvoice.id}`);
       } else {
         toast({
           title: "Invoice Created",

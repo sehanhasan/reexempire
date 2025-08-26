@@ -343,19 +343,9 @@ export default function EditInvoice() {
           description: `Invoice for ${customer?.name} has been updated and sent successfully.`
         });
         
-        // Use window.location.href for better WebView/APK compatibility
-        try {
-          const invoiceViewUrl = `${window.location.origin}/invoices/view/${id}`;
-          const whatsappUrl = invoiceService.generateWhatsAppShareUrl(id, documentNumber, customer?.name || '', invoiceViewUrl);
-          window.location.href = whatsappUrl;
-        } catch (error) {
-          console.error("Error opening WhatsApp:", error);
-          toast({
-            title: "Share Error",
-            description: "Invoice updated successfully, but failed to open WhatsApp. You can share it manually.",
-            variant: "destructive"
-          });
-        }
+        // Navigate to view page
+        navigate(`/invoices/view/${id}`);
+        return;
       } else {
         toast({
           title: "Invoice Updated",
