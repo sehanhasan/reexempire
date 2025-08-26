@@ -207,8 +207,8 @@ export default function Customers() {
                 </TableHeader>
                 <TableBody>
                   {filteredCustomers.map(customer => (
-                    <TableRow key={customer.id}>
-                      <TableCell>
+                    <TableRow key={customer.id} className="h-12">
+                      <TableCell className="py-2">
                         <div className="flex items-center">
                           <User className="h-4 w-4 mr-2 text-blue-600" />
                           <span className="font-medium cursor-pointer text-blue-600" onClick={() => handleView(customer)}>

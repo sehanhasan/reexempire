@@ -78,7 +78,7 @@ export function SubcategoriesDialog({ open, onOpenChange, category }: Subcategor
           ) : (
             <div className="space-y-3">
               {subcategories.map((subcategory) => (
-                <Card key={subcategory.id} className="overflow-hidden">
+                <Card key={subcategory.id} className="overflow-hidden bg-gray-50">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>

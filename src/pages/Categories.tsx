@@ -6,7 +6,8 @@ import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Edit, MoreHorizontal, Trash, ChevronRight, FolderOpen, Plus, Tag, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Edit, MoreHorizontal, Trash, ChevronRight, FolderOpen, Plus, Tag, Loader2, Search } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "@/services/categoryService";
@@ -25,6 +26,7 @@ export default function Categories() {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [showSubcategories, setShowSubcategories] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch categories from the API - using queryKey with proper caching
   const {
@@ -231,6 +233,11 @@ export default function Categories() {
   // Calculate stats
   const totalSubcategories = categories.reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0);
 
+  // Filter categories based on search query
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       {!isMobile && (
@@ -242,8 +249,21 @@ export default function Categories() {
         } />
       )}
 
+      {/* Search bar for desktop */}
+      {!isMobile && (
+        <div className="mb-4 relative max-w-sm">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search categories..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10"
+          />
+        </div>
+      )}
+
       <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
-        {categories.length === 0 ? (
+        {filteredCategories.length === 0 ? (
           <div className="py-8 text-center">
             <Tag className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-lg">No categories found.</p>
@@ -255,7 +275,7 @@ export default function Categories() {
           <div className="overflow-x-auto">
             {isMobile ? (
               <div className="p-2 space-y-3">
-                {categories.map(category => renderCustomMobileCard(category))}
+                {filteredCategories.map(category => renderCustomMobileCard(category))}
               </div>
             ) : (
               <Table>
@@ -267,7 +287,7 @@ export default function Categories() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {categories.map(category => (
+                  {filteredCategories.map(category => (
                     <TableRow key={category.id}>
                       <TableCell>
                         <div

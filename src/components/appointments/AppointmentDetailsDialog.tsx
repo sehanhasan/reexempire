@@ -145,7 +145,7 @@ export function AppointmentDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className="sm:max-w-md w-full">
+      <DialogContent className="sm:max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl">{appointment.title}</DialogTitle>
           <DialogClose asChild>
@@ -227,14 +227,16 @@ export function AppointmentDetailsDialog({
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-4">
-          <Button 
-            onClick={handleShareWhatsApp} 
-            variant="outline" 
-            className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
-          >
-            <Share2 className="h-4 w-4" />
-            Share via WhatsApp
-          </Button>
+          {!isCompleted && (
+            <Button 
+              onClick={handleShareWhatsApp} 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+            >
+              <Share2 className="h-4 w-4" />
+              Share via WhatsApp
+            </Button>
+          )}
           
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {!isCompleted && !isCancelled && (
