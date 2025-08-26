@@ -354,7 +354,7 @@ export default function CreateInvoice() {
         title="Create Invoice"
       />
 
-      <form className="mt-8 space-y-6">
+      <form className="mt-2 space-y-6">
         <CustomerInfoCard 
           customerId={customerId}
           setCustomer={setCustomerId}
