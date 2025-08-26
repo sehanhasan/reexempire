@@ -163,7 +163,7 @@ export function InvoiceItemsCard({
 
               {quotationDepositAmount && quotationDepositAmount > 0 && !isDepositInvoice && (
                 <div className="flex justify-between py-1 text-sm text-muted-foreground border-t pt-1">
-                  <span>Deposit Paid (from quotation):</span>
+                  <span>Amount Paid:</span>
                   <span>RM {quotationDepositAmount.toFixed(2)}</span>
                 </div>
               )}
