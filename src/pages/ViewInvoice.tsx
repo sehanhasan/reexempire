@@ -361,7 +361,7 @@ export default function ViewInvoice() {
           {/* Print Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
             <Button onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
-              Print
+              Save as PDF
             </Button>
           </div>
         </div>
