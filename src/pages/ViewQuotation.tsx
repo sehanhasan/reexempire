@@ -384,7 +384,7 @@ export default function ViewQuotation() {
               {!isAccepted && (
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle className="font-medium text-sm text-muted-foreground mb-2">Customer Acceptance</CardTitle>
+                    <CardTitle className="font-medium text-sm text-muted-foreground">Customer Acceptance</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {/* Static acceptance fields */}
