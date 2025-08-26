@@ -122,14 +122,6 @@ export default function CustomerHistory() {
                   <p className="text-sm text-muted-foreground">Email</p>
                   <p className="font-medium">{customer.email}</p>
                 </div>}
-              <div>
-                <p className="text-sm text-muted-foreground">Quotations</p>
-                <p className="font-medium">{quotations.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Invoices</p>
-                <p className="font-medium">{invoices.length}</p>
-              </div>
             </div>
           </CardContent>
         </Card>
