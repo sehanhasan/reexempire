@@ -293,10 +293,6 @@ export default function AddAppointment() {
 
   return (
     <div className="page-container">
-      <PageHeader 
-        title={isEditMode ? "Edit Appointment" : "Add Appointment"} 
-        description={isEditMode ? "Update an existing appointment or service visit." : "Schedule a new appointment or service visit."}
-      />
       
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
@@ -333,11 +329,6 @@ export default function AddAppointment() {
                       )}
                     </Button>
                   </div>
-                  {selectedCustomer && (
-                    <div className="text-sm text-muted-foreground">
-                      {selectedCustomer.phone || selectedCustomer.email || "No contact info"}
-                    </div>
-                  )}
                 </div>
               </div>
 
