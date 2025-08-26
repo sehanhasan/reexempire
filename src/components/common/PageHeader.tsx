@@ -24,7 +24,7 @@ export function PageHeader({
   }
   return <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4 md:mb-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-blue-600">{title}</h1>
+        <h1 className="text-xl font-semibold tracking-tight md:text-lg text-slate-500">{title}</h1>
       </div>
       {actions && <div>{actions}</div>}
     </div>;
