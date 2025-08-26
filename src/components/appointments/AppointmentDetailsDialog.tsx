@@ -145,7 +145,7 @@ export function AppointmentDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md w-full">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl">{appointment.title}</DialogTitle>
           <DialogClose asChild>
