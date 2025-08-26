@@ -55,7 +55,7 @@ export function LoginForm() {
   return <form onSubmit={handleLogin}>
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-center text-sky-600 font-bold text-lg">Login</CardTitle>
+          <CardTitle className="text-center font-bold text-lg text-blue-500">Login</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
