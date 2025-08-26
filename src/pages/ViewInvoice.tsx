@@ -377,7 +377,7 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Print Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
             <Button 
               onClick={() => {
@@ -404,30 +404,6 @@ export default function ViewInvoice() {
             >
               Save as PDF
             </Button>
-            
-            {(invoice.status === 'Sent' || invoice.status === 'Unpaid') && (
-              <Button 
-                onClick={async () => {
-                  try {
-                    await invoiceService.updateStatus(invoice.id, 'Cancelled');
-                    setInvoice({ ...invoice, status: 'Cancelled' });
-                    toast({
-                      title: "Success",
-                      description: "Invoice marked as cancelled"
-                    });
-                  } catch (error) {
-                    toast({
-                      title: "Error", 
-                      description: "Failed to cancel invoice",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2"
-              >
-                Cancel Invoice
-              </Button>
-            )}
           </div>
         </div>
       </div>
