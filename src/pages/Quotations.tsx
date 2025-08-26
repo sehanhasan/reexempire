@@ -341,6 +341,13 @@ export default function Quotations() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
+                                navigate(`/quotations/view/${quotation.id}`);
+                              }}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Quotation
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={e => {
+                                e.stopPropagation();
                                 handleSendWhatsapp(quotation);
                               }}>
                                 <Send className="mr-2 h-4 w-4" />
@@ -409,14 +416,18 @@ export default function Quotations() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
-                                  <Send className="mr-2 h-4 w-4" />
-                                  Send via WhatsApp
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
-                                  <FileText className="mr-2 h-4 w-4" />
-                                  Convert to Invoice
-                                </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/quotations/view/${quotation.id}`)}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Quotation
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
+                                <Send className="mr-2 h-4 w-4" />
+                                Send via WhatsApp
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Convert to Invoice
+                              </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-red-600" onClick={() => {
                                   setQuotationToDelete(quotation);

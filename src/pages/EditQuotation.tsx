@@ -296,9 +296,9 @@ export default function EditQuotation() {
 
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/quotations")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Quotations
+            <Button variant="outline" onClick={() => navigate(`/quotations/view/${id}`)}>
+              <FileText className="mr-2 h-4 w-4" />
+              View Quotation
             </Button>
           </div>} />
 

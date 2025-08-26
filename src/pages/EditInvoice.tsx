@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, CheckCircle, XCircle, Share2, Clock, DollarSign, Image, X } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Share2, Clock, DollarSign, Image, X, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { QuotationItem, DepositInfo } from "@/components/quotations/types";
 import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
@@ -477,9 +477,9 @@ export default function EditInvoice() {
         title="Edit Invoice"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/invoices")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Invoices
+            <Button variant="outline" onClick={() => navigate(`/invoices/view/${id}`)}>
+              <FileText className="mr-2 h-4 w-4" />
+              View Invoice
             </Button>
           </div>
         } 

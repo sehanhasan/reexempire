@@ -413,6 +413,13 @@ export default function Invoices() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
+                                navigate(`/invoices/view/${invoice.id}`);
+                              }}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={e => {
+                                e.stopPropagation();
                                 handleSendWhatsapp(invoice);
                               }}>
                                 <Send className="mr-2 h-4 w-4" />
@@ -475,10 +482,14 @@ export default function Invoices() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleSendWhatsapp(invoice)}>
-                                  <Send className="mr-2 h-4 w-4" />
-                                  Send via WhatsApp
-                                </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/invoices/view/${invoice.id}`)}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleSendWhatsapp(invoice)}>
+                                <Send className="mr-2 h-4 w-4" />
+                                Send via WhatsApp
+                              </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-red-600" onClick={() => {
                                   setInvoiceToDelete(invoice);
