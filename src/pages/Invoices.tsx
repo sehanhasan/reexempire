@@ -46,7 +46,7 @@ const StatusBadge = ({
       bgColor = 'bg-red-100';
       textColor = 'text-red-700';
       break;
-    case 'Partial':
+    case 'Paid - Partial':
       bgColor = 'bg-blue-100';
       textColor = 'text-blue-700';
       break;
@@ -73,7 +73,7 @@ const StatusIcon = ({
       return <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-600" />;
     case 'Overdue':
       return <XCircle className="h-3.5 w-3.5 mr-1 text-red-600" />;
-    case 'Partial':
+    case 'Paid - Partial':
       return <TimerReset className="h-3.5 w-3.5 mr-1 text-amber-600" />;
     default:
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
@@ -130,7 +130,7 @@ export default function Invoices() {
   }, []);
 
   const getDisplayStatus = (inv: InvoiceWithCustomer) => {
-    if (inv.payment_status === 'Partially Paid') return 'Partial';
+    if (inv.payment_status === 'Partially Paid') return 'Paid - Partial';
     if (inv.status === 'Sent') return 'Unpaid';
     return inv.status;
   };
@@ -321,7 +321,7 @@ export default function Invoices() {
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="unpaid">Unpaid</SelectItem>
                     <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="partial">Partial</SelectItem>
+                    <SelectItem value="paid - partial">Paid - Partial</SelectItem>
                     <SelectItem value="overdue">Overdue</SelectItem>
                   </SelectContent>
                 </Select>
@@ -342,7 +342,7 @@ export default function Invoices() {
               {isMobile ? (
                 <div className="p-2 space-y-3">
                   {filteredInvoices.map(invoice => {
-                    const status = (invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
+                     const status = (invoice.payment_status === 'Partially Paid') ? 'Paid - Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
                     return (
                       <div
                         key={invoice.id}
@@ -448,7 +448,7 @@ export default function Invoices() {
                     </TableHeader>
                     <TableBody>
                       {filteredInvoices.map(invoice => {
-                        const status = (invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
+                        const status = (invoice.payment_status === 'Partially Paid') ? 'Paid - Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
                         return (
                           <TableRow key={invoice.id}>
                             <TableCell>

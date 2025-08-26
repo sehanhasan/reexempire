@@ -232,7 +232,7 @@ export function QuotationItemsCard({
 
               <div className="flex justify-between py-2 border-t mt-1">
                 <span className="font-semibold text-base">Total:</span>
-                <span className="font-semibold text-base">RM {calculateTotal().toFixed(2)}</span>
+                <span className="font-semibold text-base">RM {(depositInfo.requiresDeposit ? depositInfo.depositAmount : calculateTotal()).toFixed(2)}</span>
               </div>
             </div>
           </div>
