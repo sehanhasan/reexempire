@@ -213,7 +213,7 @@ export default function Dashboard() {
     </div>;
   const renderActivityTab = () => <div className="space-y-4">
       {/* Upcoming Appointments */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -265,7 +265,7 @@ export default function Dashboard() {
       {/* Recent Activities Grid */}
       <div className="grid grid-cols-1 gap-4">
         {/* Recent Quotations */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-purple-100 rounded-lg">
@@ -313,7 +313,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Recent Invoices */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-emerald-100 rounded-lg">

@@ -195,7 +195,7 @@ export default function StaffPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Position</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead className="hidden">Email</TableHead>
                     <TableHead>Join Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[80px]">Actions</TableHead>
@@ -214,7 +214,7 @@ export default function StaffPage() {
                       </TableCell>
                       <TableCell>{staffMember.position || "-"}</TableCell>
                       <TableCell>{staffMember.phone || "-"}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden">
                         {staffMember.email ? (
                           <a href={`mailto:${staffMember.email}`} className="text-blue-600 hover:underline">
                             {staffMember.email}
