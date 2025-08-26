@@ -123,7 +123,7 @@ export default function AddCustomerForm({
       </div>;
   }
   return <form onSubmit={handleSubmit} className="space-y-6">
-        <CardContent className="pt-6 space-y-4 bg-white border shadow-sm ">
+        <CardContent className="pt-6 space-y-4 bg-white rounded-lg border shadow-sm">
           {/* <div className="space-y-2">
             
             <div className="flex space-x-4">
