@@ -152,7 +152,7 @@ export function InvoiceItemsCard({
 
           <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
           
-          <div className={`flex ${isMobile ? "flex-col" : "justify-start"} mt-4`}>
+          <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
             <div className={isMobile ? "w-full" : "w-72 bg-gray-50 p-3 rounded-lg"}>
               <div className="flex justify-between py-1.5 text-sm">
                 <span className="font-medium">Subtotal:</span>
