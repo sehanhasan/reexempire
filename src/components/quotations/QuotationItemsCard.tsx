@@ -179,8 +179,8 @@ export function QuotationItemsCard({
 
           <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
           
-          <div className={`flex ${isMobile ? "flex-col" : "justify-start"} mt-4 bg-gray-50 rounded-lg p-3`}>
-            <div className={isMobile ? "w-full" : "w-full"}>
+          <div className={`flex ${isMobile ? "flex-col" : "justify-start"} mt-4`}>
+            <div className={isMobile ? "w-full" : "w-72 bg-gray-50 p-3 rounded-lg"}>
               <div className="flex justify-between py-1.5 text-sm">
                 <span className="font-medium">Subtotal:</span>
                 <span>RM {calculateTotal().toFixed(2)}</span>
