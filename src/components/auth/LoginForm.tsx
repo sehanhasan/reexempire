@@ -68,17 +68,10 @@ export function LoginForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col">
-          <Button type="submit" className="w-full mb-4" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full mb-4 bg-sky-600 hover:bg-sky-500">
             {isLoading ? <LoadingSpinner /> : 'Sign In'}
           </Button>
-          <div className="text-center mt-2">
-            <span className="text-muted-foreground text-sm">
-              Don't have an account?{" "}
-              <Button variant="link" className="p-0" onClick={() => navigate('/auth/register')}>
-                Register
-              </Button>
-            </span>
-          </div>
+          
         </CardFooter>
       </Card>
     </form>;
