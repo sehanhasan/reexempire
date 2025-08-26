@@ -385,7 +385,7 @@ export default function Quotations() {
                       <TableHead>Date</TableHead>
                       <TableHead>Expiry Date</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Total</TableHead>
                       <TableHead className="w-[80px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -405,7 +405,7 @@ export default function Quotations() {
                           <TableCell>
                             <StatusBadge status={status} />
                           </TableCell>
-                          <TableCell className="text-right font-medium">
+                          <TableCell className="font-medium">
                             {formatMoney(quotation.total)}
                           </TableCell>
                           <TableCell>
