@@ -43,6 +43,7 @@ export function DataTable<T extends Record<string, any>>({
   onRowClick
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const isMobile = useIsMobile();
   const activeSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchQuery;
   const filteredData = searchKey ? data.filter(item => {
@@ -52,6 +53,12 @@ export function DataTable<T extends Record<string, any>>({
     }
     return false;
   }) : data;
+
+  // Pagination
+  const pageSize = 50;
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const showPagination = filteredData.length > pageSize;
 
   // Generate labels for mobile view
   const getMobileLabel = (column: Column<T>) => {
@@ -90,31 +97,160 @@ export function DataTable<T extends Record<string, any>>({
   return <div className="space-y-4">
       {searchKey && !isMobile && externalSearchTerm === undefined && <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 max-w-sm h-9" />
+          <Input placeholder="Search..." value={searchQuery} onChange={e => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }} className="pl-10 max-w-sm h-9" />
         </div>}
       {searchKey && !isMobile && externalSearchTerm !== undefined && onExternalSearchChange && <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." value={externalSearchTerm} onChange={e => onExternalSearchChange(e.target.value)} className="pl-10 max-w-sm h-9" />
+          <Input placeholder="Search..." value={externalSearchTerm} onChange={e => {
+            onExternalSearchChange(e.target.value);
+            setCurrentPage(1);
+          }} className="pl-10 max-w-sm h-9" />
         </div>}
-      
-      {/* Pagination setup */}
-      {(() => {
-        return null;
-      })()}
       
       <Card className="shadow-sm overflow-hidden">
         <CardContent className="p-0">
-          {isLoading ? <div className="py-6 text-center bg-slate-100">
+          {isLoading ? (
+            <div className="py-6 text-center bg-slate-100">
               <p className="text-muted-foreground">Loading...</p>
-            </div> : filteredData.length === 0 ? <div className="py-6 text-center">
+            </div>
+          ) : filteredData.length === 0 ? (
+            <div className="py-6 text-center">
               <p className="text-muted-foreground">{emptyMessage}</p>
-            </div> : (() => {
-              // Client-side pagination when records exceed 50
-              const pageSize = 50;
-              const [currentPage, setCurrentPage] = [undefined as any, undefined as any];
-              return null;
-            })()}
+            </div>
+          ) : isMobile ? (
+            renderCustomMobileCard ? (
+              <div className="divide-y">
+                {paginatedData.map((item, index) => (
+                  <div key={getCardKey(item, index)} className="p-4">
+                    {renderCustomMobileCard(item)}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="divide-y">
+                {paginatedData.map((item, index) => (
+                  <div 
+                    key={getCardKey(item, index)} 
+                    className={`p-3 ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                    onClick={() => onRowClick && onRowClick(item)}
+                  >
+                    <div className="space-y-1">
+                      {primaryColumn && (
+                        <div className="flex items-center justify-between">
+                          <div className="font-medium text-sm">
+                            {primaryColumn.cell ? 
+                              primaryColumn.cell({ row: { original: item } }) :
+                              String(item[primaryColumn.accessorKey as keyof T] || '-')
+                            }
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {mobileColumns.slice(1, 5).map((column, colIndex) => (
+                          <div key={getCellKey(column, colIndex, index)} className="flex flex-col">
+                            <span className="text-gray-500 text-xs font-medium">
+                              {getMobileLabel(column)}
+                            </span>
+                            <span className="text-gray-900">
+                              {column.cell ? 
+                                column.cell({ row: { original: item } }) :
+                                String(item[column.accessorKey as keyof T] || '-')
+                              }
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {actionsColumn && (
+                        <div className="mt-2 pt-2 border-t flex justify-end">
+                          {actionsColumn.cell && actionsColumn.cell({ row: { original: item } })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="h-8">
+                    {columns.map((column, index) => (
+                      <TableHead key={`header-${index}`} className="py-2">
+                        {column.header}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.map((row, rowIndex) => (
+                    <TableRow 
+                      key={getRowKey(row, rowIndex)} 
+                      className={`h-8 ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                      onClick={() => onRowClick && onRowClick(row)}
+                    >
+                      {columns.map((column, colIndex) => (
+                        <TableCell key={getCellKey(column, colIndex, rowIndex)} className="py-1">
+                          {column.cell ? 
+                            column.cell({ row: { original: row } }) :
+                            String(row[column.accessorKey as keyof T] || '-')
+                          }
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {showPagination && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                if (pageNumber > totalPages) return null;
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={currentPage === pageNumber ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNumber)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>;
 }

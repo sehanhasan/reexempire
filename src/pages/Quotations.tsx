@@ -393,7 +393,7 @@ export default function Quotations() {
                     {filteredQuotations.map(quotation => {
                       const status = quotation.status;
                       return (
-                        <TableRow key={quotation.id} className="h-12">
+                        <TableRow key={quotation.id} className="h-8">
                           <TableCell>
                             <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                               {quotation.reference_number}
