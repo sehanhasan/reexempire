@@ -515,9 +515,9 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
               <p className="text-sm text-muted-foreground">
                 {status === "Sent" && "Update the status of this invoice"}
                 {status === "Overdue" && "This invoice is past due. Take action to collect payment."}
-                {invoiceData?.is_deposit_invoice && status === "Paid" && "This deposit invoice has been paid (deposit collected)."}
+                {invoiceData?.is_deposit_invoice && status === "Paid" && "This deposit invoice has been paid."}
                 {!invoiceData?.is_deposit_invoice && status === "Paid" && "This invoice has been fully paid."}
-                {(paymentStatus === "Partial" || paymentStatus === "Partially Paid") && "This invoice has been partially paid."}
+                {(paymentStatus === "Partial" || paymentStatus === "Partially Paid") && "(Deposit Paid)"}
               </p>
             </div>
             
@@ -597,28 +597,6 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
                   )}
                 </>
               )}
-
-      {/* Actions for Partial status */}
-      {(paymentStatus === "Partial" || paymentStatus === "Partially Paid") && (
-        <>
-          <Button 
-            variant="outline" 
-            className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
-            onClick={() => handleStatusChange("Paid")}
-          >
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Mark as Paid
-          </Button>
-          <Button 
-            variant="outline" 
-            className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-            onClick={() => handleSendWhatsapp('partial')}
-          >
-            <Share2 className="mr-2 h-4 w-4" />
-            Send Balance Due
-          </Button>
-        </>
-      )}
             </div>
           </div>
         </div>
