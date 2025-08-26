@@ -186,17 +186,6 @@ export default function EditStaffMember() {
   
   return (
     <div className="page-container">
-      <PageHeader 
-        title={isNew ? "Add Staff Member" : "Edit Staff Member"} 
-        description={isNew ? "Add a new staff member to your team" : "Update staff member information"}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/staff")}>
-              Cancel
-            </Button>
-          </div>
-        }
-      />
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -572,7 +561,7 @@ export default function EditStaffMember() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : (isNew ? "Add Staff Member" : "Update Staff Member")}
+                  {loading ? "Saving..." : (isNew ? "Add Staff" : "Update Staff")}
                 </Button>
               </CardFooter>
             </Card>

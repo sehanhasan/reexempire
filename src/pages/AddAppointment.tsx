@@ -317,7 +317,7 @@ export default function AddAppointment() {
                     <Button type="button" variant="outline" className="w-full justify-between" onClick={() => setIsCustomerSelectorOpen(true)}>
                       {selectedCustomer ? (
                         <span className="flex items-center">
-                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <User className="mr-2 h-4 w-4 text-green-500" />
                           {selectedCustomer.unit_number ? `#${selectedCustomer.unit_number} - ` : ""}
                           {selectedCustomer.name}
                         </span>

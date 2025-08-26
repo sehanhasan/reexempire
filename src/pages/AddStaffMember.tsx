@@ -117,7 +117,6 @@ export default function AddStaffMember() {
     }
   };
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} />
       
       <form onSubmit={handleSubmit} className="mt-2 space-y-6">
         <Card>
@@ -178,7 +177,7 @@ export default function AddStaffMember() {
             </Button>
             <Button type="submit" disabled={isLoading}>
               <Save className="mr-2 h-4 w-4" />
-              {isLoading ? 'Saving...' : isEdit ? 'Update Staff Member' : 'Save Staff Member'}
+              {isLoading ? 'Saving...' : isEdit ? 'Update Staff' : 'Save Staff'}
             </Button>
           </CardFooter>
         </Card>
