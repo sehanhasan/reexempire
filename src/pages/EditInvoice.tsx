@@ -527,14 +527,14 @@ export default function EditInvoice() {
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Mark as Paid
                   </Button>
-                  {/* <Button 
+                  <Button 
                     variant="outline" 
                     className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-                    onClick={() => handleSendWhatsapp('general')}
+                    onClick={() => navigate(`/invoices/view/${id}`)}
                   >
                     <Share2 className="mr-2 h-4 w-4" />
-                    Share via WhatsApp
-                  </Button> */}
+                    Send Invoice
+                  </Button>
                 </>
               )}
 

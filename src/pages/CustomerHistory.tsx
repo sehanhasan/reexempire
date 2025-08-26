@@ -151,7 +151,14 @@ export default function CustomerHistory() {
                   </TableHeader>
                   <TableBody>
                     {quotations.map(quotation => <TableRow key={quotation.id}>
-                        <TableCell className="font-medium">{quotation.reference_number}</TableCell>
+                        <TableCell className="font-medium">
+                          <button 
+                            onClick={() => navigate(`/quotations/view/${quotation.id}`)}
+                            className="text-blue-600 hover:underline cursor-pointer"
+                          >
+                            {quotation.reference_number}
+                          </button>
+                        </TableCell>
                         <TableCell>{format(new Date(quotation.issue_date), "MMM dd, yyyy")}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(quotation.status)}>
@@ -199,7 +206,14 @@ export default function CustomerHistory() {
                   </TableHeader>
                   <TableBody>
                     {invoices.map(invoice => <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">{invoice.reference_number}</TableCell>
+                        <TableCell className="font-medium">
+                          <button 
+                            onClick={() => navigate(`/invoices/view/${invoice.id}`)}
+                            className="text-blue-600 hover:underline cursor-pointer"
+                          >
+                            {invoice.reference_number}
+                          </button>
+                        </TableCell>
                         <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(invoice.status)}>

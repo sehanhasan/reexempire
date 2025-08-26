@@ -264,17 +264,11 @@ export default function ViewQuotation() {
               <div>
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
-                      {quotation.status}
-                    </Badge>
-                      {hasSignature && (
-                        <Badge variant="outline" className="mb-1 bg-green-50 text-green-700 border-green-200 flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Signed
-                        </Badge>
-                      )}
-                  </div>
+                   <div className="flex items-center gap-2 mb-1">
+                     <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
+                       {quotation.status}
+                     </Badge>
+                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
@@ -389,69 +383,41 @@ export default function ViewQuotation() {
             <div>
               {!isAccepted && (
                 <Card className="shadow-sm">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardHeader>
                     <CardTitle className="text-base text-gray-800">Acceptance</CardTitle>
-                    {isSigning && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsSigning(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
                   </CardHeader>
                   <CardContent>
-                    {!isSigning ? (
-                      <div className="text-center py-8 bg-gray-50 rounded-lg">
-                        <p className="text-gray-600 mb-4 text-base">
-                          Please digitally sign to accept this quotation.
-                        </p>
-                        <Button 
-                          onClick={() => setIsSigning(true)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-                        >
-                          <Pen className="h-4 w-4 mr-2" />
-                          Start Digital Signature
-                        </Button>
+                    {/* Static acceptance fields */}
+                    <div className="space-y-4">
+                      <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                        By signing below, you accept the terms and conditions of this quotation.
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                          By signing below, you accept the terms and conditions of this quotation.
-                        </div>
-                        
-                        <div className="signature-container">
-                          <SignatureCanvas
-                            ref={sigCanvasRef}
-                            canvasProps={{
-                              className: 'signature-canvas',
-                            }}
-                            backgroundColor="white"
-                          />
-                          <div className="absolute top-2 left-3 text-xs text-gray-400 pointer-events-none">
-                            Sign here
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Signature</label>
+                          <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px] bg-gray-50">
+                            <p className="text-sm text-gray-500 text-center mt-6">Signature area</p>
                           </div>
                         </div>
                         
-                        <div className="flex justify-between gap-3">
-                          <Button 
-                            variant="outline" 
-                            onClick={handleClearSignature}
-                            className="px-4"
-                          >
-                            Clear
-                          </Button>
-                          <Button 
-                            onClick={handleAcceptQuotation}
-                            disabled={isProcessing}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6"
-                          >
-                            {isProcessing ? 'Processing...' : 'Accept Quotation'}
-                          </Button>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-sm font-medium text-gray-700">Name</label>
+                            <div className="mt-1 p-2 border border-gray-300 rounded bg-gray-50 min-h-[40px]">
+                              <p className="text-sm text-gray-500">Name field</p>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium text-gray-700">Date</label>
+                            <div className="mt-1 p-2 border border-gray-300 rounded bg-gray-50 min-h-[40px]">
+                              <p className="text-sm text-gray-500">Date field</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -478,18 +444,9 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Download & Print Buttons */}
+          {/* Print Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
-            <Button 
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Downloading...' : 'Download'}
-            </Button>
-
-            <Button 
+            <Button
               onClick={() => window.print()}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
             >

@@ -200,7 +200,7 @@ export default function Customers() {
                     <TableHead>Name</TableHead>
                     <TableHead>Unit #</TableHead>
                     <TableHead>Phone</TableHead>
-                    <TableHead>Email</TableHead>
+                    
                     <TableHead>Address</TableHead>
                     <TableHead className="w-[80px]">Actions</TableHead>
                   </TableRow>
@@ -221,13 +221,6 @@ export default function Customers() {
                         {customer.phone ? (
                           <a href={`https://wa.me/${customer.phone.replace(/^\+/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                             {customer.phone}
-                          </a>
-                        ) : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {customer.email ? (
-                          <a href={`mailto:${customer.email}`} className="text-blue-600 hover:underline">
-                            {customer.email}
                           </a>
                         ) : "-"}
                       </TableCell>

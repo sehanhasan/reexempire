@@ -358,13 +358,8 @@ export default function ViewInvoice() {
             </div>
           </div>
 
-          {/* Download & Print Buttons */}
+          {/* Print Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
-            <Button onClick={handleDownloadPDF} disabled={isDownloading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2">
-              <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? 'Downloading...' : 'Download'}
-            </Button>
-
             <Button onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
               Print
             </Button>

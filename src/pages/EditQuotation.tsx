@@ -351,22 +351,13 @@ export default function EditQuotation() {
                     Mark as Accepted
                   </Button>
 
-                  {/* <Button
-                    variant="outline"
-                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
-                    onClick={handleSendWhatsapp}
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share via WhatsApp
-                  </Button> */}
-
                   <Button
                     variant="outline"
                     className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
                     onClick={() => navigate(`/quotations/view/${id}`)}
                   >
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Quotation
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Send Quotation
                   </Button>
                 </>
               )}
@@ -374,22 +365,13 @@ export default function EditQuotation() {
               {/* Actions for Accepted status */}
               {status === "Accepted" && (
                 <>
-                  {/* <Button
-                    variant="outline"
-                    className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
-                    onClick={handleSendWhatsapp}
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share via WhatsApp
-                  </Button> */}
-
                   <Button
                     variant="outline"
                     className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
                     onClick={() => navigate(`/quotations/view/${id}`)}
                   >
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Quotation
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Send Updated Quotation
                   </Button>
 
                   <Button
