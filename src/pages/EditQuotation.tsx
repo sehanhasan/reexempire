@@ -351,28 +351,28 @@ export default function EditQuotation() {
                     Mark as Accepted
                   </Button>
 
-                  <Button
+                  {/* <Button
                     variant="outline"
                     className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
                     onClick={handleSendWhatsapp}
                   >
                     <Share2 className="mr-2 h-4 w-4" />
                     Share via WhatsApp
-                  </Button>
+                  </Button> */}
                 </>
               )}
 
               {/* Actions for Accepted status */}
               {status === "Accepted" && (
                 <>
-                  <Button
+                  {/* <Button
                     variant="outline"
                     className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
                     onClick={handleSendWhatsapp}
                   >
                     <Share2 className="mr-2 h-4 w-4" />
                     Share via WhatsApp
-                  </Button>
+                  </Button> */}
 
                   <Button
                     variant="outline"
@@ -400,14 +400,14 @@ export default function EditQuotation() {
                     Resend Quotation
                   </Button>
 
-                  <Button
+                  {/* <Button
                     variant="outline"
                     className={`${isMobile ? "w-full" : ""} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`}
                     onClick={handleSendWhatsapp}
                   >
                     <Share2 className="mr-2 h-4 w-4" />
                     Share via WhatsApp
-                  </Button>
+                  </Button> */}
                 </>
               )}
             </div>

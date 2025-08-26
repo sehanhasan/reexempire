@@ -346,13 +346,13 @@ export default function Quotations() {
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Quotation
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={e => {
+                              {/* <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 handleSendWhatsapp(quotation);
                               }}>
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 handleConvertToInvoice(quotation);
@@ -420,10 +420,10 @@ export default function Quotations() {
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Quotation
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
+                              {/* <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 Convert to Invoice
