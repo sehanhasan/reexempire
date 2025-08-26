@@ -280,26 +280,30 @@ export default function Invoices() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader title="Invoices" actions={!isMobile ? 
-        <Button onClick={() => navigate("/invoices/create")} className="bg-blue-600 hover:bg-blue-700">
-          <FilePlus className="mr-2 h-4 w-4" />
-          Create Invoice
-        </Button> : undefined
-      } />
+      {!isMobile && (
+        <PageHeader title="Invoices" actions={
+          <Button onClick={() => navigate("/invoices/create")} className="bg-blue-600 hover:bg-blue-700">
+            <FilePlus className="mr-2 h-4 w-4" />
+            Create Invoice
+          </Button>
+        } />
+      )}
 
-      <div className="mt-1">
+      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
         <div className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-            <div className="relative flex-1 hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search invoices..."
-                className="pl-10 h-10"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
-            </div>
+            {!isMobile && (
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search invoices..."
+                  className="pl-10 h-10"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="w-full sm:w-60">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -431,10 +435,11 @@ export default function Invoices() {
                   })}
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
+                <div className={!isMobile ? "bg-white" : ""}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Invoice #</TableHead>
                       <TableHead>Unit #</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Status</TableHead>
@@ -490,6 +495,7 @@ export default function Invoices() {
                     })}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </div>
           )}

@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { Edit, Trash, Loader2, Mail, Phone, MapPin, Users, Calendar } from "lucide-react";
+import { Edit, Trash, Loader2, Mail, Phone, MapPin, Users, Calendar, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { staffService } from "@/services";
@@ -112,12 +113,29 @@ export default function StaffPage() {
       </div>;
   }
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader title="Staff Members" actions={!isMobile ? 
-        <Button onClick={() => navigate("/staff/add")} className="bg-blue-600 hover:bg-blue-700">
-          <Users className="mr-2 h-4 w-4" />
-          Add Staff Member
-        </Button> : undefined
-      } />
+      {!isMobile && (
+        <PageHeader title="Staff Members" actions={
+          <Button onClick={() => navigate("/staff/add")} className="bg-blue-600 hover:bg-blue-700">
+            <Users className="mr-2 h-4 w-4" />
+            Add Staff Member
+          </Button>
+        } />
+      )}
+      
+      {!isMobile && (
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search staff..."
+              className="pl-10 h-10"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
       
       <div className="mt-2">
         {filteredStaff.length === 0 ? <div className="text-center py-12">

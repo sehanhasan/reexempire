@@ -232,15 +232,17 @@ export default function Categories() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader title="Categories" actions={!isMobile ? 
-        <Button onClick={() => navigate("/categories/add")} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Category
-        </Button> : undefined
-      } />
+      {!isMobile && (
+        <PageHeader title="Categories" actions={
+          <Button onClick={() => navigate("/categories/add")} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Category
+          </Button>
+        } />
+      )}
 
       <div className="mt-2">
-        <Card className="shadow-sm border-0 bg-white">
+        <Card className={`shadow-sm border-0 ${!isMobile ? 'bg-white' : ''}`}>
           <CardContent className="p-0">
             <DataTable
               columns={columns}

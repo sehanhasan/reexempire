@@ -123,12 +123,14 @@ export default function Schedule() {
     return true;
   });
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader title="Schedule" actions={!isMobile ? 
-        <Button onClick={() => navigate("/schedule/add")} className="bg-blue-600 hover:bg-blue-700">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Appointment
-        </Button> : undefined
-      } />
+      {!isMobile && (
+        <PageHeader title="Schedule" actions={
+          <Button onClick={() => navigate("/schedule/add")} className="bg-blue-600 hover:bg-blue-700">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Appointment
+          </Button>
+        } />
+      )}
       
       <div className="mt-0">
         <div className="flex border-b border-gray-200 rounded-t-lg">
