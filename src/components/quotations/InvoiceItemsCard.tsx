@@ -183,8 +183,8 @@ export function InvoiceItemsCard({
                 </div>}
 
               <div className="flex justify-between py-2 border-t mt-1">
-                <span className="font-semibold text-base">Total:</span>
-                <span className="font-semibold text-base">RM {calculateTotal().toFixed(2)}</span>
+                <span className="font-semibold text-cyan-base">Total:</span>
+                <span className="font-semibold text-cyan-base">RM {calculateTotal().toFixed(2)}</span>
               </div>
             </div>
           </div>
