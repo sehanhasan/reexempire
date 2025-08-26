@@ -17,10 +17,12 @@ import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
   unit_number?: string;
 }
+
 const StatusBadge = ({
   status
 }: {
@@ -52,10 +54,13 @@ const StatusBadge = ({
       bgColor = 'bg-gray-100';
       textColor = 'text-gray-700';
   }
-  return <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${bgColor} ${textColor}`}>
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${bgColor} ${textColor}`}>
       {status}
-    </span>;
+    </span>
+  );
 };
+
 const StatusIcon = ({
   status
 }: {
@@ -76,6 +81,7 @@ const StatusIcon = ({
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
   }
 };
+
 export default function Quotations() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -87,20 +93,27 @@ export default function Quotations() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [quotationData, customerData] = await Promise.all([quotationService.getAll(), customerService.getAll()]);
+      const [quotationData, customerData] = await Promise.all([
+        quotationService.getAll(),
+        customerService.getAll()
+      ]);
+
       const customerMap: Record<string, Customer> = {};
       customerData.forEach(customer => {
         customerMap[customer.id] = customer;
       });
       setCustomers(customerMap);
+
       const enhancedQuotations: QuotationWithCustomer[] = quotationData.map(quotation => ({
         ...quotation,
         customer_name: customerMap[quotation.customer_id]?.name || "Unknown Customer",
         unit_number: customerMap[quotation.customer_id]?.unit_number
       }));
+
       setQuotations(enhancedQuotations);
       setLoading(false);
     } catch (error) {
@@ -113,22 +126,34 @@ export default function Quotations() {
       });
     }
   };
+
   useEffect(() => {
     fetchData();
   }, []);
+
   useEffect(() => {
     let filtered = [...quotations];
+
     if (statusFilter !== "all") {
       filtered = filtered.filter(quotation => quotation.status.toLowerCase() === statusFilter.toLowerCase());
     }
+
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(quotation => quotation.reference_number.toLowerCase().includes(search) || quotation.customer_name.toLowerCase().includes(search) || formatDate(quotation.issue_date).toLowerCase().includes(search) || quotation.unit_number && quotation.unit_number.toLowerCase().includes(search));
+      filtered = filtered.filter(quotation =>
+        quotation.reference_number.toLowerCase().includes(search) ||
+        quotation.customer_name.toLowerCase().includes(search) ||
+        formatDate(quotation.issue_date).toLowerCase().includes(search) ||
+        (quotation.unit_number && quotation.unit_number.toLowerCase().includes(search))
+      );
     }
+
     setFilteredQuotations(filtered);
   }, [quotations, searchTerm, statusFilter]);
+
   const handleDelete = async () => {
     if (!quotationToDelete) return;
+
     try {
       await quotationService.delete(quotationToDelete.id);
       setQuotations(quotations.filter(quotation => quotation.id !== quotationToDelete.id));
@@ -148,6 +173,7 @@ export default function Quotations() {
       });
     }
   };
+
   const handleConvertToInvoice = (quotation: QuotationWithCustomer) => {
     navigate("/invoices/create", {
       state: {
@@ -155,6 +181,7 @@ export default function Quotations() {
       }
     });
   };
+
   const handleSendWhatsapp = (quotation: QuotationWithCustomer) => {
     const customer = customers[quotation.customer_id];
     if (!customer) {
@@ -165,6 +192,7 @@ export default function Quotations() {
       });
       return;
     }
+
     try {
       const quotationViewUrl = `${window.location.origin}/quotations/view/${quotation.id}`;
       const whatsappUrl = quotationService.generateWhatsAppShareUrl(quotation.id, quotation.reference_number, customer.name, quotationViewUrl);
@@ -178,56 +206,7 @@ export default function Quotations() {
       });
     }
   };
-  const handleDownloadPDF = async (quotation: QuotationWithCustomer) => {
-    const customer = customers[quotation.customer_id];
-    if (!customer) {
-      toast({
-        title: "Missing Information",
-        description: "Customer information not found.",
-        variant: "destructive"
-      });
-      return;
-    }
-    try {
-      const quotationItems = await quotationService.getItemsByQuotationId(quotation.id);
-      const itemsForPDF = quotationItems.map(item => ({
-        id: Number(item.id),
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unit_price,
-        amount: item.amount,
-        category: item.category || '',
-        unit: item.unit || ''
-      }));
-      const pdf = generateQuotationPDF({
-        documentNumber: quotation.reference_number,
-        documentDate: quotation.issue_date,
-        customerName: customer.name,
-        unitNumber: customer.unit_number || "",
-        expiryDate: quotation.expiry_date,
-        validUntil: quotation.expiry_date,
-        notes: quotation.notes || "",
-        items: itemsForPDF,
-        subject: quotation.subject || "",
-        customerAddress: customer.address || "",
-        customerContact: customer.phone || "",
-        customerEmail: customer.email || "",
-        depositInfo: {
-          requiresDeposit: quotation.requires_deposit || false,
-          depositAmount: quotation.deposit_amount || 0,
-          depositPercentage: quotation.deposit_percentage || 0
-        }
-      });
-      downloadPDF(pdf, `Quotation_${quotation.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "PDF Generation Failed",
-        description: "There was an error generating the PDF. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
+
   const formatMoney = (amount: number) => {
     return `RM ${parseFloat(amount.toString()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -251,7 +230,7 @@ export default function Quotations() {
       window.dispatchEvent(new CustomEvent('clear-mobile-search'));
     };
   }, [searchTerm]);
-  
+
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       {!isMobile && (
@@ -300,10 +279,12 @@ export default function Quotations() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              {isMobile ? <div className="p-2 space-y-3">
+              {isMobile ? (
+                <div className="p-2 space-y-3">
                   {filteredQuotations.map(quotation => {
-              const status = quotation.status;
-              return <div key={quotation.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                    const status = quotation.status;
+                    return (
+                      <div key={quotation.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
                         <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
                           <div>
                             <div className="font-medium text-blue-700">
@@ -358,118 +339,103 @@ export default function Quotations() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {/* <DropdownMenuItem onClick={e => {
-                        e.stopPropagation();
-                        navigate(`/quotations/edit/${quotation.id}`);
-                      }}>
-                                <FileEdit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem> */}
                               <DropdownMenuItem onClick={e => {
-                        e.stopPropagation();
-                        handleSendWhatsapp(quotation);
-                      }}>
+                                e.stopPropagation();
+                                handleSendWhatsapp(quotation);
+                              }}>
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
                               </DropdownMenuItem>
-                              {/* <DropdownMenuItem onClick={e => {
-                        e.stopPropagation();
-                        handleDownloadPDF(quotation);
-                      }}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download PDF
-                              </DropdownMenuItem> */}
                               <DropdownMenuItem onClick={e => {
-                        e.stopPropagation();
-                        handleConvertToInvoice(quotation);
-                      }}>
+                                e.stopPropagation();
+                                handleConvertToInvoice(quotation);
+                              }}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 Create Invoice
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600" onClick={e => {
-                        e.stopPropagation();
-                        setQuotationToDelete(quotation);
-                        setDeleteDialogOpen(true);
-                      }}>
+                                e.stopPropagation();
+                                setQuotationToDelete(quotation);
+                                setDeleteDialogOpen(true);
+                              }}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                      </div>;
-            })}
-                </div> : (
-                  <div className={!isMobile ? "bg-white" : ""}>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Quotation #</TableHead>
-                          <TableHead>Unit #</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Expiry Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                          <TableHead className="w-[80px]">Actions</TableHead>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Quotation #</TableHead>
+                      <TableHead>Unit #</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Expiry Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="w-[80px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredQuotations.map(quotation => {
+                      const status = quotation.status;
+                      return (
+                        <TableRow key={quotation.id}>
+                          <TableCell>
+                            <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
+                              {quotation.reference_number}
+                            </div>
+                          </TableCell>
+                          <TableCell>{quotation.unit_number || "-"}</TableCell>
+                          <TableCell>{formatDate(quotation.issue_date)}</TableCell>
+                          <TableCell>{formatDate(quotation.expiry_date)}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={status} />
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatMoney(quotation.total)}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send via WhatsApp
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Convert to Invoice
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600" onClick={() => {
+                                  setQuotationToDelete(quotation);
+                                  setDeleteDialogOpen(true);
+                                }}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredQuotations.map(quotation => {
-                          const status = quotation.status;
-                          return (
-                            <TableRow key={quotation.id}>
-                              <TableCell>
-                                <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
-                                  {quotation.reference_number}
-                                </div>
-                              </TableCell>
-                              <TableCell>{quotation.unit_number || "-"}</TableCell>
-                              <TableCell>{formatDate(quotation.issue_date)}</TableCell>
-                              <TableCell>{formatDate(quotation.expiry_date)}</TableCell>
-                              <TableCell>
-                                <StatusBadge status={status} />
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {formatMoney(quotation.total)}
-                              </TableCell>
-                              <TableCell>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleSendWhatsapp(quotation)}>
-                                      <Send className="mr-2 h-4 w-4" />
-                                      Send via WhatsApp
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleConvertToInvoice(quotation)}>
-                                      <FileText className="mr-2 h-4 w-4" />
-                                      Convert to Invoice
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-red-600" onClick={() => {
-                                      setQuotationToDelete(quotation);
-                                      setDeleteDialogOpen(true);
-                                    }}>
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -478,13 +444,11 @@ export default function Quotations() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Quotation</DialogTitle>
+            <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete quotation{" "}
-              <span className="font-medium">
-                {quotationToDelete?.reference_number}
-              </span>
-              ? This action cannot be undone.
+              This will permanently delete the quotation
+              {quotationToDelete ? ` "${quotationToDelete.reference_number}"` : ""}.
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
