@@ -150,7 +150,7 @@ export default function CustomerHistory() {
                     {quotations.map(quotation => <TableRow key={quotation.id} className="h-10">
                         <TableCell className="font-medium py-1">
                           <button 
-                            onClick={() => navigate(`/quotations/view/${quotation.id}`)}
+                            onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')}
                             className="text-blue-600 hover:underline cursor-pointer"
                           >
                             {quotation.reference_number}
@@ -165,7 +165,7 @@ export default function CustomerHistory() {
                         <TableCell>{formatMoney(quotation.total)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button size="icon" variant="ghost" onClick={() => navigate(`/quotations/view/${quotation.id}`)} title="View">
+                            <Button size="icon" variant="ghost" onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')} title="View">
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button size="icon" variant="ghost" onClick={() => navigate(`/quotations/edit/${quotation.id}`)} title="Edit">

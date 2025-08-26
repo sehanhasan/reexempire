@@ -164,8 +164,8 @@ export default function CreateQuotation() {
           description: `Quotation for ${customer?.name} has been sent successfully.`,
         });
         
-        // Navigate to view page
-        navigate(`/quotations/view/${createdQuotation.id}`);
+        // Navigate to view page in new tab
+        window.open(`/quotations/view/${createdQuotation.id}`, '_blank');
       } else {
         toast({
           title: "Quotation Created",

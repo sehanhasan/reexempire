@@ -321,20 +321,6 @@ export default function Invoices() {
               </Select>
             </div>
 
-            {/* <div className="w-full sm:w-60">
-              <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Filter by payment status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Payment Statuses</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div> */}
           </div>
 
           {loading ? (

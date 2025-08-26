@@ -11,7 +11,7 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
   do {
     const sequence = counter.toString().padStart(4, '0');
     referenceNumber = isDepositInvoice 
-      ? `INV-${year}-${sequence}-A`
+      ? `INV-${year}-${sequence}-D`
       : `INV-${year}-${sequence}`;
     
     console.log(`InvoiceService: Checking reference number: ${referenceNumber}`);
@@ -160,9 +160,18 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
       throw new Error("No due amount remaining for this deposit invoice");
     }
 
-    // Create the due invoice with proper reference number format
-    const baseRefNumber = depositInvoice.reference_number.replace('-A', '');
-    const dueReferenceNumber = `${baseRefNumber}-B`;
+    // Generate next sequential reference number for due invoice
+    const now = new Date();
+    const year = now.getFullYear();
+    
+    // Get all invoices to find the next sequence number
+    const allInvoices = await getAll();
+    const currentYearInvoices = allInvoices.filter(inv => 
+      inv.reference_number?.startsWith(`INV-${year}`)
+    );
+    
+    const nextSequence = currentYearInvoices.length + 1;
+    const dueReferenceNumber = `INV-${year}-${nextSequence.toString().padStart(4, '0')}-F`;
 
     const dueInvoiceData = {
       quotation_id: depositInvoice.quotation_id,
@@ -223,6 +232,14 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
 const update = async (id: string, updates: Partial<Invoice>): Promise<Invoice | null> => {
   try {
     console.log(`InvoiceService: Updating invoice ${id} with:`, updates);
+    
+    // If updating payment status to "Paid" for a deposit invoice, change it to "Partially Paid"
+    if (updates.payment_status === 'Paid') {
+      const currentInvoice = await getById(id);
+      if (currentInvoice?.is_deposit_invoice) {
+        updates.payment_status = 'Partially Paid';
+      }
+    }
     
     const { data, error } = await supabase
       .from('invoices')
