@@ -11,7 +11,7 @@ import { CustomerInfoCard } from "@/components/quotations/CustomerInfoCard";
 import { QuotationItemsCard } from "@/components/quotations/QuotationItemsCard";
 import { AdditionalInfoForm } from "@/components/quotations/AdditionalInfoForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { invoiceService, customerService } from "@/services";
+import { invoiceService, customerService, quotationService } from "@/services";
 import { Customer, Invoice, InvoiceImage } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,7 +53,10 @@ export default function EditInvoice() {
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   // Saved images (already uploaded for this invoice)
-  const [savedImages, setSavedImages] = useState<InvoiceImage[]>([]);
+const [savedImages, setSavedImages] = useState<InvoiceImage[]>([]);
+
+// Quotation deposit used for Due Invoices
+const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | undefined>(undefined);
 
   // Check if invoice is overdue
   const isOverdue = () => {
@@ -184,6 +187,16 @@ export default function EditInvoice() {
             const customerData = await customerService.getById(invoice.customer_id);
             setCustomer(customerData);
             console.log("Customer data fetched:", customerData);
+          }
+
+          // Fetch quotation deposit for Due Invoice (non-deposit invoice linked to a quotation)
+          if (invoice.quotation_id && !invoice.is_deposit_invoice) {
+            try {
+              const quotation = await quotationService.getById(invoice.quotation_id);
+              setQuotationDepositAmount(quotation?.deposit_amount || 0);
+            } catch (qErr) {
+              console.warn("Failed to fetch quotation for deposit amount", qErr);
+            }
           }
 
           const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
@@ -481,7 +494,7 @@ export default function EditInvoice() {
         } 
       />
 
-      {(status === "Sent" || status === "Overdue" || status === "Paid" || paymentStatus === "Partial") && (
+      {(status === "Sent" || status === "Overdue" || status === "Paid" || paymentStatus === "Partial" || paymentStatus === "Partially Paid") && (
         <div className="rounded-md p-4 mt-4 bg-white">
           <div className="flex flex-col gap-3">
             <div>
@@ -489,17 +502,22 @@ export default function EditInvoice() {
                 Invoice Status: <span className={
                   status === "Sent" ? "text-amber-600" : 
                   status === "Overdue" ? "text-red-600" : 
-                  status === "Paid" ? "text-green-600" :
-                  paymentStatus === "Partial" ? "text-blue-600" : "text-gray-600"
+                  (paymentStatus === "Partial" || paymentStatus === "Partially Paid") ? "text-blue-600" : 
+                  status === "Paid" ? "text-green-600" : "text-gray-600"
                 }>
-                  {paymentStatus === "Partial" ? "Partially Paid" : status}
+                  {invoiceData?.is_deposit_invoice && status === "Paid" 
+                    ? "Paid - Partially" 
+                    : (paymentStatus === "Partial" || paymentStatus === "Partially Paid") 
+                      ? "Partially Paid" 
+                      : status}
                 </span>
               </h3>
               <p className="text-sm text-muted-foreground">
                 {status === "Sent" && "Update the status of this invoice"}
                 {status === "Overdue" && "This invoice is past due. Take action to collect payment."}
-                {status === "Paid" && "This invoice has been fully paid."}
-                {paymentStatus === "Partial" && "This invoice has been partially paid."}
+                {invoiceData?.is_deposit_invoice && status === "Paid" && "This deposit invoice has been paid (deposit collected)."}
+                {!invoiceData?.is_deposit_invoice && status === "Paid" && "This invoice has been fully paid."}
+                {(paymentStatus === "Partial" || paymentStatus === "Partially Paid") && "This invoice has been partially paid."}
               </p>
             </div>
             
@@ -580,27 +598,27 @@ export default function EditInvoice() {
                 </>
               )}
 
-              {/* Actions for Partial status */}
-              {paymentStatus === "Partial" && (
-                <>
-                  <Button 
-                    variant="outline" 
-                    className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
-                    onClick={() => handleStatusChange("Paid")}
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Mark as Paid
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
-                    onClick={() => handleSendWhatsapp('partial')}
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Send Balance Due
-                  </Button>
-                </>
-              )}
+      {/* Actions for Partial status */}
+      {(paymentStatus === "Partial" || paymentStatus === "Partially Paid") && (
+        <>
+          <Button 
+            variant="outline" 
+            className={`${isMobile ? 'w-full' : ''} border-green-200 bg-green-50 hover:bg-green-100 text-green-600`} 
+            onClick={() => handleStatusChange("Paid")}
+          >
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Mark as Paid
+          </Button>
+          <Button 
+            variant="outline" 
+            className={`${isMobile ? 'w-full' : ''} border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-600`} 
+            onClick={() => handleSendWhatsapp('partial')}
+          >
+            <Share2 className="mr-2 h-4 w-4" />
+            Send Balance Due
+          </Button>
+        </>
+      )}
             </div>
           </div>
         </div>
@@ -628,7 +646,7 @@ export default function EditInvoice() {
           depositInfo={depositInfo} 
           setDepositInfo={setDepositInfo} 
           calculateItemAmount={calculateItemAmount}
-          quotationDepositAmount={invoiceData?.quotation_ref_number && !invoiceData?.is_deposit_invoice ? (invoiceData?.deposit_amount || 0) : undefined}
+          quotationDepositAmount={invoiceData?.quotation_ref_number && !invoiceData?.is_deposit_invoice ? quotationDepositAmount : undefined}
         />
         
         {/* <Card>

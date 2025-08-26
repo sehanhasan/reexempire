@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, FileText } from "lucide-react";
-import { invoiceService, customerService } from "@/services";
+import { invoiceService, customerService, quotationService } from "@/services";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { shareInvoice } from "@/utils/mobileShare";
@@ -20,8 +20,9 @@ export default function ViewInvoice() {
   const [customer, setCustomer] = useState(null);
   const [items, setItems] = useState([]);
   const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isDownloading, setIsDownloading] = useState(false);
+const [loading, setLoading] = useState(true);
+const [isDownloading, setIsDownloading] = useState(false);
+const [depositPaid, setDepositPaid] = useState(0);
 
   // ✅ Pinch-to-zoom effect for this page only
   useEffect(() => {
@@ -51,6 +52,16 @@ export default function ViewInvoice() {
           if (invoiceData.customer_id) {
             const customerData = await customerService.getById(invoiceData.customer_id);
             setCustomer(customerData);
+          }
+
+          // Fetch deposit paid from linked quotation for Due Invoices
+          if (invoiceData.quotation_id && !invoiceData.is_deposit_invoice) {
+            try {
+              const q = await quotationService.getById(invoiceData.quotation_id);
+              setDepositPaid(q?.deposit_amount || 0);
+            } catch (qErr) {
+              console.warn('ViewInvoice: failed to fetch quotation for deposit amount', qErr);
+            }
           }
         }
       } catch (error) {
@@ -308,10 +319,10 @@ export default function ViewInvoice() {
                         <span className="font-medium">Deposit Amount:</span>
                         <span>{formatMoney(invoice.deposit_amount)}</span>
                       </div>}
-                    {invoice.quotation_ref_number && !invoice.is_deposit_invoice && invoice.deposit_amount > 0 && (
+                    {invoice.quotation_ref_number && !invoice.is_deposit_invoice && depositPaid > 0 && (
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <span>Deposit Paid:</span>
-                        <span>-{formatMoney(invoice.deposit_amount || 0)}</span>
+                        <span>-{formatMoney(depositPaid)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-base font-bold border-t pt-1">
