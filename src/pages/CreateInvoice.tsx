@@ -390,7 +390,7 @@ export default function CreateInvoice() {
           quotationDepositAmount={quotationDepositAmount}
         />
         
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="text-lg">Work Photos</CardTitle>
           </CardHeader>
@@ -443,7 +443,7 @@ export default function CreateInvoice() {
               )}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
         
         <AdditionalInfoForm 
           terms={terms}
