@@ -123,10 +123,7 @@ export default function Schedule() {
     return true;
   });
   return <div className="page-container">
-      <PageHeader title="Schedule" description="" actions={<Button className="flex items-center" onClick={() => navigate("/schedule/add")}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Appointment
-          </Button>} />
+      
       
       <div className="mt-0">
         <div className="flex border-b border-gray-200 rounded-t-lg">
