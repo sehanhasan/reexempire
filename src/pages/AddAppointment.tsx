@@ -295,13 +295,7 @@ export default function AddAppointment() {
     <div className="page-container">
       <PageHeader 
         title={isEditMode ? "Edit Appointment" : "Add Appointment"} 
-        description={isEditMode ? "Update an existing appointment or service visit." : "Schedule a new appointment or service visit."} 
-        actions={
-          <Button variant="outline" onClick={() => navigate("/schedule")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Schedule
-          </Button>
-        } 
+        description={isEditMode ? "Update an existing appointment or service visit." : "Schedule a new appointment or service visit."}
       />
       
       {isLoading ? (

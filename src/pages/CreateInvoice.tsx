@@ -351,14 +351,6 @@ export default function CreateInvoice() {
     <div className="page-container">
       <PageHeader
         title="Create Invoice"
-        actions={
-          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/invoices")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Invoices
-            </Button>
-          </div>
-        }
       />
 
       <form className="mt-8 space-y-6">

@@ -190,14 +190,6 @@ export default function CreateQuotation() {
     <div className="page-container">
       <PageHeader
         title="Create Quotation"
-        actions={
-          <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate("/quotations")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Quotations
-            </Button>
-          </div>
-        }
       />
 
       <form className="mt-2 space-y-6">
