@@ -17,6 +17,12 @@ export function PageHeader({ title, actions, mobileHeaderActions }: PageHeaderPr
     return null; // Mobile header is handled in MainLayout
   }
 
+  // Hide page headers for specific pages on desktop/tablet
+  const hiddenPages = ['Customers', 'Quotations', 'Invoices', 'Schedule', 'Staff', 'Categories'];
+  if (hiddenPages.includes(title)) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
       <div>

@@ -126,7 +126,7 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
       />
       
       {/* Fixed sidebar wrapper to prevent scrolling */}
-      <div className="h-screen sticky top-0 z-50 flex-shrink-0">
+      <div className="h-screen fixed top-0 left-0 z-50 flex-shrink-0">
         <AppSidebar 
           open={sidebarOpen} 
           setOpen={setSidebarOpen} 
@@ -136,13 +136,15 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
         />
       </div>
       
-      <div className="flex-1 flex flex-col overflow-auto relative max-w-full">
-        <MobileHeader 
-          title={getPageTitle()} 
-          onMenuClick={toggleSidebar} 
-          actions={mobileActions}
-          searchProps={mobileSearchProps}
-        />
+      <div className={`flex-1 flex flex-col overflow-auto relative max-w-full ${!isMobile ? 'ml-64' : ''}`}>
+        {isMobile && (
+          <MobileHeader 
+            title={getPageTitle()} 
+            onMenuClick={toggleSidebar} 
+            actions={mobileActions}
+            searchProps={mobileSearchProps}
+          />
+        )}
         
         <main className={`${isMobile ? 'px-0 pt-16' : 'px-6 pt-6'} pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50`}>
           {children}
