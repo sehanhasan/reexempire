@@ -624,7 +624,7 @@ export default function EditInvoice() {
           calculateItemAmount={calculateItemAmount} 
         />
         
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="text-lg">Work Photos</CardTitle>
           </CardHeader>
@@ -696,7 +696,7 @@ export default function EditInvoice() {
               )}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
         
         <AdditionalInfoForm 
           terms={terms}
