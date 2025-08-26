@@ -34,10 +34,6 @@ export default function AddCustomer() {
   
   return (
     <div className="page-container">
-      <PageHeader
-        title={isEditing ? `Edit Customer` : "Add Customer"}
-        description={isEditing ? "Update customer information" : "Add a new customer to the system."}
-      />
       
       <div className="mt-2">
         <AddCustomerForm />
