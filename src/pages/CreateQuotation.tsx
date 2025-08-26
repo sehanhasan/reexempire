@@ -165,7 +165,7 @@ export default function CreateQuotation() {
         });
         
         // Navigate to view page
-        window.open(`/quotations/view/${createdQuotation.id}`, '_blank');
+        navigate(`/quotations/view/${createdQuotation.id}`);
       } else {
         toast({
           title: "Quotation Created",
