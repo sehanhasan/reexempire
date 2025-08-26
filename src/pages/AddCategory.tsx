@@ -229,7 +229,7 @@ export default function AddCategory() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-gray-50">
             <CardHeader>
               <CardTitle className="text-lg text-cyan-600">Subcategories</CardTitle>
               <CardDescription>

@@ -170,7 +170,7 @@ export function DataTable<T extends Record<string, any>>({
                   </TableHeader>
                   <TableBody>
                     {filteredData.map((row, rowIndex) => <TableRow key={getRowKey(row, rowIndex)}>
-                        {columns.map((column, colIndex) => <TableCell key={getCellKey(column, colIndex, rowIndex)} className="py-2">
+                        {columns.map((column, colIndex) => <TableCell key={getCellKey(column, colIndex, rowIndex)} className="py-1 h-10">
                             {column.cell ? column.cell({
                     row: {
                       original: row
