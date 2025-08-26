@@ -117,10 +117,7 @@ export default function AddStaffMember() {
     }
   };
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={<Button variant="outline" onClick={() => navigate("/staff")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Staff
-        </Button>} />
+      <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} />
       
       <form onSubmit={handleSubmit} className="mt-2 space-y-6">
         <Card>
