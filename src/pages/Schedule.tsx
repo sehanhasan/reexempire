@@ -123,17 +123,13 @@ export default function Schedule() {
     return true;
   });
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      {!isMobile && (
-        <PageHeader title="Schedule" actions={
-          <Button onClick={() => navigate("/schedule/add")} className="bg-blue-600 hover:bg-blue-700">
+      {!isMobile && <PageHeader title="Schedule" actions={<Button onClick={() => navigate("/schedule/add")} className="bg-blue-600 hover:bg-blue-700">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Appointment
-          </Button>
-        } />
-      )}
+          </Button>} />}
       
       <div className="mt-0">
-        <div className="flex border-b border-gray-200 rounded-t-lg">
+        <div className="flex border-b bg-white border-gray-200 rounded-t-lg">
           <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Upcoming
           </button>
