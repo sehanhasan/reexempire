@@ -390,9 +390,9 @@ export default function ViewQuotation() {
             <div>
               {!isAccepted && (
                 <Card className="shadow-sm">
-                  <CardHeader>
+                  {/* <CardHeader>
                     <CardTitle className="font-medium text-sm text-muted-foreground">Customer Acceptance</CardTitle>
-                  </CardHeader>
+                  </CardHeader> */}
                   <CardContent>
                     {/* Static acceptance fields */}
                     <div className="space-y-4">
@@ -402,7 +402,7 @@ export default function ViewQuotation() {
                       
                       <div className="space-y-3">
                         <div>
-                          <label className="text-sm font-medium text-gray-700">Signature</label>
+                          <label className="text-sm font-medium text-gray-700">Signature (Customer Acceptance)</label>
                           <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px]">
                             {/* <p className="text-sm text-gray-500 text-center mt-6">Signature</p> */}
                           </div>
