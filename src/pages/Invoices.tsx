@@ -433,63 +433,66 @@ export default function Invoices() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Invoice #</TableHead>
-                      <TableHead>Unit #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="w-[80px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInvoices.map(invoice => {
-                      const status = invoice.status;
-                      return (
-                        <TableRow key={invoice.id}>
-                          <TableCell>
-                            <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
-                              {invoice.reference_number}
-                            </div>
-                          </TableCell>
-                          <TableCell>{invoice.unit_number || "-"}</TableCell>
-                          <TableCell>{formatDate(invoice.issue_date)}</TableCell>
-                          <TableCell>
-                            <StatusBadge status={status} />
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatMoney(invoice.total)}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => navigate(`/invoices/view/${invoice.id}`)}>
-                                <FileText className="mr-2 h-4 w-4" />
-                                View Invoice
-                              </DropdownMenuItem>
-                              {/* <DropdownMenuItem onClick={() => handleSendWhatsapp(invoice)}>
-                                <Send className="mr-2 h-4 w-4" />
-                                Send via WhatsApp
-                              </DropdownMenuItem> */}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600" onClick={() => {
-                                  setInvoiceToDelete(invoice);
-                                  setDeleteDialogOpen(true);
-                                }}>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                        <TableHead>Unit #</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="w-[80px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredInvoices.map(invoice => {
+                        const status = invoice.status;
+                        return (
+                          <TableRow key={invoice.id}>
+                            <TableCell>
+                              <div
+                                className="font-medium cursor-pointer text-blue-600"
+                                onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
+                              >
+                                {invoice.reference_number}
+                              </div>
+                            </TableCell>
+                            <TableCell>{invoice.unit_number || "-"}</TableCell>
+                            <TableCell>{formatDate(invoice.issue_date)}</TableCell>
+                            <TableCell>
+                              <StatusBadge status={status} />
+                            </TableCell>
+                            {/* 👇 Removed Payment Status cell */}
+                            <TableCell className="text-right font-medium">
+                              {formatMoney(invoice.total)}
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => navigate(`/invoices/view/${invoice.id}`)}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    View Invoice
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={() => {
+                                      setInvoiceToDelete(invoice);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </div>
