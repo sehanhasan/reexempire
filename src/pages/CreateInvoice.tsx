@@ -327,6 +327,7 @@ export default function CreateInvoice() {
         
         // Navigate to view page
         navigate(`/invoices/view/${createdInvoice.id}`);
+        return; // Exit early to avoid navigating to /invoices
       } else {
         toast({
           title: "Invoice Created",

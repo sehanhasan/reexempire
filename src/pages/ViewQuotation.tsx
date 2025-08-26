@@ -135,24 +135,29 @@ export default function ViewQuotation() {
       const options = {
         margin: [5, 5, 5, 5],
         filename: `quotation-${quotation.reference_number}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
+        image: {
+          type: "jpeg",
+          quality: 0.95
+        },
         html2canvas: {
           scale: 1.5,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: '#ffffff',
+          backgroundColor: "#ffffff",
           scrollX: 0,
           scrollY: 0,
           height: element.scrollHeight,
-          width: element.scrollWidth,
+          width: element.scrollWidth
         },
         jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait',
-          compress: true,
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+          compress: true
         },
-        pagebreak: { mode: 'avoid-all' },
+        pagebreak: {
+          mode: "avoid-all"
+        }
       };
 
       await html2pdf().set(options).from(element).save();
@@ -444,13 +449,13 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Print Button Only */}
+          {/* Save as PDF Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
             <Button
               onClick={() => window.print()}
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
             >
-              Print
+              Save as PDF
             </Button>
           </div>
         </div>

@@ -119,15 +119,17 @@ export default function Customers() {
       
       {!isMobile && (
         <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search customers..."
-              className="pl-10 h-10"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
+          <div className="overflow-x-auto">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search customers..."
+                className="pl-10 h-10"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -207,8 +209,8 @@ export default function Customers() {
                 </TableHeader>
                 <TableBody>
                   {filteredCustomers.map(customer => (
-                    <TableRow key={customer.id} className="h-12">
-                      <TableCell className="py-2">
+                    <TableRow key={customer.id} className="h-10">
+                      <TableCell className="py-1">
                         <div className="flex items-center">
                           <User className="h-4 w-4 mr-2 text-blue-600" />
                           <span className="font-medium cursor-pointer text-blue-600" onClick={() => handleView(customer)}>

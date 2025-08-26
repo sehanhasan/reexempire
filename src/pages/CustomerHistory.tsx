@@ -147,8 +147,8 @@ export default function CustomerHistory() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {quotations.map(quotation => <TableRow key={quotation.id} className="h-12">
-                        <TableCell className="font-medium py-2">
+                    {quotations.map(quotation => <TableRow key={quotation.id} className="h-10">
+                        <TableCell className="font-medium py-1">
                           <button 
                             onClick={() => navigate(`/quotations/view/${quotation.id}`)}
                             className="text-blue-600 hover:underline cursor-pointer"
@@ -202,8 +202,8 @@ export default function CustomerHistory() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {invoices.map(invoice => <TableRow key={invoice.id} className="h-12">
-                        <TableCell className="font-medium py-2">
+                    {invoices.map(invoice => <TableRow key={invoice.id} className="h-10">
+                        <TableCell className="font-medium py-1">
                           <button 
                             onClick={() => navigate(`/invoices/view/${invoice.id}`)}
                             className="text-blue-600 hover:underline cursor-pointer"
