@@ -279,8 +279,13 @@ export default function Invoices() {
   }, [searchTerm]);
 
   return (
-    <div className="page-container">
-      <PageHeader title="Invoices" actions={<div className="hidden md:block"></div>} />
+    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+      <PageHeader title="Invoices" actions={!isMobile ? 
+        <Button onClick={() => navigate("/invoices/create")} className="bg-blue-600 hover:bg-blue-700">
+          <FilePlus className="mr-2 h-4 w-4" />
+          Create Invoice
+        </Button> : undefined
+      } />
 
       <div className="mt-1">
         <div className="p-0">

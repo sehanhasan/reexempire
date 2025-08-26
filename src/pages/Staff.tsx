@@ -11,8 +11,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { staffService } from "@/services";
 import { Staff } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 export default function StaffPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -109,8 +111,13 @@ export default function StaffPage() {
         <span className="ml-2 text-lg">Loading staff...</span>
       </div>;
   }
-  return <div className="page-container">
-      <PageHeader title="Staff" description="Manage your team members." />
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+      <PageHeader title="Staff Members" actions={!isMobile ? 
+        <Button onClick={() => navigate("/staff/add")} className="bg-blue-600 hover:bg-blue-700">
+          <Users className="mr-2 h-4 w-4" />
+          Add Staff Member
+        </Button> : undefined
+      } />
       
       <div className="mt-2">
         {filteredStaff.length === 0 ? <div className="text-center py-12">

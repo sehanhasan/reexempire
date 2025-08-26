@@ -286,7 +286,7 @@ export default function EditQuotation() {
   };
 
   if (isLoading) {
-    return <div className="page-container">
+    return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
         <PageHeader title="Edit Quotation" />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
@@ -294,7 +294,7 @@ export default function EditQuotation() {
       </div>;
   }
 
-  return <div className="page-container">
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <PageHeader title="Edit Quotation" actions={<div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
             <Button variant="outline" onClick={() => navigate("/quotations")}>
               <ArrowLeft className="mr-2 h-4 w-4" />

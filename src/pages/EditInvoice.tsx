@@ -464,7 +464,7 @@ export default function EditInvoice() {
   };
 
   if (isLoading) {
-    return <div className="page-container">
+    return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
         <PageHeader title="Edit Invoice" />
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
@@ -472,7 +472,7 @@ export default function EditInvoice() {
       </div>;
   }
 
-  return <div className="page-container">
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <PageHeader 
         title="Edit Invoice"
         actions={

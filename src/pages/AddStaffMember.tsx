@@ -10,10 +10,12 @@ import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { staffService } from "@/services";
 import { Staff } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 export default function AddStaffMember() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const staffId = searchParams.get("id");
+  const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [staffData, setStaffData] = useState<Partial<Staff>>({
@@ -114,7 +116,7 @@ export default function AddStaffMember() {
       setIsLoading(false);
     }
   };
-  return <div className="page-container">
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <PageHeader title={isEdit ? "Edit Staff Member" : "Add Staff Member"} actions={<Button variant="outline" onClick={() => navigate("/staff")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Staff

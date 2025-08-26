@@ -15,9 +15,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import "../styles/mobile-card.css";
 import { Category } from "@/types/database";
 import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Categories() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [showSubcategories, setShowSubcategories] = useState(false);
@@ -229,23 +231,13 @@ export default function Categories() {
   const totalSubcategories = categories.reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0);
 
   return (
-    <div className="page-container">
-      <PageHeader
-        title="Service Categories"
-        description="Organize your services into categories and subcategories."
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
-              <FolderOpen className="mr-1 h-3 w-3" />
-              {categories.length} Categories
-            </Badge>
-            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-              <Tag className="mr-1 h-3 w-3" />
-              {totalSubcategories} Subcategories
-            </Badge>
-          </div>
-        }
-      />
+    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+      <PageHeader title="Categories" actions={!isMobile ? 
+        <Button onClick={() => navigate("/categories/add")} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Category
+        </Button> : undefined
+      } />
 
       <div className="mt-2">
         <Card className="shadow-sm border-0 bg-white">

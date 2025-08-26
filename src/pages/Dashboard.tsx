@@ -361,7 +361,7 @@ export default function Dashboard() {
         </Card>
       </div>
     </div>;
-  return <div className="page-container min-h-screen bg-slate-50">
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <div className="">
         {/* Fixed Tab Navigation */}
         <div className="mb-4">

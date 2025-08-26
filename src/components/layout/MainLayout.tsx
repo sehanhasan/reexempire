@@ -4,6 +4,7 @@ import { MobileHeader } from "./MobileHeader";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/auth/LoadingSpinner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -22,8 +23,7 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
     onSearchChange: (value: string) => void;
     placeholder?: string;
   } | null>(null);
-  // Always treat as mobile - force mobile layout
-  const isMobile = true;
+  const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isStaff, isLoading, signOut } = useAuth();
@@ -144,7 +144,7 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
           searchProps={mobileSearchProps}
         />
         
-        <main className="px-0 pt-16 pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50">
+        <main className={`${isMobile ? 'px-0 pt-16' : 'px-6 pt-6'} pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50`}>
           {children}
         </main>
       </div>

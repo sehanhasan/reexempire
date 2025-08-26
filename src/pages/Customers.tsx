@@ -10,9 +10,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { customerService } from "@/services";
 import { Customer } from "@/types/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 export default function Customers() {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -102,8 +104,13 @@ export default function Customers() {
         <span className="ml-2 text-lg">Loading customers...</span>
       </div>;
   }
-  return <div className="page-container">
-      <PageHeader title="Customers" description="Manage your customer database." />
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+      <PageHeader title="Customers" actions={!isMobile ? 
+        <Button onClick={() => navigate("/customers/add")} className="bg-blue-600 hover:bg-blue-700">
+          <User className="mr-2 h-4 w-4" />
+          Add Customer
+        </Button> : undefined
+      } />
       
       <div className="mt-2">
         {filteredCustomers.length === 0 ? <div className="text-center py-12">

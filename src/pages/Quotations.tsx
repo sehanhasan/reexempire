@@ -251,8 +251,13 @@ export default function Quotations() {
       window.dispatchEvent(new CustomEvent('clear-mobile-search'));
     };
   }, [searchTerm]);
-  return <div className="page-container">
-      <PageHeader title="Quotations" actions={<div className="hidden md:block"></div>} />
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+      <PageHeader title="Quotations" actions={!isMobile ? 
+        <Button onClick={() => navigate("/quotations/create")} className="bg-blue-600 hover:bg-blue-700">
+          <FilePlus className="mr-2 h-4 w-4" />
+          Create Quotation
+        </Button> : undefined
+      } />
 
         <CardContent className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">

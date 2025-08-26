@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubcategoryForm {
   id?: string;
@@ -24,6 +25,7 @@ export default function AddCategory() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const categoryId = searchParams.get("id");
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState({
     name: "",
@@ -207,7 +209,7 @@ export default function AddCategory() {
     }
   };
 
-  return <div className="page-container">
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <PageHeader title={edit ? "Edit Category" : "Add Category"} actions={<Button variant="outline" onClick={() => navigate("/categories")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
