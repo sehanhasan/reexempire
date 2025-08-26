@@ -34,7 +34,7 @@ const StatusBadge = ({
       bgColor = 'bg-gray-100';
       textColor = 'text-gray-700';
       break;
-    case 'Sent':
+    case 'Unpaid':
       bgColor = 'bg-blue-100';
       textColor = 'text-blue-700';
       break;
@@ -67,7 +67,7 @@ const StatusIcon = ({
   switch (status) {
     case 'Draft':
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
-    case 'Sent':
+    case 'Unpaid':
       return <Send className="h-3.5 w-3.5 mr-1 text-blue-600" />;
     case 'Paid':
       return <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-600" />;
@@ -129,11 +129,17 @@ export default function Invoices() {
     fetchData();
   }, []);
 
+  const getDisplayStatus = (inv: InvoiceWithCustomer) => {
+    if (inv.payment_status === 'Partially Paid') return 'Partial';
+    if (inv.status === 'Sent') return 'Unpaid';
+    return inv.status;
+  };
+
   useEffect(() => {
     let filtered = [...invoices];
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter(invoice => invoice.status.toLowerCase() === statusFilter.toLowerCase());
+      filtered = filtered.filter(invoice => getDisplayStatus(invoice).toLowerCase() === statusFilter.toLowerCase());
     }
 
     if (paymentStatusFilter !== "all") {
@@ -279,49 +285,49 @@ export default function Invoices() {
   }, [searchTerm]);
 
   return (
-    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      {!isMobile && (
-        <PageHeader title="Invoices" actions={
-          <Button onClick={() => navigate("/invoices/create")} className="bg-blue-600 hover:bg-blue-700">
-            <FilePlus className="mr-2 h-4 w-4" />
-            Create Invoice
-          </Button>
-        } />
-      )}
+      <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+        {!isMobile && (
+          <PageHeader title="Invoices" actions={
+            <Button onClick={() => navigate("/invoices/create")} className="bg-blue-600 hover:bg-blue-700">
+              <FilePlus className="mr-2 h-4 w-4" />
+              Create Invoice
+            </Button>
+          } />
+        )}
 
-      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
-        <div className="p-0">
-          <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-            {!isMobile && (
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search invoices..."
-                  className="pl-10 h-10"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
+        <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
+          <div className="p-0">
+            <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+              {!isMobile && (
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search invoices..."
+                    className="pl-10 h-10"
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="w-full sm:w-60">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="partial">Partial</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            )}
 
-            <div className="w-full sm:w-60">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
-
-          </div>
 
           {loading ? (
             <div className="py-8 text-center bg-slate-100">
@@ -336,7 +342,7 @@ export default function Invoices() {
               {isMobile ? (
                 <div className="p-2 space-y-3">
                   {filteredInvoices.map(invoice => {
-                    const status = invoice.status;
+                    const status = (invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
                     return (
                       <div
                         key={invoice.id}
@@ -354,7 +360,7 @@ export default function Invoices() {
                             </div>
                           </div>
                           <div className="flex items-center">
-                            <Badge className={`flex items-center ${status === 'Paid' ? 'bg-green-100 text-green-700' : status === 'Sent' ? 'bg-blue-100 text-blue-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                            <Badge className={`flex items-center ${status === 'Paid' ? 'bg-green-100 text-green-700' : status === 'Unpaid' ? 'bg-blue-100 text-blue-700' : status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
                               <StatusIcon status={status} />
                               {status}
                             </Badge>
@@ -442,7 +448,7 @@ export default function Invoices() {
                     </TableHeader>
                     <TableBody>
                       {filteredInvoices.map(invoice => {
-                        const status = invoice.status;
+                        const status = (invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
                         return (
                           <TableRow key={invoice.id}>
                             <TableCell>

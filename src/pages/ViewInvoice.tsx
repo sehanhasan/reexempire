@@ -175,8 +175,9 @@ export default function ViewInvoice() {
   };
   const getStatusColor = status => {
     if (status === "Paid") return "bg-green-100 text-green-800 hover:bg-green-100";
-    if (status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+    if (status === "Partial" || status === "Partially Paid") return "bg-amber-100 text-amber-800 hover:bg-amber-100";
     if (status === "Overdue") return "bg-red-100 text-red-600 hover:bg-red-100";
+    if (status === "Unpaid") return "bg-blue-100 text-blue-800 hover:bg-blue-100";
     return "bg-amber-100 text-amber-800 hover:bg-amber-100";
   };
   if (loading) {
@@ -199,6 +200,7 @@ export default function ViewInvoice() {
   const today = new Date();
   const isPastDue = dueDate < today && invoice.payment_status !== "Paid";
   const displayPaymentStatus = isPastDue && invoice.payment_status === "Unpaid" ? "Overdue" : invoice.payment_status;
+  const displayPaymentStatusLabel = displayPaymentStatus === "Partially Paid" ? "Partial" : displayPaymentStatus;
   const groupedItems = {};
   items.forEach(item => {
     const category = item.category || "Other Items";
@@ -235,8 +237,8 @@ export default function ViewInvoice() {
               <div>
                 <div className="mb-3">
                   <h1 className="text-xl font-bold text-gray-900">Invoice #{invoice.reference_number}</h1>
-                  <Badge className={`mb-1 ${getStatusColor(displayPaymentStatus)}`}>
-                    {displayPaymentStatus}
+                  <Badge className={`mb-1 ${getStatusColor(displayPaymentStatusLabel)}`}>
+                    {displayPaymentStatusLabel}
                   </Badge>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issued:</strong> {format(new Date(invoice.issue_date), "MMM dd, yyyy")}</p>

@@ -95,6 +95,18 @@ const create = async (invoice: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>
     let invoiceData = { ...invoice };
     if (!invoiceData.reference_number) {
       invoiceData.reference_number = await generateUniqueReferenceNumber(invoiceData.is_deposit_invoice || false);
+    } else {
+      // Enforce suffix rules based on invoice type
+      if (invoiceData.is_deposit_invoice) {
+        // Remove any existing suffix then ensure -D
+        invoiceData.reference_number = invoiceData.reference_number.replace(/-[A-Z]$/i, '');
+        if (!invoiceData.reference_number.endsWith('-D')) {
+          invoiceData.reference_number = `${invoiceData.reference_number}-D`;
+        }
+      } else {
+        // Normal invoices should not carry deposit/due suffixes
+        invoiceData.reference_number = invoiceData.reference_number.replace(/-[A-Z]$/i, '');
+      }
     }
 
     const { data, error } = await supabase
@@ -160,18 +172,37 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
       throw new Error("No due amount remaining for this deposit invoice");
     }
 
-    // Generate next sequential reference number for due invoice
+    // Generate next sequential reference number for due invoice based on deposit invoice's sequence
     const now = new Date();
     const year = now.getFullYear();
     
-    // Get all invoices to find the next sequence number
-    const allInvoices = await getAll();
-    const currentYearInvoices = allInvoices.filter(inv => 
-      inv.reference_number?.startsWith(`INV-${year}`)
-    );
+    // Parse deposit invoice reference and increment sequence by 1
+    const parseResult = depositInvoice.reference_number?.match(/^INV-(\d{4})-(\d{4})(?:-[A-Z])?$/);
+    let seq = 1;
+    if (parseResult) {
+      const refYear = parseInt(parseResult[1], 10);
+      const refSeq = parseInt(parseResult[2], 10);
+      seq = refYear === year ? refSeq + 1 : 1;
+    }
     
-    const nextSequence = currentYearInvoices.length + 1;
-    const dueReferenceNumber = `INV-${year}-${nextSequence.toString().padStart(4, '0')}-F`;
+    // Ensure uniqueness by incrementing until no collision
+    let dueReferenceNumber = `INV-${year}-${seq.toString().padStart(4, '0')}-F`;
+    while (true) {
+      const { data: existing, error: checkError } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('reference_number', dueReferenceNumber)
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('InvoiceService: Error checking due invoice ref:', checkError);
+        throw new Error(`Error checking due invoice reference: ${checkError.message}`);
+      }
+      
+      if (!existing) break;
+      seq += 1;
+      dueReferenceNumber = `INV-${year}-${seq.toString().padStart(4, '0')}-F`;
+    }
 
     const dueInvoiceData = {
       quotation_id: depositInvoice.quotation_id,

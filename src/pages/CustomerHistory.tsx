@@ -105,7 +105,7 @@ export default function CustomerHistory() {
             <CardTitle className="text-lg text-cyan-600">Customer Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Name</p>
                 <p className="font-medium">{customer.name}</p>
@@ -122,6 +122,14 @@ export default function CustomerHistory() {
                   <p className="text-sm text-muted-foreground">Email</p>
                   <p className="font-medium">{customer.email}</p>
                 </div>}
+              <div>
+                <p className="text-sm text-muted-foreground">Quotations</p>
+                <p className="font-medium">{quotations.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Invoices</p>
+                <p className="font-medium">{invoices.length}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -213,8 +221,8 @@ export default function CustomerHistory() {
                         </TableCell>
                         <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
                         <TableCell>
-                          <Badge className={getStatusColor(invoice.status)}>
-                            {invoice.status}
+                          <Badge className={getStatusColor((invoice.payment_status === 'Partially Paid') ? 'partial' : (invoice.status === 'Sent' ? 'unpaid' : invoice.status))}>
+                            {(invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status)}
                           </Badge>
                         </TableCell>
                         <TableCell>

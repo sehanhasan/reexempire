@@ -116,12 +116,21 @@ export default function Schedule() {
   // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
     if (activeTab === "upcoming") {
-      return ["Confirmed", "Scheduled", "Pending", "In Progress"].includes(appointment.status) && appointment.status !== "Cancelled";
+      return ["Confirmed", "Scheduled", "Pending"].includes(appointment.status) && appointment.status !== "Cancelled";
+    } else if (activeTab === "in_progress") {
+      return appointment.status === "In Progress";
     } else if (activeTab === "completed") {
       return appointment.status === "Completed" || appointment.status === "Cancelled";
     }
     return true;
   });
+
+  // Counts for tabs
+  const counts = {
+    upcoming: appointments.filter(a => ["Confirmed", "Scheduled", "Pending"].includes(a.status) && a.status !== "Cancelled").length,
+    inProgress: appointments.filter(a => a.status === "In Progress").length,
+    completed: appointments.filter(a => a.status === "Completed" || a.status === "Cancelled").length,
+  };
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       {!isMobile && <PageHeader title="Schedule" actions={<Button onClick={() => navigate("/schedule/add")} className="bg-blue-600 hover:bg-blue-700">
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -131,10 +140,13 @@ export default function Schedule() {
       <div className="mt-0">
         <div className="flex border-b bg-white border-gray-200 rounded-t-lg">
           <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
-            Upcoming
+            Upcoming ({counts.upcoming})
+          </button>
+          <button onClick={() => setActiveTab("in_progress")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "in_progress" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+            In Progress ({counts.inProgress})
           </button>
           <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
-            Completed
+            Completed ({counts.completed})
           </button>
         </div>
         
