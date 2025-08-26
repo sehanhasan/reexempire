@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { Edit, Trash, Loader2, Mail, Phone, MapPin, Users, Calendar, Search } from "lucide-react";
+import { Edit, Trash, Loader2, Mail, Phone, MapPin, Users, Calendar, Search, MoreHorizontal } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -137,8 +139,9 @@ export default function StaffPage() {
         </div>
       )}
       
-      <div className="mt-2">
-        {filteredStaff.length === 0 ? <div className="text-center py-12">
+      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
+        {filteredStaff.length === 0 ? (
+          <div className="py-8 text-center">
             <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-lg">
               {searchTerm ? "No staff members found matching your search." : "No staff members found."}
@@ -146,47 +149,123 @@ export default function StaffPage() {
             {!searchTerm && <p className="text-muted-foreground text-sm mt-2">
                 Get started by adding your first team member.
               </p>}
-          </div> : <div className="px-2 space-y-4">
-            {filteredStaff.map(staffMember => <Card key={staffMember.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(staffMember)}>
-                <CardContent className="p-0">
-                  <div className="p-2 border-b bg-blue-50/30">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Users className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-blue-700">
-                            {staffMember.name}
-                          </h3>
-                          {staffMember.position && <p className="text-sm text-muted-foreground">{staffMember.position}</p>}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            {isMobile ? (
+              <div className="px-2 space-y-4">
+                {filteredStaff.map(staffMember => (
+                  <Card key={staffMember.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(staffMember)}>
+                    <CardContent className="p-0">
+                      <div className="p-2 border-b bg-blue-50/30">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Users className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-blue-700">
+                                {staffMember.name}
+                              </h3>
+                              {staffMember.position && <p className="text-sm text-muted-foreground">{staffMember.position}</p>}
+                            </div>
+                          </div>
+                          {getStatusBadge(staffMember.status || "Active")}
                         </div>
                       </div>
-                      {getStatusBadge(staffMember.status || "Active")}
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 space-y-3">
-                    {staffMember.phone && <div className="flex items-center text-sm">
-                        <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">{staffMember.phone}</span>
-                      </div>}
-                    {staffMember.email && <div className="flex items-center text-sm">
-                        <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <a href={`mailto:${staffMember.email}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
-                          {staffMember.email}
-                        </a>
-                      </div>}
-                    {staffMember.join_date && <div className="flex items-center text-sm">
-                        <Calendar className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">
-                          Joined: {new Date(staffMember.join_date).toLocaleDateString()}
-                        </span>
-                      </div>}
-                  </div>
-                </CardContent>
-              </Card>)}
-          </div>}
+                      
+                      <div className="p-4 space-y-3">
+                        {staffMember.phone && <div className="flex items-center text-sm">
+                            <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">{staffMember.phone}</span>
+                          </div>}
+                        {staffMember.email && <div className="flex items-center text-sm">
+                            <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
+                            <a href={`mailto:${staffMember.email}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
+                              {staffMember.email}
+                            </a>
+                          </div>}
+                        {staffMember.join_date && <div className="flex items-center text-sm">
+                            <Calendar className="h-4 w-4 mr-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              Joined: {new Date(staffMember.join_date).toLocaleDateString()}
+                            </span>
+                          </div>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Join Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredStaff.map(staffMember => (
+                    <TableRow key={staffMember.id}>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-2 text-blue-600" />
+                          <span className="font-medium cursor-pointer text-blue-600" onClick={() => handleView(staffMember)}>
+                            {staffMember.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staffMember.position || "-"}</TableCell>
+                      <TableCell>{staffMember.phone || "-"}</TableCell>
+                      <TableCell>
+                        {staffMember.email ? (
+                          <a href={`mailto:${staffMember.email}`} className="text-blue-600 hover:underline">
+                            {staffMember.email}
+                          </a>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {staffMember.join_date ? new Date(staffMember.join_date).toLocaleDateString() : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(staffMember.status || "Active")}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleView(staffMember)}>
+                              <Users className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(staffMember)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(staffMember)}>
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        )}
       </div>
 
       {selectedStaff && <Dialog open={showDetails} onOpenChange={open => {

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Edit, MoreHorizontal, Trash, ChevronRight, FolderOpen, Plus, Tag, Loader2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "@/services/categoryService";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, closeDropdown } from "@/components/ui/dropdown-menu";
@@ -241,18 +242,86 @@ export default function Categories() {
         } />
       )}
 
-      <div className="mt-2">
-        <Card className={`shadow-sm border-0 ${!isMobile ? 'bg-white' : ''}`}>
-          <CardContent className="p-0">
-            <DataTable
-              columns={columns}
-              data={categories}
-              searchKey="name"
-              renderCustomMobileCard={renderCustomMobileCard}
-              emptyMessage="No categories found. Add your first service category to get started."
-            />
-          </CardContent>
-        </Card>
+      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
+        {categories.length === 0 ? (
+          <div className="py-8 text-center">
+            <Tag className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-lg">No categories found.</p>
+            <p className="text-muted-foreground text-sm mt-2">
+              Add your first service category to get started.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            {isMobile ? (
+              <div className="p-2 space-y-3">
+                {categories.map(category => renderCustomMobileCard(category))}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Subcategories</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categories.map(category => (
+                    <TableRow key={category.id}>
+                      <TableCell>
+                        <div
+                          className="flex items-center font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => handleEditCategory(category)}
+                        >
+                          <FolderOpen className="mr-2 h-4 w-4 text-blue-500" />
+                          {category.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
+                            {category.subcategories?.length || 0} items
+                          </Badge>
+                          {(category.subcategories?.length || 0) > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
+                              onClick={() => handleViewSubcategories(category)}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[160px]">
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditCategory(category)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDeleteCategory(category)}>
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        )}
       </div>
 
       <AlertDialog

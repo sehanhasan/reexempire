@@ -5,7 +5,9 @@ import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { Edit, Trash, Loader2, Mail, Phone, MapPin, User, Search } from "lucide-react";
+import { Edit, Trash, Loader2, Mail, Phone, MapPin, User, Search, MoreHorizontal } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -130,8 +132,9 @@ export default function Customers() {
         </div>
       )}
       
-      <div className="mt-2">
-        {filteredCustomers.length === 0 ? <div className="text-center py-12">
+      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
+        {filteredCustomers.length === 0 ? (
+          <div className="py-8 text-center">
             <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-lg">
               {searchTerm ? "No customers found matching your search." : "No customers found."}
@@ -139,51 +142,135 @@ export default function Customers() {
             {!searchTerm && <p className="text-muted-foreground text-sm mt-2">
                 Get started by adding your first customer.
               </p>}
-          </div> : <div className="space-y-4 px-2">
-            {filteredCustomers.map(customer => <Card key={customer.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(customer)}>
-                <CardContent className="p-0">
-                  <div className="p-2 border-b bg-blue-50/30">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-blue-700">
-                            {customer.unit_number && <span className="text-blue-700">#{customer.unit_number} - </span>}
-                            {customer.name}
-                          </h3>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            {isMobile ? (
+              <div className="p-2 space-y-3">
+                {filteredCustomers.map(customer => (
+                  <Card key={customer.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(customer)}>
+                    <CardContent className="p-0">
+                      <div className="p-2 border-b bg-blue-50/30">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-blue-700">
+                                {customer.unit_number && <span className="text-blue-700">#{customer.unit_number} - </span>}
+                                {customer.name}
+                              </h3>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 space-y-3">
-                    {customer.phone && <div className="flex items-center text-sm">
-                        <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <a href={`https://wa.me/${customer.phone.replace(/^\+/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
-                          {customer.phone}
-                        </a>
-                      </div>}
-                    {customer.email && <div className="flex items-center text-sm">
-                        <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
-                        <a href={`mailto:${customer.email}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
-                          {customer.email}
-                        </a>
-                      </div>}
-                    {customer.address && <div className="flex items-start text-sm">
-                        <MapPin className="h-4 w-4 mr-3 mt-1 text-muted-foreground" />
-                        <span className="text-muted-foreground">
-                          {customer.address}
-                          {customer.city && `, ${customer.city}`}
-                          {customer.state && `, ${customer.state}`}
-                          {customer.postal_code && ` ${customer.postal_code}`}
-                        </span>
-                      </div>}
-                  </div>
-                </CardContent>
-              </Card>)}
-          </div>}
+                      
+                      <div className="p-4 space-y-3">
+                        {customer.phone && <div className="flex items-center text-sm">
+                            <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
+                            <a href={`https://wa.me/${customer.phone.replace(/^\+/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
+                              {customer.phone}
+                            </a>
+                          </div>}
+                        {customer.email && <div className="flex items-center text-sm">
+                            <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
+                            <a href={`mailto:${customer.email}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
+                              {customer.email}
+                            </a>
+                          </div>}
+                        {customer.address && <div className="flex items-start text-sm">
+                            <MapPin className="h-4 w-4 mr-3 mt-1 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              {customer.address}
+                              {customer.city && `, ${customer.city}`}
+                              {customer.state && `, ${customer.state}`}
+                              {customer.postal_code && ` ${customer.postal_code}`}
+                            </span>
+                          </div>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Unit #</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCustomers.map(customer => (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-2 text-blue-600" />
+                          <span className="font-medium cursor-pointer text-blue-600" onClick={() => handleView(customer)}>
+                            {customer.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{customer.unit_number || "-"}</TableCell>
+                      <TableCell>
+                        {customer.phone ? (
+                          <a href={`https://wa.me/${customer.phone.replace(/^\+/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            {customer.phone}
+                          </a>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {customer.email ? (
+                          <a href={`mailto:${customer.email}`} className="text-blue-600 hover:underline">
+                            {customer.email}
+                          </a>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate">
+                          {customer.address ? `${customer.address}${customer.city ? `, ${customer.city}` : ''}${customer.state ? `, ${customer.state}` : ''}` : "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleView(customer)}>
+                              <User className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(customer)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate("/quotations/create", { state: { customerId: customer.id } })}>
+                              <Mail className="mr-2 h-4 w-4" />
+                              Create Quotation
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(customer)}>
+                              <Trash className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        )}
       </div>
 
       {selectedCustomer && <Dialog open={showDetails} onOpenChange={open => {
