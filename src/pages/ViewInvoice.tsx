@@ -360,15 +360,7 @@ export default function ViewInvoice() {
 
           {/* Print Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
-            <Button onClick={() => {
-              // Add print margins to body before printing
-              document.body.style.margin = '0.2in 0.2in';
-              window.print();
-              // Reset margins after printing
-              setTimeout(() => {
-                document.body.style.margin = '';
-              }, 100);
-            }} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
+            <Button onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
               Save as PDF
             </Button>
           </div>

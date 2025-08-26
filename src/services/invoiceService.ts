@@ -11,7 +11,7 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
   do {
     const sequence = counter.toString().padStart(4, '0');
     referenceNumber = isDepositInvoice 
-      ? `INV-${year}-${sequence}-D`
+      ? `INV-${year}-${sequence}-A`
       : `INV-${year}-${sequence}`;
     
     console.log(`InvoiceService: Checking reference number: ${referenceNumber}`);
@@ -161,11 +161,8 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
     }
 
     // Create the due invoice with proper reference number format
-    const baseRefNumber = depositInvoice.reference_number.replace('-D', '');
-    const baseSequence = parseInt(baseRefNumber.split('-')[2]);
-    const year = new Date().getFullYear();
-    const nextSequence = (baseSequence + 1).toString().padStart(4, '0');
-    const dueReferenceNumber = `INV-${year}-${nextSequence}-F`;
+    const baseRefNumber = depositInvoice.reference_number.replace('-A', '');
+    const dueReferenceNumber = `${baseRefNumber}-B`;
 
     const dueInvoiceData = {
       quotation_id: depositInvoice.quotation_id,

@@ -47,9 +47,9 @@ export function AdditionalInfoForm({
     // Then navigate to the view page
     if (documentId) {
       if (documentType === 'quotation') {
-        window.open(`/quotations/view/${documentId}`, '_blank');
+        navigate(`/quotations/view/${documentId}`);
       } else {
-        window.open(`/invoices/view/${documentId}`, '_blank');
+        navigate(`/invoices/view/${documentId}`);
       }
     }
   };
