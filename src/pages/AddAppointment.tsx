@@ -436,7 +436,7 @@ export default function AddAppointment() {
                 />
               </div>
               
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label className="block mb-2">Attach Images</Label>
                 <div className="flex items-center gap-2">
                   <Label 
@@ -479,7 +479,7 @@ export default function AddAppointment() {
                     ))}
                   </div>
                 )}
-              </div>
+              </div> */}
               
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
