@@ -35,7 +35,7 @@ export default function AddCustomer() {
   return (
     <div className="page-container">
       <PageHeader
-        title={isEditing ? `Edit Customer: ${customerName}` : "Add Customer"}
+        title={isEditing ? `Edit Customer` : "Add Customer"}
         description={isEditing ? "Update customer information" : "Add a new customer to the system."}
         actions={
           <Button variant="outline" onClick={() => navigate("/customers")}>
