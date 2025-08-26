@@ -327,7 +327,11 @@ const [depositPaid, setDepositPaid] = useState(0);
                     )}
                     <div className="flex justify-between text-base font-bold border-t pt-1">
                       <span>Total:</span>
-                      <span className="text-blue-600">{formatMoney(invoice.total)}</span>
+                      <span className="text-blue-600">{formatMoney(
+                        !invoice.is_deposit_invoice && depositPaid > 0 
+                          ? invoice.total - depositPaid 
+                          : invoice.total
+                      )}</span>
                     </div>
                   </div>
                 </div>
