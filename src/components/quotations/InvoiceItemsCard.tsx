@@ -146,7 +146,7 @@ export function InvoiceItemsCard({
               Add Item
             </Button>
             
-            <Button type="button" variant="outline" onClick={() => setShowCategorySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10`}>
+            <Button type="button" onClick={() => setShowCategorySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white`}>
               <FolderOpen className="mr-1 h-3.5 w-3.5" />
               Select from Categories
             </Button>
