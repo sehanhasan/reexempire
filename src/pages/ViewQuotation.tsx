@@ -384,7 +384,7 @@ export default function ViewQuotation() {
               {!isAccepted && (
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle className="text-base text-gray-800">Customer Acceptance</CardTitle>
+                    <CardTitle className="font-medium text-sm text-muted-foreground mb-2">Customer Acceptance</CardTitle>
                   </CardHeader>
                   <CardContent>
                     {/* Static acceptance fields */}
@@ -395,24 +395,24 @@ export default function ViewQuotation() {
                       
                       <div className="space-y-3">
                         <div>
-                          {/* <label className="text-sm font-medium text-gray-700">Signature</label> */}
+                          <label className="text-sm font-medium text-gray-700">Signature</label>
                           <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px]">
-                            <p className="text-sm text-gray-500 text-center mt-6">Signature</p>
+                            {/* <p className="text-sm text-gray-500 text-center mt-6">Signature</p> */}
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            {/* <label className="text-sm font-medium text-gray-700">Name</label> */}
+                            <label className="text-sm font-medium text-gray-700">Name</label>
                             <div className="mt-1 p-2 border border-gray-300 rounded min-h-[40px]">
-                              <p className="text-sm text-gray-500">Name</p>
+                              {/* <p className="text-sm text-gray-500">Name</p> */}
                             </div>
                           </div>
                           
                           <div>
-                            {/* <label className="text-sm font-medium text-gray-700">Date</label> */}
+                            <label className="text-sm font-medium text-gray-700">Date</label>
                             <div className="mt-1 p-2 border border-gray-300 rounded min-h-[40px]">
-                              <p className="text-sm text-gray-500">Date</p>
+                              {/* <p className="text-sm text-gray-500">Date</p> */}
                             </div>
                           </div>
                         </div>
