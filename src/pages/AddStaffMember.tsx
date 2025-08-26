@@ -122,9 +122,6 @@ export default function AddStaffMember() {
         <Card>
             <CardHeader>
               <CardTitle className="text-lg text-cyan-600">Staff Information</CardTitle>
-                <CardDescription>
-                  Enter the basic information about staff member.
-                </CardDescription>
             </CardHeader>
           <CardContent className="space-y-4 mt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
