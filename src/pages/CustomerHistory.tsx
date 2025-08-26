@@ -96,10 +96,7 @@ export default function CustomerHistory() {
       </div>;
   }
   return <div className="page-container">
-      <PageHeader title={`Customer History`} description="View all quotations and invoices for this customer" actions={<Button variant="outline" onClick={() => navigate("/customers")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Customers
-          </Button>} />
+      <PageHeader title={`Customer History`} description="View all quotations and invoices for this customer" />
 
       <div className="mt-6 space-y-6">
         {/* Customer Summary */}

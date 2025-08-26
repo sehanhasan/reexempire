@@ -37,12 +37,6 @@ export default function AddCustomer() {
       <PageHeader
         title={isEditing ? `Edit Customer` : "Add Customer"}
         description={isEditing ? "Update customer information" : "Add a new customer to the system."}
-        actions={
-          <Button variant="outline" onClick={() => navigate("/customers")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Customers
-          </Button>
-        }
       />
       
       <div className="mt-2">

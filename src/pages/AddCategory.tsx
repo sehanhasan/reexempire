@@ -210,10 +210,7 @@ export default function AddCategory() {
   };
 
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader title={edit ? "Edit Category" : "Add Category"} actions={<Button variant="outline" onClick={() => navigate("/categories")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>} />
+      <PageHeader title={edit ? "Edit Category" : "Add Category"} />
       
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mt-6">
