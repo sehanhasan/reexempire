@@ -74,16 +74,8 @@ export default function AddCustomerForm({
     // Remove all non-numeric characters except +
     let cleaned = number.replace(/[^\d+]/g, '');
     
-    // If it doesn't start with +60 and is not empty, add +60
-    if (cleaned && !cleaned.startsWith('+60')) {
-      // Remove leading + if exists but not +60
-      if (cleaned.startsWith('+')) {
-        cleaned = cleaned.substring(1);
-      }
-      // Remove leading 60 if exists (to avoid +6060)
-      if (cleaned.startsWith('60')) {
-        cleaned = cleaned.substring(2);
-      }
+    // Only add +60 if there's no country code already
+    if (cleaned && !cleaned.startsWith('+')) {
       cleaned = '+60' + cleaned;
     }
     
