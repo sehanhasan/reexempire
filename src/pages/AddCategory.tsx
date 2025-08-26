@@ -238,8 +238,8 @@ export default function AddCategory() {
             </CardHeader>
             <CardContent className="space-y-6">
               {subcategories.filter(sub => !sub.deleted).map((subcategory, index) => <div key={typeof subcategory.tempId === 'string' ? subcategory.tempId : subcategory.tempId.toString()} className="space-y-4 pb-4 border-b last:border-b-0">
-                  <div className="flex justify-between items-center bg-gray-100 px-2 rounded-lg">
-                    <h3 className="font-medium text-base">Subcategory {index + 1}</h3>
+                  <div className="flex justify-between items-center bg-gray-100 px-2 rounded-md">
+                    <h3 className="font-medium text-muted-foreground">Subcategory {index + 1}</h3>
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeSubcategory(index)} disabled={subcategories.length === 1 && !edit}>
                       <Trash className="h-4 w-4 text-red-500" />
                     </Button>
