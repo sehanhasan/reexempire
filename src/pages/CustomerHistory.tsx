@@ -108,7 +108,7 @@ export default function CustomerHistory() {
             <CardTitle className="text-lg text-cyan-600">Customer Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 md:grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Name</p>
                 <p className="font-medium">{customer.name}</p>
