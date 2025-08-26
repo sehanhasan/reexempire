@@ -456,7 +456,6 @@ export default function AddAppointment() {
                   />
                 </div>
                 
-                {/* Image preview */}
                 {imageURLs.length > 0 && (
                   <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
                     {imageURLs.map((url, idx) => (
