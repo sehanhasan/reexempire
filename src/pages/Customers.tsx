@@ -276,12 +276,9 @@ export default function Customers() {
       setShowDetails(open);
       if (!open) setSelectedCustomer(null);
     }}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md pb-4">
             <DialogHeader>
               <DialogTitle>Customer Details</DialogTitle>
-              <DialogDescription>
-                Complete information about this customer.
-              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
@@ -354,13 +351,6 @@ export default function Customers() {
                 </Button>
                 <Button variant="outline" onClick={() => setShowDetails(false)}>
                   Close
-                </Button>
-                <Button variant="destructive" onClick={() => {
-              setShowDetails(false);
-              if (selectedCustomer) handleDeleteClick(selectedCustomer);
-            }}>
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
                 </Button>
               </div>
             </DialogFooter>
