@@ -479,7 +479,7 @@ export default function ViewQuotation() {
           </div>
 
           {/* Download & Print Buttons */}
-          <div className="text-center flex gap-4 justify-center">
+          <div className="text-center flex gap-4 justify-center print:hidden">
             <Button 
               onClick={handleDownloadPDF}
               disabled={isDownloading}

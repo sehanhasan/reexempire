@@ -297,7 +297,7 @@ export function ItemsTable({
                       <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                     </td>
                     <td className="py-3 px-2">
-                      <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-right h-10" />
+                      <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-left h-10" />
                     </td>
                     <td className="py-3 px-2">
                       <div className="relative">
@@ -305,7 +305,7 @@ export function ItemsTable({
                           type="number" 
                           min="0" 
                           step="0.01" 
-                          className="text-right h-10" 
+                          className="text-left h-10" 
                           value={item.unitPrice === 0 ? '' : item.unitPrice} 
                           placeholder="0.00"
                           onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 

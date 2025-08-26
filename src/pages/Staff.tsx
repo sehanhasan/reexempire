@@ -115,14 +115,6 @@ export default function StaffPage() {
       </div>;
   }
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      {!isMobile && (
-        <PageHeader title="Staff Members" actions={
-          <Button onClick={() => navigate("/staff/add")} className="bg-blue-600 hover:bg-blue-700">
-            <Users className="mr-2 h-4 w-4" />
-            Add Staff Member
-          </Button>
-        } />
-      )}
       
       {!isMobile && (
         <div className="mb-4">
