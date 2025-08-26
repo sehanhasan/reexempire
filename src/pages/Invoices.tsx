@@ -436,7 +436,6 @@ export default function Invoices() {
                       <TableHead>Unit #</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Payment Status</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead className="w-[80px]">Actions</TableHead>
                     </TableRow>
@@ -456,7 +455,6 @@ export default function Invoices() {
                           <TableCell>
                             <StatusBadge status={status} />
                           </TableCell>
-                          <TableCell>{invoice.payment_status}</TableCell>
                           <TableCell className="text-right font-medium">
                             {formatMoney(invoice.total)}
                           </TableCell>
