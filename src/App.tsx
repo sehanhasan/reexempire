@@ -16,6 +16,7 @@ import CreateInvoice from "./pages/CreateInvoice";
 import EditInvoice from "./pages/EditInvoice";
 import Customers from "./pages/Customers";
 import AddCustomer from "./pages/AddCustomer";
+import CustomerHistory from "./pages/CustomerHistory";
 import Staff from "./pages/Staff";
 import AddStaffMember from "./pages/AddStaffMember";
 import EditStaffMember from "./pages/EditStaffMember";
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/customers/add" element={<AddCustomer />} />
+                <Route path="/customers/history/:id" element={<CustomerHistory />} />
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/staff/add" element={<AddStaffMember />} />
                 <Route path="/staff/edit/:id" element={<EditStaffMember />} />

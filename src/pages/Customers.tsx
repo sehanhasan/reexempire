@@ -5,7 +5,7 @@ import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { Edit, Trash, Loader2, Mail, Phone, MapPin, User, Search, MoreHorizontal } from "lucide-react";
+import { Edit, Trash, Loader2, Mail, Phone, MapPin, User, Search, MoreHorizontal, FileText } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -255,6 +255,10 @@ export default function Customers() {
                             <DropdownMenuItem onClick={() => navigate("/quotations/create", { state: { customerId: customer.id } })}>
                               <Mail className="mr-2 h-4 w-4" />
                               Create Quotation
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/customers/history/${customer.id}`)}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              View History
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(customer)}>

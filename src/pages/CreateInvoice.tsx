@@ -49,8 +49,9 @@ export default function CreateInvoice() {
   const [isDepositInvoice, setIsDepositInvoice] = useState(false);
   const [depositAmount, setDepositAmount] = useState(0);
   const [depositPercentage, setDepositPercentage] = useState(30); // Default 30%
-  const [quotationReference, setQuotationReference] = useState("");
-  const [quotationId, setQuotationId] = useState<string | null>(null);
+    const [quotationReference, setQuotationReference] = useState("");
+    const [quotationId, setQuotationId] = useState<string | null>(null);
+    const [quotationDepositAmount, setQuotationDepositAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -145,14 +146,16 @@ export default function CreateInvoice() {
               }));
               setItems(mappedItems);
               
-              // Set deposit amount based on quotation
-              if (quotation.requires_deposit) {
-                const total = mappedItems.reduce((sum, item) => {
-                  const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
-                  return sum + (qty * item.unitPrice);
-                }, 0);
-                setDepositAmount(total * ((quotation.deposit_percentage || 30) / 100));
-              }
+            // Set deposit amount based on quotation
+            if (quotation.requires_deposit) {
+              const total = mappedItems.reduce((sum, item) => {
+                const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
+                return sum + (qty * item.unitPrice);
+              }, 0);
+              const calculatedDepositAmount = total * ((quotation.deposit_percentage || 30) / 100);
+              setDepositAmount(calculatedDepositAmount);
+              setQuotationDepositAmount(calculatedDepositAmount);
+            }
             }
             
             toast({
@@ -404,6 +407,7 @@ export default function CreateInvoice() {
           depositPercentage={depositPercentage}
           setDepositPercentage={setDepositPercentage}
           calculateItemAmount={calculateItemAmount}
+          quotationDepositAmount={quotationDepositAmount}
         />
         
         <Card>

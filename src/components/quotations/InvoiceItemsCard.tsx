@@ -22,6 +22,7 @@ interface InvoiceItemsCardProps {
   depositPercentage: number;
   setDepositPercentage: React.Dispatch<React.SetStateAction<number>>;
   calculateItemAmount: (item: InvoiceItem) => number;
+  quotationDepositAmount?: number;
 }
 
 export function InvoiceItemsCard({
@@ -33,7 +34,8 @@ export function InvoiceItemsCard({
   setDepositAmount,
   depositPercentage,
   setDepositPercentage,
-  calculateItemAmount
+  calculateItemAmount,
+  quotationDepositAmount
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
@@ -158,6 +160,13 @@ export function InvoiceItemsCard({
                 <span className="font-medium">Subtotal:</span>
                 <span>RM {calculateSubtotal().toFixed(2)}</span>
               </div>
+
+              {quotationDepositAmount && quotationDepositAmount > 0 && !isDepositInvoice && (
+                <div className="flex justify-between py-1 text-sm text-muted-foreground border-t pt-1">
+                  <span>Deposit Paid (from quotation):</span>
+                  <span>RM {quotationDepositAmount.toFixed(2)}</span>
+                </div>
+              )}
 
               {isDepositInvoice && <div className="space-y-2 border-t pt-2 mt-1">
                   <div className="grid grid-cols-2 gap-2">

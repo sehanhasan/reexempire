@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { shareQuotation, shareInvoice } from '@/utils/mobileShare';
+import { useNavigate } from 'react-router-dom';
 
 interface AdditionalInfoFormProps {
   terms?: string;
@@ -37,25 +38,19 @@ export function AdditionalInfoForm({
   isEditMode = false
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const handleSendWithShare = async (e: React.FormEvent) => {
     // First submit the document
     await onSubmit(e, "Sent");
     
-    // Then try to share via mobile if we have the required data
-    if (documentId && documentNumber && customerName) {
-      try {
-        if (documentType === 'quotation') {
-          await shareQuotation(documentId, documentNumber, customerName);
-        } else {
-          await shareInvoice(documentId, documentNumber, customerName);
-        }
-      } catch (error) {
-        console.error(`Error sharing ${documentType}:`, error);
+    // Then navigate to the view page
+    if (documentId) {
+      if (documentType === 'quotation') {
+        navigate(`/quotations/view/${documentId}`);
+      } else {
+        navigate(`/invoices/view/${documentId}`);
       }
-    } else if (onSendWhatsapp) {
-      // Fallback to the provided WhatsApp handler
-      onSendWhatsapp();
     }
   };
 

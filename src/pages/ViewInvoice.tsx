@@ -289,6 +289,12 @@ export default function ViewInvoice() {
                         <span className="font-medium">Deposit Amount:</span>
                         <span>{formatMoney(invoice.deposit_amount)}</span>
                       </div>}
+                    {invoice.quotation_ref_number && !invoice.is_deposit_invoice && (
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Deposit Paid (from {invoice.quotation_ref_number}):</span>
+                        <span>{formatMoney(invoice.deposit_amount || 0)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-base font-bold border-t pt-1">
                       <span>Total:</span>
                       <span className="text-blue-600">{formatMoney(invoice.total)}</span>
