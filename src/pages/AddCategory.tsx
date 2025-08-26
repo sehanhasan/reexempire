@@ -215,12 +215,12 @@ export default function AddCategory() {
       <form onSubmit={handleSubmit}>
         <div className="space-y-6 mt-6">
           <Card>
-            <CardHeader>
+            {/* <CardHeader>
               <CardTitle className="text-lg text-cyan-600">Category Information</CardTitle>
               <CardDescription>
                 Enter the basic information for this category.
               </CardDescription>
-            </CardHeader>
+            </CardHeader> */}
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="name">Category Name*</Label>
