@@ -126,119 +126,168 @@ export default function CustomerHistory() {
           </CardContent>
         </Card>
 
-        {/* Quotations */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center text-cyan-600">
-              <FileText className="mr-2 h-5 w-5" />
-              Quotations ({quotations.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {quotations.length === 0 ? <p className="text-muted-foreground text-center py-4">No quotations found</p> : <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quotations.map(quotation => <TableRow key={quotation.id} className="h-10">
-                        <TableCell className="font-medium py-1">
-                          <button 
-                            onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')}
-                            className="text-blue-600 hover:underline cursor-pointer"
-                          >
-                            {quotation.reference_number}
-                          </button>
-                        </TableCell>
-                        <TableCell>{format(new Date(quotation.issue_date), "MMM dd, yyyy")}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(quotation.status)}>
-                            {quotation.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatMoney(quotation.total)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="icon" variant="ghost" onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')} title="View">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => navigate(`/quotations/edit/${quotation.id}`)} title="Edit">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>)}
-                  </TableBody>
-                </Table>
-              </div>}
-          </CardContent>
-        </Card>
+        {/* Tabs for Quotations and Invoices */}
+        <div className="space-y-6">
+          <div className="bg-white border-b">
+            <nav className="flex space-x-8">
+              <button
+                className="py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600"
+                data-tab="quotations"
+                onClick={() => {
+                  const invoicesTab = document.getElementById('invoices-tab');
+                  const quotationsTab = document.getElementById('quotations-tab');
+                  if (invoicesTab && quotationsTab) {
+                    quotationsTab.classList.remove('hidden');
+                    invoicesTab.classList.add('hidden');
+                    document.querySelector('[data-tab="quotations"]')?.classList.add('border-blue-500', 'text-blue-600');
+                    document.querySelector('[data-tab="quotations"]')?.classList.remove('border-transparent', 'text-gray-500');
+                    document.querySelector('[data-tab="invoices"]')?.classList.remove('border-blue-500', 'text-blue-600');
+                    document.querySelector('[data-tab="invoices"]')?.classList.add('border-transparent', 'text-gray-500');
+                  }
+                }}
+              >
+                Quotations ({quotations.length})
+              </button>
+              <button
+                className="py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  const invoicesTab = document.getElementById('invoices-tab');
+                  const quotationsTab = document.getElementById('quotations-tab');
+                  if (invoicesTab && quotationsTab) {
+                    invoicesTab.classList.remove('hidden');
+                    quotationsTab.classList.add('hidden');
+                    document.querySelector('[data-tab="invoices"]')?.classList.add('border-blue-500', 'text-blue-600');
+                    document.querySelector('[data-tab="invoices"]')?.classList.remove('border-transparent', 'text-gray-500');
+                    document.querySelector('[data-tab="quotations"]')?.classList.remove('border-blue-500', 'text-blue-600');
+                    document.querySelector('[data-tab="quotations"]')?.classList.add('border-transparent', 'text-gray-500');
+                  }
+                }}
+                data-tab="invoices"
+              >
+                Invoices ({invoices.length})
+              </button>
+            </nav>
+          </div>
 
-        {/* Invoices */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center text-cyan-600">
-              <DollarSign className="mr-2 h-5 w-5" />
-              Invoices ({invoices.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {invoices.length === 0 ? <p className="text-muted-foreground text-center py-4">No invoices found</p> : <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Payment Status</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invoices.map(invoice => <TableRow key={invoice.id} className="h-10">
-                        <TableCell className="font-medium py-1">
-                          <button 
-                            onClick={() => navigate(`/invoices/view/${invoice.id}`)}
-                            className="text-blue-600 hover:underline cursor-pointer"
-                          >
-                            {invoice.reference_number}
-                          </button>
-                        </TableCell>
-                        <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor((invoice.payment_status === 'Partially Paid') ? 'partial' : (invoice.status === 'Sent' ? 'unpaid' : invoice.status))}>
-                            {(invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(invoice.payment_status)}>
-                            {invoice.payment_status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatMoney(invoice.total)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="icon" variant="ghost" onClick={() => navigate(`/invoices/view/${invoice.id}`)} title="View">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => navigate(`/invoices/edit/${invoice.id}`)} title="Edit">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>)}
-                  </TableBody>
-                </Table>
-              </div>}
-          </CardContent>
-        </Card>
+          {/* Quotations Tab */}
+          <Card id="quotations-tab">
+            <CardContent>
+              {quotations.length === 0 ? <p className="text-muted-foreground text-center py-4">No quotations found</p> : <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="h-8">
+                        <TableHead className="py-2">Reference</TableHead>
+                        <TableHead className="py-2">Date</TableHead>
+                        <TableHead className="py-2">Status</TableHead>
+                        <TableHead className="py-2">Total</TableHead>
+                        <TableHead className="w-[100px] py-2">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {quotations.map(quotation => <TableRow key={quotation.id} className="h-8">
+                          <TableCell className="font-medium py-1">
+                            <button 
+                              onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')}
+                              className="text-blue-600 hover:underline cursor-pointer"
+                            >
+                              {quotation.reference_number}
+                            </button>
+                          </TableCell>
+                          <TableCell className="py-1">{format(new Date(quotation.issue_date), "MMM dd, yyyy")}</TableCell>
+                          <TableCell className="py-1">
+                            <Badge className={getStatusColor(quotation.status)}>
+                              {quotation.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-1">{formatMoney(quotation.total)}</TableCell>
+                          <TableCell className="py-1">
+                            <div className="flex gap-1">
+                              <Button size="icon" variant="ghost" onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')} title="View" className="h-6 w-6">
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => navigate(`/quotations/edit/${quotation.id}`)} title="Edit" className="h-6 w-6">
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>)}
+                    </TableBody>
+                  </Table>
+                </div>}
+            </CardContent>
+          </Card>
+
+          {/* Invoices Tab */}
+          <Card id="invoices-tab" className="hidden">
+            <CardContent>
+              {invoices.length === 0 ? <p className="text-muted-foreground text-center py-4">No invoices found</p> : <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="h-8">
+                        <TableHead className="py-2">Reference</TableHead>
+                        <TableHead className="py-2">Date</TableHead>
+                        <TableHead className="py-2">Status</TableHead>
+                        <TableHead className="py-2">Total</TableHead>
+                        <TableHead className="w-[100px] py-2">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invoices.map(invoice => <TableRow key={invoice.id} className="h-8">
+                          <TableCell className="font-medium py-1">
+                            <button 
+                              onClick={() => navigate(`/invoices/view/${invoice.id}`)}
+                              className="text-blue-600 hover:underline cursor-pointer"
+                            >
+                              {invoice.reference_number}
+                            </button>
+                          </TableCell>
+                          <TableCell className="py-1">{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
+                          <TableCell className="py-1">
+                            <Badge className={getStatusColor((invoice.payment_status === 'Partially Paid') ? 'partial' : (invoice.status === 'Sent' ? 'unpaid' : invoice.status))}>
+                              {(invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-1">{formatMoney(invoice.total)}</TableCell>
+                          <TableCell className="py-1">
+                            <div className="flex gap-1">
+                              <Button size="icon" variant="ghost" onClick={() => navigate(`/invoices/view/${invoice.id}`)} title="View" className="h-6 w-6">
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => navigate(`/invoices/edit/${invoice.id}`)} title="Edit" className="h-6 w-6">
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>)}
+                    </TableBody>
+                  </Table>
+                </div>}
+            </CardContent>
+          </Card>
+        </div>
+
+        <script>
+          {`
+            // Add click handlers for tabs
+            document.addEventListener('DOMContentLoaded', function() {
+              const quotationsBtn = document.querySelector('[data-tab="quotations"]');
+              const invoicesBtn = document.querySelector('[data-tab="invoices"]');
+              const quotationsTab = document.getElementById('quotations-tab');
+              const invoicesTab = document.getElementById('invoices-tab');
+              
+              if (quotationsBtn) {
+                quotationsBtn.addEventListener('click', function() {
+                  quotationsTab?.classList.remove('hidden');
+                  invoicesTab?.classList.add('hidden');
+                  quotationsBtn.classList.add('border-blue-500', 'text-blue-600');
+                  quotationsBtn.classList.remove('border-transparent', 'text-gray-500');
+                  invoicesBtn?.classList.remove('border-blue-500', 'text-blue-600');
+                  invoicesBtn?.classList.add('border-transparent', 'text-gray-500');
+                });
+              }
+            });
+          `}
+        </script>
       </div>
     </div>;
 }

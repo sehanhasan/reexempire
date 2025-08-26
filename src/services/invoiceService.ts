@@ -473,6 +473,16 @@ const deleteItemsByInvoiceId = async (invoiceId: string): Promise<void> => {
   }
 };
 
+const updateStatus = async (id: string, status: string): Promise<Invoice | null> => {
+  try {
+    console.log(`InvoiceService: Updating invoice ${id} status to ${status}`);
+    return await update(id, { status });
+  } catch (error) {
+    console.error(`InvoiceService: Error updating invoice status:`, error);
+    throw error;
+  }
+};
+
 const generateWhatsAppShareUrl = (invoiceId: string, referenceNumber: string, customerName: string, invoiceUrl: string): string => {
   const message = `Invoice #${referenceNumber} for ${customerName}\n\nView: ${invoiceUrl}`;
   const encodedMessage = encodeURIComponent(message);
@@ -485,6 +495,7 @@ export const invoiceService = {
   create,
   createDueInvoiceFromDeposit,
   update,
+  updateStatus,
   delete: deleteInvoice,
   getItemsByInvoiceId,
   createItem,
