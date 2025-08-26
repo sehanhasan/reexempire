@@ -276,7 +276,7 @@ export default function Customers() {
       setShowDetails(open);
       if (!open) setSelectedCustomer(null);
     }}>
-          <DialogContent className="sm:max-w-md pb-4">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Customer Details</DialogTitle>
             </DialogHeader>
@@ -327,7 +327,7 @@ export default function Customers() {
                 </div>}
             </div>
             
-            <DialogFooter className="sm:justify-end">
+            <DialogFooter className="sm:justify-between">
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => {
               setShowDetails(false);
