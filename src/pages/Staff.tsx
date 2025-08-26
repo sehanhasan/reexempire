@@ -137,58 +137,56 @@ export default function StaffPage() {
         </div>
       )}
       
-      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
-        <div className="mt-2">
-          {filteredStaff.length === 0 ? <div className="text-center py-12">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-lg">
-                {searchTerm ? "No staff members found matching your search." : "No staff members found."}
-              </p>
-              {!searchTerm && <p className="text-muted-foreground text-sm mt-2">
-                  Get started by adding your first team member.
-                </p>}
-            </div> : <div className="px-2 space-y-4">
-              {filteredStaff.map(staffMember => <Card key={staffMember.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(staffMember)}>
-                  <CardContent className="p-0">
-                    <div className="p-2 border-b bg-blue-50/30">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Users className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-blue-700">
-                              {staffMember.name}
-                            </h3>
-                            {staffMember.position && <p className="text-sm text-muted-foreground">{staffMember.position}</p>}
-                          </div>
+      <div className="mt-2">
+        {filteredStaff.length === 0 ? <div className="text-center py-12">
+            <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-lg">
+              {searchTerm ? "No staff members found matching your search." : "No staff members found."}
+            </p>
+            {!searchTerm && <p className="text-muted-foreground text-sm mt-2">
+                Get started by adding your first team member.
+              </p>}
+          </div> : <div className="px-2 space-y-4">
+            {filteredStaff.map(staffMember => <Card key={staffMember.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(staffMember)}>
+                <CardContent className="p-0">
+                  <div className="p-2 border-b bg-blue-50/30">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
                         </div>
-                        {getStatusBadge(staffMember.status || "Active")}
+                        <div>
+                          <h3 className="font-medium text-blue-700">
+                            {staffMember.name}
+                          </h3>
+                          {staffMember.position && <p className="text-sm text-muted-foreground">{staffMember.position}</p>}
+                        </div>
                       </div>
+                      {getStatusBadge(staffMember.status || "Active")}
                     </div>
-                    
-                    <div className="p-4 space-y-3">
-                      {staffMember.phone && <div className="flex items-center text-sm">
-                          <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
-                          <span className="text-muted-foreground">{staffMember.phone}</span>
-                        </div>}
-                      {staffMember.email && <div className="flex items-center text-sm">
-                          <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
-                          <a href={`mailto:${staffMember.email}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
-                            {staffMember.email}
-                          </a>
-                        </div>}
-                      {staffMember.join_date && <div className="flex items-center text-sm">
-                          <Calendar className="h-4 w-4 mr-3 text-muted-foreground" />
-                          <span className="text-muted-foreground">
-                            Joined: {new Date(staffMember.join_date).toLocaleDateString()}
-                          </span>
-                        </div>}
-                    </div>
-                  </CardContent>
-                </Card>)}
-            </div>}
-        </div>
+                  </div>
+                  
+                  <div className="p-4 space-y-3">
+                    {staffMember.phone && <div className="flex items-center text-sm">
+                        <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{staffMember.phone}</span>
+                      </div>}
+                    {staffMember.email && <div className="flex items-center text-sm">
+                        <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
+                        <a href={`mailto:${staffMember.email}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
+                          {staffMember.email}
+                        </a>
+                      </div>}
+                    {staffMember.join_date && <div className="flex items-center text-sm">
+                        <Calendar className="h-4 w-4 mr-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          Joined: {new Date(staffMember.join_date).toLocaleDateString()}
+                        </span>
+                      </div>}
+                  </div>
+                </CardContent>
+              </Card>)}
+          </div>}
       </div>
 
       {selectedStaff && <Dialog open={showDetails} onOpenChange={open => {

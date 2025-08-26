@@ -241,20 +241,18 @@ export default function Categories() {
         } />
       )}
 
-      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
-        <div className="mt-2">
-          <Card className={`shadow-sm border-0 ${!isMobile ? 'bg-transparent' : ''}`}>
-            <CardContent className="p-0">
-              <DataTable
-                columns={columns}
-                data={categories}
-                searchKey="name"
-                renderCustomMobileCard={renderCustomMobileCard}
-                emptyMessage="No categories found. Add your first service category to get started."
-              />
-            </CardContent>
-          </Card>
-        </div>
+      <div className="mt-2">
+        <Card className={`shadow-sm border-0 ${!isMobile ? 'bg-white' : ''}`}>
+          <CardContent className="p-0">
+            <DataTable
+              columns={columns}
+              data={categories}
+              searchKey="name"
+              renderCustomMobileCard={renderCustomMobileCard}
+              emptyMessage="No categories found. Add your first service category to get started."
+            />
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog
