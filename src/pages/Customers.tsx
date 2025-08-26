@@ -209,7 +209,7 @@ export default function Customers() {
                 </TableHeader>
                 <TableBody>
                   {filteredCustomers.map(customer => (
-                    <TableRow key={customer.id} className="h-8">
+                    <TableRow key={customer.id} className="h-10">
                       <TableCell className="py-1">
                         <div className="flex items-center">
                           <User className="h-4 w-4 mr-2 text-blue-600" />
