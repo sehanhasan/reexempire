@@ -146,7 +146,7 @@ export function MainLayout({ children, searchProps }: MainLayoutProps) {
           />
         )}
         
-        <main className={`${isMobile ? 'px-0 pt-16' : 'px-6'} pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-50`}>
+        <main className={`${isMobile ? 'px-0 pt-16' : 'px-6'} pb-4 flex-1 max-w-full overflow-x-hidden bg-slate-100`}>
           {children}
         </main>
       </div>
