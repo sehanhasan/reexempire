@@ -342,9 +342,8 @@ export default function CreateInvoice() {
           description: `Invoice for ${customer?.name} has been sent successfully.`,
         });
         
-        // Navigate to view page
-        navigate(`/invoices/view/${createdInvoice.id}`);
-        return; // Exit early to avoid navigating to /invoices
+        // Open view page in new tab
+        window.open(`/invoices/view/${createdInvoice.id}`, '_blank');
       } else {
         toast({
           title: "Invoice Created",
