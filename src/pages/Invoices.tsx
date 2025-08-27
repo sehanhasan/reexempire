@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -440,7 +439,8 @@ export default function Invoices() {
                       <TableRow>
                         <TableHead>Invoice #</TableHead>
                         <TableHead>Unit #</TableHead>
-                        <TableHead>Date</TableHead>
+                        <TableHead>Issue Date</TableHead>
+                        <TableHead>Due Date</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Total</TableHead>
                         <TableHead className="w-[80px]">Actions</TableHead>
@@ -461,6 +461,7 @@ export default function Invoices() {
                             </TableCell>
                             <TableCell>{invoice.unit_number || "-"}</TableCell>
                             <TableCell>{formatDate(invoice.issue_date)}</TableCell>
+                            <TableCell>{formatDate(invoice.due_date)}</TableCell>
                             <TableCell>
                               <StatusBadge status={status} />
                             </TableCell>
