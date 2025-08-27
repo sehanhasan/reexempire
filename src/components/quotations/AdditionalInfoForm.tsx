@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-
+import { useNavigate } from 'react-router-dom';
 
 interface AdditionalInfoFormProps {
   terms?: string;
@@ -38,10 +38,20 @@ export function AdditionalInfoForm({
   isEditMode = false
 }: AdditionalInfoFormProps) {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const handleSendWithShare = async (e: React.FormEvent) => {
-    // First submit the document with Sent status; parent will handle opening the view in a new tab
+    // First submit the document
     await onSubmit(e, "Sent");
+    
+    // Then navigate to the view page in new tab
+    if (documentId) {
+      if (documentType === 'quotation') {
+        window.open(`/quotations/view/${documentId}`, '_blank');
+      } else {
+        window.open(`/invoices/view/${documentId}`, '_blank');
+      }
+    }
   };
 
   const getSendButtonText = () => {
