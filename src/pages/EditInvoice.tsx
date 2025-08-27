@@ -461,7 +461,7 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
         title: "Due Invoice Created",
         description: `Due invoice ${dueInvoice.reference_number} has been created successfully.`
       });
-      navigate(`/invoices/edit/${dueInvoice.id}`);
+      navigate(`/invoices/create/${dueInvoice.id}`);
     } catch (error) {
       console.error("Error creating due invoice:", error);
       toast({
