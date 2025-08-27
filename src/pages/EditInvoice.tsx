@@ -356,8 +356,8 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
           description: `Invoice for ${customer?.name} has been updated and sent successfully.`
         });
         
-        // Navigate to view page
-        navigate(`/invoices/view/${id}`);
+        // Open view page in a new tab only
+        window.open(`/invoices/view/${id}`, '_blank');
         return;
       } else {
         toast({
@@ -454,22 +454,8 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
 
   const createDueInvoice = async () => {
     if (!invoiceData || !invoiceData.is_deposit_invoice) return;
-    
-    try {
-      const dueInvoice = await invoiceService.createDueInvoiceFromDeposit(invoiceData.id);
-      toast({
-        title: "Due Invoice Created",
-        description: `Due invoice ${dueInvoice.reference_number} has been created successfully.`
-      });
-      navigate(`/invoices/edit/${dueInvoice.id}`);
-    } catch (error) {
-      console.error("Error creating due invoice:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create due invoice. Please try again.",
-        variant: "destructive"
-      });
-    }
+    // Navigate to Create Invoice with context to create a Due Invoice from the original quotation
+    navigate('/invoices/create', { state: { quotationId: invoiceData.quotation_id, isDueInvoice: true } });
   };
 
   if (isLoading) {

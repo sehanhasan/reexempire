@@ -30,6 +30,7 @@ interface ExtendedQuotation {
 export default function CreateInvoice() {
   const navigate = useNavigate();
   const location = useLocation();
+  const isDueInvoice = Boolean(location.state?.isDueInvoice);
   const isMobile = useIsMobile();
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: 1, description: "", category: "Other Items", quantity: 1, unit: "", unitPrice: 0, amount: 0 }
@@ -104,20 +105,20 @@ export default function CreateInvoice() {
 
   useEffect(() => {
     const initializeReferenceNumber = async () => {
-      const refNumber = await generateReferenceNumber();
+      const refNumber = await generateReferenceNumber(isDueInvoice);
       setDocumentNumber(refNumber);
     };
     initializeReferenceNumber();
-  }, []);
+  }, [isDueInvoice]);
 
   // Update reference number when deposit status changes
   useEffect(() => {
     const updateReferenceNumber = async () => {
-      const refNumber = await generateReferenceNumber();
+      const refNumber = await generateReferenceNumber(isDueInvoice);
       setDocumentNumber(refNumber);
     };
     updateReferenceNumber();
-  }, [isDepositInvoice]);
+  }, [isDepositInvoice, isDueInvoice]);
 
   useEffect(() => {
     if (customerId) {
@@ -342,8 +343,8 @@ export default function CreateInvoice() {
           description: `Invoice for ${customer?.name} has been sent successfully.`,
         });
         
-        // Navigate to view page
-        navigate(`/invoices/view/${createdInvoice.id}`);
+        // Open view page in a new tab only
+        window.open(`/invoices/view/${createdInvoice.id}`, '_blank');
         return; // Exit early to avoid navigating to /invoices
       } else {
         toast({
