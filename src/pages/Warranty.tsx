@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, MoreHorizontal, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { customerService, invoiceService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 
 export default function Warranty() {
@@ -107,7 +108,12 @@ export default function Warranty() {
       header: "Item Name",
       cell: ({ row }: any) => (
         <div>
-          <div className="font-medium">{row.original.item_name}</div>
+          <button 
+            onClick={() => navigate(`/edit-warranty-item/${row.original.id}`)}
+            className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
+          >
+            {row.original.item_name}
+          </button>
           {row.original.serial_number && (
             <div className="text-sm text-muted-foreground font-mono">#{row.original.serial_number}</div>
           )}
@@ -165,22 +171,27 @@ export default function Warranty() {
       accessorKey: "actions",
       header: "Actions",
       cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`/edit-warranty-item/${row.original.id}`)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => deleteWarrantyMutation.mutate(row.original.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => navigate(`/edit-warranty-item/${row.original.id}`)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="text-red-600" 
+              onClick={() => deleteWarrantyMutation.mutate(row.original.id)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )
     }
   ];
@@ -194,7 +205,7 @@ export default function Warranty() {
       />
 
 
-      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
+      <div className={!isMobile ? "bg-white rounded-lg" : ""}>
         <div className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
             {!isMobile && (
