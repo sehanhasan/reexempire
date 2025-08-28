@@ -26,6 +26,7 @@ import AddAppointment from "./pages/AddAppointment";
 import EditAppointment from "./pages/EditAppointment";
 import PublicAppointment from "./pages/PublicAppointment";
 import Warranty from "./pages/Warranty";
+import AddWarrantyItem from "./pages/AddWarrantyItem";
 import Categories from "./pages/Categories";
 import AddCategory from "./pages/AddCategory";
 import Profile from "./pages/Profile";
@@ -65,6 +66,7 @@ export default function App() {
                 <Route path="/appointments/add" element={<AddAppointment />} />
                 <Route path="/finance" element={<Finance />} />
                 <Route path="/warranty" element={<Warranty />} />
+                <Route path="/add-warranty-item" element={<AddWarrantyItem />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/categories/add" element={<AddCategory />} />
                 <Route path="/profile" element={<Profile />} />
