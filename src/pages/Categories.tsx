@@ -249,99 +249,101 @@ export default function Categories() {
         } />
       )}
 
-      {/* Search bar for desktop */}
-      {!isMobile && (
-        <div className="mb-4 relative max-w-sm">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search categories..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10"
-          />
-        </div>
-      )}
-
       <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
-        {filteredCategories.length === 0 ? (
-          <div className="py-8 text-center">
-            <Tag className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-lg">No categories found.</p>
-            <p className="text-muted-foreground text-sm mt-2">
-              Add your first service category to get started.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            {isMobile ? (
-              <div className="p-2 space-y-3">
-                {filteredCategories.map(category => renderCustomMobileCard(category))}
+        <div className="p-0">
+          <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+            {!isMobile && (
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search categories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-10"
+                />
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Subcategories</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCategories.map(category => (
-                    <TableRow key={category.id}>
-                      <TableCell>
-                        <div
-                          className="flex items-center font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                          onClick={() => handleEditCategory(category)}
-                        >
-                          <FolderOpen className="mr-2 h-4 w-4 text-blue-500" />
-                          {category.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
-                            {category.subcategories?.length || 0} items
-                          </Badge>
-                          {(category.subcategories?.length || 0) > 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
-                              onClick={() => handleViewSubcategories(category)}
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="hover:bg-gray-100">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[160px]">
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditCategory(category)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => handleDeleteCategory(category)}>
-                              <Trash className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             )}
           </div>
-        )}
+
+          {filteredCategories.length === 0 ? (
+            <div className="py-8 text-center">
+              <Tag className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-lg">No categories found.</p>
+              <p className="text-muted-foreground text-sm mt-2">
+                Add your first service category to get started.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              {isMobile ? (
+                <div className="p-2 space-y-3">
+                  {filteredCategories.map(category => renderCustomMobileCard(category))}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Subcategories</TableHead>
+                      <TableHead className="w-[80px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCategories.map(category => (
+                      <TableRow key={category.id} className="h-12">
+                        <TableCell>
+                          <div
+                            className="font-medium cursor-pointer text-blue-600"
+                            onClick={() => handleEditCategory(category)}
+                          >
+                            {category.name}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100">
+                              {category.subcategories?.length || 0} items
+                            </Badge>
+                            {(category.subcategories?.length || 0) > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
+                                onClick={() => handleViewSubcategories(category)}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditCategory(category)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCategory(category)}>
+                                <Trash className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <AlertDialog

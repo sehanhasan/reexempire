@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { DataTable } from "@/components/common/DataTable";
+import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -193,39 +194,43 @@ export default function Warranty() {
       />
 
 
-      {/* Main Content */}
-      <Card className="mt-6">
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle className="text-lg text-cyan-600">Warranty Items</CardTitle>
-            <Button onClick={() => navigate('/add-warranty-item')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Warranty Items
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search by item name, serial #, customer, or invoice #..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
+        <div className="p-0">
+          <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
+            {!isMobile && (
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by item name, serial #, customer, or invoice #..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 h-10"
+                />
+              </div>
+            )}
           </div>
 
-          <DataTable
-            columns={columns}
-            data={filteredWarrantyItems}
-            searchKey="item_name"
-            isLoading={isLoading}
-            emptyMessage="No warranty items found."
-          />
-        </CardContent>
-      </Card>
+          {isLoading ? (
+            <div className="py-8 text-center bg-slate-100">
+              <p className="text-muted-foreground">Loading warranty items...</p>
+            </div>
+          ) : filteredWarrantyItems.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-muted-foreground">No warranty items found.</p>
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredWarrantyItems}
+              searchKey="item_name"
+              isLoading={isLoading}
+              emptyMessage="No warranty items found."
+            />
+          )}
+        </div>
+      </div>
+
+      <FloatingActionButton onClick={() => navigate('/add-warranty-item')} />
     </div>
   );
 }
