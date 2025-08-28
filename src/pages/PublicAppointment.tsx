@@ -183,7 +183,14 @@ export default function PublicAppointment() {
             </div>
             <CardTitle className="text-2xl">Appointment Details</CardTitle>
             <div className="flex items-center justify-center gap-2 mt-2">
-              <Badge variant={getStatusBadgeVariant(overallStatus)} className={getStatusColor(overallStatus)}>
+              <Badge 
+                variant={overallStatus.toLowerCase() === 'confirmed' ? 'default' : overallStatus.toLowerCase() === 'completed' ? 'default' : 'secondary'} 
+                className={
+                  overallStatus.toLowerCase() === 'confirmed' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                  overallStatus.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                  'bg-amber-100 text-amber-800 border-amber-200'
+                }
+              >
                 {overallStatus}
               </Badge>
             </div>
@@ -265,18 +272,37 @@ export default function PublicAppointment() {
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <h3 className="font-semibold">{staff.name}</h3>
-                          <div className="flex gap-2 mt-1">
-                            {staff.hasStarted && (
-                              <Badge variant="secondary" className="text-amber-600">
-                                In Progress
-                              </Badge>
-                            )}
-                            {staff.hasCompleted && (
-                              <Badge variant="default" className="text-green-600">
-                                Completed
-                              </Badge>
-                            )}
-                          </div>
+                           <div className="flex gap-2 mt-1">
+                             {staff.hasStarted && (
+                               <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200">
+                                 In Progress
+                               </Badge>
+                             )}
+                             {staff.hasCompleted && (
+                               <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                                 Completed
+                               </Badge>
+                             )}
+                           </div>
+                           {appointment.notes && appointment.notes.includes(`Staff: ${staff.name}`) && (
+                             <div className="mt-2 text-sm text-muted-foreground">
+                               <p className="font-medium">Notes:</p>
+                               <div className="whitespace-pre-wrap">
+                                 {appointment.notes.split('\n').filter((line: string) => 
+                                   line.includes(`Staff: ${staff.name}`) || 
+                                   (appointment.notes.split('\n').indexOf(line) > appointment.notes.split('\n').findIndex((l: string) => l.includes(`Staff: ${staff.name}`)) && 
+                                    !line.includes('Staff:') && line.trim() !== '')
+                                 ).map((line: string, index: number) => {
+                                   if (line.startsWith('image_url:')) return null;
+                                   return (
+                                     <p key={index} className="mb-1">
+                                       {line.replace(`Staff: ${staff.name}`, '').trim()}
+                                     </p>
+                                   );
+                                 })}
+                               </div>
+                             </div>
+                           )}
                         </div>
                         <div className="flex gap-2">
                           {!staff.hasStarted && (
@@ -315,17 +341,18 @@ export default function PublicAppointment() {
           </CardContent>
         </Card>
 
-        {/* Notes */}
-        {appointment.notes && (
+        {/* General Notes */}
+        {appointment.notes && appointment.notes.split('\n').some((line: string) => !line.includes('Staff:') && !line.startsWith('image_url:') && line.trim() !== '') && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-cyan-600">Notes</CardTitle>
+              <CardTitle className="text-lg text-cyan-600">General Notes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="whitespace-pre-wrap text-sm">
                 {appointment.notes.split('\n').map((line: string, index: number) => {
-                  // Skip image URLs in notes display
-                  if (line.startsWith('image_url:')) return null;
+                  // Skip image URLs and staff-specific notes
+                  if (line.startsWith('image_url:') || line.includes('Staff:')) return null;
+                  if (line.trim() === '') return null;
                   return (
                     <p key={index} className="mb-2">
                       {line}

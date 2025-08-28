@@ -171,16 +171,6 @@ export default function AddWarrantyItem() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/warranty')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <PageHeader
-          title="Add Warranty Items"
-          description="Add new warranty items for customers"
-        />
-      </div>
 
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
@@ -264,72 +254,72 @@ export default function AddWarrantyItem() {
                             </Button>
                           )}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.issue_date`}
-                            render={({ field }) => (
-                              <FormItem className="flex flex-col">
-                                <FormLabel>Issue Date</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant="outline"
-                                        className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                      >
-                                        {field.value ? (
-                                          format(field.value, "PPP")
-                                        ) : (
-                                          <span>Pick a date</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                      mode="single"
-                                      selected={field.value}
-                                      onSelect={field.onChange}
-                                      initialFocus
-                                      className="p-3 pointer-events-auto"
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           <FormField
+                             control={form.control}
+                             name={`items.${index}.item_name`}
+                             render={({ field }) => (
+                               <FormItem>
+                                 <FormLabel>Item Name</FormLabel>
+                                 <FormControl>
+                                   <Input {...field} placeholder="Enter item name" />
+                                 </FormControl>
+                                 <FormMessage />
+                               </FormItem>
+                             )}
+                           />
 
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.item_name`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Item Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="Enter item name" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                           <FormField
+                             control={form.control}
+                             name={`items.${index}.serial_number`}
+                             render={({ field }) => (
+                               <FormItem>
+                                 <FormLabel>Serial Number</FormLabel>
+                                 <FormControl>
+                                   <Input {...field} placeholder="Enter serial number" />
+                                 </FormControl>
+                                 <FormMessage />
+                               </FormItem>
+                             )}
+                           />
 
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.serial_number`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Serial Number</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="Enter serial number" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                           <FormField
+                             control={form.control}
+                             name={`items.${index}.issue_date`}
+                             render={({ field }) => (
+                               <FormItem className="flex flex-col">
+                                 <FormLabel>Issue Date</FormLabel>
+                                 <Popover>
+                                   <PopoverTrigger asChild>
+                                     <FormControl>
+                                       <Button
+                                         variant="outline"
+                                         className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                       >
+                                         {field.value ? (
+                                           format(field.value, "PPP")
+                                         ) : (
+                                           <span>Pick a date</span>
+                                         )}
+                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                       </Button>
+                                     </FormControl>
+                                   </PopoverTrigger>
+                                   <PopoverContent className="w-auto p-0" align="start">
+                                     <Calendar
+                                       mode="single"
+                                       selected={field.value}
+                                       onSelect={field.onChange}
+                                       initialFocus
+                                       className="p-3 pointer-events-auto"
+                                     />
+                                   </PopoverContent>
+                                 </Popover>
+                                 <FormMessage />
+                               </FormItem>
+                             )}
+                           />
+                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           <FormField
