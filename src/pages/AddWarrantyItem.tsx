@@ -287,8 +287,8 @@ export default function AddWarrantyItem() {
                              control={form.control}
                              name={`items.${index}.issue_date`}
                              render={({ field }) => (
-                               <FormItem className="flex flex-col">
-                                 <FormLabel>Issue Date</FormLabel>
+                                <FormItem>
+                                  <FormLabel>Issue Date</FormLabel>
                                  <Popover>
                                    <PopoverTrigger asChild>
                                      <FormControl>
@@ -353,8 +353,8 @@ export default function AddWarrantyItem() {
                               control={form.control}
                               name={`items.${index}.end_date`}
                               render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                  <FormLabel>End Date</FormLabel>
+                                 <FormItem>
+                                   <FormLabel>End Date</FormLabel>
                                   <Popover>
                                     <PopoverTrigger asChild>
                                       <FormControl>

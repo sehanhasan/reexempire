@@ -7,17 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, Download, TrendingUp, DollarSign, Eye } from "lucide-react";
+import { Search, Calendar, Download, TrendingUp, DollarSign, Eye, CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { invoiceService, customerService } from "@/services";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Finance() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
+  const [selectedMonth, setSelectedMonth] = useState("this-month");
+  const [customDateRange, setCustomDateRange] = useState<{from?: Date; to?: Date}>({});
 
   const isMobile = useIsMobile();
 
@@ -36,12 +37,29 @@ export default function Finance() {
   // Filter paid invoices based on search and month
   const filteredInvoices = invoices.filter(invoice => {
     // Only show paid invoices
-    if (invoice.payment_status !== 'Paid') return false;
+    if (invoice.payment_status !== 'paid' && invoice.payment_status !== 'Paid') return false;
 
-    // Month filter - "all" means show all months
+    // Month filter
     if (selectedMonth && selectedMonth !== 'all') {
-      const invoiceMonth = new Date(invoice.issue_date).toISOString().slice(0, 7);
-      if (invoiceMonth !== selectedMonth) return false;
+      const invoiceDate = new Date(invoice.issue_date);
+      const now = new Date();
+      
+      if (selectedMonth === 'this-month') {
+        const thisMonth = now.toISOString().slice(0, 7);
+        const invoiceMonth = invoiceDate.toISOString().slice(0, 7);
+        if (invoiceMonth !== thisMonth) return false;
+      } else if (selectedMonth === 'last-month') {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
+        const invoiceMonth = invoiceDate.toISOString().slice(0, 7);
+        if (invoiceMonth !== lastMonth) return false;
+      } else if (selectedMonth === 'this-year') {
+        const thisYear = now.getFullYear();
+        const invoiceYear = invoiceDate.getFullYear();
+        if (invoiceYear !== thisYear) return false;
+      } else if (selectedMonth === 'custom') {
+        if (customDateRange.from && invoiceDate < customDateRange.from) return false;
+        if (customDateRange.to && invoiceDate > customDateRange.to) return false;
+      }
     }
 
     // Search filter
@@ -67,15 +85,15 @@ export default function Finance() {
   const previousMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7);
   
   const todayRevenue = invoices
-    .filter(inv => inv.payment_status === 'Paid' && inv.issue_date === today)
+    .filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && inv.issue_date === today)
     .reduce((sum, inv) => sum + Number(inv.total), 0);
   
   const currentMonthRevenue = invoices
-    .filter(inv => inv.payment_status === 'Paid' && new Date(inv.issue_date).toISOString().slice(0, 7) === currentMonth)
+    .filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && new Date(inv.issue_date).toISOString().slice(0, 7) === currentMonth)
     .reduce((sum, inv) => sum + Number(inv.total), 0);
     
   const previousMonthRevenue = invoices
-    .filter(inv => inv.payment_status === 'Paid' && new Date(inv.issue_date).toISOString().slice(0, 7) === previousMonth)
+    .filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && new Date(inv.issue_date).toISOString().slice(0, 7) === previousMonth)
     .reduce((sum, inv) => sum + Number(inv.total), 0);
 
   const growthPercentage = previousMonthRevenue > 0 
@@ -216,26 +234,60 @@ export default function Finance() {
             </div>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Select month" />
+                <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="this-month">This Month</SelectItem>
+                <SelectItem value="last-month">Last Month</SelectItem>
+                <SelectItem value="this-year">This Year</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
                 <SelectItem value="all">All Time</SelectItem>
-                {Array.from({ length: 12 }, (_, i) => {
-                  const date = new Date();
-                  date.setMonth(date.getMonth() - i);
-                  const value = date.toISOString().slice(0, 7);
-                  const label = date.toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long' 
-                  });
-                  return (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  );
-                })}
               </SelectContent>
             </Select>
+            {selectedMonth === 'custom' && (
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-[140px] justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDateRange.from ? format(customDateRange.from, "PPP") : "From"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={customDateRange.from}
+                      onSelect={(date) => setCustomDateRange(prev => ({...prev, from: date}))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-[140px] justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customDateRange.to ? format(customDateRange.to, "PPP") : "To"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={customDateRange.to}
+                      onSelect={(date) => setCustomDateRange(prev => ({...prev, to: date}))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
             <Button variant="outline" onClick={() => console.log('Export functionality coming soon')}>
               <Download className="h-4 w-4 mr-2" />
               Export
