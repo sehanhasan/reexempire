@@ -174,7 +174,7 @@ export default function AddWarrantyItem() {
 
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-lg text-cyan-600">Warranty Information</CardTitle>
+          <CardTitle className="text-cyan-600">Warranty Information</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>

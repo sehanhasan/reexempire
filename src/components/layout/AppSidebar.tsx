@@ -51,6 +51,11 @@ export function AppSidebar({
     href: "/invoices",
     adminOnly: true
   }, {
+    title: "Warranty",
+    icon: <Shield className="h-5 w-5" />,
+    href: "/warranty",
+    adminOnly: true
+  }, {
     title: "Finance",
     icon: <DollarSign className="h-5 w-5" />,
     href: "/finance",
@@ -61,11 +66,6 @@ export function AppSidebar({
     href: "/schedule",
     adminOnly: false
   }, {
-    title: "Warranty",
-    icon: <Shield className="h-5 w-5" />,
-    href: "/warranty",
-    adminOnly: true
-  }, {
     title: "Staff",
     icon: <UserCircle className="h-5 w-5" />,
     href: "/staff",
@@ -74,6 +74,11 @@ export function AppSidebar({
     title: "Categories",
     icon: <FolderTree className="h-5 w-5" />,
     href: "/categories",
+    adminOnly: true
+  }, {
+    title: "Finance",
+    icon: <DollarSign className="h-5 w-5" />,
+    href: "/finance",
     adminOnly: true
   }];
 
