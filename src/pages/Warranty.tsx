@@ -135,7 +135,7 @@ export default function Warranty() {
 
         return {
           customer_id: data.customer_id,
-          invoice_id: data.invoice_id || null,
+          invoice_id: data.invoice_id && data.invoice_id !== "no-invoice" ? data.invoice_id : null,
           item_name: item.item_name,
           serial_number: item.serial_number || null,
           issue_date: format(data.issue_date, 'yyyy-MM-dd'),
@@ -382,7 +382,7 @@ export default function Warranty() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">No invoice</SelectItem>
+                                <SelectItem value="no-invoice">No invoice</SelectItem>
                                 {invoices.map((invoice) => (
                                   <SelectItem key={invoice.id} value={invoice.id}>
                                     {invoice.reference_number}
