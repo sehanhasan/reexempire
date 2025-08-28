@@ -233,13 +233,6 @@ export default function PublicAppointment() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Customer</p>
-                  <p className="font-medium">{customer?.name || 'Unknown'}</p>
-                </div>
-              </div>
             </div>
 
             {appointment.description && (
