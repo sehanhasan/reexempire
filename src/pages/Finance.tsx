@@ -58,12 +58,17 @@ export default function Finance() {
     return true;
   });
 
-  // Calculate total revenue for the selected period
+  // Calculate revenue metrics
   const totalRevenue = filteredInvoices.reduce((sum, invoice) => sum + Number(invoice.total), 0);
 
-  // Get current and previous month data for comparison
+  // Get today, current month, and previous month data
+  const today = new Date().toISOString().slice(0, 10);
   const currentMonth = new Date().toISOString().slice(0, 7);
   const previousMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7);
+  
+  const todayRevenue = invoices
+    .filter(inv => inv.payment_status === 'Paid' && inv.issue_date === today)
+    .reduce((sum, inv) => sum + Number(inv.total), 0);
   
   const currentMonthRevenue = invoices
     .filter(inv => inv.payment_status === 'Paid' && new Date(inv.issue_date).toISOString().slice(0, 7) === currentMonth)
@@ -149,15 +154,15 @@ export default function Finance() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Selected Period Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Today</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(totalRevenue)}
+              {formatCurrency(todayRevenue)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {filteredInvoices.length} paid invoices
+              Today's revenue
             </p>
           </CardContent>
         </Card>
@@ -165,7 +170,7 @@ export default function Finance() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">This Month</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

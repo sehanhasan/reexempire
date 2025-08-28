@@ -418,19 +418,6 @@ export default function AddAppointment() {
               <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="notes" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Notes
-                </Label>
-                <Textarea 
-                  id="notes" 
-                  placeholder="Enter any additional notes" 
-                  rows={4} 
-                  value={notes} 
-                  onChange={e => setNotes(e.target.value)} 
-                />
-              </div>
               
               {/* <div className="space-y-2">
                 <Label className="block mb-2">Attach Images</Label>
