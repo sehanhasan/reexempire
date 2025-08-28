@@ -164,7 +164,7 @@ export function QuotationItemsCard({
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4">
-          <CardTitle className="text-lg text-cyan-600">Items</CardTitle>
+          <CardTitle className="text-lg text-cyan-600">Itemss</CardTitle>
         </CardHeader>
         <CardContent className="py-3 px-4">
           <div className={`flex ${isMobile ? "flex-col" : "flex-wrap"} gap-2 mb-3`}>
@@ -189,16 +189,13 @@ export function QuotationItemsCard({
               </div>
               
               {/* Show deposit paid amount for due invoices */}
-              {quotationDepositAmount !== undefined && quotationDepositAmount > 0 && (
-                <div className="flex justify-between py-1.5 text-sm text-muted-foreground">
+              {quotationDepositAmount !== undefined && quotationDepositAmount > 0 && <div className="flex justify-between py-1.5 text-sm text-muted-foreground">
                   <span>Deposit Paid:</span>
                   <span>-RM {quotationDepositAmount.toFixed(2)}</span>
-                </div>
-              )}
+                </div>}
 
               {/* Deposit Section - Hide for due invoices */}
-              {!(quotationDepositAmount !== undefined && quotationDepositAmount > 0) && (
-                <div className="border-t pt-2 mt-1">
+              {!(quotationDepositAmount !== undefined && quotationDepositAmount > 0) && <div className="border-t pt-2 mt-1">
                   <div className="flex items-center space-x-2 mb-2">
                     <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={handleDepositCheckboxChange} />
                     <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
@@ -229,8 +226,7 @@ export function QuotationItemsCard({
                       <span>RM {(calculateTotal() - depositInfo.depositAmount).toFixed(2)}</span>
                     </div>
                   </div>}
-                </div>
-              )}
+                </div>}
 
               <div className="flex justify-between py-2 border-t mt-1">
                 <span className="font-semibold text-base">Total:</span>
