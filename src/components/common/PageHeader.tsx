@@ -18,7 +18,7 @@ export function PageHeader({
   }
 
   // Hide page headers for specific pages on desktop/tablet
-  const hiddenPages = ['Customers', 'Quotations', 'Invoices', 'Schedule', 'Staff', 'Categories'];
+  const hiddenPages = ['Customers', 'Quotations', 'Invoices', 'Schedule', 'Staff', 'Categories', 'Warranty Management', 'Finance'];
   if (hiddenPages.includes(title)) {
     return null;
   }
