@@ -38,9 +38,11 @@ export default function Finance() {
     // Only show paid invoices
     if (invoice.payment_status !== 'Paid') return false;
 
-    // Month filter
-    const invoiceMonth = new Date(invoice.issue_date).toISOString().slice(0, 7);
-    if (selectedMonth && invoiceMonth !== selectedMonth) return false;
+    // Month filter - "all" means show all months
+    if (selectedMonth && selectedMonth !== 'all') {
+      const invoiceMonth = new Date(invoice.issue_date).toISOString().slice(0, 7);
+      if (invoiceMonth !== selectedMonth) return false;
+    }
 
     // Search filter
     if (searchTerm) {
@@ -212,7 +214,7 @@ export default function Finance() {
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Time</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
                 {Array.from({ length: 12 }, (_, i) => {
                   const date = new Date();
                   date.setMonth(date.getMonth() - i);
