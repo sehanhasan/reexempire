@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X, DollarSign, Shield } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppSidebarProps {
@@ -51,10 +51,20 @@ export function AppSidebar({
     href: "/invoices",
     adminOnly: true
   }, {
+    title: "Finance",
+    icon: <DollarSign className="h-5 w-5" />,
+    href: "/finance",
+    adminOnly: true
+  }, {
     title: "Schedule",
     icon: <Calendar className="h-5 w-5" />,
     href: "/schedule",
     adminOnly: false
+  }, {
+    title: "Warranty",
+    icon: <Shield className="h-5 w-5" />,
+    href: "/warranty",
+    adminOnly: true
   }, {
     title: "Staff",
     icon: <UserCircle className="h-5 w-5" />,

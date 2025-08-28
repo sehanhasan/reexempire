@@ -733,6 +733,51 @@ export type Database = {
         }
         Relationships: []
       }
+      warranty_items: {
+        Row: {
+          created_at: string
+          customer_id: string
+          expiry_date: string | null
+          id: string
+          invoice_id: string | null
+          issue_date: string
+          item_name: string
+          serial_number: string | null
+          updated_at: string
+          warranty_period_type: string
+          warranty_period_unit: string | null
+          warranty_period_value: number | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          expiry_date?: string | null
+          id?: string
+          invoice_id?: string | null
+          issue_date: string
+          item_name: string
+          serial_number?: string | null
+          updated_at?: string
+          warranty_period_type?: string
+          warranty_period_unit?: string | null
+          warranty_period_value?: number | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          expiry_date?: string | null
+          id?: string
+          invoice_id?: string | null
+          issue_date?: string
+          item_name?: string
+          serial_number?: string | null
+          updated_at?: string
+          warranty_period_type?: string
+          warranty_period_unit?: string | null
+          warranty_period_value?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

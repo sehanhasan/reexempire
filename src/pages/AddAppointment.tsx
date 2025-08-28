@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Calendar, User, Check, Image, X, Share2 } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Check, Image, X, Share2, Clock, FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
@@ -418,16 +418,19 @@ export default function AddAppointment() {
               <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
+              <div className="space-y-2">
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Notes
+                </Label>
                 <Textarea 
                   id="notes" 
-                  placeholder="Enter any additional details about this appointment..." 
+                  placeholder="Enter any additional notes" 
                   rows={4} 
                   value={notes} 
                   onChange={e => setNotes(e.target.value)} 
                 />
-              </div> */}
+              </div>
               
               {/* <div className="space-y-2">
                 <Label className="block mb-2">Attach Images</Label>

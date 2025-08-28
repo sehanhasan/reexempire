@@ -14,6 +14,7 @@ import EditQuotation from "./pages/EditQuotation";
 import Invoices from "./pages/Invoices";
 import CreateInvoice from "./pages/CreateInvoice";
 import EditInvoice from "./pages/EditInvoice";
+import Finance from "./pages/Finance";
 import Customers from "./pages/Customers";
 import AddCustomer from "./pages/AddCustomer";
 import CustomerHistory from "./pages/CustomerHistory";
@@ -23,6 +24,8 @@ import EditStaffMember from "./pages/EditStaffMember";
 import Schedule from "./pages/Schedule";
 import AddAppointment from "./pages/AddAppointment";
 import EditAppointment from "./pages/EditAppointment";
+import PublicAppointment from "./pages/PublicAppointment";
+import Warranty from "./pages/Warranty";
 import Categories from "./pages/Categories";
 import AddCategory from "./pages/AddCategory";
 import Profile from "./pages/Profile";
@@ -60,6 +63,8 @@ export default function App() {
                 <Route path="/schedule/add" element={<AddAppointment />} />
                 <Route path="/schedule/edit/:id" element={<EditAppointment />} />
                 <Route path="/appointments/add" element={<AddAppointment />} />
+                <Route path="/finance" element={<Finance />} />
+                <Route path="/warranty" element={<Warranty />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/categories/add" element={<AddCategory />} />
                 <Route path="/profile" element={<Profile />} />
@@ -76,6 +81,9 @@ export default function App() {
               
               {/* Public invoice view route */}
               <Route path="/invoices/view/:id" element={<ViewInvoice />} />
+              
+              {/* Public appointment view route */}
+              <Route path="/appointments/view/:id" element={<PublicAppointment />} />
               
               {/* Catch all route */}
               <Route path="*" element={<NotFound />} />
