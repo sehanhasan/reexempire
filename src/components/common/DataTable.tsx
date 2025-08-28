@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 export interface Column<T> {
   header: string;
   accessorKey: keyof T | string;
@@ -17,6 +18,7 @@ export interface Column<T> {
     };
   }) => React.ReactNode;
 }
+
 interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
@@ -28,6 +30,7 @@ interface DataTableProps<T> {
   onExternalSearchChange?: (value: string) => void;
   onRowClick?: (item: T) => void;
 }
+
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
@@ -85,7 +88,10 @@ export function DataTable<T extends Record<string, any>>({
   };
   const primaryColumn = getPrimaryColumn();
   return <div className="space-y-4">
-      {searchKey && !isMobile && externalSearchTerm === undefined}
+      {searchKey && !isMobile && externalSearchTerm === undefined && <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 max-w-sm h-10" />
+        </div>}
       {searchKey && !isMobile && externalSearchTerm !== undefined && onExternalSearchChange && <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search..." value={externalSearchTerm} onChange={e => onExternalSearchChange(e.target.value)} className="pl-10 max-w-sm h-10" />
@@ -93,8 +99,8 @@ export function DataTable<T extends Record<string, any>>({
       
       {/* Pagination setup */}
       {(() => {
-      return null;
-    })()}
+        return null;
+      })()}
       
       <Card className="shadow-sm overflow-hidden">
         <CardContent className="p-0">
@@ -103,11 +109,11 @@ export function DataTable<T extends Record<string, any>>({
             </div> : filteredData.length === 0 ? <div className="py-6 text-center">
               <p className="text-muted-foreground">{emptyMessage}</p>
             </div> : (() => {
-          // Client-side pagination when records exceed 50
-          const pageSize = 50;
-          const [currentPage, setCurrentPage] = [undefined as any, undefined as any];
-          return null;
-        })()}
+              // Client-side pagination when records exceed 50
+              const pageSize = 50;
+              const [currentPage, setCurrentPage] = [undefined as any, undefined as any];
+              return null;
+            })()}
         </CardContent>
       </Card>
     </div>;
