@@ -174,7 +174,7 @@ export default function AddWarrantyItem() {
 
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-cyan-600">Warranty Information</CardTitle>
+          <CardTitle className="text-lg text-cyan-600">Warranty Information</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -221,7 +221,7 @@ export default function AddWarrantyItem() {
                   name="invoice_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Invoice # (Optional)</FormLabel>
+                      <FormLabel>Invoice #</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="Enter invoice number"
