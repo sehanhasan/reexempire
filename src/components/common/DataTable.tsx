@@ -129,7 +129,7 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden">
+      <Card className="shadow-sm overflow-hidden">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-6 text-center">
