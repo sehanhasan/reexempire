@@ -222,7 +222,7 @@ export default function AddCategory() {
               </CardDescription>
             </CardHeader> */}
             <CardContent className="space-y-4 mt-4">
-              <div>
+              <div className="mt-4">
                 <Label htmlFor="name">Category Name*</Label>
                 <Input id="name" name="name" placeholder="e.g. Bathroom Renovation" value={category.name} onChange={handleCategoryChange} required />
               </div>
