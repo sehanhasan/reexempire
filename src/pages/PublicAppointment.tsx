@@ -85,22 +85,34 @@ export default function PublicAppointment() {
     fetchAppointmentData();
   }, [id]);
 
-  const handleStartWork = (staffId: string) => {
-    setStaffMembers(prev => 
-      prev.map(staff => 
-        staff.id === staffId 
-          ? { ...staff, hasStarted: true }
-          : staff
-      )
-    );
-    
-    // If any staff member starts, set overall status to "In Progress"
-    setOverallStatus('In Progress');
-    
-    toast({
-      title: "Work Started",
-      description: "You have started working on this appointment",
-    });
+  const handleStartWork = async (staffId: string) => {
+    try {
+      // Update appointment status in database
+      await appointmentService.update(id!, { status: 'In Progress' });
+      
+      setStaffMembers(prev => 
+        prev.map(staff => 
+          staff.id === staffId 
+            ? { ...staff, hasStarted: true }
+            : staff
+        )
+      );
+      
+      // If any staff member starts, set overall status to "In Progress"
+      setOverallStatus('In Progress');
+      
+      toast({
+        title: "Work Started",
+        description: "You have started working on this appointment",
+      });
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update appointment status",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCompleteWork = (staffId: string) => {
@@ -284,25 +296,25 @@ export default function PublicAppointment() {
                                </Badge>
                              )}
                            </div>
-                           {appointment.notes && appointment.notes.includes(`Staff: ${staff.name}`) && (
-                             <div className="mt-2 text-sm text-muted-foreground">
-                               <p className="font-medium">Notes:</p>
-                               <div className="whitespace-pre-wrap">
-                                 {appointment.notes.split('\n').filter((line: string) => 
-                                   line.includes(`Staff: ${staff.name}`) || 
-                                   (appointment.notes.split('\n').indexOf(line) > appointment.notes.split('\n').findIndex((l: string) => l.includes(`Staff: ${staff.name}`)) && 
-                                    !line.includes('Staff:') && line.trim() !== '')
-                                 ).map((line: string, index: number) => {
-                                   if (line.startsWith('image_url:')) return null;
-                                   return (
-                                     <p key={index} className="mb-1">
-                                       {line.replace(`Staff: ${staff.name}`, '').trim()}
-                                     </p>
-                                   );
-                                 })}
-                               </div>
-                             </div>
-                           )}
+                            {appointment.notes && appointment.notes.includes("--- Staff Notes ---") && (
+                              <div className="mt-2 text-sm text-muted-foreground">
+                                <p className="font-medium">Notes:</p>
+                                <div className="whitespace-pre-wrap">
+                                  {(() => {
+                                    const staffNotesSection = appointment.notes.split("--- Staff Notes ---")[1];
+                                    if (staffNotesSection) {
+                                      const staffNotesLines = staffNotesSection.trim().split('\n\n');
+                                      const staffNote = staffNotesLines.find((line: string) => line.startsWith(`${staff.name}:`));
+                                      if (staffNote) {
+                                        const noteContent = staffNote.replace(`${staff.name}:`, '').trim();
+                                        return <p className="mb-1">{noteContent}</p>;
+                                      }
+                                    }
+                                    return null;
+                                  })()}
+                                </div>
+                              </div>
+                            )}
                         </div>
                         <div className="flex gap-2">
                           {!staff.hasStarted && (
@@ -342,23 +354,35 @@ export default function PublicAppointment() {
         </Card>
 
         {/* General Notes */}
-        {appointment.notes && appointment.notes.split('\n').some((line: string) => !line.includes('Staff:') && !line.startsWith('image_url:') && line.trim() !== '') && (
+        {appointment.notes && (() => {
+          const generalNotes = appointment.notes.includes("--- Staff Notes ---") 
+            ? appointment.notes.split("--- Staff Notes ---")[0].trim() 
+            : appointment.notes;
+          
+          return generalNotes && generalNotes.split('\n').some((line: string) => !line.startsWith('image_url:') && line.trim() !== '');
+        })() && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg text-cyan-600">General Notes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="whitespace-pre-wrap text-sm">
-                {appointment.notes.split('\n').map((line: string, index: number) => {
-                  // Skip image URLs and staff-specific notes
-                  if (line.startsWith('image_url:') || line.includes('Staff:')) return null;
-                  if (line.trim() === '') return null;
-                  return (
-                    <p key={index} className="mb-2">
-                      {line}
-                    </p>
-                  );
-                })}
+                {(() => {
+                  const generalNotes = appointment.notes.includes("--- Staff Notes ---") 
+                    ? appointment.notes.split("--- Staff Notes ---")[0].trim() 
+                    : appointment.notes;
+                  
+                  return generalNotes.split('\n').map((line: string, index: number) => {
+                    // Skip image URLs
+                    if (line.startsWith('image_url:')) return null;
+                    if (line.trim() === '') return null;
+                    return (
+                      <p key={index} className="mb-2">
+                        {line}
+                      </p>
+                    );
+                  });
+                })()}
               </div>
             </CardContent>
           </Card>

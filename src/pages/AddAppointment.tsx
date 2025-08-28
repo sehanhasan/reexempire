@@ -77,6 +77,28 @@ export default function AddAppointment() {
               setSelectedStaff([appointment.staff_id]);
             }
 
+            // Extract staff notes from appointment notes
+            if (appointment.notes && appointment.notes.includes("--- Staff Notes ---")) {
+              const [generalNotes, staffNotesSection] = appointment.notes.split("--- Staff Notes ---");
+              setNotes(generalNotes.trim());
+              
+              if (staffNotesSection) {
+                const staffNotesObj: Record<string, string> = {};
+                const staffNotesLines = staffNotesSection.trim().split('\n\n');
+                staffNotesLines.forEach(line => {
+                  const [staffName, ...noteParts] = line.split(': ');
+                  if (staffName && noteParts.length > 0) {
+                    // Find staff ID by name
+                    const staffMember = staffMembers.find((s: any) => s.name === staffName);
+                    if (staffMember) {
+                      staffNotesObj[staffMember.id] = noteParts.join(': ');
+                    }
+                  }
+                });
+                setStaffNotes(staffNotesObj);
+              }
+            }
+
             // Extract image URLs from notes if present
             if (appointment.notes && appointment.notes.includes("image_url:")) {
               const regex = /image_url:([^\s]+)/g;
@@ -110,7 +132,7 @@ export default function AddAppointment() {
       };
       fetchAppointmentData();
     }
-  }, [id, isEditMode]);
+  }, [id, isEditMode, staffMembers]);
 
   const toggleStaffSelection = (staffId: string) => {
     if (selectedStaff.includes(staffId)) {
