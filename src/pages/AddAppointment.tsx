@@ -418,8 +418,8 @@ export default function AddAppointment() {
               <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                {/* <Label htmlFor="notes">Notes</Label>
+              {/* <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
                 <Textarea 
                   id="notes" 
                   placeholder="Enter any additional details about this appointment..." 
