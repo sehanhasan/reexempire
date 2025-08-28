@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Search, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export interface Column<T> {
   header: string;
   accessorKey: keyof T | string;
   cell?: ({
-    row
+    row,
+    getValue,
   }: {
-    row: {
-      original: T;
-    };
+    row: { original: T };
+    getValue: () => any;
   }) => React.ReactNode;
 }
 
@@ -39,74 +35,120 @@ export function DataTable<T extends Record<string, any>>({
   emptyMessage = "No data available",
   renderCustomMobileCard,
   externalSearchTerm,
-  onExternalSearchChange,
-  onRowClick
+  onRowClick,
 }: DataTableProps<T>) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const isMobile = useIsMobile();
-  const activeSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchQuery;
-  const filteredData = searchKey ? data.filter(item => {
-    const value = item[searchKey];
-    if (typeof value === 'string') {
-      return value.toLowerCase().includes(activeSearchTerm.toLowerCase());
+  const activeSearchTerm = externalSearchTerm ?? searchQuery;
+
+  const filteredData = searchKey
+    ? data.filter((item) => {
+        const value = item[searchKey as string];
+        if (typeof value === "string") {
+          return value.toLowerCase().includes(activeSearchTerm.toLowerCase());
+        }
+        return true;
+      })
+    : data;
+
+  const getRowKey = (row: T, rowIndex: number) => `row-${(row as any).id ?? "idx"}-${rowIndex}`;
+  const getCellKey = (colHeader: string, colIndex: number, rowIndex: number) =>
+    `cell-${colIndex}-${rowIndex}-${colHeader.replace(/\s+/g, "-")}`;
+  const getCardKey = (row: T, rowIndex: number) => `card-${(row as any).id ?? "idx"}-${rowIndex}`;
+
+  const getValueForColumn = (row: T, column: Column<T>) => {
+    const key = column.accessorKey as string;
+    return row[key as keyof T as string as any];
+  };
+
+  const renderCell = (row: T, column: Column<T>) => {
+    const value = getValueForColumn(row, column);
+    if (column.cell) {
+      return column.cell({ row: { original: row }, getValue: () => value });
     }
-    return false;
-  }) : data;
-
-  // Generate labels for mobile view
-  const getMobileLabel = (column: Column<T>) => {
-    return column.header;
+    if (value === null || value === undefined || value === "") return "-";
+    return typeof value === "string" || typeof value === "number" ? String(value) : "-";
   };
 
-  // Skip certain columns on mobile view
-  const shouldShowColumnOnMobile = (column: Column<T>) => {
-    const skipHeaders = ["ID", "Email", "Service", "Projects", "Actions"];
-    return !skipHeaders.includes(column.header);
-  };
+  // Simple mobile rendering: stacked cards
+  const MobileList = () => (
+    <div className="space-y-3">
+      {filteredData.map((row, rowIndex) => (
+        <Card
+          key={getCardKey(row, rowIndex)}
+          className="shadow-sm"
+          onClick={() => onRowClick?.(row)}
+        >
+          <CardContent className="p-4">
+            {renderCustomMobileCard ? (
+              renderCustomMobileCard(row)
+            ) : (
+              <div className="space-y-2">
+                {columns.map((column, colIndex) => (
+                  <div key={getCellKey(column.header, colIndex, rowIndex)} className="grid grid-cols-3 gap-2">
+                    <div className="text-sm text-muted-foreground">{column.header}</div>
+                    <div className="col-span-2 text-sm">{renderCell(row, column)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 
-  // Generate unique stable keys for each row and cell
-  const getRowKey = (row: T, rowIndex: number) => {
-    return `row-${row.id || rowIndex}-${rowIndex}`;
-  };
-  const getCellKey = (column: Column<T>, colIndex: number, rowIndex: number) => {
-    return `cell-${colIndex}-${rowIndex}-${column.header.replace(/\s+/g, '-')}`;
-  };
-  const getCardKey = (row: T, rowIndex: number) => {
-    return `card-${row.id || rowIndex}-${rowIndex}`;
-  };
+  const DesktopTable = () => (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((column, idx) => (
+              <TableHead key={`head-${idx}-${column.header.replace(/\s+/g, "-")}`}>{column.header}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredData.map((row, rowIndex) => (
+            <TableRow
+              key={getRowKey(row, rowIndex)}
+              className={onRowClick ? "cursor-pointer" : undefined}
+              onClick={() => onRowClick?.(row)}
+            >
+              {columns.map((column, colIndex) => (
+                <TableCell key={getCellKey(column.header, colIndex, rowIndex)}>
+                  {renderCell(row, column)}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
-  // Process columns for mobile view
-  const mobileColumns = columns.filter(column => shouldShowColumnOnMobile(column));
-
-  // Get the actions column for potential use in card footer
-  const actionsColumn = columns.find(column => column.header === "Actions");
-
-  // Get a suitable primary column (name, title, etc.)
-  const getPrimaryColumn = () => {
-    const nameColumn = columns.find(col => col.header.toLowerCase().includes('name') || col.header.toLowerCase().includes('title') || col.accessorKey.toString().toLowerCase().includes('name') || col.accessorKey.toString().toLowerCase().includes('title'));
-    return nameColumn || mobileColumns[0];
-  };
-  const primaryColumn = getPrimaryColumn();
-  return <div className="space-y-4">
-      
-      {/* Pagination setup */}
-      {(() => {
-        return null;
-      })()}
-      
+  return (
+    <div className="space-y-4">
       <Card className="shadow-sm overflow-hidden">
         <CardContent className="p-0">
-          {isLoading ? <div className="py-6 text-center bg-slate-100">
+          {isLoading ? (
+            <div className="py-6 text-center">
               <p className="text-muted-foreground">Loading...</p>
-            </div> : filteredData.length === 0 ? <div className="py-6 text-center">
+            </div>
+          ) : filteredData.length === 0 ? (
+            <div className="py-6 text-center">
               <p className="text-muted-foreground">{emptyMessage}</p>
-            </div> : (() => {
-              // Client-side pagination when records exceed 50
-              const pageSize = 50;
-              const [currentPage, setCurrentPage] = [undefined as any, undefined as any];
-              return null;
-            })()}
+            </div>
+          ) : isMobile ? (
+            <div className="p-3">
+              <MobileList />
+            </div>
+          ) : (
+            <DesktopTable />
+          )}
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 }
+
