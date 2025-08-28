@@ -199,6 +199,10 @@ export const appointmentService = {
       }
     }
     
+    // Add public appointment URL
+    const publicUrl = `${window.location.origin}/appointments/view/${appointment.id}`;
+    message += `\n🔗 *View Appointment:* ${publicUrl}`;
+    
     return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
   }
 };

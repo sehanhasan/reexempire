@@ -296,6 +296,10 @@ export default function AddAppointment() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+      <PageHeader 
+        title={isEditMode ? "Edit Appointment" : "Add New Appointment"}
+        description={isEditMode ? "Update appointment details" : "Schedule a new appointment with a customer"}
+      />
       
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
@@ -305,7 +309,7 @@ export default function AddAppointment() {
         <form onSubmit={handleSubmit} className="mt-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-cyan-600">Appointment Details</CardTitle>
+              <CardTitle className="text-lg text-cyan-600">{isEditMode ? "Update Appointment Details" : "Appointment Details"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 mt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -478,17 +482,20 @@ export default function AddAppointment() {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <Switch 
-                  id="share-whatsapp" 
-                  checked={shareViaWhatsApp}
-                  onCheckedChange={setShareViaWhatsApp}
-                />
-                <Label htmlFor="share-whatsapp" className="cursor-pointer flex items-center gap-2">
-                  <Share2 className="h-4 w-4 text-green-600" />
-                  Share appointment details via WhatsApp after saving
-                </Label>
-              </div>
+              {/* WhatsApp sharing option - only show for new appointments */}
+              {!isEditMode && (
+                <div className="flex items-center space-x-2 pt-2">
+                  <Switch 
+                    id="share-whatsapp" 
+                    checked={shareViaWhatsApp}
+                    onCheckedChange={setShareViaWhatsApp}
+                  />
+                  <Label htmlFor="share-whatsapp" className="cursor-pointer flex items-center gap-2">
+                    <Share2 className="h-4 w-4 text-green-600" />
+                    Share appointment details via WhatsApp after saving
+                  </Label>
+                </div>
+              )}
             </CardContent>
             <CardFooter className="flex justify-end space-x-4">
               <Button variant="outline" type="button" onClick={() => navigate("/schedule")}>

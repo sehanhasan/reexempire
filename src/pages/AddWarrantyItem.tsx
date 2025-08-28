@@ -26,16 +26,15 @@ const warrantyItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
   serial_number: z.string().optional(),
   warranty_period_type: z.string().min(1, "Warranty period is required"),
-  warranty_period_value: z.number().optional(),
-  warranty_period_unit: z.string().optional(),
+  issue_date: z.date({
+    required_error: "Issue date is required",
+  }),
+  end_date: z.date().optional(),
 });
 
 const warrantyFormSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
   invoice_id: z.string().optional(),
-  issue_date: z.date({
-    required_error: "Issue date is required",
-  }),
   items: z.array(warrantyItemSchema).min(1, "At least one item is required"),
 });
 
@@ -54,13 +53,12 @@ export default function AddWarrantyItem() {
     defaultValues: {
       customer_id: "",
       invoice_id: "",
-      issue_date: new Date(),
       items: [{
         item_name: "",
         serial_number: "",
         warranty_period_type: "30_days",
-        warranty_period_value: undefined,
-        warranty_period_unit: "",
+        issue_date: new Date(),
+        end_date: undefined,
       }]
     },
   });
@@ -86,40 +84,31 @@ export default function AddWarrantyItem() {
   const createWarrantyMutation = useMutation({
     mutationFn: async (data: WarrantyFormData) => {
       const warrantyItemsToCreate = data.items.map(item => {
-        let expiryDate = new Date(data.issue_date);
+        let expiryDate: Date;
         
-        // Calculate expiry date based on warranty period
-        switch (item.warranty_period_type) {
-          case '7_days':
-            expiryDate = addDays(expiryDate, 7);
-            break;
-          case '30_days':
-            expiryDate = addDays(expiryDate, 30);
-            break;
-          case '3_months':
-            expiryDate = addMonths(expiryDate, 3);
-            break;
-          case '6_months':
-            expiryDate = addMonths(expiryDate, 6);
-            break;
-          case '1_year':
-            expiryDate = addYears(expiryDate, 1);
-            break;
-          case 'custom':
-            if (item.warranty_period_value && item.warranty_period_unit) {
-              switch (item.warranty_period_unit) {
-                case 'days':
-                  expiryDate = addDays(expiryDate, item.warranty_period_value);
-                  break;
-                case 'months':
-                  expiryDate = addMonths(expiryDate, item.warranty_period_value);
-                  break;
-                case 'years':
-                  expiryDate = addYears(expiryDate, item.warranty_period_value);
-                  break;
-              }
-            }
-            break;
+        if (item.warranty_period_type === 'custom' && item.end_date) {
+          expiryDate = item.end_date;
+        } else {
+          // Calculate expiry date based on warranty period
+          expiryDate = new Date(item.issue_date);
+          
+          switch (item.warranty_period_type) {
+            case '7_days':
+              expiryDate = addDays(expiryDate, 7);
+              break;
+            case '30_days':
+              expiryDate = addDays(expiryDate, 30);
+              break;
+            case '3_months':
+              expiryDate = addMonths(expiryDate, 3);
+              break;
+            case '6_months':
+              expiryDate = addMonths(expiryDate, 6);
+              break;
+            case '1_year':
+              expiryDate = addYears(expiryDate, 1);
+              break;
+          }
         }
 
         return {
@@ -127,10 +116,10 @@ export default function AddWarrantyItem() {
           invoice_id: data.invoice_id || null,
           item_name: item.item_name,
           serial_number: item.serial_number || null,
-          issue_date: format(data.issue_date, 'yyyy-MM-dd'),
+          issue_date: format(item.issue_date, 'yyyy-MM-dd'),
           warranty_period_type: item.warranty_period_type,
-          warranty_period_value: item.warranty_period_value || null,
-          warranty_period_unit: item.warranty_period_unit || null,
+          warranty_period_value: null,
+          warranty_period_unit: null,
           expiry_date: format(expiryDate, 'yyyy-MM-dd'),
         };
       });
@@ -169,8 +158,8 @@ export default function AddWarrantyItem() {
       item_name: "",
       serial_number: "",
       warranty_period_type: "30_days",
-      warranty_period_value: undefined,
-      warranty_period_unit: "",
+      issue_date: new Date(),
+      end_date: undefined,
     });
   };
 
@@ -200,7 +189,7 @@ export default function AddWarrantyItem() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="customer_id"
@@ -253,42 +242,6 @@ export default function AddWarrantyItem() {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="issue_date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Issue Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <div className="space-y-4">
@@ -311,7 +264,44 @@ export default function AddWarrantyItem() {
                             </Button>
                           )}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.issue_date`}
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Issue Date</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant="outline"
+                                        className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                      >
+                                        {field.value ? (
+                                          format(field.value, "PPP")
+                                        ) : (
+                                          <span>Pick a date</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                      className="p-3 pointer-events-auto"
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
                           <FormField
                             control={form.control}
                             name={`items.${index}.item_name`}
@@ -339,7 +329,9 @@ export default function AddWarrantyItem() {
                               </FormItem>
                             )}
                           />
-
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           <FormField
                             control={form.control}
                             name={`items.${index}.warranty_period_type`}
@@ -367,49 +359,42 @@ export default function AddWarrantyItem() {
                           />
 
                           {form.watch(`items.${index}.warranty_period_type`) === 'custom' && (
-                            <>
-                              <FormField
-                                control={form.control}
-                                name={`items.${index}.warranty_period_value`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Period Value</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        {...field} 
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                        placeholder="Enter number" 
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={form.control}
-                                name={`items.${index}.warranty_period_unit`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Period Unit</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.end_date`}
+                              render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                  <FormLabel>End Date</FormLabel>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
                                       <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select unit" />
-                                        </SelectTrigger>
+                                        <Button
+                                          variant="outline"
+                                          className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                        >
+                                          {field.value ? (
+                                            format(field.value, "PPP")
+                                          ) : (
+                                            <span>Pick end date</span>
+                                          )}
+                                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
                                       </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="days">Days</SelectItem>
-                                        <SelectItem value="months">Months</SelectItem>
-                                        <SelectItem value="years">Years</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                        className="p-3 pointer-events-auto"
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
                           )}
                         </div>
                       </CardContent>
