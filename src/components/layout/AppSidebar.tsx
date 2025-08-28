@@ -56,11 +56,6 @@ export function AppSidebar({
     href: "/warranty",
     adminOnly: true
   }, {
-    title: "Finance",
-    icon: <DollarSign className="h-5 w-5" />,
-    href: "/finance",
-    adminOnly: true
-  }, {
     title: "Schedule",
     icon: <Calendar className="h-5 w-5" />,
     href: "/schedule",

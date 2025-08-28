@@ -235,7 +235,6 @@ export default function AddWarrantyItem() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Warranty Items</h3>
 
                 <div className="space-y-4">
                   {fields.map((field, index) => (
