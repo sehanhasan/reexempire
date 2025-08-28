@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X, DollarSign, Shield } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Separator } from "@/components/ui/separator";
 
 interface AppSidebarProps {
   open?: boolean;
@@ -29,60 +30,79 @@ export function AppSidebar({
   // Logo image
   const logoUrl = "https://i.ibb.co/Ltyts5K/reex-empire-logo.png";
 
-  // Navigation items
-  const navItems = [{
-    title: "Dashboard",
-    icon: <LayoutDashboard className="h-5 w-5" />,
-    href: "/",
-    adminOnly: false
-  }, {
-    title: "Customers",
-    icon: <Users className="h-5 w-5" />,
-    href: "/customers",
-    adminOnly: true
-  }, {
-    title: "Quotations",
-    icon: <FileText className="h-5 w-5" />,
-    href: "/quotations",
-    adminOnly: true
-  }, {
-    title: "Invoices",
-    icon: <Receipt className="h-5 w-5" />,
-    href: "/invoices",
-    adminOnly: true
-  }, {
-    title: "Warranty",
-    icon: <Shield className="h-5 w-5" />,
-    href: "/warranty",
-    adminOnly: true
-  }, {
-    title: "Schedule",
-    icon: <Calendar className="h-5 w-5" />,
-    href: "/schedule",
-    adminOnly: false
-  }, {
-    title: "Staff",
-    icon: <UserCircle className="h-5 w-5" />,
-    href: "/staff",
-    adminOnly: true
-  }, {
-    title: "Categories",
-    icon: <FolderTree className="h-5 w-5" />,
-    href: "/categories",
-    adminOnly: true
-  }, {
-    title: "Finance",
-    icon: <DollarSign className="h-5 w-5" />,
-    href: "/finance",
-    adminOnly: true
-  }];
+  // Navigation items with groups
+  const navGroups = [
+    {
+      items: [{
+        title: "Dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" />,
+        href: "/",
+        adminOnly: false
+      }, {
+        title: "Customers",
+        icon: <Users className="h-5 w-5" />,
+        href: "/customers",
+        adminOnly: true
+      }]
+    },
+    {
+      items: [{
+        title: "Quotations",
+        icon: <FileText className="h-5 w-5" />,
+        href: "/quotations",
+        adminOnly: true
+      }, {
+        title: "Invoices",
+        icon: <Receipt className="h-5 w-5" />,
+        href: "/invoices",
+        adminOnly: true
+      }, {
+        title: "Warranty",
+        icon: <Shield className="h-5 w-5" />,
+        href: "/warranty",
+        adminOnly: true
+      }, {
+        title: "Categories",
+        icon: <FolderTree className="h-5 w-5" />,
+        href: "/categories",
+        adminOnly: true
+      }]
+    },
+    {
+      items: [{
+        title: "Schedule",
+        icon: <Calendar className="h-5 w-5" />,
+        href: "/schedule",
+        adminOnly: false
+      }, {
+        title: "Staff",
+        icon: <UserCircle className="h-5 w-5" />,
+        href: "/staff",
+        adminOnly: true
+      }]
+    },
+    {
+      items: [{
+        title: "Finance",
+        icon: <DollarSign className="h-5 w-5" />,
+        href: "/finance",
+        adminOnly: true
+      }]
+    }
+  ];
 
-  // Filter navigation items based on user role
-  const filteredNavItems = navItems.filter(item => {
-    if (isAdmin) return true;
-    if (isStaff && !item.adminOnly) return true;
-    return false;
-  });
+  // Flatten navigation items for filtering
+  const allNavItems = navGroups.flatMap(group => group.items);
+
+  // Filter navigation groups based on user role
+  const filteredNavGroups = navGroups.map(group => ({
+    ...group,
+    items: group.items.filter(item => {
+      if (isAdmin) return true;
+      if (isStaff && !item.adminOnly) return true;
+      return false;
+    })
+  })).filter(group => group.items.length > 0);
 
   // Function to check if a nav item is active
   const isActiveRoute = (href: string) => {
@@ -137,20 +157,31 @@ export function AppSidebar({
       </div>
       
       <ScrollArea className="flex-1 py-2">
-        <nav className="space-y-1 px-2">
-          {filteredNavItems.map(item => (
-            <Button 
-              key={item.href} 
-              variant="ghost" 
-              className={cn(
-                "w-full justify-start text-gray-600 h-10", 
-                isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
-              )} 
-              onClick={() => handleNavItemClick(item.href)}
-            >
-              {item.icon}
-              <span className="ml-3">{item.title}</span>
-            </Button>
+        <nav className="px-2">
+          {filteredNavGroups.map((group, groupIndex) => (
+            <div key={groupIndex}>
+              <div className="space-y-1 mb-2">
+                {group.items.map(item => (
+                  <Button 
+                    key={item.href} 
+                    variant="ghost" 
+                    className={cn(
+                      "w-full justify-start text-gray-600 h-10", 
+                      isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
+                    )} 
+                    onClick={() => handleNavItemClick(item.href)}
+                  >
+                    {item.icon}
+                    <span className="ml-3">{item.title}</span>
+                  </Button>
+                ))}
+              </div>
+              {groupIndex < filteredNavGroups.length - 1 && (
+                <div className="my-3">
+                  <Separator />
+                </div>
+              )}
+            </div>
           ))}
         </nav>
       </ScrollArea>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { customerService, invoiceService } from "@/services";
@@ -104,15 +104,13 @@ export default function Warranty() {
     {
       accessorKey: "item_name",
       header: "Item Name",
-      cell: ({ getValue }: any) => (
-        <span className="font-medium">{getValue()}</span>
-      )
-    },
-    {
-      accessorKey: "serial_number",
-      header: "Serial #",
-      cell: ({ getValue }: any) => (
-        <span className="font-mono text-sm">{getValue() || '-'}</span>
+      cell: ({ row }: any) => (
+        <div>
+          <div className="font-medium">{row.original.item_name}</div>
+          {row.original.serial_number && (
+            <div className="text-sm text-muted-foreground font-mono">#{row.original.serial_number}</div>
+          )}
+        </div>
       )
     },
     {
@@ -166,13 +164,22 @@ export default function Warranty() {
       accessorKey: "actions",
       header: "Actions",
       cell: ({ row }: any) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => deleteWarrantyMutation.mutate(row.original.id)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/edit-warranty-item/${row.original.id}`)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => deleteWarrantyMutation.mutate(row.original.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       )
     }
   ];
