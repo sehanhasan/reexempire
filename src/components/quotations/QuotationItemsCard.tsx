@@ -194,8 +194,20 @@ export function QuotationItemsCard({
                   <span>-RM {quotationDepositAmount.toFixed(2)}</span>
                 </div>}
 
-              {/* Deposit Section - Hide for due invoices */}
-              {!(quotationDepositAmount !== undefined && quotationDepositAmount > 0) && <div className="border-t pt-2 mt-1">
+              {/* For due invoices, show deposit paid instead of deposit requirement */}
+              {quotationDepositAmount !== undefined && quotationDepositAmount > 0 ? (
+                <div className="border-t pt-2 mt-1">
+                  <div className="flex justify-between py-1.5 text-sm">
+                    <span className="font-medium flex items-center">
+                      <Wallet className="h-3.5 w-3.5 mr-1" />
+                      Deposit Paid:
+                    </span>
+                    <span>RM {quotationDepositAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              ) : (
+                /* Deposit Section - For new quotations/invoices */
+                <div className="border-t pt-2 mt-1">
                   <div className="flex items-center space-x-2 mb-2">
                     <Checkbox id="requiresDeposit" checked={depositInfo.requiresDeposit} onCheckedChange={handleDepositCheckboxChange} />
                     <label htmlFor="requiresDeposit" className="text-sm font-medium flex items-center cursor-pointer">
@@ -226,7 +238,8 @@ export function QuotationItemsCard({
                       <span>RM {(calculateTotal() - depositInfo.depositAmount).toFixed(2)}</span>
                     </div>
                   </div>}
-                </div>}
+                </div>
+              )}
 
               <div className="flex justify-between py-2 border-t mt-1">
                 <span className="font-semibold text-base">Total:</span>
