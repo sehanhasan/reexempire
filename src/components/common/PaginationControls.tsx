@@ -65,11 +65,8 @@ export function PaginationControls({
 
   return (
     <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
-      <div className="flex items-center gap-4">
-        <div className="text-sm text-muted-foreground">
-          Showing {startItem} to {endItem} of {totalItems} results
-        </div>
-        
+      {/* Left: Show dropdown */}
+      <div className="flex justify-start">
         {showPageSizeSelector && (
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Show:</span>
@@ -88,39 +85,49 @@ export function PaginationControls({
         )}
       </div>
 
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious 
-              onClick={goToPrevious}
-              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-            />
-          </PaginationItem>
-
-          {getVisiblePages().map((page, index) => (
-            <PaginationItem key={index}>
-              {page === '...' ? (
-                <PaginationEllipsis />
-              ) : (
-                <PaginationLink
-                  onClick={() => goToPage(page as number)}
-                  isActive={currentPage === page}
-                  className="cursor-pointer"
-                >
-                  {page}
-                </PaginationLink>
-              )}
+      {/* Center: Pagination controls */}
+      <div className="flex justify-center">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={goToPrevious}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
             </PaginationItem>
-          ))}
 
-          <PaginationItem>
-            <PaginationNext 
-              onClick={goToNext}
-              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+            {getVisiblePages().map((page, index) => (
+              <PaginationItem key={index}>
+                {page === '...' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    onClick={() => goToPage(page as number)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+
+            <PaginationItem>
+              <PaginationNext 
+                onClick={goToNext}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+
+      {/* Right: Results text */}
+      <div className="flex justify-end">
+        <div className="text-sm text-muted-foreground">
+          Showing {startItem} to {endItem} of {totalItems} results
+        </div>
+      </div>
     </div>
   );
 }
