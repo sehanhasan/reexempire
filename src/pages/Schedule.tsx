@@ -9,6 +9,7 @@ import { PlusCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { Appointment, Staff } from "@/types/database";
+import { usePagination } from "@/hooks/usePagination";
 export default function Schedule() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);

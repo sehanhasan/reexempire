@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import { generateQuotationPDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/usePagination";
 
 interface QuotationWithCustomer extends Quotation {
   customer_name: string;
@@ -93,6 +95,8 @@ export default function Quotations() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
+
+  const { pagination, controls, paginatedData } = usePagination(filteredQuotations.length, 10);
 
   const fetchData = async () => {
     try {
@@ -281,7 +285,7 @@ export default function Quotations() {
             <div className="overflow-x-auto">
               {isMobile ? (
                 <div className="p-2 space-y-3">
-                  {filteredQuotations.map(quotation => {
+                  {paginatedData(filteredQuotations).map(quotation => {
                     const status = quotation.status;
                     return (
                       <div key={quotation.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/quotations/edit/${quotation.id}`)}>
@@ -390,7 +394,7 @@ export default function Quotations() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredQuotations.map(quotation => {
+                    {paginatedData(filteredQuotations).map(quotation => {
                       const status = quotation.status;
                       return (
                         <TableRow key={quotation.id} className="h-12">
@@ -445,6 +449,12 @@ export default function Quotations() {
                   </TableBody>
                 </Table>
               )}
+            </div>
+          )}
+          
+          {filteredQuotations.length > 0 && (
+            <div className="p-4 border-t">
+              <PaginationControls pagination={pagination} controls={controls} />
             </div>
           )}
         </div>

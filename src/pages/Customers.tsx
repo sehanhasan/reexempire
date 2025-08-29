@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
@@ -14,17 +15,21 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { customerService } from "@/services";
 import { Customer } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/usePagination";
 export default function Customers() {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const { pagination, controls, paginatedData } = usePagination(filteredCustomers.length, 10);
   const fetchCustomers = async () => {
     try {
       const data = await customerService.getAll();
@@ -100,7 +105,17 @@ export default function Customers() {
   };
 
   // Filter customers based on search term
-  const filteredCustomers = customers.filter(customer => customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || customer.unit_number && customer.unit_number.toLowerCase().includes(searchTerm.toLowerCase()) || customer.phone && customer.phone.includes(searchTerm) || customer.address && customer.address.toLowerCase().includes(searchTerm.toLowerCase()));
+  useEffect(() => {
+    const filtered = customers.filter(customer => 
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.unit_number && customer.unit_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (customer.phone && customer.phone.includes(searchTerm)) ||
+      (customer.address && customer.address.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    setFilteredCustomers(filtered);
+  }, [customers, searchTerm]);
+
+  const paginatedCustomers = paginatedData(filteredCustomers);
   if (isLoading) {
     return <div className="page-container flex items-center justify-center h-[70vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -138,7 +153,7 @@ export default function Customers() {
             <div className="overflow-x-auto">
               {isMobile ? (
                 <div className="p-2 space-y-3">
-                  {filteredCustomers.map(customer => (
+                  {paginatedCustomers.map(customer => (
                     <Card key={customer.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(customer)}>
                       <CardContent className="p-0">
                         <div className="p-2 border-b bg-blue-50/30">
@@ -196,7 +211,7 @@ export default function Customers() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCustomers.map(customer => (
+                    {paginatedCustomers.map(customer => (
                       <TableRow key={customer.id} className="h-12">
                         <TableCell>
                           <div className="font-medium cursor-pointer text-blue-600" onClick={() => handleView(customer)}>
@@ -257,6 +272,12 @@ export default function Customers() {
                   </TableBody>
                 </Table>
               )}
+            </div>
+          )}
+          
+          {filteredCustomers.length > 0 && (
+            <div className="p-4 border-t">
+              <PaginationControls pagination={pagination} controls={controls} />
             </div>
           )}
         </div>

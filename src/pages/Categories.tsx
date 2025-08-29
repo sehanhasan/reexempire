@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import "../styles/mobile-card.css";
 import { Category } from "@/types/database";
 import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/usePagination";
 
 export default function Categories() {
   const navigate = useNavigate();
@@ -27,6 +29,8 @@ export default function Categories() {
   const [showSubcategories, setShowSubcategories] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const { pagination, controls, paginatedData } = usePagination(0, 10);
 
   // Fetch categories from the API - using queryKey with proper caching
   const {
@@ -52,6 +56,16 @@ export default function Categories() {
       return Array.from(processedCategories.values());
     }
   });
+
+  // Filter categories based on search query
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (category.description && category.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  // Update pagination total count
+  const { pagination: updatedPagination, controls: updatedControls, paginatedData: updatedPaginatedData } = 
+    usePagination(filteredCategories.length, 10);
 
   // 🔹 Loader handling
   if (isLoading) {
@@ -233,11 +247,6 @@ export default function Categories() {
   // Calculate stats
   const totalSubcategories = categories.reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0);
 
-  // Filter categories based on search query
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       {!isMobile && (
@@ -277,7 +286,7 @@ export default function Categories() {
             <div className="overflow-x-auto">
               {isMobile ? (
                 <div className="p-2 space-y-3">
-                  {filteredCategories.map(category => renderCustomMobileCard(category))}
+                  {updatedPaginatedData(filteredCategories).map(category => renderCustomMobileCard(category))}
                 </div>
               ) : (
                 <Table>
@@ -289,7 +298,7 @@ export default function Categories() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCategories.map(category => (
+                    {updatedPaginatedData(filteredCategories).map(category => (
                       <TableRow key={category.id} className="h-12">
                         <TableCell>
                           <div
@@ -341,6 +350,12 @@ export default function Categories() {
                   </TableBody>
                 </Table>
               )}
+            </div>
+          )}
+          
+          {filteredCategories.length > 0 && (
+            <div className="p-4 border-t">
+              <PaginationControls pagination={updatedPagination} controls={updatedControls} />
             </div>
           )}
         </div>

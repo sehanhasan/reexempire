@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { usePagination } from "@/hooks/usePagination";
 
 
 export default function Warranty() {
@@ -92,6 +94,8 @@ export default function Warranty() {
       invoice?.reference_number.toLowerCase().includes(searchLower)
     );
   });
+
+  const { pagination, controls, paginatedData } = usePagination(filteredWarrantyItems.length, 10);
 
   const getWarrantyStatus = (expiryDate: string) => {
     const today = new Date();
@@ -246,13 +250,20 @@ export default function Warranty() {
               <p className="text-muted-foreground">No warranty items found.</p>
             </div>
           ) : (
-            <DataTable
-              columns={columns}
-              data={filteredWarrantyItems}
-              searchKey="item_name"
-              isLoading={isLoading}
-              emptyMessage="No warranty items found."
-            />
+            <div>
+              <DataTable
+                columns={columns}
+                data={paginatedData(filteredWarrantyItems)}
+                searchKey="item_name"
+                isLoading={isLoading}
+                emptyMessage="No warranty items found."
+              />
+              {filteredWarrantyItems.length > 0 && (
+                <div className="p-4 border-t">
+                  <PaginationControls pagination={pagination} controls={controls} />
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

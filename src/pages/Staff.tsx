@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,16 +16,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { staffService } from "@/services";
 import { Staff } from "@/types/database";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/usePagination";
 export default function StaffPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [staff, setStaff] = useState<Staff[]>([]);
+  const [filteredStaff, setFilteredStaff] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const { pagination, controls, paginatedData } = usePagination(filteredStaff.length, 10);
   const fetchStaff = async () => {
     try {
       const data = await staffService.getAll();
@@ -107,7 +112,17 @@ export default function StaffPage() {
   };
 
   // Filter staff based on search term
-  const filteredStaff = staff.filter(staffMember => staffMember.name.toLowerCase().includes(searchTerm.toLowerCase()) || staffMember.position && staffMember.position.toLowerCase().includes(searchTerm.toLowerCase()) || staffMember.email && staffMember.email.toLowerCase().includes(searchTerm.toLowerCase()) || staffMember.phone && staffMember.phone.includes(searchTerm));
+  useEffect(() => {
+    const filtered = staff.filter(staffMember => 
+      staffMember.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (staffMember.position && staffMember.position.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (staffMember.email && staffMember.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (staffMember.phone && staffMember.phone.includes(searchTerm))
+    );
+    setFilteredStaff(filtered);
+  }, [staff, searchTerm]);
+
+  const paginatedStaff = paginatedData(filteredStaff);
   if (isLoading) {
     return <div className="page-container flex items-center justify-center h-[70vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -151,7 +166,7 @@ export default function StaffPage() {
             <div className="overflow-x-auto">
               {isMobile ? (
                 <div className="p-2 space-y-3">
-                  {filteredStaff.map(staffMember => (
+                  {paginatedStaff.map(staffMember => (
                     <Card key={staffMember.id} className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(staffMember)}>
                       <CardContent className="p-0">
                         <div className="p-2 border-b bg-blue-50/30">
@@ -206,7 +221,7 @@ export default function StaffPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStaff.map(staffMember => (
+                    {paginatedStaff.map(staffMember => (
                       <TableRow key={staffMember.id} className="h-12">
                         <TableCell>
                           <div className="font-medium cursor-pointer text-blue-600" onClick={() => handleView(staffMember)}>
@@ -250,6 +265,12 @@ export default function StaffPage() {
                   </TableBody>
                 </Table>
               )}
+            </div>
+          )}
+          
+          {filteredStaff.length > 0 && (
+            <div className="p-4 border-t">
+              <PaginationControls pagination={pagination} controls={controls} />
             </div>
           )}
         </div>

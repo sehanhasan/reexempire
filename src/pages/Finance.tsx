@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { DataTable } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { format } from "date-fns";
 import { invoiceService, customerService } from "@/services";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/usePagination";
 
 export default function Finance() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -75,6 +77,8 @@ export default function Finance() {
 
     return true;
   });
+
+  const { pagination, controls, paginatedData } = usePagination(filteredInvoices.length, 10);
 
   // Calculate revenue metrics
   const totalRevenue = filteredInvoices.reduce((sum, invoice) => sum + Number(invoice.total), 0);
@@ -294,13 +298,20 @@ export default function Finance() {
             </Button>
           </div>
 
-          <DataTable
-            columns={columns}
-            data={filteredInvoices}
-            searchKey="reference_number"
-            isLoading={isLoading}
-            emptyMessage="No paid invoices found for the selected period."
-          />
+          <div>
+            <DataTable
+              columns={columns}
+              data={paginatedData(filteredInvoices)}
+              searchKey="reference_number"
+              isLoading={isLoading}
+              emptyMessage="No paid invoices found for the selected period."
+            />
+            {filteredInvoices.length > 0 && (
+              <div className="p-4 border-t">
+                <PaginationControls pagination={pagination} controls={controls} />
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

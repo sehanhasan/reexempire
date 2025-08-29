@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +17,7 @@ import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/usePagination";
 
 interface InvoiceWithCustomer extends Invoice {
   customer_name: string;
@@ -91,6 +93,8 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+
+  const { pagination, controls, paginatedData } = usePagination(filteredInvoices.length, 10);
 
   const fetchData = async () => {
     try {
@@ -340,7 +344,7 @@ export default function Invoices() {
             <div className="overflow-x-auto">
               {isMobile ? (
                 <div className="p-2 space-y-3">
-                  {filteredInvoices.map(invoice => {
+                  {paginatedData(filteredInvoices).map(invoice => {
                      const status = (invoice.payment_status === 'Partially Paid') ? 'Paid - Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
                     return (
                       <div
@@ -447,7 +451,7 @@ export default function Invoices() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredInvoices.map(invoice => {
+                      {paginatedData(filteredInvoices).map(invoice => {
                         const status = (invoice.payment_status === 'Partially Paid') ? 'Paid - Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
                         return (
                           <TableRow key={invoice.id}>
@@ -501,6 +505,12 @@ export default function Invoices() {
                   </Table>
                 </div>
               )}
+            </div>
+          )}
+          
+          {filteredInvoices.length > 0 && (
+            <div className="p-4 border-t">
+              <PaginationControls pagination={pagination} controls={controls} />
             </div>
           )}
         </div>

@@ -132,7 +132,7 @@ const [depositPaid, setDepositPaid] = useState(0);
         return;
       }
       const options = {
-        margin: [5, 5, 5, 5],
+        margin: [5, 14.4, 5, 14.4], // top, right, bottom, left in mm (0.2in = 5.08mm ≈ 14.4mm for 0.2in)
         filename: `invoice-${invoice.reference_number}.pdf`,
         image: {
           type: "jpeg",
