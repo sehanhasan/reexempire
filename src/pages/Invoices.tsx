@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
 import { invoiceService, customerService } from "@/services";
+import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/utils/formatters";
 import { Invoice, Customer } from "@/types/database";
 import { generateInvoicePDF, downloadPDF } from "@/utils/pdfGenerator";
@@ -22,6 +23,7 @@ import { usePagination } from "@/hooks/usePagination";
 interface InvoiceWithCustomer extends Invoice {
   customer_name: string;
   unit_number?: string;
+  deposit_paid?: number; // For Due Invoices
 }
 
 const StatusBadge = ({
@@ -110,11 +112,35 @@ export default function Invoices() {
       });
       setCustomers(customerMap);
 
-      const enhancedInvoices: InvoiceWithCustomer[] = invoiceData.map(invoice => ({
-        ...invoice,
-        customer_name: customerMap[invoice.customer_id]?.name || "Unknown Customer",
-        unit_number: customerMap[invoice.customer_id]?.unit_number
-      }));
+      const enhancedInvoices: InvoiceWithCustomer[] = await Promise.all(
+        invoiceData.map(async (invoice) => {
+          const baseInvoice: InvoiceWithCustomer = {
+            ...invoice,
+            customer_name: customerMap[invoice.customer_id]?.name || "Unknown Customer",
+            unit_number: customerMap[invoice.customer_id]?.unit_number
+          };
+
+          // For Due Invoices (non-deposit invoices linked to quotation), fetch deposit paid
+          if (invoice.quotation_id && !invoice.is_deposit_invoice) {
+            try {
+              const { data: depositInvoice, error } = await supabase
+                .from('invoices')
+                .select('deposit_amount')
+                .eq('quotation_id', invoice.quotation_id)
+                .eq('is_deposit_invoice', true)
+                .single();
+              
+              if (!error && depositInvoice) {
+                baseInvoice.deposit_paid = depositInvoice.deposit_amount || 0;
+              }
+            } catch (err) {
+              console.warn('Failed to fetch deposit for Due Invoice:', err);
+            }
+          }
+
+          return baseInvoice;
+        })
+      );
       setInvoices(enhancedInvoices);
       setLoading(false);
     } catch (error) {
@@ -270,6 +296,14 @@ export default function Invoices() {
     })}`;
   };
 
+  const getDisplayAmount = (invoice: InvoiceWithCustomer) => {
+    // For Due Invoices, show balance (total minus deposit paid)
+    if (invoice.quotation_id && !invoice.is_deposit_invoice && invoice.deposit_paid && invoice.deposit_paid > 0) {
+      return invoice.total - invoice.deposit_paid;
+    }
+    return invoice.total;
+  };
+
   // Set up mobile search
   useEffect(() => {
     const mobileSearchEvent = new CustomEvent('setup-mobile-search', {
@@ -397,7 +431,7 @@ export default function Invoices() {
 
                         <div className="border-t p-2 bg-gray-50 flex justify-between items-center">
                           <span className="text-sm font-semibold text-blue-700">
-                            {formatMoney(invoice.total)}
+                            {formatMoney(getDisplayAmount(invoice))}
                           </span>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
@@ -470,7 +504,7 @@ export default function Invoices() {
                               <StatusBadge status={status} />
                             </TableCell>
                             <TableCell className="font-medium">
-                              {formatMoney(invoice.total)}
+                              {formatMoney(getDisplayAmount(invoice))}
                             </TableCell>
                             <TableCell>
                               <DropdownMenu>
