@@ -485,7 +485,7 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
         title="Edit Invoice"
         actions={
           <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-            <Button variant="outline" onClick={() => navigate(`/invoices/view/${id}`)}>
+            <Button variant="outline" onClick={() => window.open(`/invoices/view/${id}`, '_blank')}>
               <FileText className="mr-2 h-4 w-4" />
               View Invoice
             </Button>

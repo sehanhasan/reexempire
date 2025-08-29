@@ -404,7 +404,7 @@ export default function Invoices() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
-                                navigate(`/invoices/view/${invoice.id}`);
+                                window.open(`/invoices/view/${invoice.id}`, '_blank');
                               }}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Invoice
@@ -476,7 +476,7 @@ export default function Invoices() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => navigate(`/invoices/view/${invoice.id}`)}>
+                                  <DropdownMenuItem onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')}>
                                     <FileText className="mr-2 h-4 w-4" />
                                     View Invoice
                                   </DropdownMenuItem>
