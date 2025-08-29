@@ -372,9 +372,6 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
           title: "Invoice Update Sent",
           description: `Invoice for ${customer?.name} has been updated and sent successfully.`
         });
-        
-        // Open view page in new tab
-        window.open(`/invoices/view/${id}`, '_blank');
       } else {
         toast({
           title: "Invoice Updated",
