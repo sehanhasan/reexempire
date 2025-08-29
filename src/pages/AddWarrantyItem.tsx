@@ -209,7 +209,7 @@ export default function AddWarrantyItem() {
                       <CardContent className="pt-6">
                         <div className="flex justify-between items-center mb-4">
                           <h4 className="font-medium text-cyan-600">Item #{index + 1}</h4>
-                          {fields.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
+                          {fields.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)} className="text-red-500">
                               <Trash2 className="h-4 w-4" />
                             </Button>}
                         </div>
