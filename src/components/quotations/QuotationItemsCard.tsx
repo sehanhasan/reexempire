@@ -29,6 +29,13 @@ export function QuotationItemsCard({
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const isMobile = useIsMobile();
   const calculateTotal = () => {
+    // For Due Invoices, use original amounts (quantity * unitPrice)
+    if (quotationDepositAmount !== undefined && quotationDepositAmount > 0) {
+      return items.reduce((sum, item) => {
+        const quantity = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 0 : item.quantity;
+        return sum + (quantity * item.unitPrice);
+      }, 0);
+    }
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
 
