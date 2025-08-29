@@ -138,8 +138,8 @@ export function AppSidebar({
       )}
     >
       <div className={cn(
-        "h-14 flex items-center px-4 border-b justify-between",
-        isMobile && "mt-14" // Add top margin on mobile to account for header
+        "h-14 flex items-center px-4 border-b justify-center",
+        isMobile && "mt-14 justify-between" // Add top margin on mobile to account for header
       )}>
         <div className="flex items-center gap-2">
           <img src={logoUrl} alt="Reex Empire Logo" className="h-10" />

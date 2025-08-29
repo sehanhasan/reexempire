@@ -22,7 +22,7 @@ export default function AddStaffMember() {
     first_name: "",
     last_name: "",
     passport: "",
-    phone: "",
+    phone: "+60",
     join_date: new Date().toISOString().split("T")[0],
     status: "Active"
   });
@@ -163,8 +163,7 @@ export default function AddStaffMember() {
               </div> */}
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" placeholder="e.g. 012-3456789" value={staffData.phone} onChange={e => handleChange("phone", e.target.value)} required />
-                <p className="text-xs text-muted-foreground">Malaysian phone format: 01X-XXXXXXX</p>
+                <Input id="phone" placeholder="e.g. +60123456789" value={staffData.phone} onChange={e => handleChange("phone", e.target.value)} required />
               </div>
             </div>
           </CardContent>
