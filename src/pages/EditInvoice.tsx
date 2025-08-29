@@ -189,14 +189,31 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
             console.log("Customer data fetched:", customerData);
           }
 
-          // Fetch quotation deposit for Due Invoice (non-deposit invoice linked to a quotation)
+          // Fetch deposit amount for Due Invoice (non-deposit invoice linked to a quotation)
           if (invoice.quotation_id && !invoice.is_deposit_invoice) {
             try {
-              const quotation = await quotationService.getById(invoice.quotation_id);
-              setQuotationDepositAmount(quotation?.deposit_amount || 0);
+              console.log("Fetching deposit amount for Due Invoice, quotation_id:", invoice.quotation_id);
+              
+              // Find the deposit invoice for this quotation
+              const { data: depositInvoice, error: depositError } = await supabase
+                .from('invoices')
+                .select('deposit_amount')
+                .eq('quotation_id', invoice.quotation_id)
+                .eq('is_deposit_invoice', true)
+                .single();
+              
+              if (depositError) {
+                console.warn("Failed to fetch deposit invoice:", depositError);
+              } else {
+                console.log("Deposit invoice data fetched:", depositInvoice);
+                setQuotationDepositAmount(depositInvoice?.deposit_amount || 0);
+                console.log("Set deposit amount for Due Invoice:", depositInvoice?.deposit_amount || 0);
+              }
             } catch (qErr) {
-              console.warn("Failed to fetch quotation for deposit amount", qErr);
+              console.warn("Failed to fetch deposit amount for Due Invoice", qErr);
             }
+          } else {
+            console.log("Not fetching deposit amount - invoice.quotation_id:", invoice.quotation_id, "invoice.is_deposit_invoice:", invoice.is_deposit_invoice);
           }
 
           const invoiceItems = await invoiceService.getItemsByInvoiceId(id);
