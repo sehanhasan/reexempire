@@ -397,6 +397,7 @@ export default function CreateInvoice() {
           setDepositPercentage={setDepositPercentage}
           calculateItemAmount={calculateItemAmount}
           quotationDepositAmount={quotationDepositAmount}
+          showDepositPaid={false}
         />
         
         {/* <Card>
