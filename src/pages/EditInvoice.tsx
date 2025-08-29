@@ -623,7 +623,7 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
           depositInfo={depositInfo} 
           setDepositInfo={setDepositInfo} 
           calculateItemAmount={calculateItemAmount}
-          quotationDepositAmount={invoiceData?.quotation_ref_number && !invoiceData?.is_deposit_invoice ? quotationDepositAmount : undefined}
+          quotationDepositAmount={invoiceData?.quotation_id && !invoiceData?.is_deposit_invoice ? quotationDepositAmount : undefined}
         />
         
         {/* <Card>
