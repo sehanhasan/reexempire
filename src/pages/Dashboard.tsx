@@ -350,7 +350,13 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-sm text-slate-800">{formatMoney(invoice.total)}</p>
-                        <Badge className={invoice.payment_status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-100" : invoice.payment_status === 'Unpaid' ? "bg-red-100 text-red-700 hover:bg-red-100" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"} variant="secondary">
+                        <Badge className={
+                          invoice.payment_status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-100" : 
+                          invoice.payment_status === 'Unpaid' ? "bg-amber-100 text-amber-700 hover:bg-amber-100" : 
+                          invoice.payment_status === 'Overdue' ? "bg-red-100 text-red-700 hover:bg-red-100" :
+                          invoice.payment_status === 'Partially Paid' || invoice.payment_status === 'Partial' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" :
+                          "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                        } variant="secondary">
                           {invoice.payment_status}
                         </Badge>
                       </div>
