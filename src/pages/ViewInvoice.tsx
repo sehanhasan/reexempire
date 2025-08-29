@@ -299,7 +299,11 @@ const [depositPaid, setDepositPaid] = useState(0);
                                 {formatAmount(item.unit_price)}{item.unit && item.unit.trim() !== '' && item.unit.trim().toLowerCase() !== 'unit' ? ` ${item.unit}` : ''}
                               </td>
                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                             <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(item.amount)}</td>
+                             <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(
+                               !invoice.is_deposit_invoice && depositPaid > 0 
+                                 ? item.quantity * item.unit_price 
+                                 : item.amount
+                             )}</td>
                            </tr>)}
                       </React.Fragment>)}
                   </tbody>

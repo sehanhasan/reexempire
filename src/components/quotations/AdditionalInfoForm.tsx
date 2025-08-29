@@ -44,13 +44,12 @@ export function AdditionalInfoForm({
     // First submit the document
     await onSubmit(e, "Sent");
     
-    // Then navigate to the view page in new tab
+    // Then navigate to the view page in new tab - only open one tab
     if (documentId) {
-      if (documentType === 'quotation') {
-        window.open(`/quotations/view/${documentId}`, '_blank');
-      } else {
-        window.open(`/invoices/view/${documentId}`, '_blank');
-      }
+      const viewUrl = documentType === 'quotation' 
+        ? `/quotations/view/${documentId}` 
+        : `/invoices/view/${documentId}`;
+      window.open(viewUrl, '_blank');
     }
   };
 
