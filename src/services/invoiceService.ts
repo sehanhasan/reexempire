@@ -209,10 +209,10 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
       customer_id: depositInvoice.customer_id,
       issue_date: new Date().toISOString().split('T')[0],
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
-      subtotal: totalAmount, // Keep original subtotal - deposit will be handled in display
+      subtotal: dueAmount,
       tax_rate: depositInvoice.tax_rate || 0,
-      tax_amount: depositInvoice.tax_amount || 0, // Keep original tax amount
-      total: Number(depositInvoice.subtotal || 0) + Number(depositInvoice.tax_amount || 0), // Keep original total
+      tax_amount: 0,
+      total: dueAmount,
       is_deposit_invoice: false,
       deposit_amount: 0,
       deposit_percentage: 0,
@@ -225,20 +225,28 @@ const createDueInvoiceFromDeposit = async (depositInvoiceId: string): Promise<In
       quotation_ref_number: depositInvoice.quotation_ref_number
     };
 
+    // Calculate tax amount if tax rate is provided
+    if (dueInvoiceData.tax_rate > 0) {
+      dueInvoiceData.tax_amount = (dueAmount * dueInvoiceData.tax_rate) / 100;
+      dueInvoiceData.total = dueAmount + dueInvoiceData.tax_amount;
+    }
+
     const dueInvoice = await create(dueInvoiceData);
     
-    // Copy invoice items from the original deposit invoice with original amounts
+    // Copy invoice items from the original deposit invoice
     const depositItems = await getItemsByInvoiceId(depositInvoiceId);
     
     for (const item of depositItems) {
-      // Keep original amounts and prices - don't proportionally reduce them
+      // Calculate proportional amounts for the due invoice
+      const proportionalAmount = (item.amount / totalAmount) * dueAmount;
+      
       await createItem({
         invoice_id: dueInvoice.id,
         description: item.description,
         quantity: item.quantity,
         unit: item.unit,
         unit_price: item.unit_price,
-        amount: item.amount, // Keep original amount
+        amount: proportionalAmount,
         category: item.category,
         display_order: item.display_order
       });
