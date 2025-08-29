@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, FileText } from "lucide-react";
 import { invoiceService, customerService, quotationService } from "@/services";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
 import { shareInvoice } from "@/utils/mobileShare";
@@ -54,13 +55,28 @@ const [depositPaid, setDepositPaid] = useState(0);
             setCustomer(customerData);
           }
 
-          // Fetch deposit paid from linked quotation for Due Invoices
+          // Fetch deposit amount for Due Invoice (non-deposit invoice linked to a quotation)
           if (invoiceData.quotation_id && !invoiceData.is_deposit_invoice) {
             try {
-              const q = await quotationService.getById(invoiceData.quotation_id);
-              setDepositPaid(q?.deposit_amount || 0);
+              console.log("ViewInvoice: Fetching deposit amount for Due Invoice, quotation_id:", invoiceData.quotation_id);
+              
+              // Find the deposit invoice for this quotation
+              const { data: depositInvoice, error: depositError } = await supabase
+                .from('invoices')
+                .select('deposit_amount')
+                .eq('quotation_id', invoiceData.quotation_id)
+                .eq('is_deposit_invoice', true)
+                .single();
+              
+              if (depositError) {
+                console.warn("ViewInvoice: Failed to fetch deposit invoice:", depositError);
+              } else {
+                console.log("ViewInvoice: Deposit invoice data fetched:", depositInvoice);
+                setDepositPaid(depositInvoice?.deposit_amount || 0);
+                console.log("ViewInvoice: Set deposit amount for Due Invoice:", depositInvoice?.deposit_amount || 0);
+              }
             } catch (qErr) {
-              console.warn('ViewInvoice: failed to fetch quotation for deposit amount', qErr);
+              console.warn('ViewInvoice: failed to fetch deposit amount for Due Invoice', qErr);
             }
           }
         }
@@ -316,7 +332,11 @@ const [depositPaid, setDepositPaid] = useState(0);
                   <div className="w-64 space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="font-medium">Subtotal:</span>
-                      <span>{formatMoney(invoice.subtotal)}</span>
+                      <span>{formatMoney(
+                        !invoice.is_deposit_invoice && depositPaid > 0 
+                          ? items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+                          : invoice.subtotal
+                      )}</span>
                     </div>
                     {invoice.tax_rate > 0 && <div className="flex justify-between">
                         <span className="font-medium">Tax ({invoice.tax_rate}%):</span>
