@@ -345,7 +345,7 @@ export default function ViewQuotation() {
                     {quotation.requires_deposit && (
                       <div className="flex justify-between">
                         <span className="font-medium">
-                          Deposit ({quotation.deposit_percentage}%):
+                          Deposit Required ({quotation.deposit_percentage}%):
                         </span>
                         <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
                       </div>
