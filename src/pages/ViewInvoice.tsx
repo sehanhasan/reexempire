@@ -195,8 +195,10 @@ const [depositPaid, setDepositPaid] = useState(0);
     return <div className="min-h-screen bg-background flex justify-center items-center zoom-page" style={{
       minWidth: "1024px"
     }}>
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-        <p>Loading invoice details...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading invoice...</p>
+        </div>
       </div>;
   }
   if (!invoice || !customer) {
