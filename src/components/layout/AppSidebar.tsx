@@ -167,7 +167,7 @@ export function AppSidebar({
                     variant="ghost" 
                     className={cn(
                       "w-full justify-start text-gray-600 h-10", 
-                      isActiveRoute(item.href) && "bg-gray-100 text-gray-900 font-medium"
+                      isActiveRoute(item.href) && "bg-blue-50 text-blue-600 font-medium"
                     )} 
                     onClick={() => handleNavItemClick(item.href)}
                   >
