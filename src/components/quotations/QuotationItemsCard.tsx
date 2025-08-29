@@ -179,7 +179,13 @@ export function QuotationItemsCard({
             </Button>
           </div>
 
-          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} showDescription={true} />
+          <ItemsTable 
+            items={items} 
+            handleItemChange={handleItemChange} 
+            removeItem={removeItem} 
+            showDescription={true}
+            showOriginalAmounts={quotationDepositAmount !== undefined && quotationDepositAmount > 0}
+          />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
             <div className={isMobile ? "w-full" : "w-72 bg-gray-50 p-3 rounded-lg"}>

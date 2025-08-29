@@ -10,13 +10,15 @@ interface ItemsTableProps {
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
   showDescription?: boolean;
+  showOriginalAmounts?: boolean; // For Due Invoices to show full amounts
 }
 
 export function ItemsTable({
   items,
   handleItemChange,
   removeItem,
-  showDescription = true
+  showDescription = true,
+  showOriginalAmounts = false
 }: ItemsTableProps) {
   const isMobile = useIsMobile();
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
@@ -24,8 +26,13 @@ export function ItemsTable({
   const [swipedItemId, setSwipedItemId] = useState<number | null>(null);
 
   // Format currency without RM symbol for items table
-  const formatAmount = (amount: number) => {
-    return amount.toFixed(2);
+  const formatAmount = (item: QuotationItem) => {
+    // For Due Invoices, show original amount (quantity * unitPrice)
+    if (showOriginalAmounts) {
+      const quantity = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 0 : item.quantity;
+      return (quantity * item.unitPrice).toFixed(2);
+    }
+    return item.amount.toFixed(2);
   };
 
   // Group items by category
@@ -198,7 +205,7 @@ export function ItemsTable({
                         <div className="space-y-2">
                           <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
                           <div className="p-2 h-10 text-right text-gray-800">
-                            {formatAmount(item.amount)}
+                            {formatAmount(item)}
                           </div>
                         </div>
                       </div>
@@ -318,7 +325,7 @@ export function ItemsTable({
                       </div>
                     </td>
                     <td className="py-3 px-2 text-right text-gray-600">
-                      {formatAmount(item.amount)}
+                      {formatAmount(item)}
                     </td>
                     <td className="py-3 px-1">
                       <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
