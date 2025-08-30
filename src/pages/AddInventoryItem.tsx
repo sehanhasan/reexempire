@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageHeader } from "@/components/common/PageHeader";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { inventoryService } from "@/services/inventoryService";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function AddInventoryItem() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -50,11 +52,15 @@ export default function AddInventoryItem() {
       });
       
       navigate("/inventory");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating inventory item:", error);
+      const rawMessage = error?.message || String(error);
+      const description = rawMessage.includes("inventory_items_sku_key")
+        ? "SKU already exists. Please use a unique SKU."
+        : rawMessage || "Failed to add inventory item";
       toast({
         title: "Error",
-        description: "Failed to add inventory item",
+        description,
         variant: "destructive"
       });
     } finally {
@@ -63,15 +69,11 @@ export default function AddInventoryItem() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <div className="flex items-center gap-4">
         <Button variant="ghost" onClick={() => navigate("/inventory")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <PageHeader
-          title="Add Inventory Item"
-          description="Create a new inventory item"
-        />
       </div>
 
       <Card>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageHeader } from "@/components/common/PageHeader";
+
 import { DataTable } from "@/components/common/DataTable";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { inventoryService, InventoryItem } from "@/services/inventoryService";
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, AlertTriangle, TrendingUp, Plus, FileText, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Inventory() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchData();
@@ -136,11 +138,8 @@ export default function Inventory() {
   const activeItems = items.filter(item => item.status === 'Active').length;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <PageHeader
-        title="Inventory Management"
-        description="Manage your inventory items and track stock levels"
-      />
+    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

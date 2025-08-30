@@ -118,13 +118,15 @@ class InventoryService {
     const { data, error } = await supabase
       .from('inventory_items')
       .select('*')
-      .gte('min_stock_level', 0)
-      .filter('quantity', 'lte', 'min_stock_level')
       .eq('status', 'Active')
       .order('name');
     
     if (error) throw error;
-    return (data || []) as InventoryItem[];
+    const all = (data || []) as InventoryItem[];
+    return all.filter(item => {
+      const min = typeof item.min_stock_level === 'number' ? item.min_stock_level : 0;
+      return item.quantity === 0 || (min > 0 && item.quantity <= min);
+    });
   }
 
   // Demand Lists

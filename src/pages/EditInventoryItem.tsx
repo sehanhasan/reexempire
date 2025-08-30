@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { PageHeader } from "@/components/common/PageHeader";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { inventoryService, InventoryItem } from "@/services/inventoryService";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function EditInventoryItem() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function EditInventoryItem() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -112,15 +114,11 @@ export default function EditInventoryItem() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <div className="flex items-center gap-4">
         <Button variant="ghost" onClick={() => navigate("/inventory")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <PageHeader
-          title="Edit Inventory Item"
-          description="Update inventory item details"
-        />
       </div>
 
       <Card>
