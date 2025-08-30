@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePagination } from "@/hooks/usePagination";
 
 export default function Inventory() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("items");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -74,6 +76,8 @@ export default function Inventory() {
     const matchesStatus = statusFilter === "all" || item.status.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
+
+  const pagination = usePagination(filteredItems.length, 10);
 
   const getStockStatusBadge = (item: InventoryItem) => {
     if (item.quantity === 0) {
@@ -223,23 +227,32 @@ export default function Inventory() {
         </Card>
       </div>
 
-      <Tabs defaultValue="items" className="mt-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="items" className="flex items-center gap-2">
+      <div className="mt-6">
+        <div className="flex border-b bg-white border-gray-200 rounded-t-lg">
+          <button 
+            onClick={() => setActiveTab("items")} 
+            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 flex items-center justify-center gap-2 ${activeTab === "items" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
             <Package className="h-4 w-4" />
             Inventory Items
-          </TabsTrigger>
-          <TabsTrigger value="low-stock" className="flex items-center gap-2">
+          </button>
+          <button 
+            onClick={() => setActiveTab("low-stock")} 
+            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 flex items-center justify-center gap-2 ${activeTab === "low-stock" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
             <AlertTriangle className="h-4 w-4" />
             Low Stock
-          </TabsTrigger>
-          <TabsTrigger value="demand-lists" className="flex items-center gap-2">
+          </button>
+          <button 
+            onClick={() => setActiveTab("demand-lists")} 
+            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 flex items-center justify-center gap-2 ${activeTab === "demand-lists" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
             <FileText className="h-4 w-4" />
             Demand Lists
-          </TabsTrigger>
-        </TabsList>
+          </button>
+        </div>
 
-        <TabsContent value="items" className="space-y-4">
+        <div className={`mt-4 ${activeTab === "items" ? "block" : "hidden"}`}>
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
@@ -264,15 +277,47 @@ export default function Inventory() {
             </div>
             
             <DataTable
-              data={filteredItems}
+              data={pagination.paginatedData(filteredItems)}
               columns={columns}
               isLoading={loading}
               emptyMessage="No inventory items found"
             />
+            
+            {/* Pagination Controls */}
+            {pagination.pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-gray-500">
+                  Showing {((pagination.pagination.currentPage - 1) * pagination.pagination.pageSize) + 1} to{' '}
+                  {Math.min(pagination.pagination.currentPage * pagination.pagination.pageSize, pagination.pagination.totalItems)} of{' '}
+                  {pagination.pagination.totalItems} items
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={pagination.controls.goToPrevious}
+                    disabled={pagination.pagination.currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    Page {pagination.pagination.currentPage} of {pagination.pagination.totalPages}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={pagination.controls.goToNext}
+                    disabled={pagination.pagination.currentPage === pagination.pagination.totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="low-stock" className="space-y-4">
+        <div className={`mt-4 ${activeTab === "low-stock" ? "block" : "hidden"}`}>
           {lowStockItems.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
@@ -307,9 +352,9 @@ export default function Inventory() {
               ))}
             </div>
           )}
-        </TabsContent>
+        </div>
 
-        <TabsContent value="demand-lists" className="space-y-4">
+        <div className={`mt-4 ${activeTab === "demand-lists" ? "block" : "hidden"}`}>
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-lg font-medium">Demand Lists</h3>
@@ -332,8 +377,8 @@ export default function Inventory() {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       <FloatingActionButton
         onClick={() => navigate("/inventory/add")}

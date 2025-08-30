@@ -115,17 +115,7 @@ export default function EditInventoryItem() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate("/inventory")}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-      </div>
-
       <Card>
-        <CardHeader>
-          <CardTitle>Item Details</CardTitle>
-          <CardDescription>Update the details for this inventory item</CardDescription>
-        </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
