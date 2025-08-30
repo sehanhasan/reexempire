@@ -166,7 +166,7 @@ export default function Inventory() {
       accessorKey: "quantity",
       header: "Stock",
       cell: ({ row }: any) => (
-        <div className="text-center">
+        <div className="text-start">
           <div className="font-medium">{row.original.quantity}</div>
           {getStockStatusBadge(row.original)}
         </div>
@@ -299,13 +299,6 @@ export default function Inventory() {
             <AlertTriangle className="h-4 w-4" />
             Low Stock
           </button>
-          <button 
-            onClick={() => setActiveTab("demand-lists")} 
-            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 flex items-center justify-center gap-2 ${activeTab === "demand-lists" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}
-          >
-            <FileText className="h-4 w-4" />
-            Demand Lists
-          </button>
         </div>
 
         <div className={`mt-4 ${activeTab === "items" ? "block" : "hidden"}`}>
@@ -356,57 +349,45 @@ export default function Inventory() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4">
-              {lowStockItems.map((item) => (
-                <Card key={item.id} className="border-yellow-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium">{item.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          Current: {item.quantity} | Minimum: {item.min_stock_level}
-                        </p>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-medium">Low Stock Items</h3>
+                  <p className="text-sm text-gray-500">{lowStockItems.length} items need restocking</p>
+                </div>
+                <Button onClick={() => navigate("/inventory/demand-lists/add")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Demand List
+                </Button>
+              </div>
+              <div className="grid gap-4">
+                {lowStockItems.map((item) => (
+                  <Card key={item.id} className="border-yellow-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium">{item.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            Current: {item.quantity} | Minimum: {item.min_stock_level}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                          >
+                            Restock
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                        >
-                          Restock
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        <div className={`mt-4 ${activeTab === "demand-lists" ? "block" : "hidden"}`}>
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-medium">Demand Lists</h3>
-              <p className="text-sm text-gray-500">Manage procurement requests</p>
-            </div>
-            <Button onClick={() => navigate("/inventory/demand-lists/add")}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Demand List
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-8">
-              <FileText className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Demand Lists</h3>
-              <p className="text-gray-500 mb-4">Create demand lists to manage procurement requests.</p>
-              <Button onClick={() => navigate("/inventory/demand-lists/add")}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Demand List
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
       <FloatingActionButton

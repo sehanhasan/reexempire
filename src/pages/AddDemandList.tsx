@@ -27,7 +27,6 @@ export default function AddDemandList() {
     description: "",
     requested_date: new Date().toISOString().split('T')[0],
     required_date: "",
-    status: "Draft" as const,
     priority: "Normal" as const,
     requested_by: "",
     notes: ""
@@ -67,18 +66,38 @@ export default function AddDemandList() {
   const generateDemandListPDF = async (demandList: any, items: InventoryItem[]) => {
     const doc = new jsPDF();
     
-    // Header
-    doc.setFontSize(20);
-    doc.text('Demand List', 20, 30);
+    // Company Logo/Header
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, 0, 210, 40, 'F');
     
-    doc.setFontSize(12);
-    doc.text(`Title: ${demandList.title}`, 20, 50);
-    doc.text(`Requested Date: ${demandList.requested_date}`, 20, 60);
-    doc.text(`Priority: ${demandList.priority}`, 20, 70);
-    doc.text(`Status: ${demandList.status}`, 20, 80);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DEMAND LIST', 20, 25);
+    
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    
+    // Document info
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Document Information', 20, 60);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Title: ${demandList.title}`, 20, 75);
+    doc.text(`Requested Date: ${new Date(demandList.requested_date).toLocaleDateString()}`, 20, 85);
+    doc.text(`Priority: ${demandList.priority}`, 20, 95);
+    if (demandList.required_date) {
+      doc.text(`Required Date: ${new Date(demandList.required_date).toLocaleDateString()}`, 20, 105);
+    }
+    if (demandList.requested_by) {
+      doc.text(`Requested By: ${demandList.requested_by}`, 20, 115);
+    }
     
     if (demandList.description) {
-      doc.text(`Description: ${demandList.description}`, 20, 90);
+      doc.text(`Description: ${demandList.description}`, 20, 125);
     }
 
     // Items table
@@ -90,13 +109,41 @@ export default function AddDemandList() {
       item.unit_price ? `$${item.unit_price.toFixed(2)}` : '-'
     ]);
 
+    const totalValue = items.reduce((sum, item) => {
+      const requiredQty = Math.max((item.max_stock_level || item.min_stock_level || 10) - item.quantity, 1);
+      return sum + (requiredQty * (item.unit_price || 0));
+    }, 0);
+
     autoTable(doc, {
       head: [['Item Name', 'Current Stock', 'Min Level', 'Required Qty', 'Unit Price']],
       body: tableData,
-      startY: 110,
-      theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246] },
+      startY: 140,
+      theme: 'striped',
+      headStyles: { 
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 9
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250]
+      },
+      margin: { left: 20, right: 20 }
     });
+
+    // Add total at the bottom
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Estimated Value: $${totalValue.toFixed(2)}`, 20, finalY);
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, finalY + 20);
+    doc.text('This is a system-generated document', 20, finalY + 30);
 
     // Download the PDF
     doc.save(`demand-list-${demandList.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
@@ -110,6 +157,7 @@ export default function AddDemandList() {
       // Ensure required_date is not empty string
       const submitData = {
         ...formData,
+        status: "Draft" as const,
         required_date: formData.required_date || null
       };
       
@@ -205,20 +253,6 @@ export default function AddDemandList() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as any })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Draft">Draft</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Approved">Approved</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>

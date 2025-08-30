@@ -112,10 +112,10 @@ export default function AddInventoryItem() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category">Category *</Label>
                   <AddCategoryDialog onCategoryAdded={fetchCategories} />
                 </div>
-                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
