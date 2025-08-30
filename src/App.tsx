@@ -36,6 +36,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ViewQuotation from "./pages/ViewQuotation";
 import ViewInvoice from "./pages/ViewInvoice";
+import Inventory from "./pages/Inventory";
+import AddInventoryItem from "./pages/AddInventoryItem";
+import EditInventoryItem from "./pages/EditInventoryItem";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +81,9 @@ export default function App() {
                 <Route path="/quotations" element={<Quotations />} />
                 <Route path="/quotations/create" element={<CreateQuotation />} />
                 <Route path="/quotations/edit/:id" element={<EditQuotation />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/inventory/add" element={<AddInventoryItem />} />
+                <Route path="/inventory/edit/:id" element={<EditInventoryItem />} />
               </Route>
               
               {/* Public quotation view route */}

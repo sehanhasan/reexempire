@@ -8,3 +8,4 @@ export { appointmentService } from './appointmentService';
 export { exportService } from './exportService';
 export { paymentReceiptService } from './paymentReceiptService';
 export { notificationService } from './notificationService';
+export { inventoryService } from './inventoryService';

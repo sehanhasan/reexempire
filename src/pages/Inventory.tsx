@@ -1,0 +1,303 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/common/PageHeader";
+import { DataTable } from "@/components/common/DataTable";
+import { FloatingActionButton } from "@/components/common/FloatingActionButton";
+import { inventoryService, InventoryItem } from "@/services/inventoryService";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, AlertTriangle, TrendingUp, Plus, FileText, Activity } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/utils/formatters";
+
+export default function Inventory() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [allItems, lowStock] = await Promise.all([
+        inventoryService.getAllItems(),
+        inventoryService.getLowStockItems()
+      ]);
+      setItems(allItems);
+      setLowStockItems(lowStock);
+    } catch (error) {
+      console.error("Error fetching inventory data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch inventory data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await inventoryService.deleteItem(id);
+      toast({
+        title: "Success",
+        description: "Item deleted successfully"
+      });
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete item",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.category?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || item.status.toLowerCase() === statusFilter.toLowerCase();
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStockStatusBadge = (item: InventoryItem) => {
+    if (item.quantity === 0) {
+      return <Badge variant="destructive">Out of Stock</Badge>;
+    } else if (item.min_stock_level && item.quantity <= item.min_stock_level) {
+      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Low Stock</Badge>;
+    } else {
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">In Stock</Badge>;
+    }
+  };
+
+  const columns = [
+    {
+      accessorKey: "name",
+      header: "Item Name",
+      cell: ({ row }: any) => (
+        <div>
+          <div className="font-medium">{row.original.name}</div>
+          {row.original.sku && <div className="text-sm text-gray-500">{row.original.sku}</div>}
+        </div>
+      )
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }: any) => row.original.category || "-"
+    },
+    {
+      accessorKey: "quantity",
+      header: "Stock",
+      cell: ({ row }: any) => (
+        <div className="text-center">
+          <div className="font-medium">{row.original.quantity}</div>
+          {getStockStatusBadge(row.original)}
+        </div>
+      )
+    },
+    {
+      accessorKey: "unit_price",
+      header: "Unit Price",
+      cell: ({ row }: any) => row.original.unit_price ? formatCurrency(row.original.unit_price) : "-"
+    },
+    {
+      accessorKey: "supplier",
+      header: "Supplier",
+      cell: ({ row }: any) => row.original.supplier || "-"
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }: any) => (
+        <Badge 
+          variant={row.original.status === 'Active' ? 'default' : 'secondary'}
+          className={row.original.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
+        >
+          {row.original.status}
+        </Badge>
+      )
+    }
+  ];
+
+  const totalValue = items.reduce((sum, item) => sum + (item.quantity * (item.unit_price || 0)), 0);
+  const activeItems = items.filter(item => item.status === 'Active').length;
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <PageHeader
+        title="Inventory Management"
+        description="Manage your inventory items and track stock levels"
+      />
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{items.length}</div>
+            <p className="text-xs text-muted-foreground">{activeItems} active items</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{lowStockItems.length}</div>
+            <p className="text-xs text-muted-foreground">Items below minimum level</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
+            <p className="text-xs text-muted-foreground">Current inventory value</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Categories</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {new Set(items.map(item => item.category).filter(Boolean)).size}
+            </div>
+            <p className="text-xs text-muted-foreground">Unique categories</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="items" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="items">Inventory Items</TabsTrigger>
+          <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
+          <TabsTrigger value="demand-lists">Demand Lists</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="items" className="space-y-4">
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Search items..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="discontinued">Discontinued</option>
+              </select>
+            </div>
+            
+            <DataTable
+              data={filteredItems}
+              columns={columns}
+              isLoading={loading}
+              emptyMessage="No inventory items found"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="low-stock" className="space-y-4">
+          {lowStockItems.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <Package className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Low Stock Items</h3>
+                <p className="text-gray-500">All items are above minimum stock levels.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {lowStockItems.map((item) => (
+                <Card key={item.id} className="border-yellow-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium">{item.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          Current: {item.quantity} | Minimum: {item.min_stock_level}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                        >
+                          Restock
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="demand-lists" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-medium">Demand Lists</h3>
+              <p className="text-sm text-gray-500">Manage procurement requests</p>
+            </div>
+            <Button onClick={() => navigate("/inventory/demand-lists/add")}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Demand List
+            </Button>
+          </div>
+          
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <FileText className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium mb-2">No Demand Lists</h3>
+              <p className="text-gray-500 mb-4">Create demand lists to manage procurement requests.</p>
+              <Button onClick={() => navigate("/inventory/demand-lists/add")}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Demand List
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <FloatingActionButton
+        onClick={() => navigate("/inventory/add")}
+        icon={<Plus className="h-5 w-5" />}
+      />
+    </div>
+  );
+}

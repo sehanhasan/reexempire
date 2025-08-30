@@ -281,7 +281,10 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
-            {recentQuotations.length === 0 ? <div className="py-8 text-center">
+            {loading ? <div className="py-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-sm text-slate-600 mt-2">Loading quotations...</p>
+              </div> : recentQuotations.length === 0 ? <div className="py-8 text-center">
                 <ReceiptText className="h-12 w-12 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-600">No quotations found</p>
               </div> : <div className="space-y-3">
@@ -329,7 +332,10 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
-            {recentInvoices.length === 0 ? <div className="py-8 text-center">
+            {loading ? <div className="py-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-sm text-slate-600 mt-2">Loading invoices...</p>
+              </div> : recentInvoices.length === 0 ? <div className="py-8 text-center">
                 <Receipt className="h-12 w-12 text-slate-400 mx-auto mb-2" />
                 <p className="text-sm text-slate-600">No invoices found</p>
               </div> : <div className="space-y-3">

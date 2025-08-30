@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X, DollarSign, Shield } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Receipt, UserCircle, Calendar, FolderTree, LogOut, X, DollarSign, Shield, Package } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Separator } from "@/components/ui/separator";
 
@@ -83,6 +83,11 @@ export function AppSidebar({
     },
     {
       items: [{
+        title: "Inventory",
+        icon: <Package className="h-5 w-5" />,
+        href: "/inventory",
+        adminOnly: true
+      }, {
         title: "Finance",
         icon: <DollarSign className="h-5 w-5" />,
         href: "/finance",
@@ -167,8 +172,8 @@ export function AppSidebar({
                     variant="ghost" 
                     className={cn(
                       "w-full justify-start text-gray-600 h-10", 
-                      isActiveRoute(item.href) && "bg-blue-50 text-blue-600 font-medium"
-                    )} 
+                      isActiveRoute(item.href) && "bg-blue-50 text-blue-600 font-medium hover:bg-blue-50 hover:text-blue-600"
+                    )}
                     onClick={() => handleNavItemClick(item.href)}
                   >
                     {item.icon}

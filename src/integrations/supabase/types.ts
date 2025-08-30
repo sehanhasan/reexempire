@@ -146,6 +146,206 @@ export type Database = {
         }
         Relationships: []
       }
+      demand_list_items: {
+        Row: {
+          amount: number | null
+          created_at: string
+          demand_list_id: string
+          description: string | null
+          id: string
+          inventory_item_id: string | null
+          item_name: string
+          notes: string | null
+          quantity: number
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          demand_list_id: string
+          description?: string | null
+          id?: string
+          inventory_item_id?: string | null
+          item_name: string
+          notes?: string | null
+          quantity?: number
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          demand_list_id?: string
+          description?: string | null
+          id?: string
+          inventory_item_id?: string | null
+          item_name?: string
+          notes?: string | null
+          quantity?: number
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_list_items_demand_list_id_fkey"
+            columns: ["demand_list_id"]
+            isOneToOne: false
+            referencedRelation: "demand_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_list_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demand_lists: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          notes: string | null
+          priority: string
+          requested_by: string | null
+          requested_date: string
+          required_date: string | null
+          status: string
+          title: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          requested_by?: string | null
+          requested_date?: string
+          required_date?: string | null
+          status?: string
+          title: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          requested_by?: string | null
+          requested_date?: string
+          required_date?: string | null
+          status?: string
+          title?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          max_stock_level: number | null
+          min_stock_level: number | null
+          name: string
+          quantity: number
+          sku: string | null
+          status: string
+          supplier: string | null
+          supplier_contact: string | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          max_stock_level?: number | null
+          min_stock_level?: number | null
+          name: string
+          quantity?: number
+          sku?: string | null
+          status?: string
+          supplier?: string | null
+          supplier_contact?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          max_stock_level?: number | null
+          min_stock_level?: number | null
+          name?: string
+          quantity?: number
+          sku?: string | null
+          status?: string
+          supplier?: string | null
+          supplier_contact?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          inventory_item_id: string
+          movement_type: string
+          notes: string | null
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id: string
+          movement_type: string
+          notes?: string | null
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inventory_item_id?: string
+          movement_type?: string
+          notes?: string | null
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_images: {
         Row: {
           created_at: string
