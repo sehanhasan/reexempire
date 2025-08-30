@@ -70,7 +70,7 @@ export default function AddInventoryItem() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'pt-4'}`}>
-      <Card className="pt-4">
+      <Card className="pt-6">
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
