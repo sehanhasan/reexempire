@@ -39,6 +39,7 @@ import ViewInvoice from "./pages/ViewInvoice";
 import Inventory from "./pages/Inventory";
 import AddInventoryItem from "./pages/AddInventoryItem";
 import EditInventoryItem from "./pages/EditInventoryItem";
+import AddDemandList from "./pages/AddDemandList";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ export default function App() {
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/inventory/add" element={<AddInventoryItem />} />
                 <Route path="/inventory/edit/:id" element={<EditInventoryItem />} />
+                <Route path="/inventory/demand-lists/add" element={<AddDemandList />} />
               </Route>
               
               {/* Public quotation view route */}

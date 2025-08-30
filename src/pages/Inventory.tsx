@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, AlertTriangle, TrendingUp, Plus, FileText, Activity, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -64,6 +65,48 @@ export default function Inventory() {
       toast({
         title: "Error",
         description: "Failed to delete item",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleIssueItem = async (item: InventoryItem) => {
+    const quantity = prompt(`How many ${item.name} would you like to issue?`);
+    if (!quantity || isNaN(Number(quantity)) || Number(quantity) <= 0) {
+      return;
+    }
+
+    const quantityNumber = Number(quantity);
+    if (quantityNumber > item.quantity) {
+      toast({
+        title: "Error",
+        description: "Cannot issue more items than available in stock",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await inventoryService.createMovement({
+        inventory_item_id: item.id,
+        movement_type: 'OUT',
+        quantity: quantityNumber,
+        reference_type: 'manual_issue',
+        notes: `Manual issue of ${quantityNumber} units`,
+        created_by: 'System User'
+      });
+
+      toast({
+        title: "Success",
+        description: `Successfully issued ${quantityNumber} units of ${item.name}`
+      });
+      
+      fetchData();
+    } catch (error) {
+      console.error("Error issuing item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to issue item",
         variant: "destructive"
       });
     }
@@ -154,17 +197,21 @@ export default function Inventory() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate(`/inventory/edit/${row.original.id}`)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handleDelete(row.original.id)}
-              className="text-red-600"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`/inventory/edit/${row.original.id}`)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleIssueItem(row.original)}>
+                    <Activity className="mr-2 h-4 w-4" />
+                    Issue Item
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleDelete(row.original.id)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
@@ -283,37 +330,10 @@ export default function Inventory() {
               emptyMessage="No inventory items found"
             />
             
-            {/* Pagination Controls */}
-            {pagination.pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-gray-500">
-                  Showing {((pagination.pagination.currentPage - 1) * pagination.pagination.pageSize) + 1} to{' '}
-                  {Math.min(pagination.pagination.currentPage * pagination.pagination.pageSize, pagination.pagination.totalItems)} of{' '}
-                  {pagination.pagination.totalItems} items
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={pagination.controls.goToPrevious}
-                    disabled={pagination.pagination.currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm">
-                    Page {pagination.pagination.currentPage} of {pagination.pagination.totalPages}
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={pagination.controls.goToNext}
-                    disabled={pagination.pagination.currentPage === pagination.pagination.totalPages}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+            <PaginationControls
+              pagination={pagination.pagination}
+              controls={pagination.controls}
+            />
           </div>
         </div>
 
