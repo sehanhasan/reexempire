@@ -144,7 +144,8 @@ export default function Inventory() {
           >
             {row.original.name}
           </div>
-          {row.original.sku && <div className="text-sm text-gray-500">{row.original.sku}</div>}
+          {row.original.category && <div className="text-sm text-gray-500">{row.original.category}</div>}
+          {row.original.sku && <div className="text-xs text-gray-400">{row.original.sku}</div>}
         </div>
       )
     },

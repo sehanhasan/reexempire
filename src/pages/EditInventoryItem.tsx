@@ -8,9 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { inventoryService, InventoryItem } from "@/services/inventoryService";
+import { categoryService } from "@/services/categoryService";
+import { AddCategoryDialog } from "@/components/categories/AddCategoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Category } from "@/types/database";
 
 export default function EditInventoryItem() {
   const navigate = useNavigate();
@@ -18,6 +21,7 @@ export default function EditInventoryItem() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
   const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
@@ -39,7 +43,17 @@ export default function EditInventoryItem() {
     if (id) {
       fetchItem();
     }
+    fetchCategories();
   }, [id]);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await categoryService.getAll();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   const fetchItem = async () => {
     try {
@@ -140,12 +154,22 @@ export default function EditInventoryItem() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="category">Category</Label>
+                  <AddCategoryDialog onCategoryAdded={fetchCategories} />
+                </div>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
