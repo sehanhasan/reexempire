@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, AlertTriangle, TrendingUp, Plus, FileText, Activity } from "lucide-react";
+import { Package, AlertTriangle, TrendingUp, Plus, FileText, Activity, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -90,7 +91,12 @@ export default function Inventory() {
       header: "Item Name",
       cell: ({ row }: any) => (
         <div>
-          <div className="font-medium">{row.original.name}</div>
+          <div 
+            className="font-medium cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
+            onClick={() => navigate(`/inventory/edit/${row.original.id}`)}
+          >
+            {row.original.name}
+          </div>
           {row.original.sku && <div className="text-sm text-gray-500">{row.original.sku}</div>}
         </div>
       )
@@ -130,6 +136,33 @@ export default function Inventory() {
         >
           {row.original.status}
         </Badge>
+      )
+    },
+    {
+      accessorKey: "actions",
+      header: "Actions",
+      cell: ({ row }: any) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => navigate(`/inventory/edit/${row.original.id}`)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleDelete(row.original.id)}
+              className="text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )
     }
   ];
@@ -190,11 +223,20 @@ export default function Inventory() {
         </Card>
       </div>
 
-      <Tabs defaultValue="items" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="items">Inventory Items</TabsTrigger>
-          <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
-          <TabsTrigger value="demand-lists">Demand Lists</TabsTrigger>
+      <Tabs defaultValue="items" className="mt-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="items" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Inventory Items
+          </TabsTrigger>
+          <TabsTrigger value="low-stock" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Low Stock
+          </TabsTrigger>
+          <TabsTrigger value="demand-lists" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Demand Lists
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="items" className="space-y-4">
