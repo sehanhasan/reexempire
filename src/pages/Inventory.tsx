@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePagination } from "@/hooks/usePagination";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function Inventory() {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("items");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -52,9 +55,16 @@ export default function Inventory() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteClick = (id: string) => {
+    setItemToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    
     try {
-      await inventoryService.deleteItem(id);
+      await inventoryService.deleteItem(itemToDelete);
       toast({
         title: "Success",
         description: "Item deleted successfully"
@@ -67,6 +77,9 @@ export default function Inventory() {
         description: "Failed to delete item",
         variant: "destructive"
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -137,7 +150,7 @@ export default function Inventory() {
       accessorKey: "name",
       header: "Item Name",
       cell: ({ row }: any) => (
-        <div>
+        <div className="text-start">
           <div 
             className="font-medium cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
             onClick={() => navigate(`/inventory/edit/${row.original.id}`)}
@@ -148,11 +161,6 @@ export default function Inventory() {
           {row.original.sku && <div className="text-xs text-gray-400">{row.original.sku}</div>}
         </div>
       )
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }: any) => row.original.category || "-"
     },
     {
       accessorKey: "quantity",
@@ -207,7 +215,7 @@ export default function Inventory() {
                     Issue Item
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => handleDelete(row.original.id)}
+                    onClick={() => handleDeleteClick(row.original.id)}
                     className="text-red-600"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -405,6 +413,26 @@ export default function Inventory() {
         onClick={() => navigate("/inventory/add")}
         icon={<Plus className="h-5 w-5" />}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Inventory Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this inventory item? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

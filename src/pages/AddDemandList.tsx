@@ -11,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { inventoryService, InventoryItem } from "@/services/inventoryService";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function AddDemandList() {
   const navigate = useNavigate();
@@ -62,13 +64,57 @@ export default function AddDemandList() {
     );
   };
 
+  const generateDemandListPDF = async (demandList: any, items: InventoryItem[]) => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.text('Demand List', 20, 30);
+    
+    doc.setFontSize(12);
+    doc.text(`Title: ${demandList.title}`, 20, 50);
+    doc.text(`Requested Date: ${demandList.requested_date}`, 20, 60);
+    doc.text(`Priority: ${demandList.priority}`, 20, 70);
+    doc.text(`Status: ${demandList.status}`, 20, 80);
+    
+    if (demandList.description) {
+      doc.text(`Description: ${demandList.description}`, 20, 90);
+    }
+
+    // Items table
+    const tableData = items.map(item => [
+      item.name,
+      item.quantity.toString(),
+      item.min_stock_level?.toString() || '0',
+      Math.max((item.max_stock_level || item.min_stock_level || 10) - item.quantity, 1).toString(),
+      item.unit_price ? `$${item.unit_price.toFixed(2)}` : '-'
+    ]);
+
+    autoTable(doc, {
+      head: [['Item Name', 'Current Stock', 'Min Level', 'Required Qty', 'Unit Price']],
+      body: tableData,
+      startY: 110,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+
+    // Download the PDF
+    doc.save(`demand-list-${demandList.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Ensure required_date is not empty string
+      const submitData = {
+        ...formData,
+        required_date: formData.required_date || null
+      };
+      
       // Create the demand list
-      const demandList = await inventoryService.createDemandList(formData);
+      const demandList = await inventoryService.createDemandList(submitData);
       
       // Add selected low stock items to the demand list
       for (const itemId of selectedItems) {
@@ -91,10 +137,13 @@ export default function AddDemandList() {
           });
         }
       }
+
+      // Generate and download PDF
+      await generateDemandListPDF(demandList, selectedItems.map(id => lowStockItems.find(item => item.id === id)).filter(Boolean));
       
       toast({
         title: "Success",
-        description: `Demand list created successfully with ${selectedItems.length} items`
+        description: `Demand list created successfully with ${selectedItems.length} items and PDF downloaded`
       });
       
       navigate("/inventory");
