@@ -258,7 +258,7 @@ export function QuotationItemsCard({
             
             <Button type="button" onClick={() => setShowWarrantySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-green-600 hover:bg-green-700 text-white`}>
               <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-              Select from Inventory
+              Add Warranty Item
             </Button>
           </div>
 

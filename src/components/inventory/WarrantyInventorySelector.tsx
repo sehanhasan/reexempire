@@ -115,7 +115,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <ShieldCheck className="mr-2 h-5 w-5 text-cyan-600" />
-            Select Warranty Items from Inventory
+            Select Items
           </DialogTitle>
         </DialogHeader>
         
@@ -150,9 +150,6 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                               </div>
                             </div>
                           </div>
-                          <Button size="sm" variant="outline">
-                            Add
-                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -171,7 +168,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                       <CardContent className="p-3">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="font-medium text-sm">{item.name}</div>
+                            <div className="font-medium text-sm text-cyan-600">{item.name}</div>
                             <Button 
                               size="sm" 
                               variant="ghost" 
