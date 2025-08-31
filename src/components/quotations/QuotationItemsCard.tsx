@@ -214,7 +214,6 @@ export function QuotationItemsCard({
         case '3_months': return '3 Months';
         case '6_months': return '6 Months';
         case '1_year': return '1 Year';
-        case 'custom': return 'Custom';
         default: return period;
       }
     };
