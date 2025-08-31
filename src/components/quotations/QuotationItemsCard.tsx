@@ -228,7 +228,7 @@ export function QuotationItemsCard({
         description: description,
         category: "Warranty Items",
         quantity: 1,
-        unit: "pcs",
+        unit: "",
         unitPrice: 0, // Default to 0, user can set price
         amount: 0
       };
