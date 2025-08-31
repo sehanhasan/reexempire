@@ -100,6 +100,33 @@ export function QuotationItemsCard({
       return updatedItems;
     });
   };
+
+  const addItemToCategory = (category: string) => {
+    const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
+    const newItem: QuotationItem = {
+      id: newId,
+      description: "",
+      category: category,
+      quantity: 1,
+      unit: "",
+      unitPrice: 0,
+      amount: 0
+    };
+    setItems(prevItems => {
+      const updatedItems = [...prevItems, newItem];
+      // Auto-scroll to the new item after state update
+      setTimeout(() => {
+        const newItemElement = document.querySelector(`[data-item-id="${newId}"]`);
+        if (newItemElement) {
+          newItemElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
+      }, 100);
+      return updatedItems;
+    });
+  };
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
@@ -190,7 +217,7 @@ export function QuotationItemsCard({
             items={items} 
             handleItemChange={handleItemChange} 
             removeItem={removeItem} 
-            addItem={addItem}
+            addItemToCategory={addItemToCategory}
             showDescription={true}
             showOriginalAmounts={quotationDepositAmount !== undefined && quotationDepositAmount > 0}
           />

@@ -63,6 +63,19 @@ export function InvoiceItemsCard({
       amount: 0
     }]);
   };
+
+  const addItemToCategory = (category: string) => {
+    const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
+    setItems([...items, {
+      id: newId,
+      description: "",
+      category: category,
+      quantity: 1,
+      unit: "",
+      unitPrice: 0,
+      amount: 0
+    }]);
+  };
   const removeItem = (id: number) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
@@ -142,7 +155,7 @@ export function InvoiceItemsCard({
             </Button>
           </div>
 
-          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} addItem={addItem} showDescription={true} />
+          <ItemsTable items={items} handleItemChange={handleItemChange} removeItem={removeItem} addItemToCategory={addItemToCategory} showDescription={true} />
           
           <div className={`flex ${isMobile ? "flex-col" : "justify-end"} mt-4`}>
             <div className={isMobile ? "w-full" : "w-72 bg-gray-50 p-3 rounded-lg"}>

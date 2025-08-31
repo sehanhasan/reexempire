@@ -9,7 +9,7 @@ interface ItemsTableProps {
   items: QuotationItem[];
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
-  addItem?: () => void;
+  addItemToCategory?: (category: string) => void;
   showDescription?: boolean;
   showOriginalAmounts?: boolean; // For Due Invoices to show full amounts
 }
@@ -18,7 +18,7 @@ export function ItemsTable({
   items,
   handleItemChange,
   removeItem,
-  addItem,
+  addItemToCategory,
   showDescription = true,
   showOriginalAmounts = false
 }: ItemsTableProps) {
@@ -158,13 +158,13 @@ export function ItemsTable({
                     >
                       <Pencil className="h-3 w-3" />
                     </Button>
-                    {addItem && (
+                    {addItemToCategory && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-green-600 hover:text-green-700"
-                        onClick={addItem}
+                        onClick={() => addItemToCategory(category)}
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
@@ -304,13 +304,13 @@ export function ItemsTable({
                           >
                             <Pencil className="h-3 w-3" />
                           </Button>
-                          {addItem && (
+                          {addItemToCategory && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 text-green-600 hover:text-green-700"
-                              onClick={addItem}
+                              onClick={() => addItemToCategory(category)}
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -352,29 +352,16 @@ export function ItemsTable({
                       {formatAmount(item)}
                     </td>
                     <td className="py-3 px-1">
-                      <div className="flex gap-1">
-                        {addItem && (
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50" 
-                            onClick={addItem}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        )}
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" 
-                          onClick={() => removeItem(item.id)} 
-                          disabled={items.length <= 1}
-                        >
-                          <Trash className="h-3 w-3" />
-                        </Button>
-                      </div>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" 
+                        onClick={() => removeItem(item.id)} 
+                        disabled={items.length <= 1}
+                      >
+                        <Trash className="h-3 w-3" />
+                      </Button>
                     </td>
                   </tr>)}
               </React.Fragment>)}
