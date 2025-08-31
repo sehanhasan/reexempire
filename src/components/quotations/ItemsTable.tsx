@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash, Pencil, Check, X } from "lucide-react";
+import { Trash, Pencil, Check, X, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { QuotationItem } from "./types";
 
@@ -9,6 +9,7 @@ interface ItemsTableProps {
   items: QuotationItem[];
   handleItemChange: (id: number, field: keyof QuotationItem, value: any) => void;
   removeItem: (id: number) => void;
+  addItem?: () => void;
   showDescription?: boolean;
   showOriginalAmounts?: boolean; // For Due Invoices to show full amounts
 }
@@ -17,6 +18,7 @@ export function ItemsTable({
   items,
   handleItemChange,
   removeItem,
+  addItem,
   showDescription = true,
   showOriginalAmounts = false
 }: ItemsTableProps) {
@@ -118,13 +120,13 @@ export function ItemsTable({
           {orderedCategories.map(category => <div key={category} className="space-y-3">
               <div className="flex items-center gap-2">
                 {editingCategory === category ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <Input
-                      value={editCategoryValue}
-                      onChange={(e) => setEditCategoryValue(e.target.value)}
-                      className="text-blue-600 font-medium text-base h-8"
-                      autoFocus
-                    />
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={editCategoryValue}
+                            onChange={(e) => setEditCategoryValue(e.target.value)}
+                            className="text-blue-600 font-medium text-base h-8 max-w-xs"
+                            autoFocus
+                          />
                     <Button
                       type="button"
                       variant="ghost"
@@ -156,6 +158,17 @@ export function ItemsTable({
                     >
                       <Pencil className="h-3 w-3" />
                     </Button>
+                    {addItem && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-green-600 hover:text-green-700"
+                        onClick={addItem}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -257,7 +270,7 @@ export function ItemsTable({
                           <Input
                             value={editCategoryValue}
                             onChange={(e) => setEditCategoryValue(e.target.value)}
-                            className="text-blue-600 font-medium h-7 text-sm"
+                            className="text-blue-600 font-medium h-7 text-sm max-w-xs"
                             autoFocus
                           />
                           <Button
@@ -291,6 +304,17 @@ export function ItemsTable({
                           >
                             <Pencil className="h-3 w-3" />
                           </Button>
+                          {addItem && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-green-600 hover:text-green-700"
+                              onClick={addItem}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -328,9 +352,29 @@ export function ItemsTable({
                       {formatAmount(item)}
                     </td>
                     <td className="py-3 px-1">
-                      <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
-                        <Trash className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        {addItem && (
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50" 
+                            onClick={addItem}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        )}
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" 
+                          onClick={() => removeItem(item.id)} 
+                          disabled={items.length <= 1}
+                        >
+                          <Trash className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>)}
               </React.Fragment>)}

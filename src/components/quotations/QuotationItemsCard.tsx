@@ -190,6 +190,7 @@ export function QuotationItemsCard({
             items={items} 
             handleItemChange={handleItemChange} 
             removeItem={removeItem} 
+            addItem={addItem}
             showDescription={true}
             showOriginalAmounts={quotationDepositAmount !== undefined && quotationDepositAmount > 0}
           />
