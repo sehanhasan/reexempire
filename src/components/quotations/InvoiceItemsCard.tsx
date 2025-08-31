@@ -152,7 +152,7 @@ export function InvoiceItemsCard({
 
     const newItems = warrantyItems.map((warrantyItem, index) => {
       const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1;
-      const description = `${warrantyItem.name}${warrantyItem.serialNumber ? ` - ${warrantyItem.serialNumber}` : ''} (${getWarrantyPeriodLabel(warrantyItem.warrantyPeriod)})`;
+      const description = `${warrantyItem.name}${warrantyItem.serialNumber ? ` - #${warrantyItem.serialNumber}` : ''} (${getWarrantyPeriodLabel(warrantyItem.warrantyPeriod)})`;
       
       return {
         id: newId,
