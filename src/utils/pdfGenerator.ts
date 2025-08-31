@@ -52,12 +52,12 @@ const calculateTotal = (subtotal: number): number => {
 // Add logo to PDF
 const addLogo = (pdf: jsPDF, x: number, y: number, width: number) => {
   try {
-    pdf.addImage('/lovable-uploads/56b4e013-f45d-4f0f-8423-7980e3078898.png', 'PNG', x, y, width, width * 0.75);
+    pdf.addImage('/lovable-uploads/5000d120-da72-4502-bb4f-8d42de790fdf.png', 'PNG', x, y, width, width * 0.75);
   } catch (error) {
     console.error('Error loading logo:', error);
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('REEX EMPIRE', x, y + 10);
+    pdf.text('STAR RESIDENCES', x, y + 10);
   }
 };
 
