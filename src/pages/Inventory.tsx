@@ -427,7 +427,7 @@ export default function Inventory() {
                   <Card key={category.id} className="p-4">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-base font-normal text-muted-foreground">{category.name}</h3>
+                        <h3 className="text-base font-normal">{category.name}</h3>
                         {category.description && (
                           <p className="text-sm text-muted-foreground">{category.description}</p>
                         )}
