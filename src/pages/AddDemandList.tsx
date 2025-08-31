@@ -66,47 +66,65 @@ export default function AddDemandList() {
   const generateDemandListPDF = async (demandList: any, items: InventoryItem[]) => {
     const doc = new jsPDF();
     
-    // Company Logo/Header
-    doc.setFillColor(59, 130, 246);
-    doc.rect(0, 0, 210, 40, 'F');
+    // Company Logo/Header with improved design
+    doc.setFillColor(41, 98, 255);
+    doc.rect(0, 0, 210, 50, 'F');
     
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
+    // Add logo placeholder (you can replace this with actual logo)
+    doc.setFillColor(255, 255, 255);
+    doc.circle(25, 25, 15, 'F');
+    doc.setTextColor(41, 98, 255);
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('DEMAND LIST', 20, 25);
+    doc.text('REEX', 15, 30);
+    
+    // Company name
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REEX EMPIRE', 50, 25);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Professional Services & Solutions', 50, 35);
     
     // Reset text color
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
     
-    // Document info
-    doc.setFontSize(14);
+    // Document title
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('Document Information', 20, 60);
+    doc.text('Reex Empire - Demand List', 20, 70);
     
+    // Document details with better spacing
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Title: ${demandList.title}`, 20, 75);
     doc.text(`Requested Date: ${new Date(demandList.requested_date).toLocaleDateString()}`, 20, 85);
-    doc.text(`Priority: ${demandList.priority}`, 20, 95);
     if (demandList.required_date) {
-      doc.text(`Required Date: ${new Date(demandList.required_date).toLocaleDateString()}`, 20, 105);
+      doc.text(`Required Date: ${new Date(demandList.required_date).toLocaleDateString()}`, 20, 95);
     }
     if (demandList.requested_by) {
-      doc.text(`Requested By: ${demandList.requested_by}`, 20, 115);
+      doc.text(`Requested By: ${demandList.requested_by}`, 20, 105);
     }
     
+    // Priority aligned to the right
+    doc.setFont('helvetica', 'bold');
+    const priorityText = `Priority: ${demandList.priority}`;
+    const priorityWidth = doc.getTextWidth(priorityText);
+    doc.text(priorityText, 190 - priorityWidth, 85);
+    
+    doc.setFont('helvetica', 'normal');
     if (demandList.description) {
-      doc.text(`Description: ${demandList.description}`, 20, 125);
+      doc.text(`Description: ${demandList.description}`, 20, 115);
     }
 
-    // Items table
+    // Items table with RM currency
     const tableData = items.map(item => [
       item.name,
       item.quantity.toString(),
       item.min_stock_level?.toString() || '0',
       Math.max((item.max_stock_level || item.min_stock_level || 10) - item.quantity, 1).toString(),
-      item.unit_price ? `$${item.unit_price.toFixed(2)}` : '-'
+      item.unit_price ? `RM ${item.unit_price.toFixed(2)}` : '-'
     ]);
 
     const totalValue = items.reduce((sum, item) => {
@@ -117,12 +135,13 @@ export default function AddDemandList() {
     autoTable(doc, {
       head: [['Item Name', 'Current Stock', 'Min Level', 'Required Qty', 'Unit Price']],
       body: tableData,
-      startY: 140,
+      startY: 130,
       theme: 'striped',
       headStyles: { 
-        fillColor: [59, 130, 246],
+        fillColor: [41, 98, 255],
         textColor: [255, 255, 255],
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        fontSize: 10
       },
       bodyStyles: {
         fontSize: 9
@@ -130,23 +149,28 @@ export default function AddDemandList() {
       alternateRowStyles: {
         fillColor: [248, 249, 250]
       },
-      margin: { left: 20, right: 20 }
+      margin: { left: 20, right: 20 },
+      styles: {
+        lineColor: [200, 200, 200],
+        lineWidth: 0.1
+      }
     });
 
-    // Add total at the bottom
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    // Add total at the bottom with RM currency
+    const finalY = (doc as any).lastAutoTable.finalY + 15;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Total Estimated Value: $${totalValue.toFixed(2)}`, 20, finalY);
+    doc.text(`Total Estimated Value: RM ${totalValue.toFixed(2)}`, 20, finalY);
     
-    // Footer
+    // Footer with better styling
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, finalY + 20);
-    doc.text('This is a system-generated document', 20, finalY + 30);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, finalY + 25);
+    doc.text('This is a system-generated document by Reex Empire', 20, finalY + 35);
 
     // Download the PDF
-    doc.save(`demand-list-${demandList.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+    doc.save(`reex-demand-list-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

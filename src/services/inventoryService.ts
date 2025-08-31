@@ -106,6 +106,13 @@ class InventoryService {
   }
 
   async deleteItem(id: string): Promise<void> {
+    // First, delete any related demand list items
+    await supabase
+      .from('demand_list_items')
+      .delete()
+      .eq('inventory_item_id', id);
+
+    // Then delete the inventory item
     const { error } = await supabase
       .from('inventory_items')
       .delete()
