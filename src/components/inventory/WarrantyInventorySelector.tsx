@@ -17,6 +17,7 @@ interface WarrantyItem {
   name: string;
   serialNumber: string;
   warrantyPeriod: string;
+  quantity: number;
   endDate?: Date;
 }
 
@@ -51,12 +52,22 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
   );
 
   const handleAddItem = (inventoryItem: any) => {
+    // Check if item is already selected
+    const isAlreadySelected = Object.values(selectedItems).some(item => 
+      item.name === inventoryItem.name
+    );
+    
+    if (isAlreadySelected) {
+      return; // Don't add if already selected
+    }
+
     const newId = `${inventoryItem.id}-${Date.now()}`;
     const newItem: WarrantyItem = {
       id: newId,
       name: inventoryItem.name,
       serialNumber: "",
       warrantyPeriod: "30_days",
+      quantity: 1,
       endDate: undefined
     };
 
@@ -72,6 +83,16 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
       [id]: {
         ...prev[id],
         [field]: value
+      }
+    }));
+  };
+
+  const updateItemQuantity = (id: string, quantity: number) => {
+    setSelectedItems(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        quantity: Math.max(1, quantity)
       }
     }));
   };
@@ -131,35 +152,56 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Available Items */}
             <div>
               <h3 className="text-sm font-medium mb-2">Available Inventory Items</h3>
               <ScrollArea className="h-64 border rounded-lg">
                 <div className="p-2 space-y-2">
-                  {filteredItems.map((item) => (
-                    <Card key={item.id} className="cursor-pointer hover:bg-accent" onClick={() => handleAddItem(item)}>
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium text-sm">{item.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                Stock: {item.quantity}
+                  {filteredItems.map((item) => {
+                    const isSelected = Object.values(selectedItems).some(selectedItem => 
+                      selectedItem.name === item.name
+                    );
+                    
+                    return (
+                      <Card 
+                        key={item.id} 
+                        className={`cursor-pointer transition-colors ${
+                          isSelected 
+                            ? 'bg-cyan-50 border-cyan-200 pointer-events-none' 
+                            : 'hover:bg-accent'
+                        }`} 
+                        onClick={() => !isSelected && handleAddItem(item)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Package className={`h-4 w-4 ${isSelected ? 'text-cyan-600' : 'text-muted-foreground'}`} />
+                              <div>
+                                <div className={`font-medium text-sm ${isSelected ? 'text-cyan-600' : ''}`}>
+                                  {item.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Stock: {item.quantity}
+                                </div>
                               </div>
                             </div>
+                            {isSelected && (
+                              <Badge variant="secondary" className="bg-cyan-100 text-cyan-700">
+                                Selected
+                              </Badge>
+                            )}
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </div>
 
             {/* Selected Items */}
-            <div>
+            <div className="lg:col-span-2">
               <h3 className="text-sm font-medium mb-2">Selected Warranty Items ({Object.keys(selectedItems).length})</h3>
               <ScrollArea className="h-64 border rounded-lg">
                 <div className="p-2 space-y-3">
@@ -179,7 +221,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                             </Button>
                           </div>
                           
-                          <div className="grid grid-cols-1 gap-2">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                             <div>
                               <Label className="text-xs">Serial Number</Label>
                               <Input
@@ -208,6 +250,33 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                                   <SelectItem value="custom">Custom</SelectItem>
                                 </SelectContent>
                               </Select>
+                            </div>
+
+                            <div>
+                              <Label className="text-xs">Quantity</Label>
+                              <div className="flex items-center space-x-2">
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="icon" 
+                                  className="h-8 w-8 rounded-full" 
+                                  onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
+                                >
+                                  <span>-</span>
+                                </Button>
+                                <span className="text-sm font-medium w-8 text-center">
+                                  {item.quantity}
+                                </span>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="icon" 
+                                  className="h-8 w-8 rounded-full" 
+                                  onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
+                                >
+                                  <span>+</span>
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>

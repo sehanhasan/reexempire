@@ -190,30 +190,29 @@ export function ItemsTable({
                       </div>
                       
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="space-y-2">
-                          <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
-                          <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
-                        </div>
+                         <div className="space-y-2">
+                           <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                           <Input type="number" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                         </div>
                         
-                        <div className="space-y-2">
-                          <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
-                          <div className="relative">
-                            <Input 
-                              type="number" 
-                              min="0" 
-                              step="0.01" 
-                              className="h-10" 
-                              value={item.unitPrice === 0 ? '' : item.unitPrice} 
-                              placeholder="0.00"
-                              onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
-                            />
-                            {item.unit && item.unit.trim() !== "" && item.unit.trim().toLowerCase() !== "unit" && (
-                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
-                                {item.unit}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                         <div className="space-y-2">
+                           <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
+                           <div className="relative">
+                             <Input 
+                               min="0" 
+                               step="0.01" 
+                               className="h-10" 
+                               value={item.unitPrice === 0 ? '' : item.unitPrice} 
+                               placeholder="0.00"
+                               onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
+                             />
+                             {item.unit && item.unit.trim() !== "" && item.unit.trim().toLowerCase() !== "unit" && (
+                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
+                                 {item.unit}
+                               </span>
+                             )}
+                           </div>
+                         </div>
                         
                         <div className="space-y-2">
                           <label className="block text-xs mb-1 text-slate-600 font-medium">Amount (RM)</label>
@@ -327,27 +326,26 @@ export function ItemsTable({
                     <td className="py-3 px-2">
                       <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                     </td>
-                    <td className="py-3 px-2">
-                      <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-left h-10" />
-                    </td>
-                    <td className="py-3 px-2">
-                      <div className="relative">
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          step="0.01" 
-                          className="text-left h-10" 
-                          value={item.unitPrice === 0 ? '' : item.unitPrice} 
-                          placeholder="0.00"
-                          onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
-                        />
-                        {item.unit && item.unit.trim() !== "" && item.unit.trim().toLowerCase() !== "unit" && (
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
-                            {item.unit}
-                          </span>
-                        )}
-                      </div>
-                    </td>
+                     <td className="py-3 px-2">
+                       <Input type="number" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-left h-10" />
+                     </td>
+                     <td className="py-3 px-2">
+                       <div className="relative">
+                         <Input 
+                           min="0" 
+                           step="0.01" 
+                           className="text-left h-10" 
+                           value={item.unitPrice === 0 ? '' : item.unitPrice} 
+                           placeholder="0.00"
+                           onChange={e => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value) || 0)} 
+                         />
+                         {item.unit && item.unit.trim() !== "" && item.unit.trim().toLowerCase() !== "unit" && (
+                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
+                             {item.unit}
+                           </span>
+                         )}
+                       </div>
+                     </td>
                     <td className="py-3 px-2 text-right text-gray-600">
                       {formatAmount(item)}
                     </td>

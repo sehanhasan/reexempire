@@ -336,7 +336,6 @@ export default function Inventory() {
                   <DataTable
                     columns={columns}
                     data={paginatedData(filteredItems)}
-                    searchKey="name"
                     isLoading={isLoading}
                     emptyMessage="No inventory items found."
                   />
