@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FolderOpen, Wallet } from "lucide-react";
+import { Plus, FolderOpen, Wallet, Shield } from "lucide-react";
 import { ItemsTable } from "./ItemsTable";
 import { CategoryItemSelector, SelectedItem } from "@/components/quotations/CategoryItemSelector";
+import { WarrantyInventorySelector } from "@/components/inventory/WarrantyInventorySelector";
 import { InvoiceItem } from "./types";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -37,6 +38,7 @@ export function InvoiceItemsCard({
   showDepositPaid = false
 }: InvoiceItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [showWarrantySelector, setShowWarrantySelector] = useState(false);
   const isMobile = useIsMobile();
   const handleItemChange = (id: number, field: keyof InvoiceItem, value: any) => {
     setItems(prevItems => prevItems.map(item => {
@@ -127,6 +129,23 @@ export function InvoiceItemsCard({
       description: `${newItems.length} item(s) have been added to the invoice.`
     });
   };
+
+  const handleWarrantyItemsFromInventory = (warrantyItems: { id?: number; description: string; category: string; quantity: number; unit: string; price: number }[]) => {
+    const newItems = warrantyItems.map((warrantyItem, index) => ({
+      id: items.length > 0 ? Math.max(...items.map(item => item.id)) + index + 1 : index + 1,
+      description: warrantyItem.description,
+      category: warrantyItem.category,
+      quantity: warrantyItem.quantity,
+      unit: warrantyItem.unit,
+      unitPrice: warrantyItem.price,
+      amount: warrantyItem.quantity * warrantyItem.price
+    }));
+    setItems([...items, ...newItems]);
+    toast({
+      title: "Warranty Items Added",
+      description: `${newItems.length} warranty item(s) have been added to the invoice.`
+    });
+  };
   return <>
       <Card className="shadow-sm">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
@@ -152,6 +171,11 @@ export function InvoiceItemsCard({
             <Button type="button" onClick={() => setShowCategorySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white`}>
               <FolderOpen className="mr-1 h-3.5 w-3.5" />
               Select from Categories
+            </Button>
+            
+            <Button type="button" onClick={() => setShowWarrantySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-green-600 hover:bg-green-700 text-white`}>
+              <Shield className="mr-1 h-3.5 w-3.5" />
+              Select from Inventory
             </Button>
           </div>
 
@@ -202,5 +226,6 @@ export function InvoiceItemsCard({
       </Card>
 
       <CategoryItemSelector open={showCategorySelector} onOpenChange={setShowCategorySelector} onSelectItems={handleItemsFromCategories} />
+      <WarrantyInventorySelector open={showWarrantySelector} onOpenChange={setShowWarrantySelector} onSelectItems={handleWarrantyItemsFromInventory} />
     </>;
 }

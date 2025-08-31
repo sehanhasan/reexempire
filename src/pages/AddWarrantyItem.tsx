@@ -26,9 +26,6 @@ const warrantyItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
   serial_number: z.string().optional(),
   warranty_period_type: z.string().min(1, "Warranty period is required"),
-  issue_date: z.date({
-    required_error: "Issue date is required"
-  }),
   end_date: z.date().optional()
 });
 const warrantyFormSchema = z.object({
@@ -60,7 +57,6 @@ export default function AddWarrantyItem() {
         item_name: "",
         serial_number: "",
         warranty_period_type: "30_days",
-        issue_date: new Date(),
         end_date: undefined
       }]
     }
@@ -116,11 +112,13 @@ export default function AddWarrantyItem() {
           : null;
       const warrantyItemsToCreate = data.items.map(item => {
         let expiryDate: Date;
+        const issueDate = new Date(); // Use current date as issue date
+        
         if (item.warranty_period_type === 'custom' && item.end_date) {
           expiryDate = item.end_date;
         } else {
           // Calculate expiry date based on warranty period
-          expiryDate = new Date(item.issue_date);
+          expiryDate = new Date(issueDate);
           switch (item.warranty_period_type) {
             case '7_days':
               expiryDate = addDays(expiryDate, 7);
@@ -144,7 +142,7 @@ export default function AddWarrantyItem() {
           invoice_id: invoiceIdResolved,
           item_name: item.item_name,
           serial_number: item.serial_number || null,
-          issue_date: format(item.issue_date, 'yyyy-MM-dd'),
+          issue_date: format(issueDate, 'yyyy-MM-dd'),
           warranty_period_type: item.warranty_period_type,
           warranty_period_value: null,
           warranty_period_unit: null,
@@ -227,7 +225,6 @@ export default function AddWarrantyItem() {
       item_name: "",
       serial_number: "",
       warranty_period_type: "30_days",
-      issue_date: new Date(),
       end_date: undefined
     });
   };
@@ -285,6 +282,19 @@ export default function AddWarrantyItem() {
                     </FormItem>} />
               </div>
 
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="warrantyDate">Date</Label>
+                  <Input
+                    id="warrantyDate"
+                    type="date"
+                    defaultValue={format(new Date(), 'yyyy-MM-dd')}
+                    className="w-full"
+                  />
+                </div>
+                <div></div>
+              </div>
+
               <div className="space-y-4">
 
                 <div className="space-y-4">
@@ -296,7 +306,7 @@ export default function AddWarrantyItem() {
                               <Trash2 className="h-4 w-4" />
                             </Button>}
                         </div>
-                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            <FormField control={form.control} name={`items.${index}.item_name`} render={({
                         field
                       }) => <FormItem>
@@ -340,26 +350,6 @@ export default function AddWarrantyItem() {
                                  <FormControl>
                                    <Input {...field} placeholder="Enter serial number" />
                                  </FormControl>
-                                 <FormMessage />
-                               </FormItem>} />
-
-                           <FormField control={form.control} name={`items.${index}.issue_date`} render={({
-                        field
-                      }) => <FormItem>
-                                  <FormLabel>Issue Date</FormLabel>
-                                 <Popover>
-                                   <PopoverTrigger asChild>
-                                     <FormControl>
-                                       <Button variant="outline" className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}>
-                                         {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                       </Button>
-                                     </FormControl>
-                                   </PopoverTrigger>
-                                   <PopoverContent className="w-auto p-0" align="start">
-                                     <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus className="p-3 pointer-events-auto" />
-                                   </PopoverContent>
-                                 </Popover>
                                  <FormMessage />
                                </FormItem>} />
                          </div>
