@@ -154,7 +154,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Available Items */}
             <div>
               <h3 className="text-sm font-medium mb-2">Available Inventory Items</h3>
@@ -170,7 +170,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                         key={item.id} 
                         className={`cursor-pointer transition-colors ${
                           isSelected 
-                            ? 'bg-cyan-50 border-cyan-200 pointer-events-none' 
+                            ? 'bg-blue-50 border-blue-200 pointer-events-none' 
                             : 'hover:bg-accent'
                         }`} 
                         onClick={() => !isSelected && handleAddItem(item)}

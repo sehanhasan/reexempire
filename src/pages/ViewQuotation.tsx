@@ -304,7 +304,7 @@ export default function ViewQuotation() {
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="text-left p-2 font-semibold text-gray-700">Description</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">Qty</th>
+                      <th className="text-right p-2 font-semibold text-gray-700 w-16">QTY</th>
                       <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
                       <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
                     </tr>
