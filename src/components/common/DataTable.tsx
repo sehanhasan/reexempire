@@ -129,25 +129,23 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      <Card className="shadow-sm overflow-hidden">
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="py-6 text-center">
-              <p className="text-muted-foreground">Loading...</p>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="py-6 text-center">
-              <p className="text-muted-foreground">{emptyMessage}</p>
-            </div>
-          ) : isMobile ? (
-            <div className="p-3">
-              <MobileList />
-            </div>
-          ) : (
-            <DesktopTable />
-          )}
-        </CardContent>
-      </Card>
+      <div className="overflow-hidden">
+        {isLoading ? (
+          <div className="py-6 text-center">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        ) : filteredData.length === 0 ? (
+          <div className="py-6 text-center">
+            <p className="text-muted-foreground">{emptyMessage}</p>
+          </div>
+        ) : isMobile ? (
+          <div className="p-3">
+            <MobileList />
+          </div>
+        ) : (
+          <DesktopTable />
+        )}
+      </div>
     </div>
   );
 }

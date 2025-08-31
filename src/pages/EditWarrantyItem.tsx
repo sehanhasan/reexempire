@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, CalendarIcon, UserRound, Package, Plus } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Search, CalendarIcon, UserRound, Package, Plus, Trash2 } from "lucide-react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays, addMonths, addYears } from "date-fns";
 import * as z from "zod";
@@ -22,9 +22,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { InventoryItemSelector } from "@/components/inventory/InventoryItemSelector";
 
-const warrantyFormSchema = z.object({
-  customer_id: z.string().min(1, "Customer is required"),
-  invoice_id: z.string().optional(),
+const warrantyItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
   serial_number: z.string().optional(),
   warranty_period_type: z.string().min(1, "Warranty period is required"),
@@ -32,6 +30,12 @@ const warrantyFormSchema = z.object({
     required_error: "Issue date is required"
   }),
   end_date: z.date().optional()
+});
+
+const warrantyFormSchema = z.object({
+  customer_id: z.string().min(1, "Customer is required"),
+  invoice_id: z.string().optional(),
+  items: z.array(warrantyItemSchema).min(1, "At least one item is required")
 });
 
 type WarrantyFormData = z.infer<typeof warrantyFormSchema>;
@@ -45,7 +49,7 @@ export default function EditWarrantyItem() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [inventoryDialogOpen, setInventoryDialogOpen] = useState(false);
-  const [selectedInventoryItem, setSelectedInventoryItem] = useState<any>(null);
+  const [selectedInventoryItems, setSelectedInventoryItems] = useState<Record<number, any>>({});
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -55,12 +59,19 @@ export default function EditWarrantyItem() {
     defaultValues: {
       customer_id: "",
       invoice_id: "",
-      item_name: "",
-      serial_number: "",
-      warranty_period_type: "30_days",
-      issue_date: new Date(),
-      end_date: undefined
+      items: [{
+        item_name: "",
+        serial_number: "",
+        warranty_period_type: "30_days",
+        issue_date: new Date(),
+        end_date: undefined
+      }]
     }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items"
   });
 
   // Fetch warranty item
@@ -79,7 +90,7 @@ export default function EditWarrantyItem() {
     enabled: !!id
   });
 
-// Fetch customers
+  // Fetch customers
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: customerService.getAll
@@ -98,17 +109,20 @@ export default function EditWarrantyItem() {
       setSelectedCustomer(customer);
       
       form.setValue('customer_id', warrantyItem.customer_id);
-      form.setValue('invoice_id', warrantyItem.invoice_id || '');
-      form.setValue('item_name', warrantyItem.item_name);
-      form.setValue('serial_number', warrantyItem.serial_number || '');
-      form.setValue('warranty_period_type', warrantyItem.warranty_period_type);
-      form.setValue('issue_date', new Date(warrantyItem.issue_date));
       
-      if (warrantyItem.warranty_period_type === 'custom') {
-        form.setValue('end_date', new Date(warrantyItem.expiry_date));
-      }
+      // Find the invoice by ID and display its reference number
+      const invoice = invoices.find(i => i.id === warrantyItem.invoice_id);
+      form.setValue('invoice_id', invoice?.reference_number || warrantyItem.invoice_id || '');
+      
+      form.setValue('items', [{
+        item_name: warrantyItem.item_name,
+        serial_number: warrantyItem.serial_number || '',
+        warranty_period_type: warrantyItem.warranty_period_type,
+        issue_date: new Date(warrantyItem.issue_date),
+        end_date: warrantyItem.warranty_period_type === 'custom' ? new Date(warrantyItem.expiry_date) : undefined
+      }]);
     }
-  }, [warrantyItem, customers, form]);
+  }, [warrantyItem, customers, invoices, form]);
 
   // Filter customers based on search
   const filteredCustomers = customers.filter(customer => 
@@ -119,48 +133,53 @@ export default function EditWarrantyItem() {
   // Update warranty item mutation
   const updateWarrantyMutation = useMutation({
     mutationFn: async (data: WarrantyFormData) => {
-      let expiryDate: Date;
-      
-      if (data.warranty_period_type === 'custom' && data.end_date) {
-        expiryDate = data.end_date;
-      } else {
-        // Calculate expiry date based on warranty period
-        expiryDate = new Date(data.issue_date);
-        switch (data.warranty_period_type) {
-          case '7_days':
-            expiryDate = addDays(expiryDate, 7);
-            break;
-          case '30_days':
-            expiryDate = addDays(expiryDate, 30);
-            break;
-          case '3_months':
-            expiryDate = addMonths(expiryDate, 3);
-            break;
-          case '6_months':
-            expiryDate = addMonths(expiryDate, 6);
-            break;
-          case '1_year':
-            expiryDate = addYears(expiryDate, 1);
-            break;
+      const warrantyItemsToUpdate = data.items.map(item => {
+        let expiryDate: Date;
+        if (item.warranty_period_type === 'custom' && item.end_date) {
+          expiryDate = item.end_date;
+        } else {
+          // Calculate expiry date based on warranty period
+          expiryDate = new Date(item.issue_date);
+          switch (item.warranty_period_type) {
+            case '7_days':
+              expiryDate = addDays(expiryDate, 7);
+              break;
+            case '30_days':
+              expiryDate = addDays(expiryDate, 30);
+              break;
+            case '3_months':
+              expiryDate = addMonths(expiryDate, 3);
+              break;
+            case '6_months':
+              expiryDate = addMonths(expiryDate, 6);
+              break;
+            case '1_year':
+              expiryDate = addYears(expiryDate, 1);
+              break;
+          }
         }
-      }
 
-      const resolvedInvoiceId =
-        data.invoice_id
-          ? (isUuid(data.invoice_id) ? data.invoice_id : (invoices.find(i => i.reference_number === data.invoice_id)?.id ?? null))
-          : null;
+        const resolvedInvoiceId =
+          data.invoice_id
+            ? (isUuid(data.invoice_id) ? data.invoice_id : (invoices.find(i => i.reference_number === data.invoice_id)?.id ?? null))
+            : null;
 
-      const updateData = {
-        customer_id: data.customer_id,
-        invoice_id: resolvedInvoiceId,
-        item_name: data.item_name,
-        serial_number: data.serial_number || null,
-        issue_date: format(data.issue_date, 'yyyy-MM-dd'),
-        warranty_period_type: data.warranty_period_type,
-        expiry_date: format(expiryDate, 'yyyy-MM-dd'),
-        updated_at: new Date().toISOString()
-      };
+        return {
+          customer_id: data.customer_id,
+          invoice_id: resolvedInvoiceId,
+          item_name: item.item_name,
+          serial_number: item.serial_number || null,
+          issue_date: format(item.issue_date, 'yyyy-MM-dd'),
+          warranty_period_type: item.warranty_period_type,
+          warranty_period_value: null,
+          warranty_period_unit: null,
+          expiry_date: format(expiryDate, 'yyyy-MM-dd'),
+          updated_at: new Date().toISOString()
+        };
+      });
 
+      // For single item editing, just update the current warranty item
+      const updateData = warrantyItemsToUpdate[0];
       const { data: result, error } = await supabase
         .from('warranty_items')
         .update(updateData)
@@ -168,11 +187,51 @@ export default function EditWarrantyItem() {
         .select();
 
       if (error) throw error;
+
+      // Handle inventory deduction for warranty items
+      for (let i = 0; i < warrantyItemsToUpdate.length; i++) {
+        const warrantyItemData = warrantyItemsToUpdate[i];
+        
+        // Check if there's a matching inventory item by name
+        const { data: inventoryItems, error: inventoryError } = await supabase
+          .from('inventory_items')
+          .select('*')
+          .eq('name', warrantyItemData.item_name)
+          .eq('status', 'Active')
+          .gt('quantity', 0)
+          .single();
+
+        if (!inventoryError && inventoryItems) {
+          // Subtract 1 from inventory
+          const { error: updateError } = await supabase
+            .from('inventory_items')
+            .update({ 
+              quantity: inventoryItems.quantity - 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', inventoryItems.id);
+
+          if (!updateError) {
+            // Create inventory movement record
+            await supabase.from('inventory_movements').insert({
+              inventory_item_id: inventoryItems.id,
+              movement_type: 'OUT',
+              quantity: -1,
+              reference_type: 'warranty_issue',
+              reference_id: result[0].id,
+              notes: `Warranty issued for ${warrantyItemData.item_name}`,
+              created_by: 'System'
+            });
+          }
+        }
+      }
+
       return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warranty-items'] });
       queryClient.invalidateQueries({ queryKey: ['warranty-item', id] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
       toast({
         title: "Success",
         description: "Warranty item updated successfully",
@@ -192,15 +251,25 @@ export default function EditWarrantyItem() {
     updateWarrantyMutation.mutate(data);
   };
 
+  const addNewItem = () => {
+    append({
+      item_name: "",
+      serial_number: "",
+      warranty_period_type: "30_days",
+      issue_date: new Date(),
+      end_date: undefined
+    });
+  };
+
   const handleSelectCustomer = (customer: any) => {
     setSelectedCustomer(customer);
     form.setValue('customer_id', customer.id);
     setCustomerDialogOpen(false);
   };
 
-  const handleSelectInventoryItem = (item: any) => {
-    setSelectedInventoryItem(item);
-    form.setValue('item_name', item.name);
+  const handleSelectInventoryItem = (item: any, itemIndex: number) => {
+    setSelectedInventoryItems(prev => ({ ...prev, [itemIndex]: item }));
+    form.setValue(`items.${itemIndex}.item_name`, item.name);
     setInventoryDialogOpen(false);
   };
 
@@ -218,7 +287,7 @@ export default function EditWarrantyItem() {
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-cyan-600">Warranty Information</CardTitle>
+          <CardTitle className="text-cyan-600">Edit Warranty Information</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -265,202 +334,207 @@ export default function EditWarrantyItem() {
                 <FormField
                   control={form.control}
                   name="invoice_id"
-                  render={({ field }) => {
-                    const invoice = invoices.find(i => i.id === field.value);
-                    const displayValue = invoice?.reference_number || field.value || '';
-                    
-                    return (
-                      <FormItem>
-                        <FormLabel>Invoice #</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter invoice number" 
-                            value={displayValue}
-                            onChange={(e) => field.onChange(e.target.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Invoice #</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter invoice number" 
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
 
               <div className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="item_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Item Name</FormLabel>
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setInventoryDialogOpen(true)}
-                                className={`w-full h-10 ${selectedInventoryItem || field.value ? "justify-start" : "justify-center"}`}
-                              >
-                                {selectedInventoryItem ? (
-                                  <>
-                                    <Package className="mr-2 h-4 w-4 text-gray-500" />
-                                    <span className="truncate">
-                                      {selectedInventoryItem.name}
-                                      <span className="ml-2 text-xs text-muted-foreground">
-                                        ({selectedInventoryItem.quantity} in stock)
-                                      </span>
-                                    </span>
-                                  </>
-                                ) : field.value ? (
-                                  <>
-                                    <Package className="mr-2 h-4 w-4 text-gray-500" />
-                                    <span className="truncate">{field.value}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Search className="mr-2 h-4 w-4" />
-                                    Select Inventory Item
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="serial_number"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Serial Number</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Enter serial number" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="issue_date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Issue Date</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                  >
-                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  initialFocus
-                                  className="p-3 pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                      <FormField
-                        control={form.control}
-                        name="warranty_period_type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Warranty Period</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select period" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="7_days">7 Days</SelectItem>
-                                <SelectItem value="30_days">30 Days</SelectItem>
-                                <SelectItem value="3_months">3 Months</SelectItem>
-                                <SelectItem value="6_months">6 Months</SelectItem>
-                                <SelectItem value="1_year">1 Year</SelectItem>
-                                <SelectItem value="custom">Custom</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {form.watch('warranty_period_type') === 'custom' && (
-                        <FormField
-                          control={form.control}
-                          name="end_date"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>End Date</FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant="outline"
-                                      className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                    >
-                                      {field.value ? format(field.value, "PPP") : <span>Pick end date</span>}
-                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
-                                    className="p-3 pointer-events-auto"
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <Card key={field.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-medium text-cyan-600">Item #{index + 1}</h4>
+                          {fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => remove(index)}
+                              className="text-red-500"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
-                        />
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.item_name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Item Name</FormLabel>
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setInventoryDialogOpen(true);
+                                      (window as any).currentItemIndex = index;
+                                    }}
+                                    className={`w-full h-10 ${selectedInventoryItems[index] ? "justify-start" : "justify-center"}`}
+                                  >
+                                    {selectedInventoryItems[index] ? (
+                                      <>
+                                        <Package className="mr-2 h-4 w-4 text-gray-500" />
+                                        <span className="truncate">
+                                          {selectedInventoryItems[index].name}
+                                          <span className="ml-2 text-xs text-muted-foreground">
+                                            ({selectedInventoryItems[index].quantity} in stock)
+                                          </span>
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Search className="mr-2 h-4 w-4" />
+                                        Select Inventory Item
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.serial_number`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Serial Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Enter serial number" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.issue_date`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Issue Date</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant="outline"
+                                        className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                      >
+                                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                      className="p-3 pointer-events-auto"
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.warranty_period_type`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Warranty Period</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select period" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="7_days">7 Days</SelectItem>
+                                    <SelectItem value="30_days">30 Days</SelectItem>
+                                    <SelectItem value="3_months">3 Months</SelectItem>
+                                    <SelectItem value="6_months">6 Months</SelectItem>
+                                    <SelectItem value="1_year">1 Year</SelectItem>
+                                    <SelectItem value="custom">Custom</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {form.watch(`items.${index}.warranty_period_type`) === 'custom' && (
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.end_date`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>End Date</FormLabel>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <FormControl>
+                                        <Button
+                                          variant="outline"
+                                          className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                        >
+                                          {field.value ? format(field.value, "PPP") : <span>Pick end date</span>}
+                                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                      </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={field.value}
+                                        onSelect={field.onChange}
+                                        initialFocus
+                                        className="p-3 pointer-events-auto"
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <Button type="button" variant="outline" onClick={addNewItem}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Another Item
+                </Button>
               </div>
 
-              <div className="flex justify-between items-center">
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => navigate('/warranty')}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => navigate('/add-warranty-item')}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Another Item
-                  </Button>
-                </div>
-                <Button type="submit" disabled={updateWarrantyMutation.isPending}>
-                  {updateWarrantyMutation.isPending ? "Updating..." : "Update Warranty Item"}
+              <div className="flex gap-4 justify-end">
+                <Button type="button" variant="outline" onClick={() => navigate('/warranty')}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateWarrantyMutation.isPending} className="min-w-32">
+                  {updateWarrantyMutation.isPending ? "Updating..." : "Update Warranty Items"}
                 </Button>
               </div>
             </form>
@@ -513,8 +587,7 @@ export default function EditWarrantyItem() {
       <InventoryItemSelector
         open={inventoryDialogOpen}
         onOpenChange={setInventoryDialogOpen}
-        onSelect={handleSelectInventoryItem}
-        selectedItemId={selectedInventoryItem?.id}
+        onSelect={(item) => handleSelectInventoryItem(item, (window as any).currentItemIndex || 0)}
       />
     </div>
   );
