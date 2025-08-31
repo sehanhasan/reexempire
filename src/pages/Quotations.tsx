@@ -403,7 +403,12 @@ export default function Quotations() {
                               {quotation.reference_number}
                             </div>
                           </TableCell>
-                          <TableCell>{quotation.unit_number || "-"}</TableCell>
+                          <TableCell>
+                            <div className="leading-tight">
+                              <div>{quotation.unit_number || "-"}</div>
+                              <div className="text-xs text-muted-foreground">{quotation.customer_name}</div>
+                            </div>
+                          </TableCell>
                           <TableCell>{formatDate(quotation.issue_date)}</TableCell>
                           <TableCell>{formatDate(quotation.expiry_date)}</TableCell>
                           <TableCell>

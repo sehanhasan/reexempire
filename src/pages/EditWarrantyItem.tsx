@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays, addMonths, addYears } from "date-fns";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { customerService } from "@/services";
+import { customerService, invoiceService } from "@/services";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 
@@ -34,6 +34,9 @@ const warrantyFormSchema = z.object({
 });
 
 type WarrantyFormData = z.infer<typeof warrantyFormSchema>;
+
+const isUuid = (v: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
 export default function EditWarrantyItem() {
   const { id } = useParams<{ id: string }>();
@@ -73,10 +76,16 @@ export default function EditWarrantyItem() {
     enabled: !!id
   });
 
-  // Fetch customers
+// Fetch customers
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: customerService.getAll
+  });
+
+  // Fetch invoices (used to resolve invoice reference number to id)
+  const { data: invoices = [] as any[] } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: invoiceService.getAll
   });
 
   // Update form when warranty item is loaded
@@ -133,9 +142,14 @@ export default function EditWarrantyItem() {
         }
       }
 
+      const resolvedInvoiceId =
+        data.invoice_id
+          ? (isUuid(data.invoice_id) ? data.invoice_id : (invoices.find(i => i.reference_number === data.invoice_id)?.id ?? null))
+          : null;
+
       const updateData = {
         customer_id: data.customer_id,
-        invoice_id: data.invoice_id || null,
+        invoice_id: resolvedInvoiceId,
         item_name: data.item_name,
         serial_number: data.serial_number || null,
         issue_date: format(data.issue_date, 'yyyy-MM-dd'),

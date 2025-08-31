@@ -504,7 +504,12 @@ export default function Invoices() {
                                 {invoice.reference_number}
                               </div>
                             </TableCell>
-                            <TableCell>{invoice.unit_number || "-"}</TableCell>
+                            <TableCell>
+                              <div className="leading-tight">
+                                <div>{invoice.unit_number || "-"}</div>
+                                <div className="text-xs text-muted-foreground">{invoice.customer_name}</div>
+                              </div>
+                            </TableCell>
                             <TableCell>{formatDate(invoice.issue_date)}</TableCell>
                             <TableCell>{formatDate(invoice.due_date)}</TableCell>
                             <TableCell>

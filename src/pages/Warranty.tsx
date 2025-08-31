@@ -225,7 +225,7 @@ export default function Warranty() {
       />
 
 
-      <div className={!isMobile ? "bg-white rounded-lg" : ""}>
+      <div className={!isMobile ? "" : ""}>
         <div className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
             {!isMobile && (

@@ -18,7 +18,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays, addMonths, addYears } from "date-fns";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { customerService } from "@/services";
+import { customerService, invoiceService } from "@/services";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 const warrantyItemSchema = z.object({
@@ -36,6 +36,10 @@ const warrantyFormSchema = z.object({
   items: z.array(warrantyItemSchema).min(1, "At least one item is required")
 });
 type WarrantyFormData = z.infer<typeof warrantyFormSchema>;
+
+const isUuid = (v: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+
 export default function AddWarrantyItem() {
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
@@ -67,12 +71,16 @@ export default function AddWarrantyItem() {
     name: "items"
   });
 
-  // Fetch customers
-  const {
-    data: customers = []
-  } = useQuery({
+// Fetch customers
+  const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: customerService.getAll
+  });
+
+  // Fetch invoices (used to resolve invoice reference number to id)
+  const { data: invoices = [] as any[] } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: invoiceService.getAll
   });
 
   // Handle URL parameters for prefilled data
@@ -99,6 +107,10 @@ export default function AddWarrantyItem() {
   // Create warranty items mutation
   const createWarrantyMutation = useMutation({
     mutationFn: async (data: WarrantyFormData) => {
+      const invoiceIdResolved =
+        data.invoice_id
+          ? (isUuid(data.invoice_id) ? data.invoice_id : (invoices.find(i => i.reference_number === data.invoice_id)?.id ?? null))
+          : null;
       const warrantyItemsToCreate = data.items.map(item => {
         let expiryDate: Date;
         if (item.warranty_period_type === 'custom' && item.end_date) {
@@ -126,7 +138,7 @@ export default function AddWarrantyItem() {
         }
         return {
           customer_id: data.customer_id,
-          invoice_id: data.invoice_id || null,
+          invoice_id: invoiceIdResolved,
           item_name: item.item_name,
           serial_number: item.serial_number || null,
           issue_date: format(item.issue_date, 'yyyy-MM-dd'),
