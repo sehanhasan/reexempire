@@ -191,10 +191,10 @@ export default function AddCustomerForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Star Residences ONE">Star Residences One</SelectItem>
-                      <SelectItem value="Star Residences TWO">Star Residences Two</SelectItem>
-                      <SelectItem value="Star Residences THREE">Star Residences Three</SelectItem>
-                      <SelectItem value="Ascott">Star Suites</SelectItem>
+                      <SelectItem value="Star Residences One">Star Residences One</SelectItem>
+                      <SelectItem value="Star Residences Two">Star Residences Two</SelectItem>
+                      <SelectItem value="Star Residences Three">Star Residences Three</SelectItem>
+                      <SelectItem value="Star Suites">Star Suites</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
