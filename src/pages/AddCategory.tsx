@@ -11,7 +11,6 @@ import { categoryService } from "@/services";
 import { Plus, Trash, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface SubcategoryForm {
   id?: string;
   tempId: number | string;
@@ -20,7 +19,6 @@ interface SubcategoryForm {
   unit: string;
   deleted?: boolean;
 }
-
 export default function AddCategory() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -38,14 +36,12 @@ export default function AddCategory() {
     unit: ""
   }]);
   const [edit, setEdit] = useState(false);
-
   useEffect(() => {
     if (categoryId) {
       setEdit(true);
       fetchCategory(categoryId);
     }
   }, [categoryId]);
-
   const fetchCategory = async (id: string) => {
     try {
       setLoading(true);
@@ -55,7 +51,6 @@ export default function AddCategory() {
           name: data.name || "",
           description: data.description || ""
         });
-        
         if (data.subcategories && data.subcategories.length > 0) {
           const uniqueSubcategories = new Map();
           data.subcategories.forEach(sub => {
@@ -69,7 +64,6 @@ export default function AddCategory() {
               });
             }
           });
-          
           setSubcategories(Array.from(uniqueSubcategories.values()));
         }
       }
@@ -85,7 +79,6 @@ export default function AddCategory() {
       navigate("/categories");
     }
   };
-
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const {
       name,
@@ -96,13 +89,11 @@ export default function AddCategory() {
       [name]: value
     }));
   };
-
   const handleSubcategoryChange = (index: number, field: keyof SubcategoryForm, value: string | boolean) => {
     const updatedSubcategories = [...subcategories];
     (updatedSubcategories[index] as any)[field] = value;
     setSubcategories(updatedSubcategories);
   };
-
   const addSubcategory = () => {
     setSubcategories([...subcategories, {
       tempId: Date.now(),
@@ -111,7 +102,6 @@ export default function AddCategory() {
       unit: ""
     }]);
   };
-
   const removeSubcategory = (index: number) => {
     if (subcategories.length === 1) {
       setSubcategories([{
@@ -132,7 +122,6 @@ export default function AddCategory() {
       setSubcategories(updated);
     }
   };
-
   const validate = () => {
     if (!category.name) {
       toast({
@@ -163,7 +152,6 @@ export default function AddCategory() {
     }
     return true;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -208,7 +196,6 @@ export default function AddCategory() {
       setLoading(false);
     }
   };
-
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <PageHeader title={edit ? "Edit Category" : "Add Category"} />
       
@@ -220,7 +207,7 @@ export default function AddCategory() {
               <CardDescription>
                 Enter the basic information for this category.
               </CardDescription>
-            </CardHeader> */}
+             </CardHeader> */}
             <CardContent className="space-y-4 mt-4">
               <div className="mt-4">
                 <Label htmlFor="name">Category Name*</Label>
@@ -264,7 +251,7 @@ export default function AddCategory() {
                   </div>
                 </div>)}
               
-              <Button type="button" variant="outline" onClick={addSubcategory} className="w-full">
+              <Button type="button" variant="outline" onClick={addSubcategory} className="w-full text-sky-600 border-sky-600">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Another Subcategory
               </Button>
