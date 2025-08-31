@@ -252,7 +252,6 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                                    <SelectItem value="3_months">3 Months</SelectItem>
                                    <SelectItem value="6_months">6 Months</SelectItem>
                                    <SelectItem value="1_year">1 Year</SelectItem>
-                                   <SelectItem value="custom">Custom</SelectItem>
                                  </SelectContent>
                                </Select>
                              </div>
