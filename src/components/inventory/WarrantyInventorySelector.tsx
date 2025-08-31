@@ -154,7 +154,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Available Items */}
             <div>
               <h3 className="text-sm font-medium mb-2">Available Inventory Items</h3>
