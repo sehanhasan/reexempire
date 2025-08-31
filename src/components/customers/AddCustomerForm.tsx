@@ -26,7 +26,7 @@ export default function AddCustomerForm({
   const isMobile = useIsMobile();
   const [customerType, setCustomerType] = useState("individual");
   const [name, setName] = useState("");
-  const [residence, setResidence] = useState("Star Residences ONE");
+  const [residence, setResidence] = useState("Reex Empire ONE");
   const [unitNumber, setUnitNumber] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
@@ -50,7 +50,7 @@ export default function AddCustomerForm({
             // Ensure WhatsApp number shows with country code when editing
             setWhatsapp(customer.phone || "");
             setEmail(customer.email || "");
-            setResidence(customer.address || "Star Residences ONE");
+            setResidence(customer.address || "Reex Empire ONE");
             setNotes(customer.notes || "");
           }
           setIsLoading(false);
@@ -191,10 +191,10 @@ export default function AddCustomerForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Star Residences One">Star Residences One</SelectItem>
-                      <SelectItem value="Star Residences Two">Star Residences Two</SelectItem>
-                      <SelectItem value="Star Residences Three">Star Residences Three</SelectItem>
-                      <SelectItem value="Star Suites">Star Suites</SelectItem>
+                      <SelectItem value="Reex Empire One">Reex Empire One</SelectItem>
+                      <SelectItem value="Reex Empire Two">Reex Empire Two</SelectItem>
+                      <SelectItem value="Reex Empire Three">Reex Empire Three</SelectItem>
+                      <SelectItem value="Reex Empire Suites">Reex Empire Suites</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
