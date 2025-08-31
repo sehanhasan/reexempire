@@ -158,10 +158,10 @@ export function InvoiceItemsCard({
         id: newId,
         description: description,
         category: "Warranty Items",
-        quantity: 1,
+        quantity: warrantyItem.quantity,
         unit: "",
-        unitPrice: 0, // Default to 0, user can set price
-        amount: 0
+        unitPrice: warrantyItem.price || 0,
+        amount: (warrantyItem.quantity || 1) * (warrantyItem.price || 0)
       };
     });
 

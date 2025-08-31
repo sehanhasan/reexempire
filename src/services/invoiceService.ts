@@ -272,6 +272,100 @@ const update = async (id: string, updates: Partial<Invoice>): Promise<Invoice | 
       }
     }
     
+    // If status is being changed to "Sent", create warranty items for warranty category items
+    if (updates.status === 'Sent') {
+      const currentInvoice = await getById(id);
+      if (currentInvoice) {
+        // Get invoice items with warranty category
+        const invoiceItems = await getItemsByInvoiceId(id);
+        const warrantyItems = invoiceItems.filter(item => 
+          item.category === 'Warranty Items' && 
+          item.description && 
+          item.description.includes('Warranty:')
+        );
+
+        // Create warranty items for each warranty category item
+        for (const item of warrantyItems) {
+          try {
+            // Parse warranty information from description
+            const nameMatch = item.description.match(/^([^(]+?)(?:\s*-\s*#([^)]+))?\s*\(Warranty:\s*([^)]+)\)/);
+            if (nameMatch) {
+              const itemName = nameMatch[1].trim();
+              const serialNumber = nameMatch[2] || '';
+              const warrantyPeriod = nameMatch[3].trim();
+              
+              // Convert warranty period text to type
+              let warrantyPeriodType = '30_days';
+              switch (warrantyPeriod) {
+                case '7 Days':
+                  warrantyPeriodType = '7_days';
+                  break;
+                case '30 Days':
+                  warrantyPeriodType = '30_days';
+                  break;
+                case '3 Months':
+                  warrantyPeriodType = '3_months';
+                  break;
+                case '6 Months':
+                  warrantyPeriodType = '6_months';
+                  break;
+                case '1 Year':
+                  warrantyPeriodType = '1_year';
+                  break;
+              }
+
+              // Calculate expiry date
+              const issueDate = new Date(currentInvoice.issue_date);
+              let expiryDate = new Date(issueDate);
+              
+              switch (warrantyPeriodType) {
+                case '7_days':
+                  expiryDate.setDate(expiryDate.getDate() + 7);
+                  break;
+                case '30_days':
+                  expiryDate.setDate(expiryDate.getDate() + 30);
+                  break;
+                case '3_months':
+                  expiryDate.setMonth(expiryDate.getMonth() + 3);
+                  break;
+                case '6_months':
+                  expiryDate.setMonth(expiryDate.getMonth() + 6);
+                  break;
+                case '1_year':
+                  expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+                  break;
+              }
+
+              // Create warranty item record
+              const warrantyData = {
+                customer_id: currentInvoice.customer_id,
+                invoice_id: id,
+                item_name: itemName,
+                serial_number: serialNumber || null,
+                issue_date: currentInvoice.issue_date,
+                warranty_period_type: warrantyPeriodType,
+                warranty_period_value: null,
+                warranty_period_unit: null,
+                expiry_date: expiryDate.toISOString().split('T')[0]
+              };
+
+              const { error: warrantyError } = await supabase
+                .from('warranty_items')
+                .insert([warrantyData]);
+
+              if (warrantyError) {
+                console.error('InvoiceService: Error creating warranty item:', warrantyError);
+              } else {
+                console.log('InvoiceService: Created warranty item for:', itemName);
+              }
+            }
+          } catch (warrantyError) {
+            console.error('InvoiceService: Error processing warranty item:', warrantyError);
+          }
+        }
+      }
+    }
+    
     const { data, error } = await supabase
       .from('invoices')
       .update(updates)

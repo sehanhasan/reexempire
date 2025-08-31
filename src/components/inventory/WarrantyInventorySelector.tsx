@@ -19,6 +19,7 @@ interface WarrantyItem {
   warrantyPeriod: string;
   quantity: number;
   endDate?: Date;
+  price?: number;
 }
 
 interface WarrantyInventorySelectorProps {
@@ -68,7 +69,8 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
       serialNumber: "",
       warrantyPeriod: "30_days",
       quantity: 1,
-      endDate: undefined
+      endDate: undefined,
+      price: inventoryItem.unit_price || 0
     };
 
     setSelectedItems(prev => ({
@@ -152,7 +154,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Available Items */}
             <div>
               <h3 className="text-sm font-medium mb-2">Available Inventory Items</h3>
@@ -184,6 +186,9 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                                 <div className="text-xs text-muted-foreground">
                                   Stock: {item.quantity}
                                 </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Price: RM {(item.unit_price || 0).toFixed(2)}
+                                </div>
                               </div>
                             </div>
                             {isSelected && (
@@ -201,7 +206,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
             </div>
 
             {/* Selected Items */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
               <h3 className="text-sm font-medium mb-2">Selected Warranty Items ({Object.keys(selectedItems).length})</h3>
               <ScrollArea className="h-64 border rounded-lg">
                 <div className="p-2 space-y-3">
@@ -220,65 +225,65 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                               Remove
                             </Button>
                           </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                            <div>
-                              <Label className="text-xs">Serial Number</Label>
-                              <Input
-                                placeholder="Enter serial number"
-                                value={item.serialNumber}
-                                onChange={(e) => handleUpdateItem(item.id, 'serialNumber', e.target.value)}
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                            
-                            <div>
-                              <Label className="text-xs">Warranty Period</Label>
-                              <Select 
-                                value={item.warrantyPeriod} 
-                                onValueChange={(value) => handleUpdateItem(item.id, 'warrantyPeriod', value)}
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="7_days">7 Days</SelectItem>
-                                  <SelectItem value="30_days">30 Days</SelectItem>
-                                  <SelectItem value="3_months">3 Months</SelectItem>
-                                  <SelectItem value="6_months">6 Months</SelectItem>
-                                  <SelectItem value="1_year">1 Year</SelectItem>
-                                  <SelectItem value="custom">Custom</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                           
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                             <div>
+                               <Label className="text-xs">Serial Number</Label>
+                               <Input
+                                 placeholder="Enter serial number"
+                                 value={item.serialNumber}
+                                 onChange={(e) => handleUpdateItem(item.id, 'serialNumber', e.target.value)}
+                                 className="h-8 text-xs"
+                               />
+                             </div>
+                             
+                             <div>
+                               <Label className="text-xs">Warranty Period</Label>
+                               <Select 
+                                 value={item.warrantyPeriod} 
+                                 onValueChange={(value) => handleUpdateItem(item.id, 'warrantyPeriod', value)}
+                               >
+                                 <SelectTrigger className="h-8 text-xs">
+                                   <SelectValue />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                   <SelectItem value="7_days">7 Days</SelectItem>
+                                   <SelectItem value="30_days">30 Days</SelectItem>
+                                   <SelectItem value="3_months">3 Months</SelectItem>
+                                   <SelectItem value="6_months">6 Months</SelectItem>
+                                   <SelectItem value="1_year">1 Year</SelectItem>
+                                   <SelectItem value="custom">Custom</SelectItem>
+                                 </SelectContent>
+                               </Select>
+                             </div>
 
-                            <div>
-                              <Label className="text-xs">Quantity</Label>
-                              <div className="flex items-center space-x-2">
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  size="icon" 
-                                  className="h-8 w-8 rounded-full" 
-                                  onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
-                                >
-                                  <span>-</span>
-                                </Button>
-                                <span className="text-sm font-medium w-8 text-center">
-                                  {item.quantity}
-                                </span>
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  size="icon" 
-                                  className="h-8 w-8 rounded-full" 
-                                  onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
-                                >
-                                  <span>+</span>
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
+                             <div>
+                               <Label className="text-xs">Quantity</Label>
+                               <div className="flex items-center space-x-2">
+                                 <Button 
+                                   type="button" 
+                                   variant="outline" 
+                                   size="icon" 
+                                   className="h-8 w-8 rounded-full" 
+                                   onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
+                                 >
+                                   <span>-</span>
+                                 </Button>
+                                 <span className="text-sm font-medium w-8 text-center">
+                                   {item.quantity}
+                                 </span>
+                                 <Button 
+                                   type="button" 
+                                   variant="outline" 
+                                   size="icon" 
+                                   className="h-8 w-8 rounded-full" 
+                                   onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
+                                 >
+                                   <span>+</span>
+                                 </Button>
+                               </div>
+                             </div>
+                           </div>
                         </div>
                       </CardContent>
                     </Card>

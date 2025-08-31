@@ -190,17 +190,15 @@ export function ItemsTable({
                       </div>
                       
                       <div className="grid grid-cols-3 gap-2">
-                         <div className="space-y-2">
-                           <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
-                           <Input type="number" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
-                         </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
+                            <Input type="number" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                          </div>
                         
                          <div className="space-y-2">
                            <label className="block text-xs mb-1 text-slate-600 font-medium">Unit Price (RM)</label>
                            <div className="relative">
                              <Input 
-                               min="0" 
-                               step="0.01" 
                                className="h-10" 
                                value={item.unitPrice === 0 ? '' : item.unitPrice} 
                                placeholder="0.00"
@@ -332,8 +330,6 @@ export function ItemsTable({
                      <td className="py-3 px-2">
                        <div className="relative">
                          <Input 
-                           min="0" 
-                           step="0.01" 
                            className="text-left h-10" 
                            value={item.unitPrice === 0 ? '' : item.unitPrice} 
                            placeholder="0.00"
