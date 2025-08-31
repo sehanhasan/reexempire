@@ -66,31 +66,46 @@ export default function AddDemandList() {
   const generateDemandListPDF = async (demandList: any, items: InventoryItem[]) => {
     const doc = new jsPDF();
     
-    // Document title
-    doc.setFontSize(16);
+    // Document title with better spacing
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('Reex Empire - Demand List', 20, 70);
+    doc.text('Reex Empire - Demand List', 20, 30);
     
     // Document details with better spacing
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Requested Date: ${new Date(demandList.requested_date).toLocaleDateString()}`, 20, 85);
-    if (demandList.required_date) {
-      doc.text(`Required Date: ${new Date(demandList.required_date).toLocaleDateString()}`, 20, 95);
-    }
-    if (demandList.requested_by) {
-      doc.text(`Requested By: ${demandList.requested_by}`, 20, 105);
-    }
+    doc.text(`Requested Date: ${new Date(demandList.requested_date).toLocaleDateString()}`, 20, 50);
     
     // Priority aligned to the right
     doc.setFont('helvetica', 'bold');
     const priorityText = `Priority: ${demandList.priority}`;
     const priorityWidth = doc.getTextWidth(priorityText);
-    doc.text(priorityText, 190 - priorityWidth, 85);
+    doc.text(priorityText, 190 - priorityWidth, 50);
     
-    doc.setFont('helvetica', 'normal');
+    let currentY = 60;
+    
+    // Add required date if available
+    if (demandList.required_date) {
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Required Date: ${new Date(demandList.required_date).toLocaleDateString()}`, 20, currentY);
+      currentY += 10;
+    }
+    
+    // Add requested by if available  
+    if (demandList.requested_by) {
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Requested By: ${demandList.requested_by}`, 20, currentY);
+      currentY += 10;
+    }
+    
+    // Add description if available with proper spacing
     if (demandList.description) {
-      doc.text(`Description: ${demandList.description}`, 20, 115);
+      currentY += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Description: ${demandList.description}`, 20, currentY);
+      currentY += 15;
+    } else {
+      currentY += 10;
     }
 
     // Items table with RM currency
@@ -110,7 +125,7 @@ export default function AddDemandList() {
     autoTable(doc, {
       head: [['Item Name', 'Current Stock', 'Min Level', 'Required Qty', 'Unit Price']],
       body: tableData,
-      startY: 130,
+      startY: currentY,
       theme: 'striped',
       headStyles: { 
         fillColor: [41, 98, 255],
