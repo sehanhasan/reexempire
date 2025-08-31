@@ -16,6 +16,7 @@ import { categoryService } from "@/services/categoryService";
 import { Package, AlertTriangle, TrendingUp, Plus, FileText, Activity, MoreHorizontal, Edit, Trash2, Search, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { CategoryDialog } from "@/components/categories/CategoryDialog";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -150,11 +151,11 @@ export default function Inventory() {
 
   const getStockStatusBadge = (item: InventoryItem) => {
     if (item.quantity === 0) {
-      return <Badge variant="destructive">Out of Stock</Badge>;
+      return <Badge variant="destructive" className="pointer-events-none">Out of Stock</Badge>;
     } else if (item.quantity <= (item.min_stock_level || 0)) {
-      return <Badge variant="secondary" className="bg-amber-100 text-amber-700">Low Stock</Badge>;
+      return <Badge variant="secondary" className="bg-amber-100 text-amber-700 pointer-events-none">Low Stock</Badge>;
     } else {
-      return <Badge variant="default" className="bg-green-100 text-green-700">In Stock</Badge>;
+      return <Badge variant="default" className="bg-green-100 text-green-700 pointer-events-none">In Stock</Badge>;
     }
   };
 
@@ -180,7 +181,7 @@ export default function Inventory() {
       header: "Stock",
       accessorKey: "quantity",
       cell: ({ row }: any) => (
-        <div className="text-center">
+        <div className="text-left flex items-center gap-2">
           <div className="font-medium">{row.original.quantity}</div>
           {getStockStatusBadge(row.original)}
         </div>
@@ -413,6 +414,11 @@ export default function Inventory() {
 
           {activeTab === "categories" && (
             <div className="space-y-4 p-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Categories</h3>
+                <CategoryDialog onCategoryChanged={refetch} />
+              </div>
+              
               {categories.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No categories found.</p>
@@ -427,27 +433,11 @@ export default function Inventory() {
                           <p className="text-sm text-muted-foreground">{category.description}</p>
                         )}
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(`/categories/edit/${category.id}`)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-red-600"
-                            onClick={() => handleDeleteCategory(category.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <CategoryDialog 
+                        onCategoryChanged={refetch} 
+                        category={category} 
+                        mode="edit" 
+                      />
                     </div>
                     
                     {/* Items in this category */}

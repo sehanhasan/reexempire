@@ -114,6 +114,9 @@ export default function EditWarrantyItem() {
       const invoice = invoices.find(i => i.id === warrantyItem.invoice_id);
       form.setValue('invoice_id', invoice?.reference_number || warrantyItem.invoice_id || '');
       
+      // Set the item in selectedInventoryItems to retain display
+      setSelectedInventoryItems({ 0: { name: warrantyItem.item_name } });
+      
       form.setValue('items', [{
         item_name: warrantyItem.item_name,
         serial_number: warrantyItem.serial_number || '',
