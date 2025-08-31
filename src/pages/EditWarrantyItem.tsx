@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, CalendarIcon, UserRound } from "lucide-react";
+import { Search, CalendarIcon, UserRound, Package } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays, addMonths, addYears } from "date-fns";
@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { customerService, invoiceService } from "@/services";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
+import { InventoryItemSelector } from "@/components/inventory/InventoryItemSelector";
 
 const warrantyFormSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
@@ -43,6 +44,8 @@ export default function EditWarrantyItem() {
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [inventoryDialogOpen, setInventoryDialogOpen] = useState(false);
+  const [selectedInventoryItem, setSelectedInventoryItem] = useState<any>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -195,6 +198,12 @@ export default function EditWarrantyItem() {
     setCustomerDialogOpen(false);
   };
 
+  const handleSelectInventoryItem = (item: any) => {
+    setSelectedInventoryItem(item);
+    form.setValue('item_name', item.name);
+    setInventoryDialogOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
@@ -278,9 +287,36 @@ export default function EditWarrantyItem() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Item Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Enter item name" />
-                            </FormControl>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setInventoryDialogOpen(true)}
+                                className={`w-full h-10 ${selectedInventoryItem || field.value ? "justify-start" : "justify-center"}`}
+                              >
+                                {selectedInventoryItem ? (
+                                  <>
+                                    <Package className="mr-2 h-4 w-4 text-gray-500" />
+                                    <span className="truncate">
+                                      {selectedInventoryItem.name}
+                                      <span className="ml-2 text-xs text-muted-foreground">
+                                        ({selectedInventoryItem.quantity} in stock)
+                                      </span>
+                                    </span>
+                                  </>
+                                ) : field.value ? (
+                                  <>
+                                    <Package className="mr-2 h-4 w-4 text-gray-500" />
+                                    <span className="truncate">{field.value}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Search className="mr-2 h-4 w-4" />
+                                    Select Inventory Item
+                                  </>
+                                )}
+                              </Button>
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -453,6 +489,14 @@ export default function EditWarrantyItem() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Inventory Item Selection Dialog */}
+      <InventoryItemSelector
+        open={inventoryDialogOpen}
+        onOpenChange={setInventoryDialogOpen}
+        onSelect={handleSelectInventoryItem}
+        selectedItemId={selectedInventoryItem?.id}
+      />
     </div>
   );
 }

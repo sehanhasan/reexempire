@@ -225,14 +225,14 @@ export default function Warranty() {
       />
 
 
-      <div className={!isMobile ? "" : ""}>
+      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
         <div className="p-0">
           <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
             {!isMobile && (
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search..."
+                  placeholder="Search warranty items..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-10"
@@ -250,7 +250,7 @@ export default function Warranty() {
               <p className="text-muted-foreground">No warranty items found.</p>
             </div>
           ) : (
-            <div>
+            <div className="overflow-x-auto">
               <DataTable
                 columns={columns}
                 data={paginatedData(filteredWarrantyItems)}

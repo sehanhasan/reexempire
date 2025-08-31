@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Search, CalendarIcon, UserRound, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Search, CalendarIcon, UserRound, Trash2, ArrowLeft, Package } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays, addMonths, addYears } from "date-fns";
@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { customerService, invoiceService } from "@/services";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
+import { InventoryItemSelector } from "@/components/inventory/InventoryItemSelector";
 const warrantyItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
   serial_number: z.string().optional(),
@@ -44,6 +45,8 @@ export default function AddWarrantyItem() {
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [inventoryDialogOpen, setInventoryDialogOpen] = useState(false);
+  const [selectedInventoryItems, setSelectedInventoryItems] = useState<Record<number, any>>({});
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -190,6 +193,12 @@ export default function AddWarrantyItem() {
     form.setValue('customer_id', customer.id);
     setCustomerDialogOpen(false);
   };
+
+  const handleSelectInventoryItem = (item: any, itemIndex: number) => {
+    setSelectedInventoryItems(prev => ({ ...prev, [itemIndex]: item }));
+    form.setValue(`items.${itemIndex}.item_name`, item.name);
+    setInventoryDialogOpen(false);
+  };
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
 
       <Card className="max-w-6xl mx-auto">
@@ -249,9 +258,35 @@ export default function AddWarrantyItem() {
                         field
                       }) => <FormItem>
                                  <FormLabel>Item Name</FormLabel>
-                                 <FormControl>
-                                   <Input {...field} placeholder="Enter item name" />
-                                 </FormControl>
+                                 <div className="flex gap-2">
+                                   <Button
+                                     type="button"
+                                     variant="outline"
+                                     onClick={() => {
+                                       setInventoryDialogOpen(true);
+                                       // Store the current item index for selection
+                                       (window as any).currentItemIndex = index;
+                                     }}
+                                     className={`w-full h-10 ${selectedInventoryItems[index] ? "justify-start" : "justify-center"}`}
+                                   >
+                                     {selectedInventoryItems[index] ? (
+                                       <>
+                                         <Package className="mr-2 h-4 w-4 text-gray-500" />
+                                         <span className="truncate">
+                                           {selectedInventoryItems[index].name}
+                                           <span className="ml-2 text-xs text-muted-foreground">
+                                             ({selectedInventoryItems[index].quantity} in stock)
+                                           </span>
+                                         </span>
+                                       </>
+                                     ) : (
+                                       <>
+                                         <Search className="mr-2 h-4 w-4" />
+                                         Select Inventory Item
+                                       </>
+                                     )}
+                                   </Button>
+                                 </div>
                                  <FormMessage />
                                </FormItem>} />
 
@@ -377,5 +412,12 @@ export default function AddWarrantyItem() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Inventory Item Selection Dialog */}
+      <InventoryItemSelector
+        open={inventoryDialogOpen}
+        onOpenChange={setInventoryDialogOpen}
+        onSelect={(item) => handleSelectInventoryItem(item, (window as any).currentItemIndex || 0)}
+      />
     </div>;
 }
