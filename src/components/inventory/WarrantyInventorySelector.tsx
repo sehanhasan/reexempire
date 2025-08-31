@@ -154,7 +154,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Available Items */}
             <div>
               <h3 className="text-sm font-medium mb-2">Available Inventory Items</h3>
@@ -206,7 +206,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
             </div>
 
             {/* Selected Items */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <h3 className="text-sm font-medium mb-2">Selected Warranty Items ({Object.keys(selectedItems).length})</h3>
               <ScrollArea className="h-64 border rounded-lg">
                 <div className="p-2 space-y-3">
