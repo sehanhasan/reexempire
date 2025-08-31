@@ -5,36 +5,42 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
   const now = new Date();
   const year = now.getFullYear();
   
-  // Get the highest existing sequence number for this year
-  const pattern = isDepositInvoice ? `INV-${year}-%-D` : `INV-${year}-%`;
-  const { data: existingInvoices, error } = await supabase
-    .from("invoices")
-    .select("reference_number")
-    .like("reference_number", pattern)
-    .order("reference_number", { ascending: false })
-    .limit(1);
+  let counter = 1;
+  let referenceNumber: string;
   
-  if (error) {
-    console.error("InvoiceService: Error fetching existing invoices:", error);
-    throw new Error(`Error fetching existing invoices: ${error.message}`);
+  do {
+    const sequence = counter.toString().padStart(4, '0');
+    referenceNumber = isDepositInvoice 
+      ? `INV-${year}-${sequence}-D`
+      : `INV-${year}-${sequence}`;
+    
+    console.log(`InvoiceService: Checking reference number: ${referenceNumber}`);
+    
+    // Check if this reference number already exists
+    const { data, error } = await supabase
+      .from("invoices")
+      .select("id")
+      .eq("reference_number", referenceNumber)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("InvoiceService: Error checking reference number:", error);
+      throw new Error(`Error checking reference number: ${error.message}`);
+    }
+    
+    if (!data) {
+      // Reference number is unique
+      console.log(`InvoiceService: Found unique reference number: ${referenceNumber}`);
+      break;
+    }
+    
+    counter++;
+  } while (counter <= 9999); // Prevent infinite loop
+  
+  if (counter > 9999) {
+    throw new Error("Unable to generate unique reference number - sequence exhausted");
   }
   
-  let nextSequence = 1;
-  
-  if (existingInvoices && existingInvoices.length > 0) {
-    const latestRef = existingInvoices[0].reference_number;
-    const sequencePart = latestRef.split('-')[2];
-    const latestSequence = parseInt(sequencePart, 10);
-    nextSequence = latestSequence + 1;
-  }
-  
-  // Generate the next reference number
-  const sequence = nextSequence.toString().padStart(4, '0');
-  const referenceNumber = isDepositInvoice 
-    ? `INV-${year}-${sequence}-D`
-    : `INV-${year}-${sequence}`;
-  
-  console.log(`InvoiceService: Generated reference number: ${referenceNumber}`);
   return referenceNumber;
 };
 
