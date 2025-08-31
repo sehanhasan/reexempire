@@ -192,7 +192,25 @@ export function ItemsTable({
                       <div className="grid grid-cols-3 gap-2">
                         <div className="space-y-2">
                           <label className="block text-xs mb-1 text-slate-600 font-medium">Quantity</label>
-                          <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="h-10" />
+                          <div className="flex items-center">
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 rounded-l" onClick={() => {
+                              const currentQty = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : item.quantity;
+                              handleItemChange(item.id, 'quantity', Math.max(1, currentQty - 1));
+                            }}>
+                              <span>-</span>
+                            </Button>
+                            <Input 
+                              value={item.quantity} 
+                              onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} 
+                              className="h-8 rounded-none text-center border-x-0" 
+                            />
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8 rounded-r" onClick={() => {
+                              const currentQty = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : item.quantity;
+                              handleItemChange(item.id, 'quantity', currentQty + 1);
+                            }}>
+                              <span>+</span>
+                            </Button>
+                          </div>
                         </div>
                         
                         <div className="space-y-2">
@@ -328,7 +346,25 @@ export function ItemsTable({
                       <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
                     </td>
                     <td className="py-3 px-2">
-                      <Input value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-left h-10" />
+                      <div className="flex items-center">
+                        <Button type="button" variant="outline" size="icon" className="h-8 w-8 rounded-l" onClick={() => {
+                          const currentQty = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : item.quantity;
+                          handleItemChange(item.id, 'quantity', Math.max(1, currentQty - 1));
+                        }}>
+                          <span>-</span>
+                        </Button>
+                        <Input 
+                          value={item.quantity} 
+                          onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} 
+                          className="h-8 rounded-none text-center border-x-0" 
+                        />
+                        <Button type="button" variant="outline" size="icon" className="h-8 w-8 rounded-r" onClick={() => {
+                          const currentQty = typeof item.quantity === 'string' ? parseFloat(item.quantity) || 1 : item.quantity;
+                          handleItemChange(item.id, 'quantity', currentQty + 1);
+                        }}>
+                          <span>+</span>
+                        </Button>
+                      </div>
                     </td>
                     <td className="py-3 px-2">
                       <div className="relative">

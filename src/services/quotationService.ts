@@ -53,40 +53,33 @@ export const quotationService = {
     const now = new Date();
     const year = now.getFullYear();
     
-    let counter = 1;
-    let referenceNumber: string;
+    // Get the highest existing sequence number for this year
+    const { data: existingQuotations, error } = await supabase
+      .from("quotations")
+      .select("reference_number")
+      .like("reference_number", `QT-${year}-%`)
+      .order("reference_number", { ascending: false })
+      .limit(1);
     
-    do {
-      const sequence = counter.toString().padStart(4, '0');
-      referenceNumber = `QT-${year}-${sequence}`;
-      
-      console.log(`QuotationService: Checking reference number: ${referenceNumber}`);
-      
-      // Check if this reference number already exists
-      const { data, error } = await supabase
-        .from("quotations")
-        .select("id")
-        .eq("reference_number", referenceNumber)
-        .maybeSingle();
-      
-      if (error) {
-        console.error("QuotationService: Error checking reference number:", error);
-        throw new Error(`Error checking reference number: ${error.message}`);
-      }
-      
-      if (!data) {
-        // Reference number is unique
-        console.log(`QuotationService: Found unique reference number: ${referenceNumber}`);
-        break;
-      }
-      
-      counter++;
-    } while (counter <= 9999); // Prevent infinite loop
-    
-    if (counter > 9999) {
-      throw new Error("Unable to generate unique reference number - sequence exhausted");
+    if (error) {
+      console.error("QuotationService: Error fetching existing quotations:", error);
+      throw new Error(`Error fetching existing quotations: ${error.message}`);
     }
     
+    let nextSequence = 1;
+    
+    if (existingQuotations && existingQuotations.length > 0) {
+      const latestRef = existingQuotations[0].reference_number;
+      const sequencePart = latestRef.split('-')[2];
+      const latestSequence = parseInt(sequencePart, 10);
+      nextSequence = latestSequence + 1;
+    }
+    
+    // Generate the next reference number
+    const sequence = nextSequence.toString().padStart(4, '0');
+    const referenceNumber = `QT-${year}-${sequence}`;
+    
+    console.log(`QuotationService: Generated reference number: ${referenceNumber}`);
     return referenceNumber;
   },
 
