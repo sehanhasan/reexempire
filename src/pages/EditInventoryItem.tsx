@@ -8,12 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { inventoryService, InventoryItem } from "@/services/inventoryService";
-import { categoryService } from "@/services/categoryService";
-import { AddCategoryDialog } from "@/components/categories/AddCategoryDialog";
+import { inventoryCategoryService, InventoryCategory } from "@/services/inventoryCategoryService";
+import { AddInventoryCategoryDialog } from "@/components/inventory/AddInventoryCategoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Category } from "@/types/database";
 
 export default function EditInventoryItem() {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ export default function EditInventoryItem() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const isMobile = useIsMobile();
 
   const [formData, setFormData] = useState({
@@ -48,10 +47,10 @@ export default function EditInventoryItem() {
 
   const fetchCategories = async () => {
     try {
-      const data = await categoryService.getAll();
+      const data = await inventoryCategoryService.getAll();
       setCategories(data);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching inventory categories:", error);
     }
   };
 
@@ -155,8 +154,8 @@ export default function EditInventoryItem() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="category">Category *</Label>
-                  <AddCategoryDialog onCategoryAdded={fetchCategories} />
+                  <Label htmlFor="category">Inventory Category *</Label>
+                  <AddInventoryCategoryDialog onCategoryAdded={fetchCategories} />
                 </div>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
                   <SelectTrigger>

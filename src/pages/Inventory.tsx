@@ -12,11 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { inventoryService, InventoryItem } from "@/services/inventoryService";
-import { categoryService } from "@/services/categoryService";
+import { inventoryCategoryService, InventoryCategory } from "@/services/inventoryCategoryService";
 import { Package, AlertTriangle, TrendingUp, Plus, FileText, Activity, MoreHorizontal, Edit, Trash2, Search, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { CategoryDialog } from "@/components/categories/CategoryDialog";
+import { InventoryCategoryDialog } from "@/components/inventory/InventoryCategoryDialog";
 import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -43,10 +43,10 @@ export default function Inventory() {
     queryFn: inventoryService.getLowStockItems
   });
 
-  // Fetch categories
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn: categoryService.getAll
+  // Fetch inventory categories
+  const { data: categories = [] } = useQuery<InventoryCategory[]>({
+    queryKey: ['inventory-categories'],
+    queryFn: inventoryCategoryService.getAll
   });
 
   // Filter items based on search and status
@@ -133,7 +133,7 @@ export default function Inventory() {
 
   const handleDeleteCategory = async (categoryId: string) => {
     try {
-      await categoryService.delete(categoryId);
+      await inventoryCategoryService.delete(categoryId);
       toast({
         title: "Success",
         description: "Category deleted successfully"
@@ -415,7 +415,7 @@ export default function Inventory() {
             <div className="space-y-4 p-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Categories</h3>
-                <CategoryDialog onCategoryChanged={refetch} />
+                <InventoryCategoryDialog onCategoryChanged={refetch} />
               </div>
               
               {categories.length === 0 ? (
@@ -432,7 +432,7 @@ export default function Inventory() {
                           <p className="text-sm text-muted-foreground">{category.description}</p>
                         )}
                       </div>
-                      <CategoryDialog 
+                      <InventoryCategoryDialog 
                         onCategoryChanged={refetch} 
                         category={category} 
                         mode="edit" 
