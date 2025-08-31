@@ -8,17 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { inventoryService } from "@/services/inventoryService";
-import { categoryService } from "@/services/categoryService";
-import { AddCategoryDialog } from "@/components/categories/AddCategoryDialog";
+import { inventoryCategoryService, InventoryCategory } from "@/services/inventoryCategoryService";
+import { AddInventoryCategoryDialog } from "@/components/inventory/AddInventoryCategoryDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Category } from "@/types/database";
 
 export default function AddInventoryItem() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -27,10 +26,10 @@ export default function AddInventoryItem() {
 
   const fetchCategories = async () => {
     try {
-      const data = await categoryService.getAll();
+      const data = await inventoryCategoryService.getAll();
       setCategories(data);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching inventory categories:", error);
     }
   };
 
@@ -110,11 +109,11 @@ export default function AddInventoryItem() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="category">Category *</Label>
-                  <AddCategoryDialog onCategoryAdded={fetchCategories} />
-                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="category">Inventory Category *</Label>
+                    <AddInventoryCategoryDialog onCategoryAdded={fetchCategories} />
+                  </div>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
