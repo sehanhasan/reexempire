@@ -156,11 +156,54 @@ export default function AddWarrantyItem() {
         error
       } = await supabase.from('warranty_items').insert(warrantyItemsToCreate).select();
       if (error) throw error;
+
+      // For each warranty item created, check if it corresponds to an inventory item and subtract quantity
+      for (let i = 0; i < result.length; i++) {
+        const warrantyItem = result[i];
+        const formItem = data.items[i];
+        
+        // Check if there's a matching inventory item by name
+        const { data: inventoryItems, error: inventoryError } = await supabase
+          .from('inventory_items')
+          .select('*')
+          .eq('name', formItem.item_name)
+          .eq('status', 'Active')
+          .gt('quantity', 0)
+          .single();
+
+        if (!inventoryError && inventoryItems) {
+          // Subtract 1 from inventory
+          const { error: updateError } = await supabase
+            .from('inventory_items')
+            .update({ 
+              quantity: inventoryItems.quantity - 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', inventoryItems.id);
+
+          if (!updateError) {
+            // Create inventory movement record
+            await supabase.from('inventory_movements').insert({
+              inventory_item_id: inventoryItems.id,
+              movement_type: 'OUT',
+              quantity: -1,
+              reference_type: 'warranty_issue',
+              reference_id: warrantyItem.id,
+              notes: `Warranty issued for ${formItem.item_name}`,
+              created_by: 'System'
+            });
+          }
+        }
+      }
+
       return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['warranty-items']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['inventory-items']
       });
       toast({
         title: "Success",

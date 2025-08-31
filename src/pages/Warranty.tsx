@@ -219,11 +219,12 @@ export default function Warranty() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      <PageHeader
-        title="Warranty Management"
-        description="Track warranty periods for items provided to customers"
-      />
-
+      {!isMobile && (
+        <PageHeader
+          title="Warranty Management"
+          description="Track warranty periods for items provided to customers"
+        />
+      )}
 
       <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
         <div className="p-0">

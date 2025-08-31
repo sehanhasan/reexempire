@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, CalendarIcon, UserRound, Package } from "lucide-react";
+import { Search, CalendarIcon, UserRound, Package, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, addDays, addMonths, addYears } from "date-fns";
@@ -265,15 +265,24 @@ export default function EditWarrantyItem() {
                 <FormField
                   control={form.control}
                   name="invoice_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Invoice #</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter invoice number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const invoice = invoices.find(i => i.id === field.value);
+                    const displayValue = invoice?.reference_number || field.value || '';
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel>Invoice #</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter invoice number" 
+                            value={displayValue}
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
 
@@ -436,11 +445,21 @@ export default function EditWarrantyItem() {
                 </Card>
               </div>
 
-              <div className="flex gap-4 justify-end">
-                <Button type="button" variant="outline" onClick={() => navigate('/warranty')}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={updateWarrantyMutation.isPending} className="min-w-32">
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => navigate('/warranty')}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => navigate('/add-warranty-item')}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Another Item
+                  </Button>
+                </div>
+                <Button type="submit" disabled={updateWarrantyMutation.isPending}>
                   {updateWarrantyMutation.isPending ? "Updating..." : "Update Warranty Item"}
                 </Button>
               </div>

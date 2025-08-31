@@ -28,6 +28,7 @@ export default function Inventory() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("inventory");
 
   // Fetch inventory items
   const { data: items = [], isLoading, refetch } = useQuery({
@@ -124,6 +125,24 @@ export default function Inventory() {
       toast({
         title: "Error",
         description: "Failed to issue item",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      await categoryService.delete(categoryId);
+      toast({
+        title: "Success",
+        description: "Category deleted successfully"
+      });
+      refetch();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete category",
         variant: "destructive"
       });
     }
@@ -238,75 +257,43 @@ export default function Inventory() {
 
   return (
     <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-      {!isMobile && (
-        <PageHeader 
-          title="Inventory Management" 
-          description="Manage your inventory items and track stock levels"
-          actions={
-            <Button onClick={() => navigate("/inventory/add")} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Item
-            </Button>
-          } 
-        />
-      )}
+      <div className="mt-0">
+        <div className="flex border-b bg-white border-gray-200 rounded-t-lg">
+          <button 
+            onClick={() => setActiveTab("inventory")} 
+            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${
+              activeTab === "inventory" 
+                ? "text-blue-600 border-b-2 border-blue-600" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Inventory Items ({items.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab("low-stock")} 
+            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${
+              activeTab === "low-stock" 
+                ? "text-blue-600 border-b-2 border-blue-600" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Low Stock ({lowStockItems.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab("categories")} 
+            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${
+              activeTab === "categories" 
+                ? "text-blue-600 border-b-2 border-blue-600" 
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Categories ({uniqueCategories})
+          </button>
+        </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{items.length}</div>
-            <p className="text-xs text-muted-foreground">Active inventory items</p>
-          </CardContent>
-        </Card>
+        <div className={!isMobile ? "bg-white rounded-b-lg border border-t-0" : ""}>
+          {activeTab === "inventory" && (
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{lowStockItems.length}</div>
-            <p className="text-xs text-muted-foreground">Items need restocking</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
-            <p className="text-xs text-muted-foreground">Current inventory value</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{uniqueCategories}</div>
-            <p className="text-xs text-muted-foreground">Unique categories</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
-        <Tabs defaultValue="inventory" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="inventory">Inventory Items</TabsTrigger>
-            <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="inventory" className="mt-6">
             <div className="p-0">
               <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
                 {!isMobile && (
@@ -360,10 +347,11 @@ export default function Inventory() {
                 </div>
               )}
             </div>
-          </TabsContent>
+          )}
 
-          <TabsContent value="low-stock" className="mt-6">
-            <div className="space-y-4">
+          {activeTab === "low-stock" && (
+
+            <div className="space-y-4 p-4">
               {lowStockItems.length === 0 ? (
                 <div className="text-center py-8">
                   <AlertTriangle className="mx-auto h-12 w-12 text-green-500 mb-4" />
@@ -421,10 +409,10 @@ export default function Inventory() {
                 </>
               )}
             </div>
-          </TabsContent>
+          )}
 
-          <TabsContent value="categories" className="mt-6">
-            <div className="space-y-4">
+          {activeTab === "categories" && (
+            <div className="space-y-4 p-4">
               {categories.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No categories found.</p>
@@ -446,23 +434,14 @@ export default function Inventory() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(`/categories/add?id=${category.id}`)}>
+                          <DropdownMenuItem onClick={() => navigate(`/categories/edit/${category.id}`)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             className="text-red-600"
-                            onClick={() => {
-                              // Handle delete category
-                              categoryService.delete(category.id).then(() => {
-                                toast({
-                                  title: "Category deleted",
-                                  description: "Category has been deleted successfully.",
-                                });
-                                // Refresh categories
-                                window.location.reload();
-                              });
-                            }}
+                            onClick={() => handleDeleteCategory(category.id)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
@@ -471,39 +450,35 @@ export default function Inventory() {
                       </DropdownMenu>
                     </div>
                     
+                    {/* Items in this category */}
                     <div className="space-y-2">
-                      <h4 className="font-medium text-sm text-muted-foreground">Items in this category:</h4>
-                      {items.filter(item => item.category === category.name).length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No items in this category</p>
-                      ) : (
-                        <div className="grid gap-2">
-                          {items.filter(item => item.category === category.name).map((item) => (
-                            <div 
-                              key={item.id} 
-                              className="flex justify-between items-center p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                      {items.filter(item => item.category === category.name).map((item) => (
+                        <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                          <div className="flex-1">
+                            <button 
                               onClick={() => navigate(`/inventory/edit/${item.id}`)}
+                              className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
                             >
-                              <div>
-                                <span className="font-medium text-blue-600 hover:underline">{item.name}</span>
-                                {item.sku && <span className="text-xs text-muted-foreground ml-2">({item.sku})</span>}
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <Badge variant="outline">{item.quantity} in stock</Badge>
-                                <span className="text-muted-foreground">
-                                  {formatCurrency(item.unit_price || 0)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
+                              {item.name}
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">Stock: {item.quantity}</span>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="text-muted-foreground">{formatCurrency(item.unit_price || 0)}</span>
+                          </div>
                         </div>
+                      ))}
+                      {items.filter(item => item.category === category.name).length === 0 && (
+                        <p className="text-sm text-muted-foreground italic">No items in this category</p>
                       )}
                     </div>
                   </Card>
                 ))
               )}
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
 
       <FloatingActionButton onClick={() => navigate('/inventory/add')} />
