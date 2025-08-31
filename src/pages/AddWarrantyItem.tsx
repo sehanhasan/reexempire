@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,7 @@ export default function AddWarrantyItem() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const form = useForm<WarrantyFormData>({
     resolver: zodResolver(warrantyFormSchema),
     defaultValues: {
@@ -73,6 +74,24 @@ export default function AddWarrantyItem() {
     queryKey: ['customers'],
     queryFn: customerService.getAll
   });
+
+  // Handle URL parameters for prefilled data
+  useEffect(() => {
+    const customerId = searchParams.get('customerId');
+    const invoiceId = searchParams.get('invoiceId');
+    
+    if (customerId && customers.length > 0) {
+      const customer = customers.find(c => c.id === customerId);
+      if (customer) {
+        setSelectedCustomer(customer);
+        form.setValue('customer_id', customer.id);
+      }
+    }
+    
+    if (invoiceId) {
+      form.setValue('invoice_id', invoiceId);
+    }
+  }, [searchParams, customers, form]);
 
   // Filter customers based on search
   const filteredCustomers = customers.filter(customer => customer.name.toLowerCase().includes(customerSearch.toLowerCase()) || customer.unit_number?.toLowerCase().includes(customerSearch.toLowerCase()));

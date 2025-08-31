@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingActionButton } from "@/components/common/FloatingActionButton";
-import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight } from "lucide-react";
+import { FilePlus, Search, MoreHorizontal, FileEdit, Trash2, FileText, Download, Send, Calendar, Clock, Home, AlertCircle, CheckCircle2, XCircle, TimerReset, ChevronRight, ShieldCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/use-toast";
@@ -447,6 +447,13 @@ export default function Invoices() {
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Invoice
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={e => {
+                                e.stopPropagation();
+                                navigate(`/add-warranty-item?customerId=${invoice.customer_id}&invoiceId=${invoice.reference_number}`);
+                              }}>
+                                <ShieldCheck className="mr-2 h-4 w-4" />
+                                Add Warranty Item
+                              </DropdownMenuItem>
                               {/* <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 handleSendWhatsapp(invoice);
@@ -517,6 +524,10 @@ export default function Invoices() {
                                   <DropdownMenuItem onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')}>
                                     <FileText className="mr-2 h-4 w-4" />
                                     View Invoice
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => navigate(`/add-warranty-item?customerId=${invoice.customer_id}&invoiceId=${invoice.reference_number}`)}>
+                                    <ShieldCheck className="mr-2 h-4 w-4" />
+                                    Add Warranty Item
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem

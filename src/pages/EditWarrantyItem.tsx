@@ -140,7 +140,8 @@ export default function EditWarrantyItem() {
         serial_number: data.serial_number || null,
         issue_date: format(data.issue_date, 'yyyy-MM-dd'),
         warranty_period_type: data.warranty_period_type,
-        expiry_date: format(expiryDate, 'yyyy-MM-dd')
+        expiry_date: format(expiryDate, 'yyyy-MM-dd'),
+        updated_at: new Date().toISOString()
       };
 
       const { data: result, error } = await supabase
