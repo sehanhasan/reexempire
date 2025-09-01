@@ -217,10 +217,10 @@ export default function Inventory() {
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleIssueItem(row.original)}>
+            {/* <DropdownMenuItem onClick={() => handleIssueItem(row.original)}>
               <Package className="mr-2 h-4 w-4" />
               Issue Item
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-red-600"
@@ -413,8 +413,7 @@ export default function Inventory() {
 
           {activeTab === "categories" && (
             <div className="space-y-4 p-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Categories</h3>
+              <div className="flex justify-end items-center">
                 <InventoryCategoryDialog onCategoryChanged={refetch} />
               </div>
               
