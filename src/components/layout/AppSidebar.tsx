@@ -87,13 +87,14 @@ export function AppSidebar({
         icon: <Package className="h-5 w-5" />,
         href: "/inventory",
         adminOnly: true
-      }]
-      // items: [{
+      }, 
+      // {
       //   title: "Finance",
       //   icon: <DollarSign className="h-5 w-5" />,
       //   href: "/finance",
       //   adminOnly: true
-      // }]
+      // }
+    ]
     }
   ];
 
