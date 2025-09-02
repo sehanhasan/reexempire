@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Calendar, User, Check, Image, X, Share2, Clock, FileText } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Save, Calendar, User, Check, Image, X, Share2, Clock, FileText, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { appointmentService, staffService, customerService } from "@/services";
 import { CustomerSelector } from "@/components/appointments/CustomerSelector";
@@ -18,11 +20,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function AddAppointment() {
   const navigate = useNavigate();
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string; }>();
   const isEditMode = !!id;
 
   // Form state
@@ -36,7 +34,7 @@ export default function AddAppointment() {
   const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
   const [staffNotes, setStaffNotes] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [shareViaWhatsApp, setShareViaWhatsApp] = useState(true); // Default to true
+  const [shareViaWhatsApp, setShareViaWhatsApp] = useState(true);
   
   // Image attachment state
   const [attachedImages, setAttachedImages] = useState<File[]>([]);
@@ -47,17 +45,14 @@ export default function AddAppointment() {
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
 
   // Fetch staff members
-  const {
-    data: staffMembers = [],
-    isLoading: isLoadingStaff
-  } = useQuery({
+  const { data: staffMembers = [], isLoading: isLoadingStaff } = useQuery({
     queryKey: ['staff'],
     queryFn: staffService.getAll
   });
 
   // Fetch appointment data when in edit mode
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && staffMembers.length > 0) {
       const fetchAppointmentData = async () => {
         try {
           setIsLoading(true);
@@ -69,7 +64,6 @@ export default function AddAppointment() {
             setDate(appointment.appointment_date || new Date().toISOString().split("T")[0]);
             setStartTime(appointment.start_time || "09:00");
             setEndTime(appointment.end_time || "10:00");
-            setNotes(appointment.notes || "");
             setStatus(appointment.status || "Confirmed");
 
             // Set staff data
@@ -77,40 +71,48 @@ export default function AddAppointment() {
               setSelectedStaff([appointment.staff_id]);
             }
 
-            // Extract staff notes from appointment notes
-            if (appointment.notes && appointment.notes.includes("--- Staff Notes ---")) {
-              const [generalNotes, staffNotesSection] = appointment.notes.split("--- Staff Notes ---");
-              setNotes(generalNotes.trim());
-              
-              if (staffNotesSection) {
-                const staffNotesObj: Record<string, string> = {};
-                const staffNotesLines = staffNotesSection.trim().split('\n\n');
-                staffNotesLines.forEach(line => {
-                  const [staffName, ...noteParts] = line.split(': ');
-                  if (staffName && noteParts.length > 0) {
-                    // Find staff ID by name
-                    const staffMember = staffMembers.find((s: any) => s.name === staffName);
-                    if (staffMember) {
-                      staffNotesObj[staffMember.id] = noteParts.join(': ');
-                    }
-                  }
-                });
-                setStaffNotes(staffNotesObj);
-              }
-            }
+            // Parse staff notes properly - this fixes issue #1
+            if (appointment.notes) {
+              let generalNotes = appointment.notes;
+              let staffNotesObj: Record<string, string> = {};
 
-            // Extract image URLs from notes if present
-            if (appointment.notes && appointment.notes.includes("image_url:")) {
-              const regex = /image_url:([^\s]+)/g;
-              let match;
-              const foundImages = [];
-              while ((match = regex.exec(appointment.notes)) !== null) {
-                foundImages.push(match[1]);
+              // Check if there are staff notes in the appointment notes
+              if (appointment.notes.includes("--- Staff Notes ---")) {
+                const [generalPart, staffNotesPart] = appointment.notes.split("--- Staff Notes ---");
+                generalNotes = generalPart.trim();
+                
+                if (staffNotesPart) {
+                  const staffNotesLines = staffNotesPart.trim().split('\n\n');
+                  staffNotesLines.forEach(line => {
+                    const colonIndex = line.indexOf(': ');
+                    if (colonIndex > -1) {
+                      const staffName = line.substring(0, colonIndex).trim();
+                      const note = line.substring(colonIndex + 2).trim();
+                      
+                      // Find staff ID by name
+                      const staffMember = staffMembers.find((s: Staff) => s.name === staffName);
+                      if (staffMember && note) {
+                        staffNotesObj[staffMember.id] = note;
+                      }
+                    }
+                  });
+                }
               }
-              setImageURLs(foundImages);
-              
-              // Clean notes by removing the image URLs
-              setNotes(appointment.notes.replace(/image_url:[^\s]+/g, '').trim());
+
+              // Clean general notes by removing image URLs if present
+              if (generalNotes.includes("image_url:")) {
+                const regex = /image_url:([^\s]+)/g;
+                let match;
+                const foundImages = [];
+                while ((match = regex.exec(generalNotes)) !== null) {
+                  foundImages.push(match[1]);
+                }
+                setImageURLs(foundImages);
+                generalNotes = generalNotes.replace(/image_url:[^\s]+/g, '').trim();
+              }
+
+              setNotes(generalNotes);
+              setStaffNotes(staffNotesObj);
             }
 
             // Fetch customer data
@@ -137,11 +139,7 @@ export default function AddAppointment() {
   const toggleStaffSelection = (staffId: string) => {
     if (selectedStaff.includes(staffId)) {
       setSelectedStaff(selectedStaff.filter(id => id !== staffId));
-
-      // Create a new object without the removed staff's notes
-      const newStaffNotes = {
-        ...staffNotes
-      };
+      const newStaffNotes = { ...staffNotes };
       delete newStaffNotes[staffId];
       setStaffNotes(newStaffNotes);
     } else {
@@ -162,7 +160,6 @@ export default function AddAppointment() {
       const newFiles = Array.from(e.target.files);
       setAttachedImages(prev => [...prev, ...newFiles]);
       
-      // Create temporary URLs for preview
       const newURLs = newFiles.map(file => URL.createObjectURL(file));
       setImageURLs(prev => [...prev, ...newURLs]);
     }
@@ -178,7 +175,6 @@ export default function AddAppointment() {
     
     setImageURLs(prev => {
       const updated = [...prev];
-      // If it's a temporary URL, revoke it to avoid memory leaks
       if (updated[index].startsWith('blob:')) {
         URL.revokeObjectURL(updated[index]);
       }
@@ -201,6 +197,29 @@ export default function AddAppointment() {
     );
   };
 
+  // Delete appointment function - this fixes issue #2
+  const handleDeleteAppointment = async () => {
+    if (!id) return;
+    
+    try {
+      setIsLoading(true);
+      await appointmentService.delete(id);
+      toast({
+        title: "Appointment Deleted",
+        description: "The appointment has been deleted successfully."
+      });
+      navigate("/schedule");
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete the appointment. Please try again.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomer) {
@@ -219,6 +238,7 @@ export default function AddAppointment() {
       });
       return;
     }
+    
     try {
       setIsLoading(true);
       
@@ -239,7 +259,7 @@ export default function AddAppointment() {
         });
       }
       
-      // Prepare the appointment data - use unit number as location for WhatsApp
+      // Prepare the appointment data
       const locationValue = selectedCustomer.unit_number ? `#${selectedCustomer.unit_number}` : selectedCustomer.address;
       
       const appointmentData = {
@@ -261,10 +281,12 @@ export default function AddAppointment() {
           const staffMember = staffMembers.find((staff: Staff) => staff.id === staffId);
           return `${staffMember?.name || 'Staff'}: ${note}`;
         }).join('\n\n');
-        appointmentData.notes = appointmentData.notes ? `${appointmentData.notes}\n\n--- Staff Notes ---\n${staffNotesText}` : `--- Staff Notes ---\n${staffNotesText}`;
+        appointmentData.notes = appointmentData.notes ? 
+          `${appointmentData.notes}\n\n--- Staff Notes ---\n${staffNotesText}` : 
+          `--- Staff Notes ---\n${staffNotesText}`;
       }
 
-      // Save the appointment - create or update
+      // Save the appointment
       let savedAppointment;
       if (isEditMode) {
         savedAppointment = await appointmentService.update(id, appointmentData);
@@ -280,7 +302,7 @@ export default function AddAppointment() {
         });
       }
       
-      // If user wants to share via WhatsApp, generate and open the WhatsApp share URL
+      // WhatsApp sharing logic
       if (shareViaWhatsApp && savedAppointment) {
         const selectedStaffMembers = selectedStaff.map(staffId => {
           const staff = staffMembers.find((s: Staff) => s.id === staffId);
@@ -297,7 +319,6 @@ export default function AddAppointment() {
           selectedStaffMembers
         );
         
-        // Use window.location.href for better WebView/APK compatibility
         window.location.href = whatsAppUrl;
       }
       
@@ -331,18 +352,31 @@ export default function AddAppointment() {
         <form onSubmit={handleSubmit} className="mt-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-cyan-600">{isEditMode ? "Update Appointment Details" : "Appointment Details"}</CardTitle>
+              <CardTitle className="text-lg text-cyan-600">
+                {isEditMode ? "Update Appointment Details" : "Appointment Details"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 mt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Title/Service</Label>
-                  <Input id="title" placeholder="e.g. Kitchen Consultation" value={title} onChange={e => setTitle(e.target.value)} required />
+                  <Input 
+                    id="title" 
+                    placeholder="e.g. Kitchen Consultation" 
+                    value={title} 
+                    onChange={e => setTitle(e.target.value)} 
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="customer">Customer</Label>
                   <div className="flex space-x-2">
-                    <Button type="button" variant="outline" className="w-full justify-between" onClick={() => setIsCustomerSelectorOpen(true)}>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full justify-between" 
+                      onClick={() => setIsCustomerSelectorOpen(true)}
+                    >
                       {selectedCustomer ? (
                         <span className="flex items-center">
                           <User className="mr-2 h-4 w-4 text-green-500" />
@@ -374,15 +408,33 @@ export default function AddAppointment() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="date">Date</Label>
-                  <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} required />
+                  <Input 
+                    id="date" 
+                    type="date" 
+                    value={date} 
+                    onChange={e => setDate(e.target.value)} 
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="startTime">Start Time</Label>
-                  <Input id="startTime" type="time" value={startTime} onChange={e => setStartTime(e.target.value)} required />
+                  <Input 
+                    id="startTime" 
+                    type="time" 
+                    value={startTime} 
+                    onChange={e => setStartTime(e.target.value)} 
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endTime">End Time</Label>
-                  <Input id="endTime" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} required />
+                  <Input 
+                    id="endTime" 
+                    type="time" 
+                    value={endTime} 
+                    onChange={e => setEndTime(e.target.value)} 
+                    required 
+                  />
                 </div>
               </div>
             </CardContent>
@@ -409,10 +461,15 @@ export default function AddAppointment() {
                           className="h-4 w-4 accent-blue-600" 
                           id={`staff-${staff.id}`} 
                         />
-                        <label htmlFor={`staff-${staff.id}`} className="flex-1 flex items-center space-x-2 cursor-pointer">
+                        <label 
+                          htmlFor={`staff-${staff.id}`} 
+                          className="flex-1 flex items-center space-x-2 cursor-pointer"
+                        >
                           <div>
                             <p className="text-sm font-medium">{staff.name}</p>
-                            <p className="text-xs text-muted-foreground">{staff.position || "Staff"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {staff.position || "Staff"}
+                            </p>
                           </div>
                         </label>
                       </div>
@@ -444,50 +501,16 @@ export default function AddAppointment() {
               <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              
-              {/* <div className="space-y-2">
-                <Label className="block mb-2">Attach Images</Label>
-                <div className="flex items-center gap-2">
-                  <Label 
-                    htmlFor="image-upload" 
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md cursor-pointer hover:bg-gray-200 transition-colors"
-                  >
-                    <Image className="h-4 w-4" />
-                    <span>Add Images</span>
-                  </Label>
-                  <Input 
-                    id="image-upload" 
-                    type="file" 
-                    accept="image/*" 
-                    multiple 
-                    onChange={handleImageAttachment} 
-                    className="hidden" 
-                  />
-                </div>
-                
-                {imageURLs.length > 0 && (
-                  <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {imageURLs.map((url, idx) => (
-                      <div key={idx} className="relative">
-                        <img 
-                          src={url} 
-                          alt={`Attachment ${idx + 1}`} 
-                          className="rounded-md w-full h-24 md:h-32 object-cover border border-gray-200" 
-                        />
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="destructive"
-                          className="absolute top-1 right-1 h-6 w-6 rounded-full"
-                          onClick={() => removeImage(idx)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div> */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">General Notes</Label>
+                <Textarea 
+                  id="notes" 
+                  placeholder="Enter general notes about this appointment..." 
+                  rows={3} 
+                  value={notes} 
+                  onChange={e => setNotes(e.target.value)} 
+                />
+              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
@@ -498,13 +521,13 @@ export default function AddAppointment() {
                   <SelectContent>
                     <SelectItem value="Confirmed">Confirmed</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* WhatsApp sharing option - only show for new appointments */}
               {!isEditMode && (
                 <div className="flex items-center space-x-2 pt-2">
                   <Switch 
@@ -519,10 +542,36 @@ export default function AddAppointment() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex justify-end space-x-4">
-              <Button variant="outline" type="button" onClick={() => navigate("/schedule")}>
-                Cancel
-              </Button>
+            <CardFooter className="flex justify-between space-x-4">
+              <div className="flex space-x-2">
+                <Button variant="outline" type="button" onClick={() => navigate("/schedule")}>
+                  Cancel
+                </Button>
+                {isEditMode && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" type="button">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this appointment? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAppointment} className="bg-red-600 hover:bg-red-700">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
               <Button type="submit" disabled={isLoading}>
                 <Save className="mr-2 h-4 w-4" />
                 {isEditMode ? "Update Appointment" : "Save Appointment"}
