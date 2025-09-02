@@ -7,31 +7,34 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { inventoryCategoryService } from "@/services/inventoryCategoryService";
 import { useToast } from "@/hooks/use-toast";
-
 interface AddInventoryCategoryDialogProps {
   onCategoryAdded: () => void;
 }
-
-export function AddInventoryCategoryDialog({ onCategoryAdded }: AddInventoryCategoryDialogProps) {
+export function AddInventoryCategoryDialog({
+  onCategoryAdded
+}: AddInventoryCategoryDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: ""
   });
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       await inventoryCategoryService.create(formData);
       toast({
         title: "Success",
         description: "Inventory category created successfully"
       });
-      setFormData({ name: "", description: "" });
+      setFormData({
+        name: "",
+        description: ""
+      });
       setOpen(false);
       onCategoryAdded();
     } catch (error) {
@@ -45,11 +48,9 @@ export function AddInventoryCategoryDialog({ onCategoryAdded }: AddInventoryCate
       setLoading(false);
     }
   };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
+  return <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
+        <Button type="button" variant="outline" size="sm" className="text-cyan-600">
           <Plus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
@@ -60,21 +61,17 @@ export function AddInventoryCategoryDialog({ onCategoryAdded }: AddInventoryCate
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Category Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+            <Input id="name" value={formData.name} onChange={e => setFormData({
+            ...formData,
+            name: e.target.value
+          })} required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-            />
+            <Textarea id="description" value={formData.description} onChange={e => setFormData({
+            ...formData,
+            description: e.target.value
+          })} rows={3} />
           </div>
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -86,6 +83,5 @@ export function AddInventoryCategoryDialog({ onCategoryAdded }: AddInventoryCate
           </div>
         </form>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
