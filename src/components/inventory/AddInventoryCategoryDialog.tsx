@@ -50,8 +50,8 @@ export function AddInventoryCategoryDialog({
   };
   return <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm" className="text-cyan-600">
-          <Plus className="h-4 w-4" />
+        <Button type="button" variant="outline" size="sm">
+          <Plus className="h-4 w-4 bg-blue-100" />
         </Button>
       </DialogTrigger>
       <DialogContent>
