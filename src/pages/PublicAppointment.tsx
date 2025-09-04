@@ -193,7 +193,9 @@ export default function PublicAppointment() {
                 className="h-10" 
               />
             </div>
-            <CardTitle className="text-2xl">Appointment Details</CardTitle>
+            <CardTitle className="text-xl">
+              #{customer.unit_number} - {appointment.title}
+            </CardTitle>
             <div className="flex items-center justify-center gap-2 mt-2">
               <Badge 
                 variant={overallStatus.toLowerCase() === 'confirmed' ? 'default' : overallStatus.toLowerCase() === 'completed' ? 'default' : 'secondary'} 
@@ -216,24 +218,6 @@ export default function PublicAppointment() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Service</p>
-                  <p className="font-medium">{appointment.title}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Unit #</p>
-                  <p className="font-medium">
-                    {customer?.unit_number ? `#${customer.unit_number}` : 'N/A'}
-                  </p>
-                </div>
-              </div>
-
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
                 <div>
