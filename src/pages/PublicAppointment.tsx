@@ -372,10 +372,6 @@ export default function PublicAppointment() {
           </Card>
         )}
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-sm text-muted-foreground">
-          <p>© 2024 Reex Empire. All rights reserved.</p>
-        </div>
       </div>
     </div>
   );
