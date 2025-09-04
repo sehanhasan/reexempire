@@ -501,16 +501,6 @@ export default function AddAppointment() {
               <CardTitle className="text-lg text-cyan-600">Additional Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="notes">General Notes</Label>
-                <Textarea 
-                  id="notes" 
-                  placeholder="Enter general notes about this appointment..." 
-                  rows={3} 
-                  value={notes} 
-                  onChange={e => setNotes(e.target.value)} 
-                />
-              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
@@ -519,7 +509,7 @@ export default function AddAppointment() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Confirmed">Confirmed</SelectItem>
+                    <SelectItem value="Confirmed">Scheduled</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="In Progress">In Progress</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>

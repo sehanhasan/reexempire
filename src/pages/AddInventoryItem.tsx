@@ -38,8 +38,8 @@ export default function AddInventoryItem() {
     description: "",
     sku: "",
     category: "",
-    quantity: 0,
-    min_stock_level: 0,
+    quantity: "",
+    min_stock_level: "",
     max_stock_level: "",
     unit_price: "",
     supplier: "",
@@ -55,6 +55,8 @@ export default function AddInventoryItem() {
     try {
       const itemData = {
         ...formData,
+        quantity: formData.quantity ? parseInt(formData.quantity) : 0,
+        min_stock_level: formData.min_stock_level ? parseInt(formData.min_stock_level) : 0,
         max_stock_level: formData.max_stock_level ? parseInt(formData.max_stock_level) : undefined,
         unit_price: formData.unit_price ? parseFloat(formData.unit_price) : undefined,
       };
@@ -88,144 +90,165 @@ export default function AddInventoryItem() {
       <Card className="pt-6">
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Item Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
+            {/* Basic Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-cyan-600 border-b pb-2">Basic Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Item Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="sku">SKU</Label>
-                <Input
-                  id="sku"
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  placeholder="Stock Keeping Unit"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="Stock Keeping Unit"
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="category">Inventory Category *</Label>
                     <AddInventoryCategoryDialog onCategoryAdded={fetchCategories} />
                   </div>
-                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.name}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as any })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="Discontinued">Discontinued</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as any })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                    <SelectItem value="Discontinued">Discontinued</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Current Quantity *</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                  required
-                  min="0"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="min_stock_level">Minimum Stock Level</Label>
-                <Input
-                  id="min_stock_level"
-                  type="number"
-                  value={formData.min_stock_level}
-                  onChange={(e) => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) || 0 })}
-                  min="0"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="max_stock_level">Maximum Stock Level</Label>
-                <Input
-                  id="max_stock_level"
-                  type="number"
-                  value={formData.max_stock_level}
-                  onChange={(e) => setFormData({ ...formData, max_stock_level: e.target.value })}
-                  min="0"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="unit_price">Unit Price</Label>
-                <Input
-                  id="unit_price"
-                  type="number"
-                  step="0.01"
-                  value={formData.unit_price}
-                  onChange={(e) => setFormData({ ...formData, unit_price: e.target.value })}
-                  min="0"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplier">Supplier</Label>
-                <Input
-                  id="supplier"
-                  value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="supplier_contact">Supplier Contact</Label>
-                <Input
-                  id="supplier_contact"
-                  value={formData.supplier_contact}
-                  onChange={(e) => setFormData({ ...formData, supplier_contact: e.target.value })}
-                  placeholder="Phone or email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Storage Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Warehouse, shelf, etc."
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-              />
+            {/* Stock Management Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-cyan-600 border-b pb-2">Stock Management</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Current Quantity *</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    required
+                    min="0"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="min_stock_level">Minimum Stock Level</Label>
+                  <Input
+                    id="min_stock_level"
+                    type="number"
+                    value={formData.min_stock_level}
+                    onChange={(e) => setFormData({ ...formData, min_stock_level: e.target.value })}
+                    min="0"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="max_stock_level">Maximum Stock Level</Label>
+                  <Input
+                    id="max_stock_level"
+                    type="number"
+                    value={formData.max_stock_level}
+                    onChange={(e) => setFormData({ ...formData, max_stock_level: e.target.value })}
+                    min="0"
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Supplier & Pricing Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-cyan-600 border-b pb-2">Supplier & Pricing</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="unit_price">Unit Price</Label>
+                  <Input
+                    id="unit_price"
+                    type="number"
+                    step="0.01"
+                    value={formData.unit_price}
+                    onChange={(e) => setFormData({ ...formData, unit_price: e.target.value })}
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="location">Storage Location</Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Warehouse, shelf, etc."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="supplier">Supplier</Label>
+                  <Input
+                    id="supplier"
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    placeholder="Supplier name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="supplier_contact">Supplier Contact</Label>
+                  <Input
+                    id="supplier_contact"
+                    value={formData.supplier_contact}
+                    onChange={(e) => setFormData({ ...formData, supplier_contact: e.target.value })}
+                    placeholder="Phone or email"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2">

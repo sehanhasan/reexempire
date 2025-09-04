@@ -152,7 +152,7 @@ export default function AddCustomerForm({
               <CardTitle className="text-lg text-cyan-600">Customer Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 mt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {customerType === "individual" ? (
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
@@ -164,10 +164,6 @@ export default function AddCustomerForm({
                     <Input id="companyName" value={name} onChange={e => setName(e.target.value)} required />
                   </div>
                 )}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
-                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -213,10 +209,6 @@ export default function AddCustomerForm({
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea id="notes" placeholder="Enter any additional notes about this customer..." rows={4} value={notes} onChange={e => setNotes(e.target.value)} />
-              </div>
             </CardContent>
             <CardFooter className="flex justify-end space-x-4">
               <Button variant="outline" type="button" onClick={() => {
