@@ -26,7 +26,8 @@ const warrantyItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
   serial_number: z.string().optional(),
   warranty_period_type: z.string().min(1, "Warranty period is required"),
-  end_date: z.date().optional()
+  end_date: z.date().optional(),
+  quantity: z.number().min(1, "Quantity must be at least 1").optional()
 });
 const warrantyFormSchema = z.object({
   customer_id: z.string().min(1, "Customer is required"),
@@ -61,7 +62,8 @@ export default function AddWarrantyItem() {
         item_name: "",
         serial_number: "",
         warranty_period_type: "30_days",
-        end_date: undefined
+        end_date: undefined,
+        quantity: 1
       }]
     }
   });
@@ -242,7 +244,8 @@ export default function AddWarrantyItem() {
       item_name: "",
       serial_number: "",
       warranty_period_type: "30_days",
-      end_date: undefined
+      end_date: undefined,
+      quantity: 1
     });
   };
   const handleSelectCustomer = (customer: any) => {
@@ -330,7 +333,7 @@ export default function AddWarrantyItem() {
                               <Trash2 className="h-4 w-4" />
                             </Button>}
                         </div>
-                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                            <FormField control={form.control} name={`items.${index}.item_name`} render={({
                          field
                        }) => <FormItem>
@@ -372,6 +375,18 @@ export default function AddWarrantyItem() {
                                   )}
                                  <FormMessage />
                                </FormItem>} />
+
+                           <div className="space-y-2">
+                             <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                             <Input 
+                               id={`quantity-${index}`}
+                               type="number" 
+                               min="1" 
+                               value={form.watch(`items.${index}.quantity`) || 1}
+                               onChange={(e) => form.setValue(`items.${index}.quantity` as any, parseInt(e.target.value) || 1)}
+                               placeholder="1" 
+                             />
+                           </div>
 
                            <FormField control={form.control} name={`items.${index}.serial_number`} render={({
                          field

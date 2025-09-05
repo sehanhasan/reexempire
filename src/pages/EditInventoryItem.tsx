@@ -133,7 +133,7 @@ export default function EditInventoryItem() {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-primary">Basic Information</h3>
+              <h3 className="text-lg font-semibold text-cyan-600 border-b pb-2">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Item Name *</Label>
@@ -181,28 +181,43 @@ export default function EditInventoryItem() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
-                      <SelectItem value="Discontinued">Discontinued</SelectItem>
+                      <SelectItem value="Active" className="text-green-600 focus:text-green-600">
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                          Active
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="Inactive" className="text-yellow-600 focus:text-yellow-600">
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                          Inactive
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="Discontinued" className="text-red-600 focus:text-red-600">
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                          Discontinued
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
 
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                />
               </div>
             </div>
 
             {/* Stock Management Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-primary">Stock Management</h3>
+              <h3 className="text-lg font-semibold text-cyan-600 border-b pb-2">Stock Management</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="quantity">Current Quantity *</Label>
@@ -237,7 +252,9 @@ export default function EditInventoryItem() {
                     min="0"
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="location">Storage Location</Label>
                   <Input
@@ -252,8 +269,8 @@ export default function EditInventoryItem() {
 
             {/* Supplier & Pricing Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-primary">Supplier & Pricing</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <h3 className="text-lg font-semibold text-cyan-600 border-b pb-2">Supplier & Pricing</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="unit_price">Unit Price</Label>
                   <Input
@@ -263,6 +280,7 @@ export default function EditInventoryItem() {
                     value={formData.unit_price}
                     onChange={(e) => setFormData({ ...formData, unit_price: e.target.value })}
                     min="0"
+                    placeholder="0.00"
                   />
                 </div>
 
@@ -272,6 +290,7 @@ export default function EditInventoryItem() {
                     id="supplier"
                     value={formData.supplier}
                     onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    placeholder="Supplier name"
                   />
                 </div>
 

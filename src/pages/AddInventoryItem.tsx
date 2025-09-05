@@ -140,9 +140,24 @@ export default function AddInventoryItem() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
-                      <SelectItem value="Discontinued">Discontinued</SelectItem>
+                      <SelectItem value="Active" className="text-green-600 focus:text-green-600">
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                          Active
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="Inactive" className="text-yellow-600 focus:text-yellow-600">
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                          Inactive
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="Discontinued" className="text-red-600 focus:text-red-600">
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                          Discontinued
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

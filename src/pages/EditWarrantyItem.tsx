@@ -26,7 +26,8 @@ const warrantyItemSchema = z.object({
   item_name: z.string().min(1, "Item name is required"),
   serial_number: z.string().optional(),
   warranty_period_type: z.string().min(1, "Warranty period is required"),
-  end_date: z.date().optional()
+  end_date: z.date().optional(),
+  quantity: z.number().min(1, "Quantity must be at least 1").optional()
 });
 
 const warrantyFormSchema = z.object({
@@ -64,7 +65,8 @@ export default function EditWarrantyItem() {
         item_name: "",
         serial_number: "",
         warranty_period_type: "30_days",
-        end_date: undefined
+        end_date: undefined,
+        quantity: 1
       }]
     }
   });
@@ -123,7 +125,8 @@ export default function EditWarrantyItem() {
         item_name: warrantyItem.item_name,
         serial_number: warrantyItem.serial_number || '',
         warranty_period_type: warrantyItem.warranty_period_type,
-        end_date: warrantyItem.warranty_period_type === 'custom' ? new Date(warrantyItem.expiry_date) : undefined
+        end_date: warrantyItem.warranty_period_type === 'custom' ? new Date(warrantyItem.expiry_date) : undefined,
+        quantity: 1 // Default quantity since it's not stored in current DB schema
       }]);
     }
   }, [warrantyItem, customers, invoices, form]);
@@ -260,7 +263,8 @@ export default function EditWarrantyItem() {
       item_name: "",
       serial_number: "",
       warranty_period_type: "30_days",
-      end_date: undefined
+      end_date: undefined,
+      quantity: 1
     });
   };
 
@@ -404,7 +408,7 @@ export default function EditWarrantyItem() {
                             </Button>
                           )}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <FormField
                             control={form.control}
                             name={`items.${index}.item_name`}
@@ -444,19 +448,31 @@ export default function EditWarrantyItem() {
                             )}
                           />
 
-                          <FormField
-                            control={form.control}
-                            name={`items.${index}.serial_number`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Serial Number</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="Enter serial number" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                           <div className="space-y-2">
+                             <Label htmlFor={`quantity-${index}`}>Quantity</Label>
+                             <Input 
+                               id={`quantity-${index}`}
+                               type="number" 
+                               min="1" 
+                               value={form.watch(`items.${index}.quantity`) || 1}
+                               onChange={(e) => form.setValue(`items.${index}.quantity` as any, parseInt(e.target.value) || 1)}
+                               placeholder="1" 
+                             />
+                           </div>
+
+                           <FormField
+                             control={form.control}
+                             name={`items.${index}.serial_number`}
+                             render={({ field }) => (
+                               <FormItem>
+                                 <FormLabel>Serial Number</FormLabel>
+                                 <FormControl>
+                                   <Input {...field} placeholder="Enter serial number" />
+                                 </FormControl>
+                                 <FormMessage />
+                               </FormItem>
+                             )}
+                           />
 
                           <FormField
                             control={form.control}

@@ -158,6 +158,13 @@ export default function Warranty() {
       cell: ({ getValue }: any) => formatDate(getValue())
     },
     {
+      accessorKey: "quantity",
+      header: "Quantity",
+      cell: ({ row }: any) => (
+        <span className="font-medium">{row.original.quantity || 1}</span>
+      )
+    },
+    {
       accessorKey: "expiry_date",
       header: "Expiry Date",
       cell: ({ getValue }: any) => {
