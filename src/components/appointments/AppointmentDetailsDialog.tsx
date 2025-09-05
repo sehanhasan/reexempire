@@ -101,8 +101,8 @@ export function AppointmentDetailsDialog({
     const customerName = customer?.name || null;
     const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(appointment, customerName, staffInfo);
     
-    // Open using window.location.href for better WebView/APK compatibility
-    window.location.href = whatsAppUrl;
+    // Open WhatsApp URL in a new tab
+    window.open(whatsAppUrl, '_blank');
   };
   
   const checkForImagesInNotes = (notes: string) => {

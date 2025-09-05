@@ -220,6 +220,21 @@ export default function AddWarrantyItem() {
     }
   });
   const onSubmit = (data: WarrantyFormData) => {
+    // Check if any selected inventory items have stock < 1
+    const hasInvalidStock = data.items.some((item, index) => {
+      const inventoryItem = selectedInventoryItems[index];
+      return inventoryItem && inventoryItem.quantity < 1;
+    });
+
+    if (hasInvalidStock) {
+      toast({
+        title: "Error",
+        description: "Cannot add warranty items for inventory with no stock available",
+        variant: "destructive"
+      });
+      return;
+    }
+
     createWarrantyMutation.mutate(data);
   };
   const addNewItem = () => {
@@ -320,35 +335,41 @@ export default function AddWarrantyItem() {
                          field
                        }) => <FormItem>
                                  <FormLabel>Item Name</FormLabel>
-                                 <div className="flex gap-2">
-                                   <Button
-                                     type="button"
-                                     variant="outline"
-                                     onClick={() => {
-                                       setInventoryDialogOpen(true);
-                                       // Store the current item index for selection
-                                       (window as any).currentItemIndex = index;
-                                     }}
-                                     className={`w-full h-10 ${selectedInventoryItems[index] ? "justify-start" : "justify-center"}`}
-                                   >
-                                     {selectedInventoryItems[index] ? (
-                                       <>
-                                         <Package className="mr-2 h-4 w-4 text-gray-500" />
-                                         <span className="truncate">
-                                           {selectedInventoryItems[index].name}
-                                           <span className="ml-2 text-xs text-muted-foreground">
-                                             ({selectedInventoryItems[index].quantity} in stock)
-                                           </span>
-                                         </span>
-                                       </>
-                                     ) : (
-                                       <>
-                                         <Search className="mr-2 h-4 w-4" />
-                                         Select Inventory Item
-                                       </>
-                                     )}
-                                   </Button>
-                                 </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setInventoryDialogOpen(true);
+                                        // Store the current item index for selection
+                                        (window as any).currentItemIndex = index;
+                                      }}
+                                      className={`w-full h-10 ${selectedInventoryItems[index] ? "justify-start" : "justify-center"}`}
+                                    >
+                                      {selectedInventoryItems[index] ? (
+                                        <>
+                                          <Package className="mr-2 h-4 w-4 text-gray-500" />
+                                          <span className="truncate">
+                                            {selectedInventoryItems[index].name}
+                                            <span className="ml-2 text-xs text-muted-foreground">
+                                              ({selectedInventoryItems[index].quantity} in stock)
+                                            </span>
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Search className="mr-2 h-4 w-4" />
+                                          Select Inventory Item
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                  {/* Stock validation error */}
+                                  {selectedInventoryItems[index] && selectedInventoryItems[index].quantity < 1 && (
+                                    <p className="text-sm text-red-500 mt-1">
+                                      There is no stock available for {selectedInventoryItems[index].name}. Please add stock in inventory.
+                                    </p>
+                                  )}
                                  <FormMessage />
                                </FormItem>} />
 

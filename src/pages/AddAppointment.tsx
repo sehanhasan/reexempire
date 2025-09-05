@@ -319,7 +319,8 @@ export default function AddAppointment() {
           selectedStaffMembers
         );
         
-        window.location.href = whatsAppUrl;
+        // Open WhatsApp URL in a new tab
+        window.open(whatsAppUrl, '_blank');
       }
       
       setIsLoading(false);

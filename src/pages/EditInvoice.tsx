@@ -454,7 +454,7 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
       }
       
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.location.href = whatsappUrl;
+      window.open(whatsappUrl, '_blank');
     } catch (error) {
       console.error("Error sharing invoice:", error);
       toast({
