@@ -163,6 +163,7 @@ export default function AddWarrantyItem() {
       for (let i = 0; i < result.length; i++) {
         const warrantyItem = result[i];
         const formItem = data.items[i];
+        const quantityToSubtract = formItem.quantity || 1;
         
         // Check if there's a matching inventory item by name
         const { data: inventoryItems, error: inventoryError } = await supabase
@@ -170,15 +171,15 @@ export default function AddWarrantyItem() {
           .select('*')
           .eq('name', formItem.item_name)
           .eq('status', 'Active')
-          .gt('quantity', 0)
+          .gte('quantity', quantityToSubtract)
           .single();
 
         if (!inventoryError && inventoryItems) {
-          // Subtract 1 from inventory
+          // Subtract the specified quantity from inventory
           const { error: updateError } = await supabase
             .from('inventory_items')
             .update({ 
-              quantity: inventoryItems.quantity - 1,
+              quantity: inventoryItems.quantity - quantityToSubtract,
               updated_at: new Date().toISOString()
             })
             .eq('id', inventoryItems.id);
@@ -188,10 +189,10 @@ export default function AddWarrantyItem() {
             await supabase.from('inventory_movements').insert({
               inventory_item_id: inventoryItems.id,
               movement_type: 'OUT',
-              quantity: -1,
+              quantity: -quantityToSubtract,
               reference_type: 'warranty_issue',
               reference_id: warrantyItem.id,
-              notes: `Warranty issued for ${formItem.item_name}`,
+              notes: `Warranty issued for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
               created_by: 'System'
             });
           }
@@ -222,16 +223,24 @@ export default function AddWarrantyItem() {
     }
   });
   const onSubmit = (data: WarrantyFormData) => {
-    // Check if any selected inventory items have stock < 1
+    // Check if any selected inventory items have insufficient stock
     const hasInvalidStock = data.items.some((item, index) => {
       const inventoryItem = selectedInventoryItems[index];
-      return inventoryItem && inventoryItem.quantity < 1;
+      const requestedQuantity = item.quantity || 1;
+      return inventoryItem && inventoryItem.quantity < requestedQuantity;
     });
 
     if (hasInvalidStock) {
+      const invalidItem = data.items.find((item, index) => {
+        const inventoryItem = selectedInventoryItems[index];
+        const requestedQuantity = item.quantity || 1;
+        return inventoryItem && inventoryItem.quantity < requestedQuantity;
+      });
+      const inventoryItem = selectedInventoryItems[data.items.findIndex(item => item === invalidItem)];
+      
       toast({
         title: "Error",
-        description: "Cannot add warranty items for inventory with no stock available",
+        description: `There is no stock available for ${inventoryItem?.name}. Please add stock in inventory.`,
         variant: "destructive"
       });
       return;
@@ -376,17 +385,43 @@ export default function AddWarrantyItem() {
                                  <FormMessage />
                                </FormItem>} />
 
-                           <div className="space-y-2">
-                             <Label htmlFor={`quantity-${index}`}>Quantity</Label>
-                             <Input 
-                               id={`quantity-${index}`}
-                               type="number" 
-                               min="1" 
-                               value={form.watch(`items.${index}.quantity`) || 1}
-                               onChange={(e) => form.setValue(`items.${index}.quantity` as any, parseInt(e.target.value) || 1)}
-                               placeholder="1" 
-                             />
-                           </div>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Quantity</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      min="1" 
+                                      max={selectedInventoryItems[index]?.quantity || 999}
+                                      value={field.value || 1}
+                                      onChange={(e) => {
+                                        const value = parseInt(e.target.value) || 1;
+                                        const maxQuantity = selectedInventoryItems[index]?.quantity || 999;
+                                        if (value > maxQuantity) {
+                                          toast({
+                                            title: "Error",
+                                            description: `Cannot exceed available stock (${maxQuantity})`,
+                                            variant: "destructive"
+                                          });
+                                          return;
+                                        }
+                                        field.onChange(value);
+                                      }}
+                                      placeholder="1" 
+                                    />
+                                  </FormControl>
+                                  {selectedInventoryItems[index] && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Available: {selectedInventoryItems[index].quantity}
+                                    </p>
+                                  )}
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
 
                            <FormField control={form.control} name={`items.${index}.serial_number`} render={({
                          field

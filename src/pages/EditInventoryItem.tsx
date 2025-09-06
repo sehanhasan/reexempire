@@ -145,15 +145,6 @@ export default function EditInventoryItem() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="Stock Keeping Unit"
-                  />
-                </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">

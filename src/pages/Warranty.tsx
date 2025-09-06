@@ -121,8 +121,18 @@ export default function Warranty() {
           <button onClick={() => navigate(`/edit-warranty-item/${row.original.id}`)} className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left">
             {row.original.item_name}
           </button>
-          {row.original.serial_number && <div className="text-sm text-muted-foreground font-mono">#{row.original.serial_number}</div>}
+          <div className="text-sm text-muted-foreground">
+            Qty: {row.original.quantity || 1}
+          </div>
         </div>
+  }, {
+    accessorKey: "serial_number",
+    header: "Serial #",
+    cell: ({
+      getValue
+    }: any) => <span className="font-mono text-sm">
+          {getValue() || '-'}
+        </span>
   }, {
     accessorKey: "customer_id",
     header: "Customer",
@@ -152,12 +162,6 @@ export default function Warranty() {
     cell: ({
       getValue
     }: any) => formatDate(getValue())
-  }, {
-    accessorKey: "quantity",
-    header: "Quantity",
-    cell: ({
-      row
-    }: any) => <span className="font-medium">{row.original.quantity || 1}</span>
   }, {
     accessorKey: "expiry_date",
     header: "Expiry Date",
@@ -192,28 +196,34 @@ export default function Warranty() {
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem className="text-red-600" onSelect={e => e.preventDefault()}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete warranty item?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the warranty item.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteWarrantyMutation.mutate(row.original.id)} className="bg-red-600 hover:bg-red-500">
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem className="text-red-600" onSelect={e => e.preventDefault()}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete warranty item?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the warranty item.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteWarrantyMutation.mutate(row.original.id);
+                        }} 
+                        className="bg-red-600 hover:bg-red-500"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
   }];
