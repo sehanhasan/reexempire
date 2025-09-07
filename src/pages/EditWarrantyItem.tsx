@@ -261,6 +261,7 @@ export default function EditWarrantyItem() {
       queryClient.invalidateQueries({ queryKey: ['warranty-items'] });
       queryClient.invalidateQueries({ queryKey: ['warranty-item', id] });
       queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
       toast({
         title: "Success",
         description: "Warranty item updated successfully",

@@ -209,6 +209,9 @@ export default function AddWarrantyItem() {
       queryClient.invalidateQueries({
         queryKey: ['inventory-items']
       });
+      queryClient.invalidateQueries({
+        queryKey: ['low-stock-items']
+      });
       toast({
         title: "Success",
         description: "Warranty items added successfully"
