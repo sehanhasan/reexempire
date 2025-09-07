@@ -21,7 +21,6 @@ import { toast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePagination } from "@/hooks/usePagination";
-
 export default function Inventory() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -32,44 +31,48 @@ export default function Inventory() {
   const [activeTab, setActiveTab] = useState("inventory");
 
   // Fetch inventory items
-  const { data: items = [], isLoading, refetch } = useQuery({
+  const {
+    data: items = [],
+    isLoading,
+    refetch
+  } = useQuery({
     queryKey: ['inventory-items'],
     queryFn: inventoryService.getAllItems
   });
 
   // Fetch low stock items
-  const { data: lowStockItems = [] } = useQuery({
+  const {
+    data: lowStockItems = []
+  } = useQuery({
     queryKey: ['low-stock-items'],
     queryFn: inventoryService.getLowStockItems
   });
 
   // Fetch inventory categories
-  const { data: categories = [] } = useQuery<InventoryCategory[]>({
+  const {
+    data: categories = []
+  } = useQuery<InventoryCategory[]>({
     queryKey: ['inventory-categories'],
     queryFn: inventoryCategoryService.getAll
   });
 
   // Filter items based on search and status
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.category?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) || item.category?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || item.status.toLowerCase() === statusFilter.toLowerCase();
-    
     return matchesSearch && matchesStatus;
   });
-
-  const { pagination, controls, paginatedData } = usePagination(filteredItems.length, 10);
-
+  const {
+    pagination,
+    controls,
+    paginatedData
+  } = usePagination(filteredItems.length, 10);
   const handleDeleteClick = (id: string) => {
     setItemToDelete(id);
     setDeleteDialogOpen(true);
   };
-
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
-    
     try {
       await inventoryService.deleteItem(itemToDelete);
       toast({
@@ -89,13 +92,11 @@ export default function Inventory() {
       setItemToDelete(null);
     }
   };
-
   const handleIssueItem = async (item: InventoryItem) => {
     const quantity = prompt(`How many ${item.name} would you like to issue?`);
     if (!quantity || isNaN(Number(quantity)) || Number(quantity) <= 0) {
       return;
     }
-
     const quantityNumber = Number(quantity);
     if (quantityNumber > item.quantity) {
       toast({
@@ -105,7 +106,6 @@ export default function Inventory() {
       });
       return;
     }
-
     try {
       await inventoryService.createMovement({
         inventory_item_id: item.id,
@@ -115,7 +115,6 @@ export default function Inventory() {
         notes: 'Manual issue from inventory',
         created_by: 'System'
       });
-
       toast({
         title: "Success",
         description: `${quantityNumber} units of ${item.name} issued successfully`
@@ -130,7 +129,6 @@ export default function Inventory() {
       });
     }
   };
-
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       await inventoryCategoryService.delete(categoryId);
@@ -148,7 +146,6 @@ export default function Inventory() {
       });
     }
   };
-
   const getStockStatusBadge = (item: InventoryItem) => {
     if (item.quantity === 0) {
       return <Badge variant="destructive" className="pointer-events-none">Out of Stock</Badge>;
@@ -158,55 +155,50 @@ export default function Inventory() {
       return <Badge variant="default" className="bg-green-100 text-green-700 pointer-events-none">In Stock</Badge>;
     }
   };
-
-  const columns = [
-    {
-      header: "Item",
-      accessorKey: "name",
-      cell: ({ row }: any) => (
-        <div>
-          <button 
-            onClick={() => navigate(`/inventory/edit/${row.original.id}`)}
-            className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
-          >
+  const columns = [{
+    header: "Item",
+    accessorKey: "name",
+    cell: ({
+      row
+    }: any) => <div>
+          <button onClick={() => navigate(`/inventory/edit/${row.original.id}`)} className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left">
             {row.original.name}
           </button>
-          {row.original.sku && (
-            <div className="text-sm text-muted-foreground font-mono">SKU: {row.original.sku}</div>
-          )}
+          {row.original.sku && <div className="text-sm text-muted-foreground font-mono">SKU: {row.original.sku}</div>}
         </div>
-      )
-    },
-    {
-      header: "Stock",
-      accessorKey: "quantity",
-      cell: ({ row }: any) => (
-        <div className="text-left flex items-center gap-2">
+  }, {
+    header: "Stock",
+    accessorKey: "quantity",
+    cell: ({
+      row
+    }: any) => <div className="text-left flex items-center gap-2">
           <div className="font-medium">{row.original.quantity}</div>
           {getStockStatusBadge(row.original)}
         </div>
-      )
-    },
-    {
-      header: "Price",
-      accessorKey: "unit_price",
-      cell: ({ getValue }: any) => formatCurrency(getValue() || 0)
-    },
-    {
-      header: "Supplier",
-      accessorKey: "supplier",
-      cell: ({ getValue }: any) => getValue() || '-'
-    },
-    {
-      header: "Category",
-      accessorKey: "category",
-      cell: ({ getValue }: any) => getValue() || '-'
-    },
-    {
-      header: "Actions",
-      accessorKey: "actions",
-      cell: ({ row }: any) => (
-        <DropdownMenu>
+  }, {
+    header: "Price",
+    accessorKey: "unit_price",
+    cell: ({
+      getValue
+    }: any) => formatCurrency(getValue() || 0)
+  }, {
+    header: "Supplier",
+    accessorKey: "supplier",
+    cell: ({
+      getValue
+    }: any) => getValue() || '-'
+  }, {
+    header: "Category",
+    accessorKey: "category",
+    cell: ({
+      getValue
+    }: any) => getValue() || '-'
+  }, {
+    header: "Actions",
+    accessorKey: "actions",
+    cell: ({
+      row
+    }: any) => <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <MoreHorizontal className="h-4 w-4" />
@@ -220,23 +212,18 @@ export default function Inventory() {
             {/* <DropdownMenuItem onClick={() => handleIssueItem(row.original)}>
               <Package className="mr-2 h-4 w-4" />
               Issue Item
-            </DropdownMenuItem> */}
+             </DropdownMenuItem> */}
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="text-red-600"
-              onClick={() => handleDeleteClick(row.original.id)}
-            >
+            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(row.original.id)}>
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )
-    }
-  ];
+  }];
 
   // Calculate stats
-  const totalValue = items.reduce((sum, item) => sum + (item.quantity * (item.unit_price || 0)), 0);
+  const totalValue = items.reduce((sum, item) => sum + item.quantity * (item.unit_price || 0), 0);
   const uniqueCategories = new Set(items.map(item => item.category).filter(Boolean)).size;
 
   // Set up mobile search
@@ -255,59 +242,27 @@ export default function Inventory() {
       window.dispatchEvent(new CustomEvent('clear-mobile-search'));
     };
   }, [searchTerm]);
-
-  return (
-    <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <div className="mt-0">
         <div className="flex border-b bg-white border-gray-200 rounded-t-lg">
-          <button 
-            onClick={() => setActiveTab("inventory")} 
-            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${
-              activeTab === "inventory" 
-                ? "text-blue-600 border-b-2 border-blue-600" 
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
+          <button onClick={() => setActiveTab("inventory")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "inventory" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Inventory Items ({items.length})
           </button>
-          <button 
-            onClick={() => setActiveTab("low-stock")} 
-            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${
-              activeTab === "low-stock" 
-                ? "text-blue-600 border-b-2 border-blue-600" 
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
+          <button onClick={() => setActiveTab("low-stock")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "low-stock" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Low Stock ({lowStockItems.length})
           </button>
-          <button 
-            onClick={() => setActiveTab("categories")} 
-            className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${
-              activeTab === "categories" 
-                ? "text-blue-600 border-b-2 border-blue-600" 
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
+          <button onClick={() => setActiveTab("categories")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "categories" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Categories
           </button>
         </div>
 
         <div className={!isMobile ? "bg-white rounded-b-lg border border-t-0" : ""}>
-          {activeTab === "inventory" && (
-
-            <div className="p-0">
+          {activeTab === "inventory" && <div className="p-0">
               <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-                {!isMobile && (
-                  <div className="relative flex-1">
+                {!isMobile && <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search inventory items..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 h-10"
-                    />
-                  </div>
-                )}
+                    <Input placeholder="Search inventory items..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 h-10" />
+                  </div>}
 
                 <div className="w-full sm:w-60">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -323,43 +278,24 @@ export default function Inventory() {
                 </div>
               </div>
 
-              {isLoading ? (
-                <div className="py-8 text-center bg-slate-100">
+              {isLoading ? <div className="py-8 text-center bg-slate-100">
                   <p className="text-muted-foreground">Loading inventory items...</p>
-                </div>
-              ) : filteredItems.length === 0 ? (
-                <div className="py-8 text-center">
+                </div> : filteredItems.length === 0 ? <div className="py-8 text-center">
                   <p className="text-muted-foreground">No inventory items found.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <DataTable
-                    columns={columns}
-                    data={paginatedData(filteredItems)}
-                    isLoading={isLoading}
-                    emptyMessage="No inventory items found."
-                  />
-                  {filteredItems.length > 0 && (
-                    <div className="p-4 border-t">
+                </div> : <div className="overflow-x-auto">
+                  <DataTable columns={columns} data={paginatedData(filteredItems)} isLoading={isLoading} emptyMessage="No inventory items found." />
+                  {filteredItems.length > 0 && <div className="p-4 border-t">
                       <PaginationControls pagination={pagination} controls={controls} />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                    </div>}
+                </div>}
+            </div>}
 
-          {activeTab === "low-stock" && (
-
-            <div className="space-y-4 p-4">
-              {lowStockItems.length === 0 ? (
-                <div className="text-center py-8">
+          {activeTab === "low-stock" && <div className="space-y-4 p-4">
+              {lowStockItems.length === 0 ? <div className="text-center py-8">
                   <AlertTriangle className="mx-auto h-12 w-12 text-green-500 mb-4" />
                   <p className="text-lg font-medium text-green-700">All items are well stocked!</p>
                   <p className="text-muted-foreground">No items are currently below minimum stock levels.</p>
-                </div>
-              ) : (
-                <>
+                </div> : <>
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="text-lg font-semibold">Low Stock Items</h3>
@@ -374,15 +310,12 @@ export default function Inventory() {
                   </div>
                   
                   <div className="grid gap-4">
-                    {lowStockItems.map((item) => (
-                      <Card key={item.id} className="border-l-4 border-l-amber-500">
+                    {lowStockItems.map(item => <Card key={item.id} className="border-l-4 border-l-amber-500">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
                             <div>
                               <h4 className="font-medium">{item.name}</h4>
-                              {item.sku && (
-                                <p className="text-sm text-muted-foreground font-mono">SKU: {item.sku}</p>
-                              )}
+                              {item.sku && <p className="text-sm text-muted-foreground font-mono">SKU: {item.sku}</p>}
                               <div className="flex items-center gap-2 mt-2">
                                 <Badge variant="secondary" className="bg-amber-100 text-amber-700">
                                   {item.quantity} remaining
@@ -393,60 +326,38 @@ export default function Inventory() {
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                              >
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/inventory/edit/${item.id}`)}>
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
                         </CardContent>
-                      </Card>
-                    ))}
+                      </Card>)}
                   </div>
-                </>
-              )}
-            </div>
-          )}
+                </>}
+            </div>}
 
-          {activeTab === "categories" && (
-            <div className="space-y-4 p-4">
+          {activeTab === "categories" && <div className="space-y-4 p-4">
               <div className="flex justify-end items-center">
                 <InventoryCategoryDialog onCategoryChanged={refetch} />
               </div>
               
-              {categories.length === 0 ? (
-                <div className="text-center py-8">
+              {categories.length === 0 ? <div className="text-center py-8">
                   <p className="text-muted-foreground">No categories found.</p>
-                </div>
-              ) : (
-                categories.map((category) => (
-                  <Card key={category.id} className="p-4">
+                </div> : categories.map(category => <Card key={category.id} className="p-4">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="text-base font-normal">{category.name}</h3>
-                        {category.description && (
-                          <p className="text-sm text-muted-foreground">{category.description}</p>
-                        )}
+                        {category.description && <p className="text-sm text-muted-foreground">{category.description}</p>}
                       </div>
-                      <InventoryCategoryDialog 
-                        onCategoryChanged={refetch} 
-                        category={category} 
-                        mode="edit" 
-                      />
+                      <InventoryCategoryDialog onCategoryChanged={refetch} category={category} mode="edit" />
                     </div>
                     
                     {/* Items in this category */}
                     <div className="space-y-2">
-                      {items.filter(item => item.category === category.name).map((item) => (
-                        <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      {items.filter(item => item.category === category.name).map(item => <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                           <div className="flex-1">
-                            <button 
-                              onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                              className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
-                            >
+                            <button onClick={() => navigate(`/inventory/edit/${item.id}`)} className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left">
                               {item.name}
                             </button>
                           </div>
@@ -455,17 +366,11 @@ export default function Inventory() {
                             <span className="text-muted-foreground">•</span>
                             <span className="text-muted-foreground">{formatCurrency(item.unit_price || 0)}</span>
                           </div>
-                        </div>
-                      ))}
-                      {items.filter(item => item.category === category.name).length === 0 && (
-                        <p className="text-sm text-muted-foreground italic">No items in this category</p>
-                      )}
+                        </div>)}
+                      {items.filter(item => item.category === category.name).length === 0 && <p className="text-sm text-muted-foreground italic">No items in this category</p>}
                     </div>
-                  </Card>
-                ))
-              )}
-            </div>
-          )}
+                  </Card>)}
+            </div>}
         </div>
       </div>
 
@@ -482,10 +387,9 @@ export default function Inventory() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-500">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 }
