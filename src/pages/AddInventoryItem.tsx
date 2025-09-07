@@ -104,26 +104,6 @@ export default function AddInventoryItem() {
                   />
                 </div>
 
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="category">Inventory Category *</Label>
-                    <AddInventoryCategoryDialog onCategoryAdded={fetchCategories} />
-                  </div>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as any })}>
@@ -149,6 +129,25 @@ export default function AddInventoryItem() {
                           Discontinued
                         </span>
                       </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="category">Inventory Category *</Label>
+                    <AddInventoryCategoryDialog onCategoryAdded={fetchCategories} />
+                  </div>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
