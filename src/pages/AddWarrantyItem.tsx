@@ -150,7 +150,8 @@ export default function AddWarrantyItem() {
           warranty_period_type: item.warranty_period_type,
           warranty_period_value: null,
           warranty_period_unit: null,
-          expiry_date: format(expiryDate, 'yyyy-MM-dd')
+          expiry_date: format(expiryDate, 'yyyy-MM-dd'),
+          quantity: item.quantity || 1
         };
       });
       const {

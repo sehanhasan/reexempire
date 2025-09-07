@@ -36,7 +36,6 @@ export default function AddInventoryItem() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    sku: "",
     category: "",
     quantity: "",
     min_stock_level: "",

@@ -966,6 +966,7 @@ export type Database = {
           invoice_id: string | null
           issue_date: string
           item_name: string
+          quantity: number
           serial_number: string | null
           updated_at: string
           warranty_period_type: string
@@ -980,6 +981,7 @@ export type Database = {
           invoice_id?: string | null
           issue_date: string
           item_name: string
+          quantity?: number
           serial_number?: string | null
           updated_at?: string
           warranty_period_type?: string
@@ -994,6 +996,7 @@ export type Database = {
           invoice_id?: string | null
           issue_date?: string
           item_name?: string
+          quantity?: number
           serial_number?: string | null
           updated_at?: string
           warranty_period_type?: string

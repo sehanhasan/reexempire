@@ -26,7 +26,6 @@ export default function EditInventoryItem() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    sku: "",
     category: "",
     quantity: 0,
     min_stock_level: 0,
@@ -62,7 +61,6 @@ export default function EditInventoryItem() {
         setFormData({
           name: item.name,
           description: item.description || "",
-          sku: item.sku || "",
           category: item.category || "",
           quantity: item.quantity,
           min_stock_level: item.min_stock_level || 0,

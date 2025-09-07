@@ -106,29 +106,48 @@ export default function EditWarrantyItem() {
 
   // Update form when warranty item is loaded
   useEffect(() => {
-    if (warrantyItem) {
-      const customer = customers.find(c => c.id === warrantyItem.customer_id);
-      setSelectedCustomer(customer);
-      
-      form.setValue('customer_id', warrantyItem.customer_id);
-      
-      // Find the invoice by ID and display its reference number
-      const invoice = invoices.find(i => i.id === warrantyItem.invoice_id);
-      form.setValue('invoice_id', invoice?.reference_number || warrantyItem.invoice_id || '');
-      
-      // Set the item in selectedInventoryItems to retain display
-      setSelectedInventoryItems({ 0: { name: warrantyItem.item_name } });
-      
-      form.setValue('warranty_date', new Date(warrantyItem.issue_date));
-      
-      form.setValue('items', [{
-        item_name: warrantyItem.item_name,
-        serial_number: warrantyItem.serial_number || '',
-        warranty_period_type: warrantyItem.warranty_period_type,
-        end_date: warrantyItem.warranty_period_type === 'custom' ? new Date(warrantyItem.expiry_date) : undefined,
-        quantity: 1 // Default quantity since it's not stored in current DB schema
-      }]);
-    }
+    const loadWarrantyData = async () => {
+      if (warrantyItem) {
+        const customer = customers.find(c => c.id === warrantyItem.customer_id);
+        setSelectedCustomer(customer);
+        
+        form.setValue('customer_id', warrantyItem.customer_id);
+        
+        // Find the invoice by ID and display its reference number
+        const invoice = invoices.find(i => i.id === warrantyItem.invoice_id);
+        form.setValue('invoice_id', invoice?.reference_number || warrantyItem.invoice_id || '');
+        
+        // Fetch the actual inventory item to show available quantity
+        try {
+          const { data: inventoryItem } = await supabase
+            .from('inventory_items')
+            .select('*')
+            .eq('name', warrantyItem.item_name)
+            .eq('status', 'Active')
+            .single();
+          
+          if (inventoryItem) {
+            setSelectedInventoryItems({ 0: inventoryItem });
+          } else {
+            setSelectedInventoryItems({ 0: { name: warrantyItem.item_name, quantity: 0 } });
+          }
+        } catch (error) {
+          setSelectedInventoryItems({ 0: { name: warrantyItem.item_name, quantity: 0 } });
+        }
+        
+        form.setValue('warranty_date', new Date(warrantyItem.issue_date));
+        
+        form.setValue('items', [{
+          item_name: warrantyItem.item_name,
+          serial_number: warrantyItem.serial_number || '',
+          warranty_period_type: warrantyItem.warranty_period_type,
+          end_date: warrantyItem.warranty_period_type === 'custom' ? new Date(warrantyItem.expiry_date) : undefined,
+          quantity: warrantyItem.quantity || 1
+        }]);
+      }
+    };
+    
+    loadWarrantyData();
   }, [warrantyItem, customers, invoices, form]);
 
   // Filter customers based on search
@@ -181,6 +200,7 @@ export default function EditWarrantyItem() {
           warranty_period_value: null,
           warranty_period_unit: null,
           expiry_date: format(expiryDate, 'yyyy-MM-dd'),
+          quantity: item.quantity || 1,
           updated_at: new Date().toISOString()
         };
       });
