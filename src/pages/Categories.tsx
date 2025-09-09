@@ -318,7 +318,7 @@ export default function Categories() {
                                 variant="ghost"
                                 size="sm"
                                 className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1"
-                                onClick={() => handleViewSubcategories(category))}
+                                onClick={() => handleViewSubcategories(category)}
                               >
                                 <ChevronRight className="h-4 w-4" />
                               </Button>
