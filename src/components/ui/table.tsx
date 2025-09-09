@@ -1,14 +1,21 @@
-
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useLocation } from "react-router-dom"
+
+// Helper: return true when current route needs extra vertical padding in cells
+const useWrappedTablePadding = () => {
+  const { pathname } = useLocation()
+  const targets = ["/quotations", "/invoices", "/warranty"]
+  return targets.some((t) => pathname.startsWith(t))
+}
 
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => {
   const isMobile = useIsMobile()
-  
+
   return (
     <div className={cn("relative w-full overflow-auto", isMobile && "overflow-visible")}>
       <table
@@ -61,7 +68,7 @@ const TableRow = React.forwardRef<
   React.HTMLAttributes<HTMLTableRowElement>
 >(({ className, ...props }, ref) => {
   const isMobile = useIsMobile()
-  
+
   return (
     <tr
       ref={ref}
@@ -81,7 +88,7 @@ const TableHead = React.forwardRef<
   React.ThHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => {
   const isMobile = useIsMobile()
-  
+
   return (
     <th
       ref={ref}
@@ -96,24 +103,29 @@ const TableHead = React.forwardRef<
 })
 TableHead.displayName = "TableHead"
 
-const TableCell = React.forwardRef<
-  HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => {
-  const isMobile = useIsMobile()
-  
-  return (
-    <td
-      ref={ref}
-      className={cn(
-        "px-4 py-0 align-middle [&:has([role=checkbox])]:pr-0",
-        isMobile && "block px-4 py-2",
-        className
-      )}
-      {...props}
-    />
-  )
-})
+interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {}
+
+const TableCell = React.forwardRef<HTMLTableCellElement, TableCellProps>(
+  ({ className, ...props }, ref) => {
+    const isMobile = useIsMobile()
+    const isWrappedPage = useWrappedTablePadding()
+
+    return (
+      <td
+        ref={ref}
+        className={cn(
+          "px-4 align-middle [&:has([role=checkbox])]:pr-0",
+          // Desktop: no vertical padding by default; add on specific routes
+          !isMobile && (isWrappedPage ? "py-2" : "py-0"),
+          // Mobile: keep stacked spacing
+          isMobile && "block px-4 py-2",
+          className
+        )}
+        {...props}
+      />
+    )
+  }
+)
 TableCell.displayName = "TableCell"
 
 const TableCaption = React.forwardRef<
