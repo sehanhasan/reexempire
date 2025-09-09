@@ -110,7 +110,7 @@ export default function Warranty() {
     return {
       status: 'Active',
       variant: 'default' as const,
-      className: 'bg-green-600 text-white'
+      className: 'bg-green-100 text-green-700'
     };
   };
   const columns = [{
