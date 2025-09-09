@@ -223,7 +223,7 @@ export default function CustomerHistory() {
                             <TableCell>{format(new Date(invoice.issue_date), "MMM dd, yyyy")}</TableCell>
                             <TableCell>
                               <Badge className={getStatusColor((invoice.payment_status === 'Partially Paid') ? 'partial' : (invoice.status === 'Sent' ? 'unpaid' : invoice.status))}>
-                                {(invoice.payment_status === 'Partially Paid') ? 'Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status)}
+                                {(invoice.payment_status === 'Partially Paid') ? 'Paid - Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status)}
                               </Badge>
                             </TableCell>
                             <TableCell>{formatMoney(invoice.total)}</TableCell>
