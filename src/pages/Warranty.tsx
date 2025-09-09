@@ -171,11 +171,12 @@ export default function Warranty() {
     }: any) => {
       const {
         status,
-        variant
+        variant,
+        className
       } = getWarrantyStatus(getValue());
       return <div>
             <div>{formatDate(getValue())}</div>
-            <Badge variant={variant} className="mt-1">
+            <Badge variant={variant} className={`mt-1 ${className || ''}`}>
               {status}
             </Badge>
           </div>;
