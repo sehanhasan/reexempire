@@ -244,7 +244,13 @@ export default function Warranty() {
             </div> : filteredWarrantyItems.length === 0 ? <div className="py-8 text-center">
               <p className="text-muted-foreground">No warranty items found.</p>
             </div> : <div className="overflow-x-auto">
-              <DataTable columns={columns} data={paginatedData(filteredWarrantyItems)} searchKey="item_name" isLoading={isLoading} emptyMessage="No warranty items found." />
+              <DataTable
+                columns={columns}
+                data={paginatedData(filteredWarrantyItems)}
+                searchKey={"item_name" as never}   // ← cast to satisfy DataTableProps<unknown>
+                isLoading={isLoading}
+                emptyMessage="No warranty items found."
+              />
               {filteredWarrantyItems.length > 0 && <div className="p-4 border-t">
                   <PaginationControls pagination={pagination} controls={controls} />
                 </div>}
