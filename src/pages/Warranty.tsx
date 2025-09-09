@@ -109,8 +109,7 @@ export default function Warranty() {
     };
     return {
       status: 'Active',
-      variant: 'default' as const,
-      className: 'bg-green-600 text-white hover:bg-green-700'
+      variant: 'default' as const
     };
   };
   const columns = [{
@@ -171,12 +170,11 @@ export default function Warranty() {
     }: any) => {
       const {
         status,
-        variant,
-        className
+        variant
       } = getWarrantyStatus(getValue());
       return <div>
             <div>{formatDate(getValue())}</div>
-            <Badge variant={variant} className={`mt-1 ${className || ''}`}>
+            <Badge variant={variant} className="mt-1">
               {status}
             </Badge>
           </div>;

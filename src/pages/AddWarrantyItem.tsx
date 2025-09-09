@@ -175,18 +175,8 @@ export default function AddWarrantyItem() {
           .gte('quantity', quantityToSubtract)
           .single();
 
-        // If there's a matching inventory item and enough stock, proceed with quantity subtraction
-        if (inventoryItems && inventoryItems.quantity >= quantityToSubtract) {
-          // Subtract the specified quantity from selectedInventoryItems display
-          setSelectedInventoryItems(prev => ({
-            ...prev,
-            [i]: {
-              ...prev[i],
-              quantity: prev[i] ? prev[i].quantity - quantityToSubtract : 0
-            }
-          }));
-
-          // Subtract the specified quantity from actual inventory
+        if (!inventoryError && inventoryItems) {
+          // Subtract the specified quantity from inventory
           const { error: updateError } = await supabase
             .from('inventory_items')
             .update({ 

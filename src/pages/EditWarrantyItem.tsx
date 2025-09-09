@@ -230,18 +230,8 @@ export default function EditWarrantyItem() {
           .gte('quantity', quantityToSubtract)
           .single();
 
-        // If there's a matching inventory item and enough stock, proceed with quantity subtraction
-        if (inventoryItems && inventoryItems.quantity >= quantityToSubtract) {
-          // Update selectedInventoryItems display to show reduced quantity
-          setSelectedInventoryItems(prev => ({
-            ...prev,
-            [i]: {
-              ...prev[i],
-              quantity: prev[i] ? prev[i].quantity - quantityToSubtract : 0
-            }
-          }));
-
-          // Subtract the specified quantity from actual inventory
+        if (!inventoryError && inventoryItems) {
+          // Subtract the specified quantity from inventory
           const { error: updateError } = await supabase
             .from('inventory_items')
             .update({ 
@@ -532,11 +522,11 @@ export default function EditWarrantyItem() {
                                       placeholder="1" 
                                     />
                                   </FormControl>
-                                   {selectedInventoryItems[index] && (
-                                     <p className="text-xs text-muted-foreground">
-                                       Available: {selectedInventoryItems[index].quantity}
-                                     </p>
-                                   )}
+                                  {selectedInventoryItems[index] && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Available: {selectedInventoryItems[index].quantity}
+                                    </p>
+                                  )}
                                   <FormMessage />
                                 </FormItem>
                               )}

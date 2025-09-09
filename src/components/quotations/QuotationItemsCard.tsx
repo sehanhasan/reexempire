@@ -226,10 +226,10 @@ export function QuotationItemsCard({
         id: newId,
         description: description,
         category: "Warranty Items",
-        quantity: warrantyItem.quantity || 1,
+        quantity: 1,
         unit: "",
-        unitPrice: warrantyItem.price || 0,
-        amount: (warrantyItem.quantity || 1) * (warrantyItem.price || 0)
+        unitPrice: 0, // Default to 0, user can set price
+        amount: 0
       };
     });
 
