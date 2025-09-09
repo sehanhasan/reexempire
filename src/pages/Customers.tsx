@@ -235,7 +235,7 @@ export default function Customers() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
+                                <MoreHorizontal className="h-4 w-4 text-blue-600" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
