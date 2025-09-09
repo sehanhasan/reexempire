@@ -12,9 +12,9 @@ import { Edit, MoreHorizontal, Trash, ChevronRight, FolderOpen, Plus, Tag, Loade
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { categoryService } from "@/services/categoryService";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, closeDropdown } from "@/components/ui/dropdown-menu";
-import { toast } from "@/components/ui/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, closeAlertDialog } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import "../styles/mobile-card.css";
 import { Category } from "@/types/database";
 import { SubcategoriesDialog } from "@/components/categories/SubcategoriesDialog";
@@ -82,11 +82,8 @@ export default function Categories() {
   };
 
   const handleDeleteCategory = (category: Category) => {
-    closeDropdown();
-    setTimeout(() => {
-      setCategoryToDelete(category);
-      setShowConfirmDelete(true);
-    }, 50);
+    setCategoryToDelete(category);
+    setShowConfirmDelete(true);
   };
 
   const handleViewSubcategories = (category: Category) => {
@@ -97,18 +94,15 @@ export default function Categories() {
   const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
     try {
-      closeAlertDialog();
-      setTimeout(async () => {
-        await categoryService.delete(categoryToDelete.id);
-        toast({
-          title: "Category Deleted",
-          description: `${categoryToDelete.name} has been deleted.`,
-          variant: "destructive"
-        });
-        setCategoryToDelete(null);
-        setShowConfirmDelete(false);
-        refetch();
-      }, 100);
+      await categoryService.delete(categoryToDelete.id);
+      toast({
+        title: "Category Deleted",
+        description: `${categoryToDelete.name} has been deleted.`,
+        variant: "destructive"
+      });
+      setCategoryToDelete(null);
+      setShowConfirmDelete(false);
+      refetch();
     } catch (error) {
       console.error("Error deleting category:", error);
       toast({
@@ -120,11 +114,8 @@ export default function Categories() {
   };
 
   const handleCancelDelete = () => {
-    closeAlertDialog();
-    setTimeout(() => {
-      setShowConfirmDelete(false);
-      setCategoryToDelete(null);
-    }, 100);
+    setShowConfirmDelete(false);
+    setCategoryToDelete(null);
   };
 
   const columns = [

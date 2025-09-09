@@ -226,10 +226,10 @@ export function QuotationItemsCard({
         id: newId,
         description: description,
         category: "Warranty Items",
-        quantity: 1,
+        quantity: warrantyItem.quantity || 1,
         unit: "",
-        unitPrice: 0, // Default to 0, user can set price
-        amount: 0
+        unitPrice: warrantyItem.price || 0,
+        amount: (warrantyItem.quantity || 1) * (warrantyItem.price || 0)
       };
     });
 
@@ -256,10 +256,10 @@ export function QuotationItemsCard({
               Select from Categories
             </Button>
             
-            <Button type="button" onClick={() => setShowWarrantySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-green-600 hover:bg-green-700 text-white`}>
+            {/* <Button type="button" onClick={() => setShowWarrantySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-green-600 hover:bg-green-700 text-white`}>
               <ShieldCheck className="mr-1 h-3.5 w-3.5" />
               Add Warranty Item
-            </Button>
+            </Button> */}
           </div>
 
           <ItemsTable 

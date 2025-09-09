@@ -70,7 +70,7 @@ export default function CustomerHistory() {
       case 'overdue':
         return 'bg-red-100 text-red-800';
       case 'partially paid':
-        return 'bg-amber-100 text-amber-800';
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -164,7 +164,7 @@ export default function CustomerHistory() {
                           <TableRow key={quotation.id} className="h-10">
                             <TableCell className="font-medium py-1">
                               <button 
-                                onClick={() => window.open(`/quotations/view/${quotation.id}`, '_blank')}
+                                onClick={() => navigate(`/quotations/edit/${quotation.id}`)}
                                 className="text-blue-600 hover:underline cursor-pointer"
                               >
                                 {quotation.reference_number}
@@ -214,7 +214,7 @@ export default function CustomerHistory() {
                           <TableRow key={invoice.id} className="h-10">
                             <TableCell className="font-medium py-1">
                               <button 
-                                onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')}
+                                onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
                                 className="text-blue-600 hover:underline cursor-pointer"
                               >
                                 {invoice.reference_number}
