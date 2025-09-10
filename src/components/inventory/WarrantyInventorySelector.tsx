@@ -108,7 +108,11 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
   };
 
   const handleConfirm = () => {
-    const items = Object.values(selectedItems);
+    const items = Object.values(selectedItems).map(item => ({
+      ...item,
+      unitPrice: item.price || 0, // Map price to unitPrice for ItemsCard
+      qty: item.quantity // Map quantity to qty for ItemsCard
+    }));
     onSelectItems(items);
     setSelectedItems({});
     setSearchTerm("");

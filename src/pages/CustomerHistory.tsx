@@ -70,6 +70,7 @@ export default function CustomerHistory() {
       case 'overdue':
         return 'bg-red-100 text-red-800';
       case 'partially paid':
+      case 'partial':
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -163,7 +164,7 @@ export default function CustomerHistory() {
                         {quotations.map(quotation => 
                           <TableRow key={quotation.id} className="h-10">
                             <TableCell className="font-medium py-1">
-                              <button 
+                               <button 
                                 onClick={() => navigate(`/quotations/edit/${quotation.id}`)}
                                 className="text-blue-600 hover:underline cursor-pointer"
                               >

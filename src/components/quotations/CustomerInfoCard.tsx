@@ -156,10 +156,28 @@ export function CustomerInfoCard({
 
             {documentType === "invoice" && <div className="space-y-2">
                 <Label htmlFor="dueDate">Due Date</Label>
-                <div className="relative">
-                  <Input id="dueDate" type="date" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} className="h-10" />
-                  <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-                </div>
+                <Select value={expiryDate} onValueChange={setExpiryDate}>
+                  <SelectTrigger id="dueDate" className="h-10">
+                    <SelectValue placeholder="Select due date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      3 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      7 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      14 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      30 days
+                    </SelectItem>
+                    <SelectItem value={new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}>
+                      60 days
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>}
 
             {documentType === "invoice" && paymentMethod !== undefined && setPaymentMethod && <div className="space-y-2">

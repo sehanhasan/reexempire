@@ -86,6 +86,7 @@ export default function App() {
                 <Route path="/inventory/add" element={<AddInventoryItem />} />
                 <Route path="/inventory/edit/:id" element={<EditInventoryItem />} />
                 <Route path="/inventory/demand-lists/add" element={<AddDemandList />} />
+                <Route path="/demand-list/add" element={<AddDemandList />} />
               </Route>
               
               {/* Public quotation view route */}
