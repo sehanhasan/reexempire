@@ -18,6 +18,7 @@ interface QuotationItemsCardProps {
   setDepositInfo: React.Dispatch<React.SetStateAction<DepositInfo>>;
   calculateItemAmount: (item: QuotationItem) => number;
   quotationDepositAmount?: number;
+  showWarrantyButton?: boolean;
 }
 export function QuotationItemsCard({
   items,
@@ -25,7 +26,8 @@ export function QuotationItemsCard({
   depositInfo,
   setDepositInfo,
   calculateItemAmount,
-  quotationDepositAmount
+  quotationDepositAmount,
+  showWarrantyButton = false
 }: QuotationItemsCardProps) {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [showWarrantySelector, setShowWarrantySelector] = useState(false);
@@ -256,10 +258,12 @@ export function QuotationItemsCard({
               Select from Categories
             </Button>
             
-            {/* <Button type="button" onClick={() => setShowWarrantySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-green-600 hover:bg-green-700 text-white`}>
-              <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-              Add Warranty Item
-            </Button> */}
+            {showWarrantyButton && (
+              <Button type="button" onClick={() => setShowWarrantySelector(true)} className={`${isMobile ? "w-full" : ""} text-sm h-10 bg-green-600 hover:bg-green-700 text-white`}>
+                <ShieldCheck className="mr-1 h-3.5 w-3.5" />
+                Add Warranty Item
+              </Button>
+            )}
           </div>
 
           <ItemsTable 

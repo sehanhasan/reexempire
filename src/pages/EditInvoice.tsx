@@ -638,6 +638,7 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
           setDepositInfo={setDepositInfo} 
           calculateItemAmount={calculateItemAmount}
           quotationDepositAmount={invoiceData?.quotation_id && !invoiceData?.is_deposit_invoice ? quotationDepositAmount : undefined}
+          showWarrantyButton={true}
         />
         
         {/* <Card>
