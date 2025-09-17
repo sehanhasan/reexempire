@@ -251,7 +251,7 @@ export default function AddCategory() {
                   </div>
                 </div>)}
               
-              <Button type="button" variant="outline" onClick={addSubcategory} className="w-auto text-sky-600 border-sky-600 hover:bg-sky-100">
+              <Button type="button" variant="outline" onClick={addSubcategory} className="w-auto text-sky-600 border-sky-600 hover:bg-sky-100 hover:text-sky-600">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Another Subcategory
               </Button>
