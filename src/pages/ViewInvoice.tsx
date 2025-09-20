@@ -21,9 +21,9 @@ export default function ViewInvoice() {
   const [customer, setCustomer] = useState(null);
   const [items, setItems] = useState([]);
   const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [depositPaid, setDepositPaid] = useState(0);
+const [loading, setLoading] = useState(true);
+const [isDownloading, setIsDownloading] = useState(false);
+const [depositPaid, setDepositPaid] = useState(0);
 
   // ✅ Pinch-to-zoom effect for this page only
   useEffect(() => {
@@ -109,7 +109,19 @@ export default function ViewInvoice() {
     if (!invoice) return;
     try {
       setIsDownloading(true);
-
+      
+      // Add print styles temporarily
+      const style = document.createElement('style');
+      style.textContent = `
+        @media print {
+          @page {
+            margin: 0.2in 0.2in;
+            size: A4;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      
       const element = document.querySelector(".invoice-content");
       if (!element) {
         toast({
@@ -147,7 +159,10 @@ export default function ViewInvoice() {
         }
       };
       await html2pdf().set(options).from(element).save();
-
+      
+      // Remove temporary style
+      document.head.removeChild(style);
+      
       toast({
         title: "Success",
         description: "Invoice PDF downloaded successfully!"
@@ -407,7 +422,26 @@ export default function ViewInvoice() {
           {/* Print Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
             <Button 
-              onClick={() => window.print()}
+              onClick={() => {
+                // Add print styles temporarily
+                const style = document.createElement('style');
+                style.textContent = `
+                  @media print {
+                    @page {
+                      margin: 0.2in 0.2in;
+                      size: A4;
+                    }
+                  }
+                `;
+                document.head.appendChild(style);
+                
+                window.print();
+                
+                // Remove temporary style after print
+                setTimeout(() => {
+                  document.head.removeChild(style);
+                }, 1000);
+              }} 
               className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
             >
               Save as PDF

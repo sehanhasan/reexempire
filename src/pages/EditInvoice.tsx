@@ -447,7 +447,7 @@ const [quotationDepositAmount, setQuotationDepositAmount] = useState<number | un
           message = `Dear ${customer.name},\n\nWe have received a partial payment for Invoice ${invoiceData.reference_number}. Please review the remaining balance and complete the payment:\n\n${invoiceViewUrl}\n\nThank you for your payment.\n\nReex Empire Sdn Bhd`;
           break;
         case 'paid':
-          message = `Dear ${customer.name},\n\nThank you for your payment! Invoice# ${invoiceData.reference_number} has been marked as paid. You can view the invoice details here:\n\n${invoiceViewUrl}\n\nWe appreciate your business!\n\nReex Empire Sdn Bhd`;
+          message = `Dear ${customer.name},\n\nThank you for your payment! Invoice ${invoiceData.reference_number} has been marked as paid. You can view the invoice details here:\n\n${invoiceViewUrl}\n\nWe appreciate your business!\n\nReex Empire Sdn Bhd`;
           break;
         default:
           message = `Dear ${customer.name},\n\nPlease find Invoice ${invoiceData.reference_number} for review:\n\n${invoiceViewUrl}\n\nIf you have any questions, please contact us.\n\nThank you,\nReex Empire Sdn Bhd`;
