@@ -382,12 +382,7 @@ export default function Categories() {
         <SubcategoriesDialog open={showSubcategories} onOpenChange={setShowSubcategories} category={selectedCategory} />
       )}
 
-      <FloatingActionButton
-        onClick={() => navigate("/categories/add")}
-        className="bg-blue-600 hover:bg-blue-700 shadow-lg"
-      >
-        <Plus className="h-6 w-6" />
-      </FloatingActionButton>
+      <FloatingActionButton onClick={() => navigate('/categories/add')} />
     </div>
   );
 }
