@@ -390,7 +390,7 @@ export default function ViewInvoice() {
                   </Card>}
               {/* Contact Info */}
               <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
-                <p>For all enquiries, please contact Khalil Pasha</p>
+                <p>For all enquiries, please contact Reex Empire</p>
                 <p>Email: reexsb@gmail.com Tel: 011-1665 6525 / 019-999 1024</p>
                 <div className="text-center text-gray-500 text-xs py-3">
                   <p>&copy; {new Date().getFullYear()} Reex Empire Sdn Bhd. All rights reserved.</p>
