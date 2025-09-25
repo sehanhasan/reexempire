@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,9 +13,12 @@ import SignatureCanvas from 'react-signature-canvas';
 import { shareQuotation } from '@/utils/mobileShare';
 import html2pdf from 'html2pdf.js';
 import '@/styles/zoom.css';
-
 export default function ViewQuotation() {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const navigate = useNavigate();
   const [isSigning, setIsSigning] = useState(false);
   const [signatureData, setSignatureData] = useState<string>('');
@@ -28,45 +30,44 @@ export default function ViewQuotation() {
   useEffect(() => {
     const viewport = document.querySelector('meta[name=viewport]');
     let original = '';
-
     if (viewport) {
       original = viewport.getAttribute('content') || '';
-      viewport.setAttribute(
-        'content',
-        'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes'
-      );
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes');
     }
-
     return () => {
       if (viewport && original) {
         viewport.setAttribute('content', original);
       }
     };
   }, []);
-
-  const { data: quotation, isLoading, refetch } = useQuery({
+  const {
+    data: quotation,
+    isLoading,
+    refetch
+  } = useQuery({
     queryKey: ['quotation', id],
     queryFn: () => quotationService.getById(id!),
     enabled: !!id,
     staleTime: 0,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: true
   });
-
-  const { data: customer } = useQuery({
+  const {
+    data: customer
+  } = useQuery({
     queryKey: ['customer', quotation?.customer_id],
     queryFn: () => customerService.getById(quotation!.customer_id),
     enabled: !!quotation?.customer_id,
-    staleTime: 0,
+    staleTime: 0
   });
-
-  const { data: items = [] } = useQuery({
+  const {
+    data: items = []
+  } = useQuery({
     queryKey: ['quotation-items', id],
     queryFn: () => quotationService.getItemsByQuotationId(id!),
     enabled: !!id,
-    staleTime: 0,
+    staleTime: 0
   });
-
   useEffect(() => {
     if (quotation) {
       document.title = `#${quotation.reference_number} - Reex Empire`;
@@ -75,7 +76,6 @@ export default function ViewQuotation() {
       document.title = 'Reex Empire';
     };
   }, [quotation]);
-
   useEffect(() => {
     if (quotation?.signature_data && quotation.status === 'Accepted') {
       setSignatureData(quotation.signature_data);
@@ -83,31 +83,23 @@ export default function ViewQuotation() {
       setSignatureData('');
     }
   }, [quotation]);
-
   const handleClearSignature = () => {
     if (sigCanvasRef.current) {
       sigCanvasRef.current.clear();
     }
   };
-
   const handleAcceptQuotation = async () => {
     if (!sigCanvasRef.current || !quotation) return;
-
     const signatureDataUrl = sigCanvasRef.current.toDataURL();
-    if (
-      !signatureDataUrl ||
-      signatureDataUrl ===
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-    ) {
+    if (!signatureDataUrl || signatureDataUrl === 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==') {
       toast.error('Please provide a signature before accepting');
       return;
     }
-
     setIsProcessing(true);
     try {
       await quotationService.update(quotation.id, {
         status: 'Accepted',
-        signature_data: signatureDataUrl,
+        signature_data: signatureDataUrl
       });
       setSignatureData(signatureDataUrl);
       setIsSigning(false);
@@ -120,10 +112,8 @@ export default function ViewQuotation() {
       setIsProcessing(false);
     }
   };
-
   const handleDownloadPDF = async () => {
     if (!quotation) return;
-
     try {
       setIsDownloading(true);
       const element = document.querySelector('.quotation-content');
@@ -131,7 +121,6 @@ export default function ViewQuotation() {
         toast.error('Could not find quotation content to download');
         return;
       }
-
       const options = {
         margin: [5, 5, 5, 5],
         filename: `quotation-${quotation.reference_number}.pdf`,
@@ -159,7 +148,6 @@ export default function ViewQuotation() {
           mode: "avoid-all"
         }
       };
-
       await html2pdf().set(options).from(element).save();
       toast.success('Quotation PDF downloaded successfully!');
     } catch (error) {
@@ -169,46 +157,33 @@ export default function ViewQuotation() {
       setIsDownloading(false);
     }
   };
-
   const handleShare = async () => {
     if (!quotation || !customer) {
       toast.error('Missing quotation or customer information');
       return;
     }
-
     try {
-      await shareQuotation(
-        quotation.id,
-        quotation.reference_number,
-        customer.name
-      );
+      await shareQuotation(quotation.id, quotation.reference_number, customer.name);
       toast.success('Quotation shared successfully!');
     } catch (error) {
       console.error('Error sharing quotation:', error);
       toast.error('Failed to share quotation');
     }
   };
-
   if (isLoading) {
-    return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
+    return <div className="min-h-screen bg-background flex items-center justify-center" style={{
+      minWidth: '1024px'
+    }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!quotation) {
-    return (
-      <div
-        className="min-h-screen bg-background flex items-center justify-center"
-        style={{ minWidth: '1024px' }}
-      >
+    return <div className="min-h-screen bg-background flex items-center justify-center" style={{
+      minWidth: '1024px'
+    }}>
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -219,38 +194,32 @@ export default function ViewQuotation() {
             Return Home
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const isAccepted = quotation.status === 'Accepted';
   const hasSignature = signatureData && isAccepted;
-
-  const groupedItems: { [key: string]: any[] } = {};
-  items.forEach((item) => {
+  const groupedItems: {
+    [key: string]: any[];
+  } = {};
+  items.forEach(item => {
     const category = item.category || 'Other Items';
     if (!groupedItems[category]) {
       groupedItems[category] = [];
     }
     groupedItems[category].push(item);
   });
-
   const categories = Object.keys(groupedItems).sort();
-
-  return (
-    <div className="min-h-screen bg-background zoom-page" style={{ minWidth: '1024px' }} id="quotation-view">
+  return <div className="min-h-screen bg-background zoom-page" style={{
+    minWidth: '1024px'
+  }} id="quotation-view">
       <div className="py-4 px-4 quotation-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Quotation Info in Columns */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-white p-4">
             <div className="grid grid-cols-2 gap-6">
               {/* Left Column - Company Logo and Details */}
               <div>
-                <img 
-                  src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" 
-                  alt="Reex Empire Logo" 
-                  className="h-16 w-auto mb-3"
-                />
+                <img src="https://i.ibb.co/Ltyts5K/reex-empire-logo.png" alt="Reex Empire Logo" className="h-16 w-auto mb-3" />
                 <h2 className="text-sm font-bold text-gray-900 mb-2">Reex Empire Sdn Bhd (1426553-A)</h2>
                 <div className="text-sm text-gray-600 space-y-1">
                   <p>No. 29-1, Jalan 2A/6, Taman Setapak Indah</p>
@@ -258,11 +227,9 @@ export default function ViewQuotation() {
                   <p className="text-gray-800">www.reexempire.com</p>
                 </div>
                   {/* Subject within customer info */}
-                  {quotation.subject && (
-                    <div className="mt-3 pt-2 border-t">
+                  {quotation.subject && <div className="mt-3 pt-2 border-t">
                       <p className="text-sm text-gray-800 font-semibold mb-1">Subject: {quotation.subject}</p>
-                    </div>
-                  )}
+                    </div>}
               </div>
               
               {/* Right Column - Quotation Details and Customer */}
@@ -270,11 +237,9 @@ export default function ViewQuotation() {
                  <div className="mb-3">
                    <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
                     <div className="flex items-center gap-2 mb-1">
-                      {quotation.status !== 'Sent' && (
-                        <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
+                      {quotation.status !== 'Sent' && <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
                           {quotation.status}
-                        </Badge>
-                      )}
+                        </Badge>}
                     </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
@@ -282,16 +247,14 @@ export default function ViewQuotation() {
                   </div>
                 </div>
                 
-                {customer && (
-                  <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
+                {customer && <div className="w-64 bg-gray-100 p-3 rounded-lg text-sm">
                     <p className="text-lg font-bold text-gray-500 font-medium mb-1">Bill To</p>
                     <div className="text-sm text-gray-800 space-y-1">
                       <p>Attn: {customer.name}</p>
                       <p className="font-semibold">{customer.unit_number}</p>
                       <p>{customer.address}</p>
                     </div>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
           </div>
@@ -310,25 +273,21 @@ export default function ViewQuotation() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category, categoryIndex) => (
-                      <React.Fragment key={category}>
+                    {categories.map((category, categoryIndex) => <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
                           <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
                             {categoryIndex + 1}- {category}
                           </td>
                         </tr>
-                        {groupedItems[category].map((item, index) => (
-                           <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
+                        {groupedItems[category].map((item, index) => <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
                              <td className="p-2 text-gray-800">{item.description}</td>
                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
                               <td className="text-right p-2 text-gray-800">
                                 {item.unit_price.toFixed(2)}{item.unit && item.unit.trim() !== '' && item.unit.trim().toLowerCase() !== 'unit' ? ` ${item.unit}` : ''}
                               </td>
                              <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
-                           </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
+                           </tr>)}
+                      </React.Fragment>)}
                   </tbody>
                 </table>
               </div>
@@ -342,14 +301,12 @@ export default function ViewQuotation() {
                       <span>{formatCurrency(quotation.subtotal)}</span>
                     </div>
                     
-                    {quotation.requires_deposit && (
-                      <div className="flex justify-between">
+                    {quotation.requires_deposit && <div className="flex justify-between">
                         <span className="font-medium">
                           Deposit Required ({quotation.deposit_percentage}%):
                         </span>
                         <span>{formatCurrency(quotation.deposit_amount || 0)}</span>
-                      </div>
-                    )}
+                      </div>}
                     
                     <div className="flex justify-between text-base font-bold border-t pt-1">
                       <span>Total:</span>
@@ -366,14 +323,12 @@ export default function ViewQuotation() {
             {/* Left Column */}
             <div className="space-y-4">
               {/* Terms & Conditions */}
-              {quotation.terms && (
-                <Card className="shadow-sm">
+              {quotation.terms && <Card className="shadow-sm">
                   <CardContent className="p-4">
                     <h4 className="font-medium text-sm text-muted-foreground mb-2">Terms & Conditions</h4>
                     <p className="text-sm whitespace-pre-wrap">{quotation.terms}</p>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
 
               {/* Contact Info */}
               <div className="text-center text-gray-600 text-sm py-3 bg-gray-50 rounded-lg">
@@ -388,17 +343,16 @@ export default function ViewQuotation() {
 
             {/* Right Column - Acceptance Section */}
             <div>
-              {!isAccepted && (
-                <Card className="shadow-sm">
+              {!isAccepted && <Card className="shadow-sm">
                   {/* <CardHeader>
                     <CardTitle className="font-medium text-sm text-muted-foreground">Customer Acceptance</CardTitle>
-                  </CardHeader> */}
+                   </CardHeader> */}
                   <CardContent>
                     {/* Static acceptance fields */}
                     <div className="space-y-4">
                       {/* <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
                         By signing below, you accept the terms and conditions of this quotation.
-                      </div> */}
+                       </div> */}
                       
                       <div className="space-y-3">
                         <div className="pt-3">
@@ -426,42 +380,32 @@ export default function ViewQuotation() {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
 
               {/* Show signature if accepted */}
-              {hasSignature && (
-                <Card className="shadow-sm">
+              {hasSignature && <Card className="shadow-sm">
                   <CardContent className="p-4">
                     <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <img 
-                        src={signatureData} 
-                        alt="Customer Signature" 
-                        className="max-w-full h-auto border border-gray-200 rounded bg-white"
-                        style={{ maxHeight: '150px' }}
-                      />
+                      <img src={signatureData} alt="Customer Signature" className="max-w-full h-auto border border-gray-200 rounded bg-white" style={{
+                    maxHeight: '150px'
+                  }} />
                       <p className="text-xs text-muted-foreground mt-2">
                         Signed digitally on {new Date().toLocaleDateString()}
                       </p>
                     </div>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
             </div>
           </div>
 
           {/* Save as PDF Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
-            <Button
-              onClick={() => window.print()}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-            >
+            <Button onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
               Save as PDF
             </Button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }

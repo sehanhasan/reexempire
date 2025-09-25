@@ -21,9 +21,9 @@ export default function ViewInvoice() {
   const [customer, setCustomer] = useState(null);
   const [items, setItems] = useState([]);
   const [images, setImages] = useState([]);
-const [loading, setLoading] = useState(true);
-const [isDownloading, setIsDownloading] = useState(false);
-const [depositPaid, setDepositPaid] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [depositPaid, setDepositPaid] = useState(0);
 
   // ✅ Pinch-to-zoom effect for this page only
   useEffect(() => {
@@ -59,15 +59,12 @@ const [depositPaid, setDepositPaid] = useState(0);
           if (invoiceData.quotation_id && !invoiceData.is_deposit_invoice) {
             try {
               console.log("ViewInvoice: Fetching deposit amount for Due Invoice, quotation_id:", invoiceData.quotation_id);
-              
+
               // Find the deposit invoice for this quotation
-              const { data: depositInvoice, error: depositError } = await supabase
-                .from('invoices')
-                .select('deposit_amount')
-                .eq('quotation_id', invoiceData.quotation_id)
-                .eq('is_deposit_invoice', true)
-                .single();
-              
+              const {
+                data: depositInvoice,
+                error: depositError
+              } = await supabase.from('invoices').select('deposit_amount').eq('quotation_id', invoiceData.quotation_id).eq('is_deposit_invoice', true).single();
               if (depositError) {
                 console.warn("ViewInvoice: Failed to fetch deposit invoice:", depositError);
               } else {
@@ -109,7 +106,7 @@ const [depositPaid, setDepositPaid] = useState(0);
     if (!invoice) return;
     try {
       setIsDownloading(true);
-      
+
       // Add print styles temporarily
       const style = document.createElement('style');
       style.textContent = `
@@ -121,7 +118,6 @@ const [depositPaid, setDepositPaid] = useState(0);
         }
       `;
       document.head.appendChild(style);
-      
       const element = document.querySelector(".invoice-content");
       if (!element) {
         toast({
@@ -159,10 +155,9 @@ const [depositPaid, setDepositPaid] = useState(0);
         }
       };
       await html2pdf().set(options).from(element).save();
-      
+
       // Remove temporary style
       document.head.removeChild(style);
-      
       toast({
         title: "Success",
         description: "Invoice PDF downloaded successfully!"
@@ -246,7 +241,7 @@ const [depositPaid, setDepositPaid] = useState(0);
       <div className="py-4 px-4 invoice-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-white p-4">
             <div className="grid grid-cols-2 gap-6">
               {/* Left Column - Company Logo and Details */}
               <div>
@@ -315,11 +310,7 @@ const [depositPaid, setDepositPaid] = useState(0);
                                 {formatAmount(item.unit_price)}{item.unit && item.unit.trim() !== '' && item.unit.trim().toLowerCase() !== 'unit' ? ` ${item.unit}` : ''}
                               </td>
                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                             <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(
-                               !invoice.is_deposit_invoice && depositPaid > 0 
-                                 ? item.quantity * item.unit_price 
-                                 : item.amount
-                             )}</td>
+                             <td className="text-right p-2 font-semibold text-gray-800">{formatAmount(!invoice.is_deposit_invoice && depositPaid > 0 ? item.quantity * item.unit_price : item.amount)}</td>
                            </tr>)}
                       </React.Fragment>)}
                   </tbody>
@@ -332,11 +323,7 @@ const [depositPaid, setDepositPaid] = useState(0);
                   <div className="w-64 space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="font-medium">Subtotal:</span>
-                      <span>{formatMoney(
-                        !invoice.is_deposit_invoice && depositPaid > 0 
-                          ? items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
-                          : invoice.subtotal
-                      )}</span>
+                      <span>{formatMoney(!invoice.is_deposit_invoice && depositPaid > 0 ? items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0) : invoice.subtotal)}</span>
                     </div>
                     {invoice.tax_rate > 0 && <div className="flex justify-between">
                         <span className="font-medium">Tax ({invoice.tax_rate}%):</span>
@@ -346,19 +333,13 @@ const [depositPaid, setDepositPaid] = useState(0);
                         <span className="font-medium">Deposit Amount:</span>
                         <span>{formatMoney(invoice.deposit_amount)}</span>
                       </div>}
-                    {!invoice.is_deposit_invoice && depositPaid > 0 && (
-                      <div className="flex justify-between text-sm text-muted-foreground">
+                    {!invoice.is_deposit_invoice && depositPaid > 0 && <div className="flex justify-between text-sm text-muted-foreground">
                         <span>Deposit Paid:</span>
                         <span>-{formatMoney(depositPaid)}</span>
-                      </div>
-                    )}
+                      </div>}
                     <div className="flex justify-between text-base font-bold border-t pt-1">
                       <span>{!invoice.is_deposit_invoice && depositPaid > 0 ? 'Balance:' : 'Total:'}</span>
-                      <span className="text-blue-600">{formatMoney(
-                        !invoice.is_deposit_invoice && depositPaid > 0 
-                          ? invoice.total - depositPaid 
-                          : invoice.total
-                      )}</span>
+                      <span className="text-blue-600">{formatMoney(!invoice.is_deposit_invoice && depositPaid > 0 ? invoice.total - depositPaid : invoice.total)}</span>
                     </div>
                   </div>
                 </div>
@@ -421,11 +402,10 @@ const [depositPaid, setDepositPaid] = useState(0);
 
           {/* Print Button Only */}
           <div className="text-center flex gap-4 justify-center print:hidden">
-            <Button 
-              onClick={() => {
-                // Add print styles temporarily
-                const style = document.createElement('style');
-                style.textContent = `
+            <Button onClick={() => {
+            // Add print styles temporarily
+            const style = document.createElement('style');
+            style.textContent = `
                   @media print {
                     @page {
                       margin: 0.2in 0.2in;
@@ -433,17 +413,14 @@ const [depositPaid, setDepositPaid] = useState(0);
                     }
                   }
                 `;
-                document.head.appendChild(style);
-                
-                window.print();
-                
-                // Remove temporary style after print
-                setTimeout(() => {
-                  document.head.removeChild(style);
-                }, 1000);
-              }} 
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-            >
+            document.head.appendChild(style);
+            window.print();
+
+            // Remove temporary style after print
+            setTimeout(() => {
+              document.head.removeChild(style);
+            }, 1000);
+          }} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
               Save as PDF
             </Button>
           </div>
