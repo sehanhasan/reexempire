@@ -285,7 +285,7 @@ export default function ViewInvoice() {
           </div>
 
           {/* Compact Items Table with Sequential Category Indexing */}
-          <Card className="shadow-sm">
+          <Card className="rounded-lg shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
