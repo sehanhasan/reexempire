@@ -88,12 +88,12 @@ export function AppSidebar({
         href: "/inventory",
         adminOnly: true
       }, 
-      // {
-      //   title: "Finance",
-      //   icon: <DollarSign className="h-5 w-5" />,
-      //   href: "/finance",
-      //   adminOnly: true
-      // }
+      {
+        title: "Finance",
+        icon: <DollarSign className="h-5 w-5" />,
+        href: "/finance",
+        adminOnly: true
+      }
     ]
     }
   ];
