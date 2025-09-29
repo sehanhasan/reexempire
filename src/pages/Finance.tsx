@@ -16,6 +16,7 @@ import { invoiceService, customerService } from "@/services";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePagination } from "@/hooks/usePagination";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Finance() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,6 +104,57 @@ export default function Finance() {
   const growthPercentage = previousMonthRevenue > 0 
     ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 
     : 0;
+
+  const handleExport = () => {
+    try {
+      const csvData = filteredInvoices.map(invoice => {
+        const customer = customers.find(c => c.id === invoice.customer_id);
+        return {
+          'Invoice #': invoice.reference_number,
+          'Customer': customer?.name || 'Unknown',
+          'Unit #': customer?.unit_number || '',
+          'Issue Date': formatDate(invoice.issue_date),
+          'Due Date': formatDate(invoice.due_date),
+          'Amount': Number(invoice.total).toFixed(2),
+          'Status': invoice.payment_status
+        };
+      });
+
+      const csvHeaders = Object.keys(csvData[0] || {}).join(',');
+      const csvRows = csvData.map(row => 
+        Object.values(row).map(value => 
+          typeof value === 'string' && value.includes(',') 
+            ? `"${value}"` 
+            : value
+        ).join(',')
+      );
+      
+      const csvContent = [csvHeaders, ...csvRows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `paid-invoices-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Successful",
+        description: "Paid invoices have been exported to CSV.",
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export invoices. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const columns = [
     {
@@ -206,15 +258,19 @@ export default function Finance() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Growth</CardTitle>
+            <CardTitle className="text-sm font-medium">This Year</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${growthPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {growthPercentage >= 0 ? '+' : ''}{growthPercentage.toFixed(1)}%
+            <div className="text-2xl font-bold">
+              {formatCurrency(invoices
+                .filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && 
+                  new Date(inv.issue_date).getFullYear() === new Date().getFullYear())
+                .reduce((sum, inv) => sum + Number(inv.total), 0)
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
-              vs previous month
+              Current year revenue
             </p>
           </CardContent>
         </Card>
@@ -292,20 +348,79 @@ export default function Finance() {
                 </Popover>
               </div>
             )}
-            <Button variant="outline" onClick={() => console.log('Export functionality coming soon')}>
+            <Button variant="outline" onClick={handleExport}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
           </div>
 
-          <div>
-            <DataTable
-              columns={columns}
-              data={paginatedData(filteredInvoices)}
-              searchKey="reference_number"
-              isLoading={isLoading}
-              emptyMessage="No paid invoices found for the selected period."
-            />
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-4 font-medium text-muted-foreground">Invoice #</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Unit #</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Issue Date</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Due Date</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-right p-4 font-medium text-muted-foreground">Total</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8">Loading invoices...</td>
+                  </tr>
+                ) : paginatedData(filteredInvoices).length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No paid invoices found for the selected period.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedData(filteredInvoices).map((invoice) => {
+                    const customer = customers.find(c => c.id === invoice.customer_id);
+                    return (
+                      <tr key={invoice.id} className="border-b hover:bg-muted/50">
+                        <td className="p-4">
+                          <span className="font-mono text-sm text-blue-600">{invoice.reference_number}</span>
+                        </td>
+                        <td className="p-4">
+                          <div>
+                            <div className="font-medium">{customer?.name || 'Unknown'}</div>
+                            {customer?.unit_number && (
+                              <div className="text-sm text-muted-foreground">#{customer.unit_number}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm">{formatDate(invoice.issue_date)}</td>
+                        <td className="p-4 text-sm">{formatDate(invoice.due_date)}</td>
+                        <td className="p-4">
+                          <Badge variant="default" className="bg-green-100 text-green-800">
+                            {invoice.payment_status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-right">
+                          <span className="font-semibold text-green-600">
+                            {formatCurrency(Number(invoice.total))}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
             {filteredInvoices.length > 0 && (
               <div className="p-4 border-t">
                 <PaginationControls pagination={pagination} controls={controls} />

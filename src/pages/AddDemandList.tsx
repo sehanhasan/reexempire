@@ -1,276 +1,130 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { inventoryService, InventoryItem } from "@/services/inventoryService";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { Calendar, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AddDemandList() {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const isMobile = useIsMobile();
-
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    requested_date: new Date().toISOString().split('T')[0],
-    required_date: "",
-    priority: "Normal" as const,
     requested_by: "",
-    notes: ""
+    priority: "Normal",
+    status: "Draft",
+    notes: "",
+    requested_date: new Date(),
+    required_date: undefined as Date | undefined
   });
-
-  useEffect(() => {
-    fetchLowStockItems();
-  }, []);
-
-  const fetchLowStockItems = async () => {
-    try {
-      const items = await inventoryService.getLowStockItems();
-      setLowStockItems(items);
-      // Auto-suggest title if creating from low stock items
-      if (items.length > 0 && !formData.title) {
-        setFormData(prev => ({
-          ...prev,
-          title: "Low Stock Replenishment",
-          description: `Demand list for ${items.length} low stock items`
-        }));
-        // Auto-select all low stock items
-        setSelectedItems(items.map(item => item.id));
-      }
-    } catch (error) {
-      console.error("Error fetching low stock items:", error);
-    }
-  };
-
-  const handleItemToggle = (itemId: string) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
-
-  const generateDemandListPDF = async (demandList: any, items: InventoryItem[]) => {
-    const doc = new jsPDF();
-    
-    // Document title with better spacing
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Reex Empire - Demand List', 20, 30);
-    
-    // Document details with better spacing
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Requested Date: ${new Date(demandList.requested_date).toLocaleDateString()}`, 20, 50);
-    
-    // Priority aligned to the right
-    doc.setFont('helvetica', 'bold');
-    const priorityText = `Priority: ${demandList.priority}`;
-    const priorityWidth = doc.getTextWidth(priorityText);
-    doc.text(priorityText, 190 - priorityWidth, 50);
-    
-    let currentY = 60;
-    
-    // Add required date if available
-    if (demandList.required_date) {
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Required Date: ${new Date(demandList.required_date).toLocaleDateString()}`, 20, currentY);
-      currentY += 10;
-    }
-    
-    // Add requested by if available  
-    if (demandList.requested_by) {
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Requested By: ${demandList.requested_by}`, 20, currentY);
-      currentY += 10;
-    }
-    
-    // Add description if available with proper spacing
-    if (demandList.description) {
-      currentY += 5;
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Description: ${demandList.description}`, 20, currentY);
-      currentY += 15;
-    } else {
-      currentY += 10;
-    }
-
-    // Items table with RM currency
-    const tableData = items.map(item => [
-      item.name,
-      item.quantity.toString(),
-      item.min_stock_level?.toString() || '0',
-      Math.max((item.max_stock_level || item.min_stock_level || 10) - item.quantity, 1).toString(),
-      item.unit_price ? `RM ${item.unit_price.toFixed(2)}` : '-'
-    ]);
-
-    const totalValue = items.reduce((sum, item) => {
-      const requiredQty = Math.max((item.max_stock_level || item.min_stock_level || 10) - item.quantity, 1);
-      return sum + (requiredQty * (item.unit_price || 0));
-    }, 0);
-
-    autoTable(doc, {
-      head: [['Item Name', 'Current Stock', 'Min Level', 'Required Qty', 'Unit Price']],
-      body: tableData,
-      startY: currentY,
-      theme: 'striped',
-      headStyles: { 
-        fillColor: [41, 98, 255],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 10
-      },
-      bodyStyles: {
-        fontSize: 9
-      },
-      alternateRowStyles: {
-        fillColor: [248, 249, 250]
-      },
-      margin: { left: 20, right: 20 },
-      styles: {
-        lineColor: [200, 200, 200],
-        lineWidth: 0.1
-      }
-    });
-
-    // Add total at the bottom with RM currency
-    const finalY = (doc as any).lastAutoTable.finalY + 15;
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total Estimated Value: RM ${totalValue.toFixed(2)}`, 20, finalY);
-    
-    // Footer with better styling
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, finalY + 25);
-    doc.text('This is a system-generated document by Reex Empire', 20, finalY + 35);
-
-    // Download the PDF
-    doc.save(`reex-demand-list-${new Date().toISOString().split('T')[0]}.pdf`);
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    if (!formData.title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a title for the demand list.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      // Ensure required_date is not empty string
-      const submitData = {
-        ...formData,
-        status: "Draft" as const,
-        required_date: formData.required_date || null
-      };
-      
-      // Create the demand list
-      const demandList = await inventoryService.createDemandList(submitData);
-      
-      // Add selected low stock items to the demand list
-      for (const itemId of selectedItems) {
-        const item = lowStockItems.find(i => i.id === itemId);
-        if (item) {
-          const suggestedQuantity = Math.max(
-            (item.max_stock_level || item.min_stock_level || 10) - item.quantity,
-            1
-          );
-          
-          await inventoryService.createDemandListItem({
-            demand_list_id: demandList.id,
-            inventory_item_id: itemId,
-            item_name: item.name,
-            description: `Restock for low inventory (Current: ${item.quantity}, Min: ${item.min_stock_level})`,
-            quantity: suggestedQuantity,
-            unit_price: item.unit_price || 0,
-            amount: (item.unit_price || 0) * suggestedQuantity,
-            notes: `Auto-generated from low stock alert`
-          });
-        }
-      }
+      const { data, error } = await supabase
+        .from('demand_lists')
+        .insert([{
+          title: formData.title.trim(),
+          description: formData.description.trim() || null,
+          requested_by: formData.requested_by.trim() || null,
+          priority: formData.priority,
+          status: formData.status,
+          notes: formData.notes.trim() || null,
+          requested_date: formData.requested_date.toISOString().split('T')[0],
+          required_date: formData.required_date ? formData.required_date.toISOString().split('T')[0] : null
+        }])
+        .select()
+        .single();
 
-      // Generate and download PDF
-      await generateDemandListPDF(demandList, selectedItems.map(id => lowStockItems.find(item => item.id === id)).filter(Boolean));
-      
+      if (error) throw error;
+
       toast({
         title: "Success",
-        description: `Demand list created successfully with ${selectedItems.length} items and PDF downloaded`
+        description: "Demand list created successfully!"
       });
-      
-      navigate("/inventory");
-    } catch (error: any) {
-      console.error("Error creating demand list:", error);
+
+      navigate('/demand-lists');
+    } catch (error) {
+      console.error('Error creating demand list:', error);
       toast({
         title: "Error",
-        description: "Failed to create demand list",
+        description: "Failed to create demand list. Please try again.",
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className={`${isMobile ? 'page-container' : 'pt-4'}`}>
+    <div className="max-w-2xl mx-auto p-6">
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle>Create New Demand List</CardTitle>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter demand list title"
+                required
+              />
+            </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter description"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="requested_by">Requested By</Label>
                 <Input
                   id="requested_by"
                   value={formData.requested_by}
                   onChange={(e) => setFormData({ ...formData, requested_by: e.target.value })}
+                  placeholder="Enter requester name"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="requested_date">Requested Date *</Label>
-                <Input
-                  id="requested_date"
-                  type="date"
-                  value={formData.requested_date}
-                  onChange={(e) => setFormData({ ...formData, requested_date: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="required_date">Required Date</Label>
-                <Input
-                  id="required_date"
-                  type="date"
-                  value={formData.required_date}
-                  onChange={(e) => setFormData({ ...formData, required_date: e.target.value })}
-                />
-              </div>
-
 
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
-                <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value as any })}>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -284,14 +138,60 @@ export default function AddDemandList() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Requested Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.requested_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.requested_date ? format(formData.requested_date, "PPP") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={formData.requested_date}
+                      onSelect={(date) => date && setFormData({ ...formData, requested_date: date })}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Required Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.required_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.required_date ? format(formData.required_date, "PPP") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={formData.required_date}
+                      onSelect={(date) => setFormData({ ...formData, required_date: date })}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -300,70 +200,17 @@ export default function AddDemandList() {
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                rows={3}
+                placeholder="Enter additional notes"
+                rows={2}
               />
             </div>
 
-            {lowStockItems.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Low Stock Items</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedItems(
-                      selectedItems.length === lowStockItems.length 
-                        ? [] 
-                        : lowStockItems.map(item => item.id)
-                    )}
-                  >
-                    {selectedItems.length === lowStockItems.length ? "Deselect All" : "Select All"}
-                  </Button>
-                </div>
-                <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
-                  <div className="space-y-3">
-                    {lowStockItems.map((item) => (
-                      <div key={item.id} className="flex items-center space-x-3">
-                        <Checkbox
-                          id={item.id}
-                          checked={selectedItems.includes(item.id)}
-                          onCheckedChange={() => handleItemToggle(item.id)}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <label htmlFor={item.id} className="text-sm font-medium cursor-pointer">
-                                {item.name}
-                              </label>
-                              <p className="text-xs text-gray-500">
-                                Current: {item.quantity} | Min: {item.min_stock_level || 0}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm text-red-600">Low Stock</div>
-                              <div className="text-xs text-gray-500">
-                                Need: {Math.max((item.max_stock_level || item.min_stock_level || 10) - item.quantity, 1)}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="text-sm text-gray-600">
-                  {selectedItems.length} of {lowStockItems.length} items selected
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => navigate("/inventory")}>
-                Cancel
+            <div className="flex gap-4 pt-4">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Demand List"}
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create Demand List"}
+              <Button type="button" variant="outline" onClick={() => navigate('/demand-lists')}>
+                Cancel
               </Button>
             </div>
           </form>

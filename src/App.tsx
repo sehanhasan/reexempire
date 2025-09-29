@@ -40,6 +40,7 @@ import Inventory from "./pages/Inventory";
 import AddInventoryItem from "./pages/AddInventoryItem";
 import EditInventoryItem from "./pages/EditInventoryItem";
 import AddDemandList from "./pages/AddDemandList";
+import SignQuotation from "./pages/SignQuotation";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,7 @@ export default function App() {
               
               {/* Public quotation view route */}
               <Route path="/quotations/view/:id" element={<ViewQuotation />} />
+              <Route path="/quotations/sign/:id" element={<SignQuotation />} />
               
               {/* Public invoice view route */}
               <Route path="/invoices/view/:id" element={<ViewInvoice />} />
