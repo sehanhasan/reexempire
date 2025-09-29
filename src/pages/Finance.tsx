@@ -255,7 +255,7 @@ export default function Finance() {
                 <SelectItem value="this-month">This Month</SelectItem>
                 <SelectItem value="last-month">Last Month</SelectItem>
                 <SelectItem value="this-year">This Year</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
+                {/* <SelectItem value="custom">Custom</SelectItem> */}
                 <SelectItem value="all">All Time</SelectItem>
               </SelectContent>
             </Select>
