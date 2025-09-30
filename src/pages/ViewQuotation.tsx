@@ -354,11 +354,19 @@ export default function ViewQuotation() {
                         By signing below, you accept the terms and conditions of this quotation.
                        </div> */}
                       
-                      <div className="space-y-3">
+                        <div className="space-y-3">
                         <div className="pt-3">
                           <label className="text-sm font-medium text-gray-700">Signature (Customer Acceptance)</label>
                           <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px]">
                             {/* <p className="text-sm text-gray-500 text-center mt-6">Signature</p> */}
+                          </div>
+                          <div className="mt-3 text-center">
+                            <Button 
+                              onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} 
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                            >
+                              Click here to sign
+                            </Button>
                           </div>
                         </div>
                         
@@ -399,19 +407,11 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Save as PDF Button and Click here to sign */}
-          <div className="text-center flex gap-4 justify-center print:hidden">
+          {/* Save as PDF Button */}
+          <div className="text-center print:hidden">
             <Button onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
               Save as PDF
             </Button>
-            {!isAccepted && (
-              <Button 
-                onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-              >
-                Click here to sign
-              </Button>
-            )}
           </div>
         </div>
       </div>
