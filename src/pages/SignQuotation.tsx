@@ -12,68 +12,66 @@ import { X, Pen, CheckCircle } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { toast } from 'sonner';
 import SignatureCanvas from 'react-signature-canvas';
-
 export default function SignQuotation() {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const navigate = useNavigate();
   const [customerName, setCustomerName] = useState('');
   const [signatureDate, setSignatureDate] = useState(new Date().toISOString().split('T')[0]);
   const [isProcessing, setIsProcessing] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
-
-  const { data: quotation, isLoading, refetch } = useQuery({
+  const {
+    data: quotation,
+    isLoading,
+    refetch
+  } = useQuery({
     queryKey: ['quotation', id],
     queryFn: () => quotationService.getById(id!),
-    enabled: !!id,
+    enabled: !!id
   });
-
-  const { data: customer } = useQuery({
+  const {
+    data: customer
+  } = useQuery({
     queryKey: ['customer', quotation?.customer_id],
     queryFn: () => customerService.getById(quotation!.customer_id),
-    enabled: !!quotation?.customer_id,
+    enabled: !!quotation?.customer_id
   });
-
   useEffect(() => {
     if (customer) {
       setCustomerName(customer.name);
     }
   }, [customer]);
-
   const handleClearSignature = () => {
     if (sigCanvasRef.current) {
       sigCanvasRef.current.clear();
     }
   };
-
   const handleAcceptQuotation = async () => {
     if (!sigCanvasRef.current || !quotation) return;
-
     const signatureDataUrl = sigCanvasRef.current.toDataURL();
     if (!signatureDataUrl || signatureDataUrl === 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==') {
       toast.error('Please provide a signature before accepting');
       return;
     }
-
     if (!customerName.trim()) {
       toast.error('Please enter your name');
       return;
     }
-
     setIsProcessing(true);
-
     try {
       await quotationService.update(quotation.id, {
         status: 'Accepted',
         signature_data: signatureDataUrl
       });
-
       toast.success('Quotation accepted successfully!');
-      
+
       // Close the window after a brief delay
       setTimeout(() => {
         window.close();
       }, 2000);
-      
     } catch (error) {
       console.error('Error accepting quotation:', error);
       toast.error('Failed to accept quotation');
@@ -81,21 +79,16 @@ export default function SignQuotation() {
       setIsProcessing(false);
     }
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading quotation...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!quotation || !customer) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="text-center p-6">
             <h2 className="text-2xl font-semibold mb-2">Quotation Not Found</h2>
@@ -105,13 +98,10 @@ export default function SignQuotation() {
             <Button onClick={() => window.close()}>Close</Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
   if (quotation.status === 'Accepted') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="text-center p-6">
             <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
@@ -122,24 +112,20 @@ export default function SignQuotation() {
             <Button onClick={() => window.close()}>Close</Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
   const getStatusColor = () => {
     if (quotation.status === 'Accepted') return 'bg-green-100 text-green-800';
     return 'bg-yellow-100 text-yellow-800';
   };
-
-  return (
-    <div className="min-h-screen bg-background p-4">
+  return <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-2xl">Quotation Signature</CardTitle>
+                <CardTitle className="text-xl text-cyan-600 text-left">Reex Empire - Quotation Acceptance</CardTitle>
                 <p className="text-muted-foreground">Please review and sign the quotation below</p>
               </div>
               <Button variant="ghost" size="sm" onClick={() => window.close()}>
@@ -154,7 +140,7 @@ export default function SignQuotation() {
           <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <h3 className="font-semibold text-lg mb-3">Quotation Details</h3>
+                <h3 className="font-semibold text-lg mb-3 text-cyan-600">Quotation Details</h3>
                 <div className="space-y-2">
                   <div>
                     <span className="font-medium">Quotation #:</span> {quotation.reference_number}
@@ -181,7 +167,7 @@ export default function SignQuotation() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-lg mb-3">Customer Information</h3>
+                <h3 className="font-semibold text-lg mb-3 text-cyan-600">Customer Information</h3>
                 <div className="space-y-2">
                   <div>
                     <span className="font-medium">Name:</span> {customer.name}
@@ -195,9 +181,7 @@ export default function SignQuotation() {
                   <div>
                     <span className="font-medium">Phone:</span> {customer.phone}
                   </div>
-                  <div>
-                    <span className="font-medium">Email:</span> {customer.email}
-                  </div>
+                  
                 </div>
               </div>
             </div>
@@ -207,50 +191,32 @@ export default function SignQuotation() {
         {/* Signature Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Customer Acceptance</CardTitle>
+            <CardTitle className="text-cyan-600 text-lg">Customer Acceptance</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="customerName">Name *</Label>
-                  <Input
-                    id="customerName"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
+                  <Input id="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Enter your full name" />
                 </div>
                 <div>
                   <Label htmlFor="signatureDate">Date *</Label>
-                  <Input
-                    id="signatureDate"
-                    type="date"
-                    value={signatureDate}
-                    onChange={(e) => setSignatureDate(e.target.value)}
-                  />
+                  <Input id="signatureDate" type="date" value={signatureDate} onChange={e => setSignatureDate(e.target.value)} />
                 </div>
               </div>
 
               <div>
                 <Label>Signature *</Label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-white">
-                  <SignatureCanvas
-                    ref={sigCanvasRef}
-                    canvasProps={{
-                      width: 500,
-                      height: 200,
-                      className: 'signature-canvas w-full'
-                    }}
-                  />
+                  <SignatureCanvas ref={sigCanvasRef} canvasProps={{
+                  width: 500,
+                  height: 200,
+                  className: 'signature-canvas w-full'
+                }} />
                 </div>
                 <div className="flex justify-end mt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearSignature}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={handleClearSignature}>
                     <X className="h-4 w-4 mr-2" />
                     Clear Signature
                   </Button>
@@ -258,26 +224,15 @@ export default function SignQuotation() {
               </div>
 
               <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  By signing below, I acknowledge that I have read, understood, and agree to the terms and conditions of this quotation.
-                  I accept the proposed work and pricing as outlined above.
-                </p>
+                <p className="text-sm text-blue-800">By signing, I acknowledge that I have read, understood, and agree to the terms and conditions of this quotation. I accept the proposed work and pricing outlined in the quotation.</p>
               </div>
 
               <div className="flex gap-4 justify-center">
-                <Button
-                  onClick={handleAcceptQuotation}
-                  disabled={isProcessing}
-                  className="bg-green-600 hover:bg-green-700 px-8"
-                >
-                  {isProcessing ? (
-                    <>Processing...</>
-                  ) : (
-                    <>
+                <Button onClick={handleAcceptQuotation} disabled={isProcessing} className="bg-green-600 hover:bg-green-700 px-8">
+                  {isProcessing ? <>Processing...</> : <>
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Accept & Sign Quotation
-                    </>
-                  )}
+                    </>}
                 </Button>
                 <Button variant="outline" onClick={() => window.close()}>
                   Cancel
@@ -287,6 +242,5 @@ export default function SignQuotation() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
