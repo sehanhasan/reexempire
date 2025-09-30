@@ -128,7 +128,7 @@ export default function SignQuotation() {
                 <CardTitle className="text-xl text-cyan-600 text-left">Reex Empire - Quotation Acceptance</CardTitle>
                 <p className="text-muted-foreground">Please review and sign the quotation below</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => window.close()}>
+              <Button variant="ghost" size="sm" onClick={() => window.close()} className="font-bold ">
                 <X className="h-4 w-4" />
               </Button>
             </div>
