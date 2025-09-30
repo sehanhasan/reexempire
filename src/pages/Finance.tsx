@@ -139,11 +139,15 @@ export default function Finance() {
   const columns = [{
     accessorKey: "reference_number",
     header: "Invoice #",
-    cell: ({ getValue }: { getValue: () => string }) => <span className="font-mono text-sm">{getValue()}</span>
+    cell: ({
+      getValue
+    }: any) => <span className="font-mono text-sm">{getValue()}</span>
   }, {
     accessorKey: "customer_id",
     header: "Customer",
-    cell: ({ getValue }: { getValue: () => string }) => {
+    cell: ({
+      getValue
+    }: any) => {
       const customer = customers.find(c => c.id === getValue());
       return <div>
             <div className="font-medium">{customer?.name || 'Unknown'}</div>
@@ -153,23 +157,31 @@ export default function Finance() {
   }, {
     accessorKey: "issue_date",
     header: "Issue Date",
-    cell: ({ getValue }: { getValue: () => string }) => formatDate(getValue())
+    cell: ({
+      getValue
+    }: any) => formatDate(getValue())
   }, {
     accessorKey: "total",
     header: "Amount",
-    cell: ({ getValue }: { getValue: () => number }) => <span className="font-semibold text-green-600">
+    cell: ({
+      getValue
+    }: any) => <span className="font-semibold text-green-600">
           {formatCurrency(Number(getValue()))}
         </span>
   }, {
     accessorKey: "payment_status",
     header: "Status",
-    cell: ({ getValue }: { getValue: () => string }) => <Badge variant="default" className="bg-green-100 text-green-800">
+    cell: ({
+      getValue
+    }: any) => <Badge variant="default" className="bg-green-100 text-green-800">
           {getValue()}
         </Badge>
   }, {
     accessorKey: "actions",
     header: "Actions",
-    cell: ({ row }: { row: { original: any } }) => <Button variant="ghost" size="sm" onClick={() => window.open(`/invoices/view/${row.original.id}`, '_blank')}>
+    cell: ({
+      row
+    }: any) => <Button variant="ghost" size="sm" onClick={() => window.open(`/invoices/view/${row.original.id}`, '_blank')}>
           <Eye className="h-4 w-4" />
         </Button>
   }];
