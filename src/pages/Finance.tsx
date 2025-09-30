@@ -299,13 +299,13 @@ export default function Finance() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left p-4 font-medium text-muted-foreground">Invoice #</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Unit #</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Issue Date</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Due Date</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right p-4 font-medium text-muted-foreground">Total</th>
-                  <th className="text-center p-4 font-medium text-muted-foreground">Actions</th>
+                  <th className="text-left text-sm p-4 font-medium text-muted-foreground">Invoice #</th>
+                  <th className="text-left text-sm p-4 font-medium text-muted-foreground">Unit #</th>
+                  <th className="text-left text-sm p-4 font-medium text-muted-foreground">Issue Date</th>
+                  <th className="text-left text-sm p-4 font-medium text-muted-foreground">Due Date</th>
+                  <th className="text-left text-sm p-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-right text-sm p-4 font-medium text-muted-foreground">Total</th>
+                  <th className="text-center text-sm p-4 font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
