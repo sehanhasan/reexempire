@@ -304,7 +304,7 @@ export default function Finance() {
                   <th className="text-left text-sm p-4 font-medium text-muted-foreground">Issue Date</th>
                   <th className="text-left text-sm p-4 font-medium text-muted-foreground">Due Date</th>
                   <th className="text-left text-sm p-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right text-sm p-4 font-medium text-muted-foreground">Total</th>
+                  <th className="text-left text-sm p-4 font-medium text-muted-foreground">Total</th>
                   <th className="text-center text-sm p-4 font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -319,7 +319,7 @@ export default function Finance() {
                 const customer = customers.find(c => c.id === invoice.customer_id);
                 return <tr key={invoice.id} className="border-b hover:bg-muted/50">
                         <td className="p-4">
-                          <span className="font-mono text-sm text-blue-600">{invoice.reference_number}</span>
+                          <span className="font-mono text-sm text-inherit">{invoice.reference_number}</span>
                         </td>
                         <td className="p-4">
                           <div>
@@ -340,7 +340,7 @@ export default function Finance() {
                           </span>
                         </td>
                         <td className="p-4 text-center">
-                          <Button variant="ghost" size="sm" onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')}>
+                          <Button variant="ghost" size="sm" onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')} className="text-blue-600">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </td>
