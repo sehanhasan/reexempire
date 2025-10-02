@@ -153,9 +153,9 @@ export default function SignQuotation() {
                     <p className="text-xs md:text-sm text-muted-foreground">This quotation has been signed and accepted</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => window.close()} className="self-end md:self-auto">
+                {/* <Button variant="ghost" size="sm" onClick={() => window.close()} className="self-end md:self-auto">
                   <X className="h-4 w-4" />
-                </Button>
+                </Button> */}
               </div>
             </CardHeader>
           </Card>
