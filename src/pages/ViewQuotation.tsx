@@ -348,12 +348,14 @@ export default function ViewQuotation() {
                     <CardTitle className="font-medium text-sm text-muted-foreground">Signature (Customer Acceptance)</CardTitle>
                    </CardHeader>
                   <CardContent className="flex justify-center">
-                    <Button 
-                      onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} 
-                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-medium font-semibold w-full"
+                    <a
+                      href={`/quotations/sign/${quotation.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-medium font-semibold w-full block text-center rounded-lg"
                     >
                       Click Here to Sign
-                    </Button>
+                    </a>
                   </CardContent>
                 </Card>}
 
