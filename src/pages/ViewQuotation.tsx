@@ -362,7 +362,7 @@ export default function ViewQuotation() {
               {/* Show signature if accepted */}
               {hasSignature && <Card className="shadow-sm">
                   <CardContent className="p-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Acceptance</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <img src={signatureData} alt="Customer Signature" className="max-w-full h-auto border border-gray-200 rounded bg-white" style={{
                     maxHeight: '150px'
