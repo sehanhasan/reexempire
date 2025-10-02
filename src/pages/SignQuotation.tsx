@@ -149,7 +149,7 @@ export default function SignQuotation() {
                 <div className="flex items-center gap-4">
                   <img src={reexLogo} alt="Reex Empire" className="h-12 md:h-16 w-auto" />
                   <div>
-                    <CardTitle className="text-lg md:text-xl text-cyan-600">Quotation Accepted</CardTitle>
+                    <CardTitle className="text-lg md:text-xl text-green-600">Quotation Accepted</CardTitle>
                     <p className="text-xs md:text-sm text-muted-foreground">This quotation has been signed and accepted</p>
                   </div>
                 </div>
@@ -267,7 +267,7 @@ export default function SignQuotation() {
                 <img src={reexLogo} alt="Reex Empire" className="h-12 md:h-16 w-auto" />
                 <div>
                   <CardTitle className="text-lg md:text-xl text-cyan-600">Quotation Acceptance</CardTitle>
-                  <p className="text-xs md:text-sm text-muted-foreground">Please review and sign the quotation below</p>
+                  <p className="text-sm text-muted-foreground">Please review and sign the quotation below</p>
                 </div>
               </div>
               {/* <Button variant="ghost" size="sm" onClick={() => window.close()} className="self-end md:self-auto">
