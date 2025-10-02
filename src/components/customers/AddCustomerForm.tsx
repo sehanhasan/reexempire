@@ -187,16 +187,10 @@ export default function AddCustomerForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Star Residences. 50450 Kuala Lumpur">Star Residences, Jalan yap Kwan seng. 50450 Kuala Lumpur</SelectItem>
+                      <SelectItem value="Star Residences, Jalan Yap Kwan Seng. 50450 Kuala Lumpur">Star Residences, Jalan yap Kwan seng. 50450 Kuala Lumpur</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                {customerType === "company" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="ssm">SSM Registration No.</Label>
-                    <Input id="ssm" placeholder="e.g. 1234567-A" value={ssm} onChange={e => setSsm(e.target.value)} />
-                  </div>
-                )}
               </div>
 
               {customerType === "company" && (
