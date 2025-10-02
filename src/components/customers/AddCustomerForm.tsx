@@ -187,10 +187,7 @@ export default function AddCustomerForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Star Residences One">Star Residences One</SelectItem>
-                      <SelectItem value="Star Residences Two">Star Residences Two</SelectItem>
-                      <SelectItem value="Star Residences Three">Star Residences Three</SelectItem>
-                      <SelectItem value="Star Suites">Star Suites</SelectItem>
+                      <SelectItem value="Star Residences">Star Residences, Jalan yap Kwan seng. 50450 Kuala Lumpur</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
