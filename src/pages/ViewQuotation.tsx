@@ -344,41 +344,16 @@ export default function ViewQuotation() {
             {/* Right Column - Acceptance Section */}
             <div>
               {!isAccepted && <Card className="shadow-sm">
-                  {/* <CardHeader>
-                    <CardTitle className="font-medium text-sm text-muted-foreground">Customer Acceptance</CardTitle>
-                   </CardHeader> */}
-                  <CardContent>
-                    {/* Static acceptance fields */}
-                    <div className="space-y-4">
-                      {/* <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-                        By signing below, you accept the terms and conditions of this quotation.
-                       </div> */}
-                      
-                      <div className="space-y-3">
-                        <div className="pt-3">
-                          <label className="text-sm font-medium text-gray-700">Signature (Customer Acceptance)</label>
-                          <div className="mt-1 p-3 border-2 border-dashed border-gray-300 rounded-lg min-h-[80px]">
-                            {/* <p className="text-sm text-gray-500 text-center mt-6">Signature</p> */}
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Name</label>
-                            <div className="mt-1 p-2 border border-gray-300 rounded min-h-[40px]">
-                              {/* <p className="text-sm text-gray-500">Name</p> */}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Date</label>
-                            <div className="mt-1 p-2 border border-gray-300 rounded min-h-[40px]">
-                              {/* <p className="text-sm text-gray-500">Date</p> */}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <CardHeader>
+                    <CardTitle className="font-medium text-sm text-muted-foreground">Signature (Customer Acceptance)</CardTitle>
+                   </CardHeader>
+                  <CardContent className="flex justify-center">
+                    <Button 
+                      onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} 
+                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg font-semibold w-full"
+                    >
+                      Click Here to Sign
+                    </Button>
                   </CardContent>
                 </Card>}
 
@@ -399,12 +374,11 @@ export default function ViewQuotation() {
             </div>
           </div>
 
-          {/* Save as PDF Button and Click here to sign */}
+          {/* Save as PDF Button */}
           <div className="text-center flex gap-4 justify-center print:hidden">
             <Button onClick={() => window.print()} className="text-white px-6 py-2 bg-blue-600 hover:bg-blue-700">
               Save as PDF
             </Button>
-            {!isAccepted && <Button onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">Click Here to Sign</Button>}
           </div>
         </div>
       </div>

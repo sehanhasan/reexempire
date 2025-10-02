@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Trash, Pencil, Check, X, Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -186,7 +187,12 @@ export function ItemsTable({
                     <div className="space-y-3 pb-1">
                       <div className="space-y-2">
                         <label className="block text-xs mb-1 text-slate-600 font-medium">Item #{index + 1} - Description</label>
-                        <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
+                        <Textarea 
+                          placeholder="Enter item description" 
+                          value={item.description} 
+                          onChange={e => handleItemChange(item.id, 'description', e.target.value)} 
+                          className="min-h-[60px] text-xs" 
+                        />
                       </div>
                       
                       <div className="grid grid-cols-3 gap-2">
@@ -322,7 +328,12 @@ export function ItemsTable({
                       {index + 1}
                     </td>
                     <td className="py-3 px-2">
-                      <Input placeholder="Enter item description" value={item.description} onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="h-10 text-xs" />
+                      <Textarea 
+                        placeholder="Enter item description" 
+                        value={item.description} 
+                        onChange={e => handleItemChange(item.id, 'description', e.target.value)} 
+                        className="min-h-[60px] text-xs" 
+                      />
                     </td>
                      <td className="py-3 px-2">
                        <Input type="number" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="text-left h-10" />

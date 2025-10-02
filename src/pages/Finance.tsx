@@ -46,7 +46,7 @@ export default function Finance() {
   // Filter paid invoices based on search and month
   const filteredInvoices = invoices.filter(invoice => {
     // Only show paid invoices
-    if (invoice.payment_status !== 'paid' && invoice.payment_status !== 'Paid') return false;
+    if (invoice.payment_status !== 'Paid' && invoice.payment_status !== 'paid') return false;
 
     // Month filter
     if (selectedMonth && selectedMonth !== 'all') {
