@@ -352,7 +352,7 @@ export default function ViewQuotation() {
                       href={`/quotations/sign/${quotation.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-medium font-semibold w-full block text-center rounded-lg"
+                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-medium font-semibold w-full"
                     >
                       Click Here to Sign
                     </a>
