@@ -149,7 +149,7 @@ export default function SignQuotation() {
                 <div className="flex items-center gap-4">
                   <img src={reexLogo} alt="Reex Empire" className="h-12 md:h-16 w-auto" />
                   <div>
-                    <CardTitle className="text-lg md:text-xl text-cyan-600">Reex Empire - Quotation Accepted</CardTitle>
+                    <CardTitle className="text-lg md:text-xl text-cyan-600">Quotation Accepted</CardTitle>
                     <p className="text-xs md:text-sm text-muted-foreground">This quotation has been signed and accepted</p>
                   </div>
                 </div>
@@ -241,11 +241,11 @@ export default function SignQuotation() {
             </Card>
           )}
 
-          {/* <div className="flex justify-center">
+          <div className="flex justify-center">
             <Button onClick={() => window.close()} className="w-full md:w-auto">
               Close
             </Button>
-          </div> */}
+          </div>
         </div>
       </div>
     );
@@ -270,9 +270,9 @@ export default function SignQuotation() {
                   <p className="text-xs md:text-sm text-muted-foreground">Please review and sign the quotation below</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => window.close()} className="self-end md:self-auto">
+              {/* <Button variant="ghost" size="sm" onClick={() => window.close()} className="self-end md:self-auto">
                 <X className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </CardHeader>
         </Card>
@@ -409,7 +409,7 @@ export default function SignQuotation() {
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Accept & Sign Quotation
+                      Sign & Accept Quotation
                     </>
                   )}
                 </Button>

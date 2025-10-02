@@ -350,7 +350,7 @@ export default function ViewQuotation() {
                   <CardContent className="flex justify-center">
                     <Button 
                       onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} 
-                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg font-semibold w-full"
+                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-medium font-semibold w-full"
                     >
                       Click Here to Sign
                     </Button>
