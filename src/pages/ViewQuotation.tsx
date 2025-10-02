@@ -401,17 +401,10 @@ export default function ViewQuotation() {
 
           {/* Save as PDF Button and Click here to sign */}
           <div className="text-center flex gap-4 justify-center print:hidden">
-            <Button onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
+            <Button onClick={() => window.print()} className="text-white px-6 py-2 bg-blue-600 hover:bg-blue-700">
               Save as PDF
             </Button>
-            {!isAccepted && (
-              <Button 
-                onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-              >
-                Click here to sign
-              </Button>
-            )}
+            {!isAccepted && <Button onClick={() => window.open(`/quotations/sign/${quotation.id}`, '_blank')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">Click Here to Sign</Button>}
           </div>
         </div>
       </div>
