@@ -332,7 +332,7 @@ export function ItemsTable({
                         placeholder="Enter item description" 
                         value={item.description} 
                         onChange={e => handleItemChange(item.id, 'description', e.target.value)} 
-                        className="min-h-[60px] text-xs" 
+                        className="min-h-[60px]" 
                       />
                     </td>
                      <td className="py-3 px-2">
