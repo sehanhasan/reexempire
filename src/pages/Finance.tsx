@@ -57,7 +57,8 @@ export default function Finance() {
         const invoiceMonth = invoiceDate.toISOString().slice(0, 7);
         if (invoiceMonth !== thisMonth) return false;
       } else if (selectedMonth === 'last-month') {
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
+        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
+        const lastMonth = lastMonthDate.toISOString().slice(0, 7);
         const invoiceMonth = invoiceDate.toISOString().slice(0, 7);
         if (invoiceMonth !== lastMonth) return false;
       } else if (selectedMonth === 'this-year') {

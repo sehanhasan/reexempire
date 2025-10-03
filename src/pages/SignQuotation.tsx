@@ -17,8 +17,9 @@ import reexLogo from '@/assets/reex-empire-logo.png';
 export default function SignQuotation() {
   const { id } = useParams<{ id: string }>();
   const [customerName, setCustomerName] = useState('');
-  const [signatureDate, setSignatureDate] = useState(new Date().toISOString().split('T')[0]);
+  const [signatureDate] = useState(new Date().toISOString().split('T')[0]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
@@ -92,15 +93,12 @@ export default function SignQuotation() {
         status: 'Accepted',
         signature_data: signatureDataUrl,
       });
-      toast.success('Quotation accepted successfully!');
+      
+      // Show success modal
+      setShowSuccessModal(true);
       
       // Refetch to show the read-only view
       await refetch();
-
-      // Close the window after a brief delay
-      setTimeout(() => {
-        window.close();
-      }, 2000);
     } catch (error) {
       console.error('Error accepting quotation:', error);
       toast.error('Failed to accept quotation');
@@ -140,7 +138,7 @@ export default function SignQuotation() {
 
   if (isAccepted) {
     return (
-      <div className="min-h-screen bg-background p-4">
+      <div className="min-h-screen bg-slate-100 p-4">
         <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
           {/* Header with Logo */}
           <Card>
@@ -247,6 +245,30 @@ export default function SignQuotation() {
             </Button>
           </div>
         </div>
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full text-center shadow-xl">
+              <div className="mb-4">
+                <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
+              <p className="text-gray-600 mb-4">
+                Your quotation has been successfully signed and accepted.
+              </p>
+              <p className="text-gray-600 mb-6">
+                We will be in touch shortly. For all enquiries, please contact Reex Empire:
+              </p>
+              <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                <p className="font-semibold text-blue-900">011-1665 6525 / 019-999 1024</p>
+              </div>
+              <Button onClick={() => window.close()} className="w-full bg-green-600 hover:bg-green-700">
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -257,7 +279,7 @@ export default function SignQuotation() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-slate-100 p-4">
       <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
         {/* Header with Logo */}
         <Card>
@@ -352,13 +374,13 @@ export default function SignQuotation() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="signatureDate" className="text-sm">Date *</Label>
+                  <Label htmlFor="signatureDate" className="text-sm">Date</Label>
                   <Input
                     id="signatureDate"
                     type="date"
                     value={signatureDate}
-                    onChange={(e) => setSignatureDate(e.target.value)}
-                    className="mt-1"
+                    disabled
+                    className="mt-1 bg-gray-100"
                   />
                 </div>
               </div>

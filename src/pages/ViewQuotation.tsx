@@ -236,11 +236,11 @@ export default function ViewQuotation() {
               <div>
                  <div className="mb-3">
                    <h1 className="text-xl font-bold text-gray-900">Quotation #{quotation.reference_number}</h1>
-                    <div className="flex items-center gap-2 mb-1">
-                      {quotation.status !== 'Sent' && <Badge className="mb-1" variant={isAccepted ? "default" : "secondary"}>
+                     <div className="flex items-center gap-2 mb-1">
+                       {quotation.status !== 'Sent' && <Badge className={`mb-1 ${isAccepted ? 'bg-green-100 text-green-800' : ''}`} variant={isAccepted ? "default" : "secondary"}>
                           {quotation.status}
                         </Badge>}
-                    </div>
+                     </div>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p><strong>Issue Date:</strong> {formatDate(quotation.issue_date)}</p>
                     <p><strong>Expiry Date:</strong> {formatDate(quotation.expiry_date)}</p>
@@ -280,7 +280,7 @@ export default function ViewQuotation() {
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
-                             <td className="p-2 text-gray-800">{item.description}</td>
+                             <td className="p-2 text-gray-800 whitespace-pre-wrap">{item.description}</td>
                              <td className="text-right p-2 text-gray-800">{item.quantity}</td>
                               <td className="text-right p-2 text-gray-800">
                                 {item.unit_price.toFixed(2)}{item.unit && item.unit.trim() !== '' && item.unit.trim().toLowerCase() !== 'unit' ? ` ${item.unit}` : ''}
@@ -362,13 +362,13 @@ export default function ViewQuotation() {
               {/* Show signature if accepted */}
               {hasSignature && <Card className="shadow-sm">
                   <CardContent className="p-4">
-                    <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Acceptance</h4>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-3">Customer Signature</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <img src={signatureData} alt="Customer Signature" className="max-w-full h-auto border border-gray-200 rounded bg-white" style={{
                     maxHeight: '150px'
                   }} />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Signed digitally on {new Date().toLocaleDateString()}
+                      <p className="text-xs text-muted-foreground mt-3">
+                        Signed digitally on {formatDate(quotation.updated_at)} by {customer?.name}
                       </p>
                     </div>
                   </CardContent>

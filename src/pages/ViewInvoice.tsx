@@ -305,7 +305,7 @@ export default function ViewInvoice() {
                           </td>
                         </tr>
                         {groupedItems[category].map((item, idx) => <tr key={idx} className="border-b hover:bg-gray-50">
-                             <td className="p-2 text-gray-800">{item.description}</td>
+                             <td className="p-2 text-gray-800 whitespace-pre-wrap">{item.description}</td>
                               <td className="text-right p-2 text-gray-800">
                                 {formatAmount(item.unit_price)}{item.unit && item.unit.trim() !== '' && item.unit.trim().toLowerCase() !== 'unit' ? ` ${item.unit}` : ''}
                               </td>

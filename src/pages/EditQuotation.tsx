@@ -197,6 +197,8 @@ export default function EditQuotation() {
 
         // Navigate to view page in new tab
         window.open(`/quotations/view/${id}`, '_blank');
+        // Don't navigate to /quotations, stay on current page
+        setIsSubmitting(false);
         return;
       } else {
         toast({
