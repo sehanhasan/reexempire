@@ -205,9 +205,9 @@ export default function SignQuotation() {
                 <div>
                   <span className="font-medium">Address:</span> {customer.address}
                 </div>
-                <div>
+                {/* <div>
                   <span className="font-medium">Phone:</span> {customer.phone}
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>
@@ -348,9 +348,9 @@ export default function SignQuotation() {
               <div>
                 <span className="font-medium">Address:</span> {customer.address}
               </div>
-              <div>
+              {/* <div>
                 <span className="font-medium">Phone:</span> {customer.phone}
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>
