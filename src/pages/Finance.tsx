@@ -50,22 +50,24 @@ export default function Finance() {
 
     // Month filter
     if (selectedMonth && selectedMonth !== 'all') {
-      const invoiceDate = new Date(invoice.issue_date);
+      // Use the date string directly to avoid timezone issues
+      const invoiceYearMonth = invoice.issue_date.slice(0, 7); // "YYYY-MM"
       const now = new Date();
+      
       if (selectedMonth === 'this-month') {
-        const thisMonth = now.toISOString().slice(0, 7);
-        const invoiceMonth = invoiceDate.toISOString().slice(0, 7);
-        if (invoiceMonth !== thisMonth) return false;
+        const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        if (invoiceYearMonth !== thisMonth) return false;
       } else if (selectedMonth === 'last-month') {
-        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1);
-        const lastMonth = lastMonthDate.toISOString().slice(0, 7);
-        const invoiceMonth = invoiceDate.toISOString().slice(0, 7);
-        if (invoiceMonth !== lastMonth) return false;
+        const lastMonth = now.getMonth() === 0 
+          ? `${now.getFullYear() - 1}-12` 
+          : `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
+        if (invoiceYearMonth !== lastMonth) return false;
       } else if (selectedMonth === 'this-year') {
-        const thisYear = now.getFullYear();
-        const invoiceYear = invoiceDate.getFullYear();
+        const thisYear = String(now.getFullYear());
+        const invoiceYear = invoice.issue_date.slice(0, 4);
         if (invoiceYear !== thisYear) return false;
       } else if (selectedMonth === 'custom') {
+        const invoiceDate = new Date(invoice.issue_date + 'T00:00:00');
         if (customDateRange.from && invoiceDate < customDateRange.from) return false;
         if (customDateRange.to && invoiceDate > customDateRange.to) return false;
       }

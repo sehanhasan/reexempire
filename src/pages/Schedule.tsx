@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { appointmentService, customerService, staffService } from "@/services";
 import { ListView } from "@/components/schedule/ListView";
-import { PlusCircle } from "lucide-react";
+import { CalendarView } from "@/components/schedule/CalendarView";
+import { PlusCircle, Calendar, List } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { Appointment, Staff } from "@/types/database";
@@ -19,6 +20,7 @@ export default function Schedule() {
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -204,13 +206,43 @@ export default function Schedule() {
         </div>
         
         <div className="mt-4">
-          <ListView 
-            appointments={filteredAppointments} 
-            onEdit={handleEdit} 
-            onMarkAsCompleted={handleMarkAsCompleted} 
-            onMarkAsInProgress={handleMarkAsInProgress} 
-          />
+          {viewMode === "list" ? (
+            <ListView 
+              appointments={filteredAppointments} 
+              onEdit={handleEdit} 
+              onMarkAsCompleted={handleMarkAsCompleted} 
+              onMarkAsInProgress={handleMarkAsInProgress} 
+            />
+          ) : (
+            <CalendarView
+              appointments={filteredAppointments}
+              onEdit={handleEdit}
+              onMarkAsCompleted={handleMarkAsCompleted}
+              onMarkAsInProgress={handleMarkAsInProgress}
+            />
+          )}
         </div>
+      </div>
+
+      {/* View Toggle Button */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <Button
+          onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")}
+          className="shadow-lg"
+          size="lg"
+        >
+          {viewMode === "list" ? (
+            <>
+              <Calendar className="mr-2 h-5 w-5" />
+              Calendar View
+            </>
+          ) : (
+            <>
+              <List className="mr-2 h-5 w-5" />
+              List View
+            </>
+          )}
+        </Button>
       </div>
       
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />

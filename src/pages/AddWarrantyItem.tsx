@@ -167,35 +167,37 @@ export default function AddWarrantyItem() {
         const quantityToSubtract = formItem.quantity || 1;
         
         // Check if there's a matching inventory item by name
-        const { data: inventoryItems, error: inventoryError } = await supabase
+        const { data: inventoryItem, error: inventoryError } = await supabase
           .from('inventory_items')
           .select('*')
           .eq('name', formItem.item_name)
           .eq('status', 'Active')
-          .gte('quantity', quantityToSubtract)
-          .single();
+          .maybeSingle();
 
-        if (!inventoryError && inventoryItems) {
-          // Subtract the specified quantity from inventory
-          const { error: updateError } = await supabase
-            .from('inventory_items')
-            .update({ 
-              quantity: inventoryItems.quantity - quantityToSubtract,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', inventoryItems.id);
+        if (!inventoryError && inventoryItem) {
+          // Check if there's enough stock
+          if (inventoryItem.quantity >= quantityToSubtract) {
+            // Subtract the specified quantity from inventory
+            const { error: updateError } = await supabase
+              .from('inventory_items')
+              .update({ 
+                quantity: inventoryItem.quantity - quantityToSubtract,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', inventoryItem.id);
 
-          if (!updateError) {
-            // Create inventory movement record
-            await supabase.from('inventory_movements').insert({
-              inventory_item_id: inventoryItems.id,
-              movement_type: 'OUT',
-              quantity: -quantityToSubtract,
-              reference_type: 'warranty_issue',
-              reference_id: warrantyItem.id,
-              notes: `Warranty issued for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
-              created_by: 'System'
-            });
+            if (!updateError) {
+              // Create inventory movement record
+              await supabase.from('inventory_movements').insert({
+                inventory_item_id: inventoryItem.id,
+                movement_type: 'OUT',
+                quantity: quantityToSubtract,
+                reference_type: 'warranty_issue',
+                reference_id: warrantyItem.id,
+                notes: `Warranty issued for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
+                created_by: 'System'
+              });
+            }
           }
         }
       }
