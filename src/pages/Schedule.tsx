@@ -225,7 +225,7 @@ export default function Schedule() {
       </div>
 
       {/* View Toggle Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-16 z-50">
         <Button
           onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")}
           className="shadow-lg"

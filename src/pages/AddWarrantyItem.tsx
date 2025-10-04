@@ -177,14 +177,25 @@ export default function AddWarrantyItem() {
         if (!inventoryError && inventoryItem) {
           // Check if there's enough stock
           if (inventoryItem.quantity >= quantityToSubtract) {
-            // Create inventory movement record - the database trigger will handle the quantity update
+            // When issuing a warranty item
             await supabase.from('inventory_movements').insert({
               inventory_item_id: inventoryItem.id,
-              movement_type: 'OUT',
+              movement_type: 'OUT', // subtracts stock
               quantity: quantityToSubtract,
               reference_type: 'warranty_issue',
               reference_id: warrantyItem.id,
               notes: `Warranty issued for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
+              created_by: 'System'
+            });
+
+            // When removing/canceling a warranty item
+            await supabase.from('inventory_movements').insert({
+              inventory_item_id: inventoryItem.id,
+              movement_type: 'IN', // adds back stock
+              quantity: quantityToSubtract,
+              reference_type: 'warranty_issue_removal',
+              reference_id: warrantyItem.id,
+              notes: `Warranty item removed for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
               created_by: 'System'
             });
           }
