@@ -160,7 +160,7 @@ export default function AddWarrantyItem() {
       } = await supabase.from('warranty_items').insert(warrantyItemsToCreate).select();
       if (error) throw error;
 
-      // For each warranty item created, check if it corresponds to an inventory item and subtract quantity
+      // For each warranty item created, create inventory movement record (trigger handles quantity update)
       for (let i = 0; i < result.length; i++) {
         const warrantyItem = result[i];
         const formItem = data.items[i];
@@ -177,27 +177,16 @@ export default function AddWarrantyItem() {
         if (!inventoryError && inventoryItem) {
           // Check if there's enough stock
           if (inventoryItem.quantity >= quantityToSubtract) {
-            // Subtract the specified quantity from inventory
-            const { error: updateError } = await supabase
-              .from('inventory_items')
-              .update({ 
-                quantity: inventoryItem.quantity - quantityToSubtract,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', inventoryItem.id);
-
-            if (!updateError) {
-              // Create inventory movement record
-              await supabase.from('inventory_movements').insert({
-                inventory_item_id: inventoryItem.id,
-                movement_type: 'OUT',
-                quantity: quantityToSubtract,
-                reference_type: 'warranty_issue',
-                reference_id: warrantyItem.id,
-                notes: `Warranty issued for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
-                created_by: 'System'
-              });
-            }
+            // Create inventory movement record - the database trigger will handle the quantity update
+            await supabase.from('inventory_movements').insert({
+              inventory_item_id: inventoryItem.id,
+              movement_type: 'OUT',
+              quantity: quantityToSubtract,
+              reference_type: 'warranty_issue',
+              reference_id: warrantyItem.id,
+              notes: `Warranty issued for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
+              created_by: 'System'
+            });
           }
         }
       }
