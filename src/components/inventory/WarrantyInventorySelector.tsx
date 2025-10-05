@@ -174,7 +174,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                         key={item.id} 
                         className={`cursor-pointer transition-colors ${
                           isSelected 
-                            ? 'bg-blue-50 border-blue-200 pointer-events-none' 
+                            ? 'bg-blue-50 border-green-200 pointer-events-none' 
                             : 'hover:bg-accent'
                         }`} 
                         onClick={() => !isSelected && handleAddItem(item)}
@@ -182,9 +182,9 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                         <CardContent className="p-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                              <Package className={`h-4 w-4 ${isSelected ? 'text-cyan-600' : 'text-muted-foreground'}`} />
+                              <Package className={`h-4 w-4 ${isSelected ? 'text-green-600' : 'text-muted-foreground'}`} />
                               <div>
-                                <div className={`font-medium text-sm ${isSelected ? 'text-cyan-600' : ''}`}>
+                                <div className={`font-medium text-sm ${isSelected ? 'text-green-600' : ''}`}>
                                   {item.name}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
