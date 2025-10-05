@@ -52,11 +52,12 @@ export default function AddAppointment() {
 
   // Fetch appointment data when in edit mode
   useEffect(() => {
-    if (isEditMode && staffMembers.length > 0) {
+    if (isEditMode && id) {
       const fetchAppointmentData = async () => {
         try {
           setIsLoading(true);
           const appointment = await appointmentService.getById(id);
+          
           if (appointment) {
             // Set basic appointment data
             setTitle(appointment.title || "");
@@ -71,7 +72,7 @@ export default function AddAppointment() {
               setSelectedStaff([appointment.staff_id]);
             }
 
-            // Parse staff notes properly - this fixes issue #1
+            // Parse staff notes properly
             if (appointment.notes) {
               let generalNotes = appointment.notes;
               let staffNotesObj: Record<string, string> = {};
@@ -81,7 +82,7 @@ export default function AddAppointment() {
                 const [generalPart, staffNotesPart] = appointment.notes.split("--- Staff Notes ---");
                 generalNotes = generalPart.trim();
                 
-                if (staffNotesPart) {
+                if (staffNotesPart && staffMembers.length > 0) {
                   const staffNotesLines = staffNotesPart.trim().split('\n\n');
                   staffNotesLines.forEach(line => {
                     const colonIndex = line.indexOf(': ');
@@ -134,7 +135,7 @@ export default function AddAppointment() {
       };
       fetchAppointmentData();
     }
-  }, [id, isEditMode, staffMembers]);
+  }, [id, isEditMode]);
 
   const toggleStaffSelection = (staffId: string) => {
     if (selectedStaff.includes(staffId)) {
