@@ -174,7 +174,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                         key={item.id} 
                         className={`cursor-pointer transition-colors ${
                           isSelected 
-                            ? 'bg-blue-50 border-green-200 pointer-events-none' 
+                            ? 'bg-green-50 border-green-200 pointer-events-none' 
                             : 'hover:bg-accent'
                         }`} 
                         onClick={() => !isSelected && handleAddItem(item)}
@@ -196,7 +196,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                               </div>
                             </div>
                             {isSelected && (
-                              <Badge variant="secondary" className="bg-cyan-100 text-cyan-700">
+                              <Badge variant="secondary" className="bg-green-100 text-green-700">
                                 Selected
                               </Badge>
                             )}
@@ -219,7 +219,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                       <CardContent className="p-3">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="font-medium text-sm text-cyan-600">{item.name}</div>
+                            <div className="font-medium text-sm text-green-600">{item.name}</div>
                             <Button 
                               size="sm" 
                               variant="ghost" 
