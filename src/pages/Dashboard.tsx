@@ -263,7 +263,7 @@ export default function Dashboard() {
       </Card>
 
       {/* Recent Activities Grid */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Quotations */}
         <Card className="border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
