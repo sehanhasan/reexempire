@@ -115,20 +115,17 @@ export default function Schedule() {
     }
   };
 
-  // Filter appointments based on active tab - this is the key fix for issue #3
-  const getFilteredAppointments = () => {
+  // Filter appointments based on active tab
+  const filteredAppointments = appointments.filter(appointment => {
     if (activeTab === "upcoming") {
-      return appointments.filter(appointment => ["Confirmed", "Scheduled", "Pending"].includes(appointment.status) && appointment.status !== "Cancelled");
+      return ["Confirmed", "Scheduled", "Pending"].includes(appointment.status);
     } else if (activeTab === "in_progress") {
-      return appointments.filter(appointment => appointment.status === "In Progress");
+      return appointment.status === "In Progress";
     } else if (activeTab === "completed") {
-      return appointments.filter(appointment => appointment.status === "Completed" || appointment.status === "Cancelled");
+      return appointment.status === "Completed" || appointment.status === "Cancelled";
     }
-    return appointments;
-  };
-
-  // Get filtered appointments whenever activeTab or appointments change
-  const filteredAppointments = getFilteredAppointments();
+    return true;
+  });
 
   // Counts for tabs
   const counts = {
@@ -161,7 +158,7 @@ export default function Schedule() {
       </div>
 
       {/* View Toggle Button */}
-      <div className="fixed bottom-6 right-30 z-50">
+      <div className="fixed bottom-6 left-6 z-50">
         <Button onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} size="lg" className="shadow-lg bg-blue-600 hover:bg-blue-500">
           {viewMode === "list" ? <>
               <Calendar className="mr-2 h-5 w-5" />

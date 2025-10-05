@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns";
+import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
 
 interface CalendarViewProps {
   appointments: any[];
@@ -14,6 +15,8 @@ interface CalendarViewProps {
 
 export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAsInProgress }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -113,7 +116,10 @@ export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAs
                   {dayAppointments.slice(0, 3).map((appointment) => (
                     <div
                       key={appointment.id}
-                      onClick={() => onEdit(appointment)}
+                      onClick={() => {
+                        setSelectedAppointment(appointment);
+                        setIsDialogOpen(true);
+                      }}
                       className={`text-xs p-1.5 rounded cursor-pointer hover:opacity-80 transition-opacity border ${getStatusColor(
                         appointment.status
                       )}`}
@@ -141,6 +147,18 @@ export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAs
           })}
         </div>
       </div>
+
+      {selectedAppointment && (
+        <AppointmentDetailsDialog
+          appointment={selectedAppointment}
+          open={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          customer={selectedAppointment.customer || null}
+          assignedStaff={selectedAppointment.staff || null}
+          onMarkAsCompleted={onMarkAsCompleted}
+          onMarkAsInProgress={onMarkAsInProgress}
+        />
+      )}
     </div>
   );
 }

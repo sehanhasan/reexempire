@@ -318,8 +318,8 @@ export default function Finance() {
                     <td colSpan={7} className="text-center py-8 text-muted-foreground">
                       No paid invoices found for the selected period.
                     </td>
-                  </tr> : paginatedData(filteredInvoices).map(invoice => {
-                const customer = customers.find(c => c.id === invoice.customer_id);
+                  </tr> : paginatedData(filteredInvoices).map((invoice: any) => {
+                const customer = customers.find((c: any) => c.id === invoice.customer_id);
                 return <tr key={invoice.id} className="border-b hover:bg-muted/50">
                         <td className="p-4">
                           <span className="font-mono text-sm text-inherit">{invoice.reference_number}</span>

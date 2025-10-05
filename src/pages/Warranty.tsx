@@ -59,18 +59,56 @@ export default function Warranty() {
   // Delete warranty item mutation
   const deleteWarrantyMutation = useMutation({
     mutationFn: async (id: string) => {
-      const {
-        error
-      } = await supabase.from('warranty_items').delete().eq('id', id);
+      // First, get the warranty item to know which inventory item to restock
+      const { data: warrantyItem, error: fetchError } = await supabase
+        .from('warranty_items')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // Find matching inventory item
+      const { data: inventoryItem } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('name', warrantyItem.item_name)
+        .eq('status', 'Active')
+        .maybeSingle();
+      
+      // Delete the warranty item
+      const { error } = await supabase.from('warranty_items').delete().eq('id', id);
       if (error) throw error;
+      
+      // Add the quantity back to inventory if inventory item exists
+      if (inventoryItem) {
+        const quantityToReturn = warrantyItem.quantity || 1;
+        
+        // Create inventory movement record (the trigger will update the quantity)
+        await supabase.from('inventory_movements').insert({
+          inventory_item_id: inventoryItem.id,
+          movement_type: 'IN',
+          quantity: quantityToReturn,
+          reference_type: 'warranty_return',
+          reference_id: id,
+          notes: `Warranty item deleted - restocking ${warrantyItem.item_name} (Qty: ${quantityToReturn})`,
+          created_by: 'System'
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['warranty-items']
       });
+      queryClient.invalidateQueries({
+        queryKey: ['inventory-items']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['low-stock-items']
+      });
       toast({
         title: "Success",
-        description: "Warranty item deleted successfully"
+        description: "Warranty item deleted and inventory restocked successfully"
       });
     },
     onError: () => {
