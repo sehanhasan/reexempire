@@ -209,7 +209,7 @@ export default function AddDemandList() {
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Creating..." : "Create Demand List"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/demand-lists')}>
+              <Button type="button" variant="outline" onClick={() => navigate('/inventory')}>
                 Cancel
               </Button>
             </div>
