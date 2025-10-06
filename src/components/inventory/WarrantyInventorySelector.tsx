@@ -219,7 +219,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
                       <CardContent className="p-3">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="font-medium text-sm text-green-600">{item.name}</div>
+                            <div className="font-medium text-sm">{item.name}</div>
                             <Button 
                               size="sm" 
                               variant="ghost" 
