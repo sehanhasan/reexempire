@@ -4,7 +4,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Chart } from "@/components/dashboard/Chart";
-import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt, TrendingUp, Activity, DollarSign, Package } from "lucide-react";
+import { Users, ReceiptText, CreditCard, Clock, ChevronRight, Calendar, Receipt, TrendingUp, Activity, DollarSign } from "lucide-react";
 import { quotationService, invoiceService, customerService, appointmentService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,6 @@ import { formatCurrency } from "@/utils/formatters";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
 export default function Dashboard() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -31,7 +30,6 @@ export default function Dashboard() {
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [revenueData, setRevenueData] = useState([]);
   const [activeTab, setActiveTab] = useState("activity");
-  const [lowStockItems, setLowStockItems] = useState([]);
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -86,19 +84,6 @@ export default function Dashboard() {
         setUpcomingAppointments(enhancedAppointments);
         setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
         setRecentInvoices(invoices.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
-        
-        // Fetch low stock inventory items
-        const { data: inventoryItems } = await supabase
-          .from('inventory_items')
-          .select('*')
-          .eq('status', 'Active')
-          .order('quantity', { ascending: true })
-          .limit(5);
-        
-        if (inventoryItems) {
-          setLowStockItems(inventoryItems.filter(item => item.quantity <= (item.min_stock_level || 10)));
-        }
-        
         setLoading(false);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -372,14 +357,13 @@ export default function Dashboard() {
                       <div className="text-right">
                         <p className="font-bold text-sm text-slate-800">{formatMoney(invoice.total)}</p>
                         <Badge className={
-                          invoice.status === 'Draft' ? "bg-gray-100 text-gray-700 hover:bg-gray-100" :
                           invoice.payment_status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-100" : 
                           invoice.payment_status === 'Unpaid' ? "bg-amber-100 text-amber-700 hover:bg-amber-100" : 
                           invoice.payment_status === 'Overdue' ? "bg-red-100 text-red-700 hover:bg-red-100" :
                           invoice.payment_status === 'Partially Paid' || invoice.payment_status === 'Partial' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" :
                           "bg-gray-100 text-gray-700 hover:bg-gray-100"
                         } variant="secondary">
-                          {invoice.status === 'Draft' ? 'Draft' : invoice.payment_status}
+                          {invoice.payment_status}
                         </Badge>
                       </div>
                     </div>;
@@ -388,87 +372,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Inventory Card */}
-      <Card className="border shadow-sm mt-4">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Package className="h-4 w-4 text-orange-600" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-semibold text-slate-800">Low Stock Items</CardTitle>
-            </div>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate("/inventory")} 
-            className="text-orange-600 hover:text-orange-700"
-          >
-            View All
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {loading ? (
-            <div className="py-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-sm text-slate-600 mt-2">Loading inventory...</p>
-            </div>
-          ) : lowStockItems.length === 0 ? (
-            <div className="py-8 text-center">
-              <Package className="h-12 w-12 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm text-slate-600">All inventory items are well-stocked</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {lowStockItems.map((item) => (
-                <div 
-                  key={item.id}
-                  onClick={() => navigate(`/edit-inventory-item/${item.id}`)}
-                  className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200 hover:from-orange-100 hover:to-red-100 transition-all cursor-pointer"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-slate-900 text-sm">
-                        {item.name}
-                      </h3>
-                      <Badge 
-                        className={
-                          item.quantity === 0 
-                            ? "bg-red-100 text-red-700 hover:bg-red-100" 
-                            : item.quantity <= (item.min_stock_level || 10) / 2
-                            ? "bg-orange-100 text-orange-700 hover:bg-orange-100"
-                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
-                        }
-                        variant="secondary"
-                      >
-                        {item.quantity === 0 ? 'Out of Stock' : 'Low Stock'}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-slate-600">
-                      <span className="font-medium text-orange-600">
-                        Current: {item.quantity}
-                      </span>
-                      {' • '}
-                      <span className="text-slate-500">
-                        Min: {item.min_stock_level || 10}
-                      </span>
-                      {item.category && (
-                        <>
-                          {' • '}
-                          <span className="text-slate-500">{item.category}</span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>;
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
       <div className="">

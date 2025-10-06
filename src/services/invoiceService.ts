@@ -5,11 +5,11 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
   const now = new Date();
   const year = now.getFullYear();
   
-  let counter = 1691; // Start from 1691 as requested
+  let counter = 1;
   let referenceNumber: string;
   
   do {
-    const sequence = counter.toString().padStart(5, '0'); // Changed to 5 digits to accommodate larger numbers
+    const sequence = counter.toString().padStart(4, '0');
     referenceNumber = isDepositInvoice 
       ? `INV-${year}-${sequence}-D`
       : `INV-${year}-${sequence}`;
@@ -35,9 +35,9 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
     }
     
     counter++;
-  } while (counter <= 99999); // Prevent infinite loop
+  } while (counter <= 9999); // Prevent infinite loop
   
-  if (counter > 99999) {
+  if (counter > 9999) {
     throw new Error("Unable to generate unique reference number - sequence exhausted");
   }
   

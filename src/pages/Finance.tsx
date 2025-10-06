@@ -66,10 +66,6 @@ export default function Finance() {
         const thisYear = String(now.getFullYear());
         const invoiceYear = invoice.issue_date.slice(0, 4);
         if (invoiceYear !== thisYear) return false;
-      } else if (selectedMonth === 'last-year') {
-        const lastYear = String(now.getFullYear() - 1);
-        const invoiceYear = invoice.issue_date.slice(0, 4);
-        if (invoiceYear !== lastYear) return false;
       } else if (selectedMonth === 'custom') {
         const invoiceDate = new Date(invoice.issue_date + 'T00:00:00');
         if (customDateRange.from && invoiceDate < customDateRange.from) return false;
@@ -262,7 +258,6 @@ export default function Finance() {
                 <SelectItem value="this-month">This Month</SelectItem>
                 <SelectItem value="last-month">Last Month</SelectItem>
                 <SelectItem value="this-year">This Year</SelectItem>
-                <SelectItem value="last-year">Last Year</SelectItem>
                 {/* <SelectItem value="custom">Custom</SelectItem> */}
                 <SelectItem value="all">All Time</SelectItem>
               </SelectContent>

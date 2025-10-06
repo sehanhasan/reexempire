@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PaginationControls } from "@/components/common/PaginationControls";
@@ -23,32 +23,6 @@ export default function Warranty() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  // Set up real-time subscription for warranty items
-  useEffect(() => {
-    const channel = supabase
-      .channel('warranty-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'warranty_items'
-        },
-        (payload) => {
-          console.log('Warranty item change detected:', payload);
-          // Invalidate queries to refetch data
-          queryClient.invalidateQueries({ queryKey: ['warranty-items'] });
-          queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-          queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 
   // Fetch warranty items
   const {
