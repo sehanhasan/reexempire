@@ -5,11 +5,11 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
   const now = new Date();
   const year = now.getFullYear();
   
-  let counter = 1;
+  let counter = 1691;
   let referenceNumber: string;
   
   do {
-    const sequence = counter.toString().padStart(4, '0');
+    const sequence = counter.toString().padStart(5, '0');
     referenceNumber = isDepositInvoice 
       ? `INV-${year}-${sequence}-D`
       : `INV-${year}-${sequence}`;
