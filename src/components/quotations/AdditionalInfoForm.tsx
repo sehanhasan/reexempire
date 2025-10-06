@@ -73,9 +73,9 @@ export function AdditionalInfoForm({
             Cancel
           </Button>
           
-          {/* {showDraft && <Button type="button" variant="secondary" onClick={e => onSubmit(e, "Draft")} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
+          {showDraft && <Button type="button" variant="secondary" onClick={e => onSubmit(e, "Draft")} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
               {isSubmitting ? "Saving..." : "Save as Draft"}
-            </Button>} */}
+            </Button>}
 
           <Button type="button" onClick={handleSendWithShare} disabled={isSubmitting} className={isMobile ? "w-full" : ""}>
             {isSubmitting ? "Processing..." : getSendButtonText()}
