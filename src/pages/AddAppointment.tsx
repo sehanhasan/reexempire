@@ -547,7 +547,7 @@ export default function AddAppointment() {
                         Delete
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -555,8 +555,14 @@ export default function AddAppointment() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAppointment} className="bg-red-600 hover:bg-red-700">
+                        <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteAppointment();
+                          }} 
+                          className="bg-red-600 hover:bg-red-700"
+                        >
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>
