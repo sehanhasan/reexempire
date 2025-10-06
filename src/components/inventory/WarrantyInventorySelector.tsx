@@ -142,7 +142,7 @@ export function WarrantyInventorySelector({ open, onOpenChange, onSelectItems }:
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <ShieldCheck className="mr-2 h-5 w-5 text-cyan-600" />
-            Select Items
+            Select Warranty Items
           </DialogTitle>
         </DialogHeader>
         

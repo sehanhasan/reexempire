@@ -447,14 +447,14 @@ export default function Invoices() {
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Invoice
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={e => {
+                              {/* <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 navigate(`/add-warranty-item?customerId=${invoice.customer_id}&invoiceId=${invoice.reference_number}`);
                               }}>
                                 <ShieldCheck className="mr-2 h-4 w-4" />
                                 Add Warranty Item
                               </DropdownMenuItem>
-                              {/* <DropdownMenuItem onClick={e => {
+                              <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 handleSendWhatsapp(invoice);
                               }}>
@@ -530,10 +530,10 @@ export default function Invoices() {
                                     <FileText className="mr-2 h-4 w-4" />
                                     View Invoice
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => navigate(`/add-warranty-item?customerId=${invoice.customer_id}&invoiceId=${invoice.reference_number}`)}>
+                                  {/* <DropdownMenuItem onClick={() => navigate(`/add-warranty-item?customerId=${invoice.customer_id}&invoiceId=${invoice.reference_number}`)}>
                                     <ShieldCheck className="mr-2 h-4 w-4" />
                                     Add Warranty Item
-                                  </DropdownMenuItem>
+                                  </DropdownMenuItem> */}
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     className="text-red-600"
