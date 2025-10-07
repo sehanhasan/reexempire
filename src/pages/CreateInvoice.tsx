@@ -84,7 +84,7 @@ export default function CreateInvoice() {
         inv.reference_number?.startsWith(`INV-${currentYear}`)
       ) || [];
       
-      const nextNumber = Math.max(1700, currentYearInvoices.length + 1687);
+      const nextNumber = Math.max(1700, currentYearInvoices.length + 1650);
       const baseRef = `INV-${currentYear}-${nextNumber.toString().padStart(5, '0')}`;
       
       if (isDueInvoice) {
