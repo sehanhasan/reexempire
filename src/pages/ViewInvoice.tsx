@@ -216,9 +216,13 @@ export default function ViewInvoice() {
     return <div className="min-h-screen bg-background flex justify-center items-center zoom-page" style={{
       minWidth: "1024px"
     }}>
-        <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-2xl font-bold">Invoice Not Found</h2>
-        <Button onClick={() => navigate("/")}>Return Home</Button>
+       <div className="text-center">
+          <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Invoice Not Found</h2>
+          <Button onClick={() => navigate('/')} className="mt-4">
+            Return Home
+          </Button>
+        </div>
       </div>;
   }
   const dueDate = new Date(invoice.due_date);
