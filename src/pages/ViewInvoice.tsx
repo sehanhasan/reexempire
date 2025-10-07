@@ -112,7 +112,7 @@ export default function ViewInvoice() {
       style.textContent = `
         @media print {
           @page {
-            margin: 0.2in 0.2in;
+            margin: 5mm 5mm 5mm 5mm;
             size: A4;
           }
         }
@@ -412,7 +412,7 @@ export default function ViewInvoice() {
             style.textContent = `
                   @media print {
                     @page {
-                      margin: 0.2in 0.2in;
+                      margin: 5mm 5mm 5mm 5mm;
                       size: A4;
                     }
                   }

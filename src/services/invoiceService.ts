@@ -5,7 +5,7 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
   const now = new Date();
   const year = now.getFullYear();
   
-  let counter = 1691;
+  let counter = 1700;
   let referenceNumber: string;
   
   do {
@@ -35,9 +35,9 @@ const generateUniqueReferenceNumber = async (isDepositInvoice: boolean = false):
     }
     
     counter++;
-  } while (counter <= 9999); // Prevent infinite loop
+  } while (counter <= 99999); // Prevent infinite loop
   
-  if (counter > 9999) {
+  if (counter > 99999) {
     throw new Error("Unable to generate unique reference number - sequence exhausted");
   }
   
@@ -293,6 +293,7 @@ const update = async (id: string, updates: Partial<Invoice>): Promise<Invoice | 
               const itemName = nameMatch[1].trim();
               const serialNumber = nameMatch[2] || '';
               const warrantyPeriod = nameMatch[3].trim();
+              const quantity = item.quantity || 1;
               
               // Convert warranty period text to type
               let warrantyPeriodType = '30_days';
@@ -346,17 +347,41 @@ const update = async (id: string, updates: Partial<Invoice>): Promise<Invoice | 
                 warranty_period_type: warrantyPeriodType,
                 warranty_period_value: null,
                 warranty_period_unit: null,
-                expiry_date: expiryDate.toISOString().split('T')[0]
+                expiry_date: expiryDate.toISOString().split('T')[0],
+                quantity: quantity
               };
 
-              const { error: warrantyError } = await supabase
+              const { data: warrantyResult, error: warrantyError } = await supabase
                 .from('warranty_items')
-                .insert([warrantyData]);
+                .insert([warrantyData])
+                .select()
+                .single();
 
               if (warrantyError) {
                 console.error('InvoiceService: Error creating warranty item:', warrantyError);
               } else {
                 console.log('InvoiceService: Created warranty item for:', itemName);
+                
+                // Find matching inventory item and subtract quantity
+                const { data: inventoryItem } = await supabase
+                  .from('inventory_items')
+                  .select('*')
+                  .eq('name', itemName)
+                  .eq('status', 'Active')
+                  .maybeSingle();
+                
+                if (inventoryItem) {
+                  // Create inventory movement record (the trigger will update the quantity)
+                  await supabase.from('inventory_movements').insert({
+                    inventory_item_id: inventoryItem.id,
+                    movement_type: 'OUT',
+                    quantity: quantity,
+                    reference_type: 'warranty',
+                    reference_id: warrantyResult.id,
+                    notes: `Warranty item added from invoice ${currentInvoice.reference_number}`
+                  });
+                  console.log('InvoiceService: Subtracted inventory quantity for:', itemName);
+                }
               }
             }
           } catch (warrantyError) {
@@ -389,6 +414,47 @@ const update = async (id: string, updates: Partial<Invoice>): Promise<Invoice | 
 const deleteInvoice = async (id: string): Promise<void> => {
   try {
     console.log(`InvoiceService: Deleting invoice with id ${id}`);
+    
+    // Before deleting invoice, delete associated warranty items and restore inventory
+    const { data: warrantyItems } = await supabase
+      .from('warranty_items')
+      .select('*')
+      .eq('invoice_id', id);
+    
+    if (warrantyItems && warrantyItems.length > 0) {
+      for (const warrantyItem of warrantyItems) {
+        // Find matching inventory item
+        const { data: inventoryItem } = await supabase
+          .from('inventory_items')
+          .select('*')
+          .eq('name', warrantyItem.item_name)
+          .eq('status', 'Active')
+          .maybeSingle();
+        
+        // Add the quantity back to inventory if inventory item exists
+        if (inventoryItem) {
+          const quantityToReturn = warrantyItem.quantity || 1;
+          
+          // Create inventory movement record (the trigger will update the quantity)
+          await supabase.from('inventory_movements').insert({
+            inventory_item_id: inventoryItem.id,
+            movement_type: 'IN',
+            quantity: quantityToReturn,
+            reference_type: 'warranty_return',
+            reference_id: warrantyItem.id,
+            notes: `Returned from warranty item deletion (Invoice deleted)`
+          });
+          
+          console.log(`InvoiceService: Returned ${quantityToReturn} of ${warrantyItem.item_name} to inventory`);
+        }
+        
+        // Delete the warranty item
+        await supabase
+          .from('warranty_items')
+          .delete()
+          .eq('id', warrantyItem.id);
+      }
+    }
     
     const { error } = await supabase
       .from('invoices')
