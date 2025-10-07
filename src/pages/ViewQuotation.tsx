@@ -266,26 +266,26 @@ export default function ViewQuotation() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="text-left p-2 font-semibold text-gray-700">Description</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-16">QTY</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Unit Price</th>
-                      <th className="text-right p-2 font-semibold text-gray-700 w-24">Amount</th>
+                      <th className="text-left px-2 py-1 font-semibold text-gray-700">Description</th>
+                      <th className="text-right px-2 py-1 font-semibold text-gray-700 w-16">QTY</th>
+                      <th className="text-right px-2 py-1 font-semibold text-gray-700 w-24">Unit Price</th>
+                      <th className="text-right px-2 py-1 font-semibold text-gray-700 w-24">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categories.map((category, categoryIndex) => <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
+                          <td colSpan={4} className="px-2 py-1 font-semibold text-blue-800 text-sm">
                             {categoryIndex + 1}- {category}
                           </td>
                         </tr>
                         {groupedItems[category].map((item, index) => <tr key={`${category}-${index}`} className="border-b hover:bg-gray-50">
-                             <td className="p-2 text-gray-800 whitespace-pre-wrap">{item.description}</td>
-                             <td className="text-right p-2 text-gray-800">{item.quantity}</td>
-                              <td className="text-right p-2 text-gray-800">
+                             <td className="px-2 py-1 text-gray-800 whitespace-pre-wrap">{item.description}</td>
+                             <td className="text-right px-2 py-1 text-gray-800">{item.quantity}</td>
+                              <td className="text-right px-2 py-1 text-gray-800">
                                 {item.unit_price.toFixed(2)}{item.unit && item.unit.trim() !== '' && item.unit.trim().toLowerCase() !== 'unit' ? ` ${item.unit}` : ''}
                               </td>
-                             <td className="text-right p-2 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
+                             <td className="text-right px-2 py-1 font-semibold text-gray-800">{item.amount.toFixed(2)}</td>
                            </tr>)}
                       </React.Fragment>)}
                   </tbody>
