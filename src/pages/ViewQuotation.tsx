@@ -275,7 +275,7 @@ export default function ViewQuotation() {
                   <tbody>
                     {categories.map((category, categoryIndex) => <React.Fragment key={category}>
                         <tr className="bg-blue-50 border-t border-b">
-                          <td colSpan={4} className="p-2 font-semibold text-blue-800 text-sm">
+                          <td colSpan={4} className="px-2 py-1 font-semibold text-blue-800 text-sm">
                             {categoryIndex + 1}- {category}
                           </td>
                         </tr>
