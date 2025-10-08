@@ -86,16 +86,19 @@ export default function Dashboard() {
         setUpcomingAppointments(enhancedAppointments);
         setRecentQuotations(quotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
         setRecentInvoices(invoices.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5));
-
+        
         // Fetch low stock inventory items
-        const {
-          data: inventoryItems
-        } = await supabase.from('inventory_items').select('*').eq('status', 'Active').order('quantity', {
-          ascending: true
-        }).limit(5);
+        const { data: inventoryItems } = await supabase
+          .from('inventory_items')
+          .select('*')
+          .eq('status', 'Active')
+          .order('quantity', { ascending: true })
+          .limit(5);
+        
         if (inventoryItems) {
           setLowStockItems(inventoryItems.filter(item => item.quantity <= (item.min_stock_level || 10)));
         }
+        
         setLoading(false);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -302,7 +305,7 @@ export default function Dashboard() {
               </div> : <div className="space-y-3">
                 {recentQuotations.slice(0, 3).map(quotation => {
               const customer = customersMap[quotation.customer_id] || {};
-              return <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between p-3 rounded-lg border border-purple-200 transition-all cursor-pointer ">
+              return <div key={quotation.id} onClick={() => navigateToQuotation(quotation.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:from-purple-100 hover:to-pink-100 transition-all cursor-pointer ">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-purple-700">
@@ -353,7 +356,7 @@ export default function Dashboard() {
               </div> : <div className="space-y-3">
                 {recentInvoices.slice(0, 3).map(invoice => {
               const customer = customersMap[invoice.customer_id] || {};
-              return <div key={invoice.id} onClick={() => navigateToInvoice(invoice.id)} className="flex items-center justify-between p-3 rounded-lg border border-emerald-200 transition-all cursor-pointer">
+              return <div key={invoice.id} onClick={() => navigateToInvoice(invoice.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all cursor-pointer">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-emerald-700">
@@ -368,7 +371,14 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-sm text-slate-800">{formatMoney(invoice.total)}</p>
-                        <Badge className={invoice.status === 'Draft' ? "bg-gray-100 text-gray-700 hover:bg-gray-100" : invoice.payment_status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-100" : invoice.payment_status === 'Unpaid' ? "bg-amber-100 text-amber-700 hover:bg-amber-100" : invoice.payment_status === 'Overdue' ? "bg-red-100 text-red-700 hover:bg-red-100" : invoice.payment_status === 'Partially Paid' || invoice.payment_status === 'Partial' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-gray-100 text-gray-700 hover:bg-gray-100"} variant="secondary">
+                        <Badge className={
+                          invoice.status === 'Draft' ? "bg-gray-100 text-gray-700 hover:bg-gray-100" :
+                          invoice.payment_status === 'Paid' ? "bg-green-100 text-green-700 hover:bg-green-100" : 
+                          invoice.payment_status === 'Unpaid' ? "bg-amber-100 text-amber-700 hover:bg-amber-100" : 
+                          invoice.payment_status === 'Overdue' ? "bg-red-100 text-red-700 hover:bg-red-100" :
+                          invoice.payment_status === 'Partially Paid' || invoice.payment_status === 'Partial' ? "bg-blue-100 text-blue-700 hover:bg-blue-100" :
+                          "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                        } variant="secondary">
                           {invoice.status === 'Draft' ? 'Draft' : invoice.payment_status}
                         </Badge>
                       </div>
@@ -390,26 +400,50 @@ export default function Dashboard() {
               <CardTitle className="text-lg font-semibold text-slate-800">Low Stock Items</CardTitle>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/inventory")} className="text-orange-600 hover:text-orange-700">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate("/inventory")} 
+            className="text-orange-600 hover:text-orange-700"
+          >
             View All
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </CardHeader>
         <CardContent className="pt-0">
-          {loading ? <div className="py-8 text-center">
+          {loading ? (
+            <div className="py-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-sm text-slate-600 mt-2">Loading inventory...</p>
-            </div> : lowStockItems.length === 0 ? <div className="py-8 text-center">
+            </div>
+          ) : lowStockItems.length === 0 ? (
+            <div className="py-8 text-center">
               <Package className="h-12 w-12 text-slate-400 mx-auto mb-2" />
               <p className="text-sm text-slate-600">All inventory items are well-stocked</p>
-            </div> : <div className="space-y-3">
-              {lowStockItems.map(item => <div key={item.id} onClick={() => navigate(`/edit-inventory-item/${item.id}`)} className="flex items-center justify-between p-3 rounded-lg border border-orange-200 transition-all cursor-pointer">
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {lowStockItems.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => navigate(`/edit-inventory-item/${item.id}`)}
+                  className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200 hover:from-orange-100 hover:to-red-100 transition-all cursor-pointer"
+                >
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-semibold text-slate-900 text-sm">
                         {item.name}
                       </h3>
-                      <Badge className={item.quantity === 0 ? "bg-red-100 text-red-700 hover:bg-red-100" : item.quantity <= (item.min_stock_level || 10) / 2 ? "bg-orange-100 text-orange-700 hover:bg-orange-100" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"} variant="secondary">
+                      <Badge 
+                        className={
+                          item.quantity === 0 
+                            ? "bg-red-100 text-red-700 hover:bg-red-100" 
+                            : item.quantity <= (item.min_stock_level || 10) / 2
+                            ? "bg-orange-100 text-orange-700 hover:bg-orange-100"
+                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                        }
+                        variant="secondary"
+                      >
                         {item.quantity === 0 ? 'Out of Stock' : 'Low Stock'}
                       </Badge>
                     </div>
@@ -421,14 +455,18 @@ export default function Dashboard() {
                       <span className="text-slate-500">
                         Min: {item.min_stock_level || 10}
                       </span>
-                      {item.category && <>
+                      {item.category && (
+                        <>
                           {' • '}
                           <span className="text-slate-500">{item.category}</span>
-                        </>}
+                        </>
+                      )}
                     </p>
                   </div>
-                </div>)}
-            </div>}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>;
