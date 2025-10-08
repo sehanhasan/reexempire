@@ -115,12 +115,39 @@ export default function Schedule() {
     }
   };
 
+  const handleSubmitForReview = async (appointment: Appointment) => {
+    try {
+      await appointmentService.update(appointment.id, {
+        status: 'Pending Review'
+      });
+
+      // Update local state
+      setAppointments(prev => prev.map(app => app.id === appointment.id ? {
+        ...app,
+        status: 'Pending Review'
+      } : app));
+      toast({
+        title: "Submitted for Review",
+        description: "Appointment has been submitted for review."
+      });
+    } catch (error) {
+      console.error("Error submitting appointment for review:", error);
+      toast({
+        title: "Error",
+        description: "Could not submit appointment for review",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Filter appointments based on active tab
   const filteredAppointments = appointments.filter(appointment => {
     if (activeTab === "upcoming") {
       return ["Confirmed", "Scheduled", "Pending"].includes(appointment.status);
     } else if (activeTab === "in_progress") {
       return appointment.status === "In Progress";
+    } else if (activeTab === "in_review") {
+      return appointment.status === "Pending Review";
     } else if (activeTab === "completed") {
       return appointment.status === "Completed" || appointment.status === "Cancelled";
     }
@@ -131,6 +158,7 @@ export default function Schedule() {
   const counts = {
     upcoming: appointments.filter(a => ["Confirmed", "Scheduled", "Pending"].includes(a.status) && a.status !== "Cancelled").length,
     inProgress: appointments.filter(a => a.status === "In Progress").length,
+    inReview: appointments.filter(a => a.status === "Pending Review").length,
     completed: appointments.filter(a => a.status === "Completed" || a.status === "Cancelled").length
   };
   return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
@@ -140,20 +168,23 @@ export default function Schedule() {
             </Button>} />}
       
       <div className="mt-0">
-        <div className="flex border-b bg-white border-gray-200 rounded-t-lg">
-          <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+        <div className="flex border-b bg-white border-gray-200 rounded-t-lg overflow-x-auto">
+          <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Upcoming ({counts.upcoming})
           </button>
-          <button onClick={() => setActiveTab("in_progress")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "in_progress" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+          <button onClick={() => setActiveTab("in_progress")} className={`flex-1 py-3 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === "in_progress" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             In Progress ({counts.inProgress})
           </button>
-          <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-6 text-medium font-small transition-colors duration-200 ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+          <button onClick={() => setActiveTab("in_review")} className={`flex-1 py-3 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === "in_review" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+            In Review ({counts.inReview})
+          </button>
+          <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-4 text-sm font-medium transition-colors duration-200 whitespace-nowrap ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Completed ({counts.completed})
           </button>
         </div>
         
         <div className="mt-4">
-          {viewMode === "list" ? <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} /> : <CalendarView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} />}
+          {viewMode === "list" ? <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} onSubmitForReview={handleSubmitForReview} /> : <CalendarView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} onSubmitForReview={handleSubmitForReview} />}
         </div>
       </div>
 
