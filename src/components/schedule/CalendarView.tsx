@@ -11,10 +11,9 @@ interface CalendarViewProps {
   onEdit: (appointment: any) => void;
   onMarkAsCompleted: (appointment: any) => void;
   onMarkAsInProgress: (appointment: any) => void;
-  onSubmitForReview?: (appointment: any) => void;
 }
 
-export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAsInProgress, onSubmitForReview }: CalendarViewProps) {
+export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAsInProgress }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -158,7 +157,6 @@ export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAs
           assignedStaff={selectedAppointment.staff || null}
           onMarkAsCompleted={onMarkAsCompleted}
           onMarkAsInProgress={onMarkAsInProgress}
-          onSubmitForReview={onSubmitForReview}
         />
       )}
     </div>

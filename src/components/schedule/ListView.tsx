@@ -26,15 +26,13 @@ interface ListViewProps {
   onEdit: (appointment: AppointmentWithRelations) => void;
   onMarkAsCompleted: (appointment: AppointmentWithRelations) => void;
   onMarkAsInProgress: (appointment: AppointmentWithRelations) => void;
-  onSubmitForReview?: (appointment: AppointmentWithRelations) => void;
 }
 
 export function ListView({
   appointments,
   onEdit,
   onMarkAsCompleted,
-  onMarkAsInProgress,
-  onSubmitForReview
+  onMarkAsInProgress
 }: ListViewProps) {
   const [groupedAppointments, setGroupedAppointments] = useState<Record<string, AppointmentWithRelations[]>>({});
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null);
@@ -116,8 +114,6 @@ export function ListView({
         return <Badge variant="completed" className="text-xs">Completed</Badge>;
       case "inprogress":
         return <Badge variant="inprogress" className="text-xs whitespace-nowrap">In Progress</Badge>;
-      case "pendingreview":
-        return <Badge variant="pending" className="text-xs whitespace-nowrap">In Review</Badge>;
       case "cancelled":
         return <Badge variant="cancelled" className="text-xs">Cancelled</Badge>;
       case "confirmed":
@@ -207,7 +203,6 @@ export function ListView({
         assignedStaff={assignedStaff} 
         onMarkAsCompleted={onMarkAsCompleted}
         onMarkAsInProgress={onMarkAsInProgress}
-        onSubmitForReview={onSubmitForReview}
       />
     </div>
   );

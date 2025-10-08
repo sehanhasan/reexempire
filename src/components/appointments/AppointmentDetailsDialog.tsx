@@ -2,13 +2,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2, User, Upload, FileImage } from "lucide-react";
+import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { appointmentService } from "@/services";
-import { supabase } from "@/integrations/supabase/client";
 
 interface AppointmentDetailsDialogProps {
   open: boolean;
@@ -18,7 +17,6 @@ interface AppointmentDetailsDialogProps {
   assignedStaff: Staff | null;
   onMarkAsCompleted?: (appointment: Appointment) => void;
   onMarkAsInProgress?: (appointment: Appointment) => void;
-  onSubmitForReview?: (appointment: Appointment) => void;
 }
 
 export function AppointmentDetailsDialog({
@@ -28,24 +26,17 @@ export function AppointmentDetailsDialog({
   customer,
   assignedStaff,
   onMarkAsCompleted,
-  onMarkAsInProgress,
-  onSubmitForReview
+  onMarkAsInProgress
 }: AppointmentDetailsDialogProps) {
   const navigate = useNavigate();
   const [images, setImages] = useState<string[]>([]);
-  const [workPhotos, setWorkPhotos] = useState<string[]>([]);
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [uploading, setUploading] = useState(false);
   
   useEffect(() => {
     if (appointment?.notes) {
       const foundImages = checkForImagesInNotes(appointment.notes);
-      const foundWorkPhotos = checkForWorkPhotos(appointment.notes);
       setImages(foundImages);
-      setWorkPhotos(foundWorkPhotos);
     } else {
       setImages([]);
-      setWorkPhotos([]);
     }
   }, [appointment]);
   
@@ -126,96 +117,10 @@ export function AppointmentDetailsDialog({
     }
     return [];
   };
-
-  const checkForWorkPhotos = (notes: string) => {
-    if (notes && notes.includes("work_photo:")) {
-      const regex = /work_photo:([^\s]+)/g;
-      let match;
-      const foundPhotos = [];
-      while ((match = regex.exec(notes)) !== null) {
-        foundPhotos.push(match[1]);
-      }
-      return foundPhotos;
-    }
-    return [];
-  };
-
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || !appointment) return;
-
-    setUploading(true);
-    try {
-      const uploadedUrls: string[] = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${appointment.id}-${Date.now()}-${i}.${fileExt}`;
-        const filePath = `appointment-work-photos/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('pdfs')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('pdfs')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
-      }
-
-      // Add work photos to appointment notes
-      const currentNotes = appointment.notes || '';
-      const workPhotoTags = uploadedUrls.map(url => `work_photo:${url}`).join(' ');
-      const updatedNotes = currentNotes ? `${currentNotes} ${workPhotoTags}` : workPhotoTags;
-
-      await appointmentService.update(appointment.id, { notes: updatedNotes });
-      
-      setWorkPhotos([...workPhotos, ...uploadedUrls]);
-      toast({
-        title: "Success",
-        description: "Work photos uploaded successfully"
-      });
-      setShowUploadDialog(false);
-    } catch (error) {
-      console.error("Error uploading photos:", error);
-      toast({
-        title: "Error",
-        description: "Failed to upload work photos",
-        variant: "destructive"
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSubmitForReview = () => {
-    if (workPhotos.length === 0) {
-      setShowUploadDialog(true);
-    } else {
-      proceedWithReview();
-    }
-  };
-
-  const proceedWithReview = () => {
-    if (onSubmitForReview && appointment) {
-      onSubmitForReview(appointment);
-      onClose();
-    }
-  };
-
-  const skipUploadAndReview = () => {
-    setShowUploadDialog(false);
-    proceedWithReview();
-  };
   
-  const cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '').replace(/work_photo:[^\s]+/g, '').trim() || '';
+  const cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '') || '';
   const isCompleted = appointment.status.toLowerCase() === "completed";
   const isInProgress = appointment.status.toLowerCase() === "in progress";
-  const isPendingReview = appointment.status.toLowerCase() === "pending review";
   const isCancelled = appointment.status.toLowerCase() === "cancelled";
   
   const getStatusBadge = () => {
@@ -226,8 +131,6 @@ export function AppointmentDetailsDialog({
         return <Badge variant="completed">Completed</Badge>;
       case "inprogress":
         return <Badge variant="inprogress">In Progress</Badge>;
-      case "pendingreview":
-        return <Badge variant="pending">In Review</Badge>;
       case "cancelled":
         return <Badge variant="cancelled">Cancelled</Badge>;
       case "confirmed":
@@ -286,7 +189,7 @@ export function AppointmentDetailsDialog({
               </div>
             )}
 
-            {assignedStaff && !isCompleted && (
+            {assignedStaff && (
               <div className="flex items-start gap-2">
                 <User className="h-4 w-4 mt-1 text-gray-500" />
                 <div>
@@ -320,41 +223,25 @@ export function AppointmentDetailsDialog({
                 </div>
               </div>
             )}
-
-            {workPhotos.length > 0 && (
-              <div className="mt-4">
-                <p className="font-medium">Work Photos</p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {workPhotos.map((photo, index) => (
-                    <div key={index} className="relative">
-                      <img src={photo} alt={`Work Photo ${index + 1}`} className="rounded-md w-full h-32 object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-4">
-          {!isCompleted && !isPendingReview && (
+          {!isCompleted && (
             <Button 
-              onClick={() => {
-                const publicUrl = `${window.location.origin}/appointments/view/${appointment.id}`;
-                window.open(publicUrl, '_blank');
-              }} 
+              onClick={handleShareWhatsApp} 
               variant="outline" 
-              className="w-full flex items-center justify-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+              className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
             >
               <Share2 className="h-4 w-4" />
-              Review Job
+              Share via WhatsApp
             </Button>
           )}
           
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {!isCompleted && !isCancelled && (
               <>
-                {!isInProgress && !isPendingReview ? (
+                {!isInProgress ? (
                   <Button 
                     onClick={handleMarkInProgress} 
                     className="w-full sm:w-auto flex items-center justify-center gap-2"
@@ -362,15 +249,7 @@ export function AppointmentDetailsDialog({
                     <Play className="h-4 w-4" />
                     Start
                   </Button>
-                ) : isInProgress ? (
-                  <Button 
-                    onClick={handleSubmitForReview} 
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Submit for Review
-                  </Button>
-                ) : isPendingReview ? (
+                ) : (
                   <Button 
                     onClick={handleMarkCompleted} 
                     className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600"
@@ -378,7 +257,7 @@ export function AppointmentDetailsDialog({
                     <Check className="h-4 w-4" />
                     Mark Completed
                   </Button>
-                ) : null}
+                )}
               </>
             )}
             <Button 
@@ -392,55 +271,6 @@ export function AppointmentDetailsDialog({
           </div>
         </DialogFooter>
       </DialogContent>
-
-      {/* Upload Work Photos Dialog */}
-      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Upload Work Photos (Optional)</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Would you like to upload photos of the completed work before submitting for review?
-            </p>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="work-photos" className="cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
-                  <FileImage className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                  <p className="text-sm font-medium">Click to upload photos</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB each</p>
-                </div>
-                <input
-                  id="work-photos"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                  disabled={uploading}
-                />
-              </label>
-            </div>
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="outline" 
-              onClick={skipUploadAndReview}
-              disabled={uploading}
-              className="w-full sm:w-auto"
-            >
-              Skip
-            </Button>
-            <Button 
-              onClick={() => document.getElementById('work-photos')?.click()}
-              disabled={uploading}
-              className="w-full sm:w-auto"
-            >
-              {uploading ? "Uploading..." : "Upload Photos"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Dialog>
   );
 }
