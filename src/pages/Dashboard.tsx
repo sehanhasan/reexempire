@@ -353,7 +353,7 @@ export default function Dashboard() {
               </div> : <div className="space-y-3">
                 {recentInvoices.slice(0, 3).map(invoice => {
               const customer = customersMap[invoice.customer_id] || {};
-              return <div key={invoice.id} onClick={() => navigateToInvoice(invoice.id)} className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 hover:from-emerald-100 hover:to-teal-100 transition-all cursor-pointer">
+              return <div key={invoice.id} onClick={() => navigateToInvoice(invoice.id)} className="flex items-center justify-between p-3 rounded-lg border border-emerald-200 transition-all cursor-pointer">
                       <div>
                         <h3 className="font-semibold text-slate-900 text-sm">
                           <span className="text-emerald-700">
@@ -403,7 +403,7 @@ export default function Dashboard() {
               <Package className="h-12 w-12 text-slate-400 mx-auto mb-2" />
               <p className="text-sm text-slate-600">All inventory items are well-stocked</p>
             </div> : <div className="space-y-3">
-              {lowStockItems.map(item => <div key={item.id} onClick={() => navigate(`/edit-inventory-item/${item.id}`)} className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200 hover:from-orange-100 hover:to-red-100 transition-all cursor-pointer">
+              {lowStockItems.map(item => <div key={item.id} onClick={() => navigate(`/edit-inventory-item/${item.id}`)} className="flex items-center justify-between p-3 rounded-lg border border-orange-200 transition-all cursor-pointer">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h3 className="font-semibold text-slate-900 text-sm">
