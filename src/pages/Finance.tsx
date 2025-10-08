@@ -53,14 +53,11 @@ export default function Finance() {
       // Use the date string directly to avoid timezone issues
       const invoiceYearMonth = invoice.issue_date.slice(0, 7); // "YYYY-MM"
       const now = new Date();
-      
       if (selectedMonth === 'this-month') {
         const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         if (invoiceYearMonth !== thisMonth) return false;
       } else if (selectedMonth === 'last-month') {
-        const lastMonth = now.getMonth() === 0 
-          ? `${now.getFullYear() - 1}-12` 
-          : `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
+        const lastMonth = now.getMonth() === 0 ? `${now.getFullYear() - 1}-12` : `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`;
         if (invoiceYearMonth !== lastMonth) return false;
       } else if (selectedMonth === 'this-year') {
         const thisYear = String(now.getFullYear());
@@ -218,7 +215,7 @@ export default function Finance() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-green-600">
               {formatCurrency(currentMonthRevenue)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -233,7 +230,7 @@ export default function Finance() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-green-600">
               {formatCurrency(invoices.filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && new Date(inv.issue_date).getFullYear() === new Date().getFullYear()).reduce((sum, inv) => sum + Number(inv.total), 0))}
             </div>
             <p className="text-xs text-muted-foreground">
