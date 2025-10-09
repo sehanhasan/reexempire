@@ -468,31 +468,31 @@ export default function PublicAppointment() {
           
           return generalNotes && generalNotes.split('\n').some((line: string) => !line.startsWith('image_url:') && line.trim() !== '');
         })() && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg text-cyan-600">General Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="whitespace-pre-wrap text-sm">
-                {(() => {
-                  const generalNotes = appointment.notes.includes("--- Staff Notes ---") 
-                    ? appointment.notes.split("--- Staff Notes ---")[0].trim() 
-                    : appointment.notes;
+          // <Card>
+          //   <CardHeader>
+          //     <CardTitle className="text-lg text-cyan-600">General Notes</CardTitle>
+          //   </CardHeader>
+          //   <CardContent>
+          //     <div className="whitespace-pre-wrap text-sm">
+          //       {(() => {
+          //         const generalNotes = appointment.notes.includes("--- Staff Notes ---") 
+          //           ? appointment.notes.split("--- Staff Notes ---")[0].trim() 
+          //           : appointment.notes;
                   
-                  return generalNotes.split('\n').map((line: string, index: number) => {
-                    // Skip image URLs
-                    if (line.startsWith('image_url:')) return null;
-                    if (line.trim() === '') return null;
-                    return (
-                      <p key={index} className="mb-2">
-                        {line}
-                      </p>
-                    );
-                  });
-                })()}
-              </div>
-            </CardContent>
-          </Card>
+          //         return generalNotes.split('\n').map((line: string, index: number) => {
+          //           // Skip image URLs
+          //           if (line.startsWith('image_url:')) return null;
+          //           if (line.trim() === '') return null;
+          //           return (
+          //             <p key={index} className="mb-2">
+          //               {line}
+          //             </p>
+          //           );
+          //         });
+          //       })()}
+          //     </div>
+          //   </CardContent>
+          // </Card>
         )}
 
         {/* Upload Work Photos Dialog */}
