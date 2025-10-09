@@ -9,11 +9,12 @@ import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentD
 interface CalendarViewProps {
   appointments: any[];
   onEdit: (appointment: any) => void;
-  onMarkAsCompleted: (appointment: any) => void;
-  onMarkAsInProgress: (appointment: any) => void;
+  onMarkAsCompleted?: (appointment: any) => void;
+  onMarkAsInProgress?: (appointment: any) => void;
+  onSubmitForReview?: (appointment: any) => void;
 }
 
-export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAsInProgress }: CalendarViewProps) {
+export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAsInProgress, onSubmitForReview }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -154,10 +155,11 @@ export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAs
           open={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
           customer={selectedAppointment.customer || null}
-          assignedStaff={selectedAppointment.staff || null}
-          onMarkAsCompleted={onMarkAsCompleted}
-          onMarkAsInProgress={onMarkAsInProgress}
-        />
+        assignedStaff={selectedAppointment.staff || null}
+        onMarkAsCompleted={onMarkAsCompleted}
+        onMarkAsInProgress={onMarkAsInProgress}
+        onSubmitForReview={onSubmitForReview}
+      />
       )}
     </div>
   );
