@@ -520,20 +520,19 @@ export default function AddAppointment() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {!isEditMode && (
-                <div className="flex items-center space-x-2 pt-2">
-                  <Switch 
-                    id="share-whatsapp" 
-                    checked={shareViaWhatsApp}
-                    onCheckedChange={setShareViaWhatsApp}
-                  />
-                  <Label htmlFor="share-whatsapp" className="cursor-pointer flex items-center gap-2">
-                    <Share2 className="h-4 w-4 text-green-600" />
-                    Share appointment details via WhatsApp after saving
-                  </Label>
-                </div>
-              )}
+              
+              <div className="flex items-center space-x-2 pt-2">
+                <Switch 
+                  id="share-whatsapp" 
+                  checked={shareViaWhatsApp}
+                  onCheckedChange={setShareViaWhatsApp}
+                />
+                <Label htmlFor="share-whatsapp" className="cursor-pointer flex items-center gap-2">
+                  <Share2 className="h-4 w-4 text-green-600" />
+                  Share appointment details via WhatsApp after saving
+                </Label>
+              </div>
+              
             </CardContent>
             <CardFooter className="flex justify-between space-x-4">
               <div className="flex space-x-2">
