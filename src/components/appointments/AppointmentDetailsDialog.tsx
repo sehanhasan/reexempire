@@ -122,6 +122,7 @@ export function AppointmentDetailsDialog({
   const isCompleted = appointment.status.toLowerCase() === "completed";
   const isInProgress = appointment.status.toLowerCase() === "in progress";
   const isCancelled = appointment.status.toLowerCase() === "cancelled";
+  const isPendingReview = appointment.status.toLowerCase() === "pending review";
   
   const getStatusBadge = () => {
     const status = appointment.status.toLowerCase().replace(/\s+/g, '');
@@ -131,6 +132,8 @@ export function AppointmentDetailsDialog({
         return <Badge variant="completed">Completed</Badge>;
       case "inprogress":
         return <Badge variant="inprogress">In Progress</Badge>;
+      case "pendingreview":
+        return <Badge className="bg-purple-500 hover:bg-purple-600">In Review</Badge>;
       case "cancelled":
         return <Badge variant="cancelled">Cancelled</Badge>;
       case "confirmed":
@@ -227,7 +230,7 @@ export function AppointmentDetailsDialog({
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-4">
-          {!isCompleted && (
+          {!isCompleted && !isPendingReview && (
             <Button 
               onClick={handleShareWhatsApp} 
               variant="outline" 
@@ -238,10 +241,21 @@ export function AppointmentDetailsDialog({
             </Button>
           )}
           
+          {isPendingReview && (
+            <Button 
+              onClick={() => window.open(`/appointments/view/${appointment.id}`, '_blank')} 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+            >
+              <Edit className="h-4 w-4" />
+              Review Job
+            </Button>
+          )}
+          
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {!isCompleted && !isCancelled && (
               <>
-                {!isInProgress ? (
+                {!isInProgress && !isPendingReview && (
                   <Button 
                     onClick={handleMarkInProgress} 
                     className="w-full sm:w-auto flex items-center justify-center gap-2"
@@ -249,7 +263,8 @@ export function AppointmentDetailsDialog({
                     <Play className="h-4 w-4" />
                     Start
                   </Button>
-                ) : (
+                )}
+                {isPendingReview && (
                   <Button 
                     onClick={handleMarkCompleted} 
                     className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600"

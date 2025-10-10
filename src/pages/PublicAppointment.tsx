@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, Clock, MapPin, User, FileText, Play, CheckCircle, AlertCircle, Upload, FileImage } from "lucide-react";
+import { Calendar, Clock, MapPin, User, FileText, Play, CheckCircle, AlertCircle, Upload, FileImage, X } from "lucide-react";
 import { appointmentService, customerService, staffService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { toast } from "@/hooks/use-toast";
@@ -28,6 +28,8 @@ export default function PublicAppointment() {
   const [workPhotos, setWorkPhotos] = useState<string[]>([]);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string>('');
 
   useEffect(() => {
     const fetchAppointmentData = async () => {
@@ -447,7 +449,14 @@ export default function PublicAppointment() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {workPhotos.map((photo, index) => (
-                  <div key={index} className="relative">
+                  <div 
+                    key={index} 
+                    className="relative cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => {
+                      setLightboxImage(photo);
+                      setLightboxOpen(true);
+                    }}
+                  >
                     <img 
                       src={photo} 
                       alt={`Work photo ${index + 1}`} 
@@ -460,40 +469,27 @@ export default function PublicAppointment() {
           </Card>
         )}
 
-        {/* General Notes */}
-        {appointment.notes && (() => {
-          const generalNotes = appointment.notes.includes("--- Staff Notes ---") 
-            ? appointment.notes.split("--- Staff Notes ---")[0].trim() 
-            : appointment.notes;
-          
-          return generalNotes && generalNotes.split('\n').some((line: string) => !line.startsWith('image_url:') && line.trim() !== '');
-        })() && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg text-cyan-600">General Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="whitespace-pre-wrap text-sm">
-                {(() => {
-                  const generalNotes = appointment.notes.includes("--- Staff Notes ---") 
-                    ? appointment.notes.split("--- Staff Notes ---")[0].trim() 
-                    : appointment.notes;
-                  
-                  return generalNotes.split('\n').map((line: string, index: number) => {
-                    // Skip image URLs
-                    if (line.startsWith('image_url:')) return null;
-                    if (line.trim() === '') return null;
-                    return (
-                      <p key={index} className="mb-2">
-                        {line}
-                      </p>
-                    );
-                  });
-                })()}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Lightbox Dialog */}
+        <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+          <DialogContent className="max-w-4xl w-full p-0">
+            <div className="relative">
+              <img
+                src={lightboxImage}
+                alt="Work photo"
+                className="w-full h-auto"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+                onClick={() => setLightboxOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
 
         {/* Upload Work Photos Dialog */}
         <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
