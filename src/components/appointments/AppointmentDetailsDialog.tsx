@@ -118,11 +118,17 @@ export function AppointmentDetailsDialog({
     return [];
   };
   
-  const cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '') || '';
   const isCompleted = appointment.status.toLowerCase() === "completed";
   const isInProgress = appointment.status.toLowerCase() === "in progress";
   const isCancelled = appointment.status.toLowerCase() === "cancelled";
   const isPendingReview = appointment.status.toLowerCase() === "pending review";
+  
+  // Remove image_url and work_photo links from notes
+  let cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '') || '';
+  if (isPendingReview) {
+    cleanNotes = cleanNotes.replace(/work_photo:[^\s]+/g, '');
+  }
+  cleanNotes = cleanNotes.trim();
   
   const getStatusBadge = () => {
     const status = appointment.status.toLowerCase().replace(/\s+/g, '');
