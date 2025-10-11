@@ -123,11 +123,8 @@ export function AppointmentDetailsDialog({
   const isCancelled = appointment.status.toLowerCase() === "cancelled";
   const isPendingReview = appointment.status.toLowerCase() === "pending review";
   
-  // Remove image_url and work_photo links from notes
-  let cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '') || '';
-  if (isPendingReview) {
-    cleanNotes = cleanNotes.replace(/work_photo:[^\s]+/g, '');
-  }
+  // Remove image_url and work_photo links from notes for all statuses
+  let cleanNotes = appointment.notes?.replace(/image_url:[^\s]+/g, '').replace(/work_photo:[^\s]+/g, '') || '';
   cleanNotes = cleanNotes.trim();
   
   const getStatusBadge = () => {

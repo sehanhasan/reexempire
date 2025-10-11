@@ -4,6 +4,7 @@ import { FloatingActionButton } from "@/components/common/FloatingActionButton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { appointmentService, customerService, staffService } from "@/services";
+import { supabase } from "@/integrations/supabase/client";
 import { ListView } from "@/components/schedule/ListView";
 import { CalendarView } from "@/components/schedule/CalendarView";
 import { PlusCircle, Calendar, List } from "lucide-react";
@@ -62,6 +63,28 @@ export default function Schedule() {
       }
     };
     fetchData();
+
+    // Set up realtime subscription for appointments
+    const channel = supabase
+      .channel('appointments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        async (payload) => {
+          console.log('Appointment change received:', payload);
+          // Refetch data when any appointment changes
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   const handleEdit = appointment => {
     navigate(`/schedule/edit/${appointment.id}`);
@@ -146,10 +169,11 @@ export default function Schedule() {
             </Button>} />}
       
       <div className="mt-0">
-        <div className="flex border-b bg-white border-gray-200 rounded-t-lg overflow-x-auto">
-          <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-4 text-medium font-small transition-colors duration-200 whitespace-nowrap ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
-            Upcoming ({counts.upcoming})
-          </button>
+        <div className="flex items-center justify-between bg-white border-b border-gray-200 rounded-t-lg">
+          <div className="flex overflow-x-auto">
+            <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-4 text-medium font-small transition-colors duration-200 whitespace-nowrap ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+              Upcoming ({counts.upcoming})
+            </button>
           <button onClick={() => setActiveTab("in_progress")} className={`flex-1 py-3 px-4 text-medium font-small transition-colors duration-200 whitespace-nowrap ${activeTab === "in_progress" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             In Progress ({counts.inProgress})
           </button>
@@ -159,9 +183,34 @@ export default function Schedule() {
           <button onClick={() => setActiveTab("cancelled")} className={`flex-1 py-3 px-4 text-medium font-small transition-colors duration-200 whitespace-nowrap ${activeTab === "cancelled" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
             Cancelled ({counts.cancelled})
           </button>
-          <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-4 text-medium font-small transition-colors duration-200 whitespace-nowrap ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
-            Completed ({counts.completed})
-          </button>
+            <button onClick={() => setActiveTab("completed")} className={`flex-1 py-3 px-4 text-medium font-small transition-colors duration-200 whitespace-nowrap ${activeTab === "completed" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
+              Completed ({counts.completed})
+            </button>
+          </div>
+          
+          {/* View Toggle Button - Desktop Only */}
+          {!isMobile && (
+            <div className="pr-4">
+              <Button 
+                onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} 
+                size="sm" 
+                variant="outline"
+                className="whitespace-nowrap"
+              >
+                {viewMode === "list" ? (
+                  <>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Calendar View
+                  </>
+                ) : (
+                  <>
+                    <List className="mr-2 h-4 w-4" />
+                    List View
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
         
         <div className="mt-4">
@@ -169,18 +218,20 @@ export default function Schedule() {
         </div>
       </div>
 
-      {/* View Toggle Button */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <Button onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} size="lg" className="shadow-lg bg-blue-600 hover:bg-blue-500">
-          {viewMode === "list" ? <>
-              <Calendar className="mr-2 h-5 w-5" />
-              Calendar View
-            </> : <>
-              <List className="mr-2 h-5 w-5" />
-              List View
-            </>}
-        </Button>
-      </div>
+      {/* View Toggle Button - Mobile Only */}
+      {isMobile && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <Button onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} size="lg" className="shadow-lg bg-blue-600 hover:bg-blue-500">
+            {viewMode === "list" ? <>
+                <Calendar className="mr-2 h-5 w-5" />
+                Calendar View
+              </> : <>
+                <List className="mr-2 h-5 w-5" />
+                List View
+              </>}
+          </Button>
+        </div>
+      )}
       
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />
     </div>;

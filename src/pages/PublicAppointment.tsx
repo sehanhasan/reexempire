@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, Clock, MapPin, User, FileText, Play, CheckCircle, AlertCircle, Upload, FileImage, X } from "lucide-react";
+import { Calendar, Clock, MapPin, User, FileText, Play, CheckCircle, AlertCircle, Upload, FileImage, X, Share2 } from "lucide-react";
 import { appointmentService, customerService, staffService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { toast } from "@/hooks/use-toast";
@@ -96,6 +96,29 @@ export default function PublicAppointment() {
     };
 
     fetchAppointmentData();
+
+    // Set up realtime subscription for this appointment
+    const channel = supabase
+      .channel(`appointment-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'appointments',
+          filter: `id=eq.${id}`
+        },
+        async (payload) => {
+          console.log('Appointment updated:', payload);
+          // Refetch appointment data
+          fetchAppointmentData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [id]);
 
   const handleStartWork = async (staffId: string) => {
@@ -465,6 +488,32 @@ export default function PublicAppointment() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Share via WhatsApp - Only for Completed Status */}
+        {overallStatus.toLowerCase() === 'completed' && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <Button
+                onClick={() => {
+                  const message = encodeURIComponent(
+                    `Thank you for choosing Reex Empire!\n\n` +
+                    `Your appointment for ${appointment.title} has been completed.\n\n` +
+                    `Unit #${customer?.unit_number || 'N/A'}\n` +
+                    `Date: ${formatDate(appointment.appointment_date)}\n\n` +
+                    `We appreciate your business!`
+                  );
+                  const whatsappUrl = `https://wa.me/?text=${message}`;
+                  window.open(whatsappUrl, '_blank');
+                }}
+                className="w-full flex items-center justify-center gap-2 text-green-600 bg-green-50 hover:bg-green-100 border border-green-200"
+                variant="outline"
+              >
+                <Share2 className="h-5 w-5" />
+                Share via WhatsApp
+              </Button>
             </CardContent>
           </Card>
         )}
