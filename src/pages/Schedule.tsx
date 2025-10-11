@@ -191,7 +191,7 @@ export default function Schedule() {
         
         {/* View Toggle Button - Desktop Only */}
         {!isMobile && (
-          <div className="mt-4 mb-4">
+          <div className="absolute bottom-0 left-0 right-0 mb-4">
             <Button 
               onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} 
               size="sm" 
