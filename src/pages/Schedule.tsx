@@ -183,7 +183,7 @@ export default function Schedule() {
         
         {/* View Toggle Button - Desktop Only */}
         {!isMobile && <div className="mt-4 mb-4">
-            <Button onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} size="sm" variant="outline" className="whitespace-nowrap absolute bottom-0 mb-4 text-sky-600">
+            <Button onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} size="sm" variant="outline" className="whitespace-nowrap fixed bottom-0 mb-4">
               {viewMode === "list" ? <>
                   <Calendar className="mr-2 h-4 w-4" />
                   Calendar View
