@@ -169,7 +169,7 @@ export default function Schedule() {
             </Button>} />}
       
       <div className="mt-0">
-        <div className="flex items-center justify-between bg-white border-b border-gray-200 rounded-t-lg">
+        <div className="bg-white border-b border-gray-200 rounded-t-lg">
           <div className="flex overflow-x-auto">
             <button onClick={() => setActiveTab("upcoming")} className={`flex-1 py-3 px-4 text-medium font-small transition-colors duration-200 whitespace-nowrap ${activeTab === "upcoming" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-700"}`}>
               Upcoming ({counts.upcoming})
@@ -187,31 +187,31 @@ export default function Schedule() {
               Completed ({counts.completed})
             </button>
           </div>
-          
-          {/* View Toggle Button - Desktop Only */}
-          {!isMobile && (
-            <div className="pr-4">
-              <Button 
-                onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} 
-                size="sm" 
-                variant="outline"
-                className="whitespace-nowrap"
-              >
-                {viewMode === "list" ? (
-                  <>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Calendar View
-                  </>
-                ) : (
-                  <>
-                    <List className="mr-2 h-4 w-4" />
-                    List View
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
         </div>
+        
+        {/* View Toggle Button - Desktop Only */}
+        {!isMobile && (
+          <div className="mt-4 mb-4">
+            <Button 
+              onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} 
+              size="sm" 
+              variant="outline"
+              className="whitespace-nowrap"
+            >
+              {viewMode === "list" ? (
+                <>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Calendar View
+                </>
+              ) : (
+                <>
+                  <List className="mr-2 h-4 w-4" />
+                  List View
+                </>
+              )}
+            </Button>
+          </div>
+        )}
         
         <div className="mt-4">
           {viewMode === "list" ? <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} /> : <CalendarView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} />}

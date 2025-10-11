@@ -68,8 +68,8 @@ export default function PublicAppointment() {
             assignedStaff.push({
               id: staff.id,
               name: staff.name,
-              hasStarted: false,
-              hasCompleted: false,
+              hasStarted: appointmentData.status === 'In Progress' || appointmentData.status === 'Pending Review' || appointmentData.status === 'Completed',
+              hasCompleted: appointmentData.status === 'Pending Review' || appointmentData.status === 'Completed',
             });
           }
         }

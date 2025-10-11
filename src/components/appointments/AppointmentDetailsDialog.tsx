@@ -104,6 +104,22 @@ export function AppointmentDetailsDialog({
     // Open WhatsApp URL in a new tab
     window.open(whatsAppUrl, '_blank');
   };
+
+  const handleShareToCustomer = () => {
+    if (!appointment || !customer) return;
+    
+    const publicUrl = `${window.location.origin}/appointments/view/${appointment.id}`;
+    const formattedDate = new Date(appointment.appointment_date).toLocaleDateString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    
+    const message = `Thank you for choosing Reex Empire! Your appointment for ${appointment.title} has been completed. Unit #${customer.unit_number}, Date: ${formattedDate}.\n${publicUrl}\n\nWe appreciate your business!`;
+    
+    const whatsAppUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsAppUrl, '_blank');
+  };
   
   const checkForImagesInNotes = (notes: string) => {
     if (notes && notes.includes("image_url:")) {
@@ -241,6 +257,17 @@ export function AppointmentDetailsDialog({
             >
               <Share2 className="h-4 w-4" />
               Share via WhatsApp
+            </Button>
+          )}
+          
+          {isCompleted && (
+            <Button 
+              onClick={handleShareToCustomer} 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+            >
+              <Share2 className="h-4 w-4" />
+              Share to Customer
             </Button>
           )}
           
