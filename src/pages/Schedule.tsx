@@ -65,23 +65,15 @@ export default function Schedule() {
     fetchData();
 
     // Set up realtime subscription for appointments
-    const channel = supabase
-      .channel('appointments-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'appointments'
-        },
-        async (payload) => {
-          console.log('Appointment change received:', payload);
-          // Refetch data when any appointment changes
-          fetchData();
-        }
-      )
-      .subscribe();
-
+    const channel = supabase.channel('appointments-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'appointments'
+    }, async payload => {
+      console.log('Appointment change received:', payload);
+      // Refetch data when any appointment changes
+      fetchData();
+    }).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
@@ -190,28 +182,17 @@ export default function Schedule() {
         </div>
         
         {/* View Toggle Button - Desktop Only */}
-        {!isMobile && (
-          <div className="mt-4 mb-4">
-            <Button 
-              onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} 
-              size="sm" 
-              variant="outline"
-              className="whitespace-nowrap"
-            >
-              {viewMode === "list" ? (
-                <>
+        {!isMobile && <div className="mt-4 mb-4">
+            <Button onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} size="sm" variant="outline" className="whitespace-nowrap absolute bottom-0 mb-4 text-sky-600">
+              {viewMode === "list" ? <>
                   <Calendar className="mr-2 h-4 w-4" />
                   Calendar View
-                </>
-              ) : (
-                <>
+                </> : <>
                   <List className="mr-2 h-4 w-4" />
                   List View
-                </>
-              )}
+                </>}
             </Button>
-          </div>
-        )}
+          </div>}
         
         <div className="mt-4">
           {viewMode === "list" ? <ListView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} /> : <CalendarView appointments={filteredAppointments} onEdit={handleEdit} onMarkAsCompleted={handleMarkAsCompleted} onMarkAsInProgress={handleMarkAsInProgress} />}
@@ -219,8 +200,7 @@ export default function Schedule() {
       </div>
 
       {/* View Toggle Button - Mobile Only */}
-      {isMobile && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      {isMobile && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
           <Button onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")} size="lg" className="shadow-lg bg-blue-600 hover:bg-blue-500">
             {viewMode === "list" ? <>
                 <Calendar className="mr-2 h-5 w-5" />
@@ -230,8 +210,7 @@ export default function Schedule() {
                 List View
               </>}
           </Button>
-        </div>
-      )}
+        </div>}
       
       <FloatingActionButton onClick={() => navigate("/schedule/add")} />
     </div>;
