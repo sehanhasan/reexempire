@@ -115,7 +115,7 @@ export function AppointmentDetailsDialog({
       year: 'numeric'
     });
     
-    const message = `Thank you for choosing Reex Empire! Your appointment for ${appointment.title} has been completed. Unit #${customer.unit_number}, Date: ${formattedDate}.\n${publicUrl}\n\nWe appreciate your business!`;
+    const message = `Thank you for choosing Reex Empire!\n\n` + `Your appointment for ${appointment.title} has been completed.\n\n` + `Unit #${customer.unit_number}\n` + `Date: ${formattedDate}.\n${publicUrl}\n\nWe appreciate your business!`;
     
     const whatsAppUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsAppUrl, '_blank');

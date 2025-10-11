@@ -586,7 +586,7 @@ export default function PublicAppointment() {
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button
+              {/* <Button
                 variant="outline"
                 onClick={() => {
                   if (staffMembers[0]) {
@@ -597,7 +597,7 @@ export default function PublicAppointment() {
                 className="w-full sm:w-auto"
               >
                 Skip & Submit
-              </Button>
+              </Button> */}
               <Button
                 onClick={() => {
                   if (staffMembers[0]) {
