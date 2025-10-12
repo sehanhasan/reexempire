@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, MapPin, Check, Edit, Play } from "lucide-react";
+import { Clock, Calendar, MapPin, Check, Edit, Play, Star } from "lucide-react";
 import { format, isToday, isTomorrow, isYesterday, isThisWeek, parseISO, compareDesc } from "date-fns";
 import { AppointmentDetailsDialog } from "../appointments/AppointmentDetailsDialog";
 import { Appointment, Customer, Staff } from "@/types/database";
 import { staffService } from "@/services";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Service {
   id: string;
@@ -38,6 +39,33 @@ export function ListView({
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [assignedStaff, setAssignedStaff] = useState<Staff | null>(null);
+  const [appointmentRatings, setAppointmentRatings] = useState<Record<string, any>>({});
+
+  // Fetch ratings for all completed appointments
+  useEffect(() => {
+    const fetchRatings = async () => {
+      const completedAppointments = appointments.filter(
+        app => app.status?.toLowerCase() === 'completed'
+      );
+      
+      if (completedAppointments.length === 0) return;
+      
+      const { data } = await supabase
+        .from('appointment_ratings')
+        .select('*')
+        .in('appointment_id', completedAppointments.map(app => app.id));
+      
+      if (data) {
+        const ratingsMap: Record<string, any> = {};
+        data.forEach(rating => {
+          ratingsMap[rating.appointment_id] = rating;
+        });
+        setAppointmentRatings(ratingsMap);
+      }
+    };
+    
+    fetchRatings();
+  }, [appointments]);
 
   useEffect(() => {
     if (!appointments.length) return;
@@ -161,35 +189,52 @@ export function ListView({
             </h2>
             
             <div className="space-y-2">
-              {groupedAppointments[date].map(appointment => (
-                <Card 
-                  key={appointment.id} 
-                  className="border-l-4 border-l-blue-500 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleAppointmentClick(appointment)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium">
-                            {getTimeDisplay(appointment.start_time, appointment.end_time)}
-                          </span>
+              {groupedAppointments[date].map(appointment => {
+                const rating = appointmentRatings[appointment.id];
+                return (
+                  <Card 
+                    key={appointment.id} 
+                    className="border-l-4 border-l-blue-500 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleAppointmentClick(appointment)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center space-x-1">
+                            <Clock className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium">
+                              {getTimeDisplay(appointment.start_time, appointment.end_time)}
+                            </span>
+                          </div>
+                          
+                          <h3 className="font-medium">
+                            {appointment.customer?.unit_number && `#${appointment.customer.unit_number} - `}
+                            {appointment.title || "Unnamed Service"}
+                          </h3>
                         </div>
                         
-                        <h3 className="font-medium">
-                          {appointment.customer?.unit_number && `#${appointment.customer.unit_number} - `}
-                          {appointment.title || "Unnamed Service"}
-                        </h3>
+                        <div className="flex-shrink-0 flex flex-col items-end gap-2">
+                          {getStatusBadge(appointment.status)}
+                          {rating && appointment.status?.toLowerCase() === 'completed' && (
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`h-3.5 w-3.5 ${
+                                    star <= rating.rating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      
-                      <div className="flex-shrink-0">
-                        {getStatusBadge(appointment.status)}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         ))
@@ -200,7 +245,8 @@ export function ListView({
         onClose={() => setDetailsDialogOpen(false)} 
         appointment={selectedAppointment} 
         customer={selectedAppointment?.customer || null} 
-        assignedStaff={assignedStaff} 
+        assignedStaff={assignedStaff}
+        rating={selectedAppointment ? appointmentRatings[selectedAppointment.id] || null : null}
         onMarkAsCompleted={onMarkAsCompleted}
         onMarkAsInProgress={onMarkAsInProgress}
       />

@@ -32,6 +32,7 @@ export default function PublicAppointment() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string>('');
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [rating, setRating] = useState<any>(null);
 
   useEffect(() => {
     const fetchAppointmentData = async () => {
@@ -122,6 +123,15 @@ export default function PublicAppointment() {
           setWorkPhotos(foundPhotos);
         }
         
+        // Fetch rating if appointment is completed
+        const { data: ratingData } = await supabase
+          .from('appointment_ratings')
+          .select('*')
+          .eq('appointment_id', id)
+          .maybeSingle();
+        
+        setRating(ratingData);
+        
       } catch (error) {
         console.error("Error fetching appointment:", error);
         toast({
@@ -171,9 +181,27 @@ export default function PublicAppointment() {
       )
       .subscribe();
 
+    const ratingChannel = supabase
+      .channel(`appointment-rating-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointment_ratings',
+          filter: `appointment_id=eq.${id}`
+        },
+        async (payload) => {
+          console.log('Rating updated:', payload);
+          fetchAppointmentData();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(appointmentChannel);
       supabase.removeChannel(staffChannel);
+      supabase.removeChannel(ratingChannel);
     };
   }, [id]);
 
@@ -599,6 +627,35 @@ export default function PublicAppointment() {
           </DialogContent>
         </Dialog>
 
+
+        {/* Rating Section - Show if completed and rated */}
+        {overallStatus.toLowerCase() === 'completed' && rating && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-cyan-600">Customer Rating</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`h-6 w-6 ${
+                      star <= rating.rating
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 text-lg font-semibold">{rating.rating}/5</span>
+              </div>
+              {rating.comment && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-700">{rating.comment}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Rating Dialog */}
         <RatingDialog

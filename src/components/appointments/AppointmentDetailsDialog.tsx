@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2, User } from "lucide-react";
+import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2, User, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
 import { useState, useEffect } from "react";
@@ -15,6 +15,7 @@ interface AppointmentDetailsDialogProps {
   appointment: Appointment | null;
   customer: Customer | null;
   assignedStaff: Staff | null;
+  rating?: any;
   onMarkAsCompleted?: (appointment: Appointment) => void;
   onMarkAsInProgress?: (appointment: Appointment) => void;
 }
@@ -25,6 +26,7 @@ export function AppointmentDetailsDialog({
   appointment,
   customer,
   assignedStaff,
+  rating,
   onMarkAsCompleted,
   onMarkAsInProgress
 }: AppointmentDetailsDialogProps) {
@@ -242,6 +244,31 @@ export function AppointmentDetailsDialog({
                       <img src={image} alt={`Attachment ${index + 1}`} className="rounded-md w-full h-32 object-cover" />
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Rating Section */}
+            {rating && isCompleted && (
+              <div className="mt-4">
+                <p className="font-medium mb-2">Customer Rating</p>
+                <div className="p-3 bg-gray-50 rounded-md space-y-2">
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-5 w-5 ${
+                          star <= rating.rating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-1 font-semibold">{rating.rating}/5</span>
+                  </div>
+                  {rating.comment && (
+                    <p className="text-sm text-gray-700">{rating.comment}</p>
+                  )}
                 </div>
               </div>
             )}

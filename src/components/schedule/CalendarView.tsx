@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Clock, MapPin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns";
 import { AppointmentDetailsDialog } from "@/components/appointments/AppointmentDetailsDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CalendarViewProps {
   appointments: any[];
@@ -17,6 +18,33 @@ export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAs
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [appointmentRatings, setAppointmentRatings] = useState<Record<string, any>>({});
+
+  // Fetch ratings for all completed appointments
+  useEffect(() => {
+    const fetchRatings = async () => {
+      const completedAppointments = appointments.filter(
+        app => app.status?.toLowerCase() === 'completed'
+      );
+      
+      if (completedAppointments.length === 0) return;
+      
+      const { data } = await supabase
+        .from('appointment_ratings')
+        .select('*')
+        .in('appointment_id', completedAppointments.map(app => app.id));
+      
+      if (data) {
+        const ratingsMap: Record<string, any> = {};
+        data.forEach(rating => {
+          ratingsMap[rating.appointment_id] = rating;
+        });
+        setAppointmentRatings(ratingsMap);
+      }
+    };
+    
+    fetchRatings();
+  }, [appointments]);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -113,29 +141,46 @@ export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAs
 
                 {/* Appointments for this day */}
                 <div className="space-y-1">
-                  {dayAppointments.slice(0, 3).map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      onClick={() => {
-                        setSelectedAppointment(appointment);
-                        setIsDialogOpen(true);
-                      }}
-                      className={`text-xs p-1.5 rounded cursor-pointer hover:opacity-80 transition-opacity border ${getStatusColor(
-                        appointment.status
-                      )}`}
-                    >
-                      <div className="font-medium truncate">{appointment.title}</div>
-                      <div className="flex items-center gap-1 text-[10px] mt-0.5">
-                        <Clock className="h-3 w-3" />
-                        <span>{appointment.start_time?.slice(0, 5)}</span>
-                      </div>
-                      {appointment.customer?.name && (
-                        <div className="truncate text-[10px] mt-0.5">
-                          {appointment.customer.name}
+                  {dayAppointments.slice(0, 3).map((appointment) => {
+                    const rating = appointmentRatings[appointment.id];
+                    return (
+                      <div
+                        key={appointment.id}
+                        onClick={() => {
+                          setSelectedAppointment(appointment);
+                          setIsDialogOpen(true);
+                        }}
+                        className={`text-xs p-1.5 rounded cursor-pointer hover:opacity-80 transition-opacity border ${getStatusColor(
+                          appointment.status
+                        )}`}
+                      >
+                        <div className="font-medium truncate">{appointment.title}</div>
+                        <div className="flex items-center gap-1 text-[10px] mt-0.5">
+                          <Clock className="h-3 w-3" />
+                          <span>{appointment.start_time?.slice(0, 5)}</span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        {appointment.customer?.name && (
+                          <div className="truncate text-[10px] mt-0.5">
+                            {appointment.customer.name}
+                          </div>
+                        )}
+                        {rating && appointment.status?.toLowerCase() === 'completed' && (
+                          <div className="flex items-center gap-0.5 mt-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-2.5 w-2.5 ${
+                                  star <= rating.rating
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {dayAppointments.length > 3 && (
                     <div className="text-xs text-gray-500 text-center py-1">
                       +{dayAppointments.length - 3} more
@@ -155,6 +200,7 @@ export function CalendarView({ appointments, onEdit, onMarkAsCompleted, onMarkAs
           onClose={() => setIsDialogOpen(false)}
           customer={selectedAppointment.customer || null}
           assignedStaff={selectedAppointment.staff || null}
+          rating={appointmentRatings[selectedAppointment.id] || null}
           onMarkAsCompleted={onMarkAsCompleted}
           onMarkAsInProgress={onMarkAsInProgress}
         />
