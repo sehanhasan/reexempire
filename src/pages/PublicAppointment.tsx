@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, Clock, MapPin, User, FileText, Play, CheckCircle, AlertCircle, Upload, FileImage, X, Share2 } from "lucide-react";
+import { Calendar, Clock, MapPin, User, FileText, Play, CheckCircle, AlertCircle, Upload, FileImage, X, Star } from "lucide-react";
 import { appointmentService, customerService, staffService } from "@/services";
 import { formatDate } from "@/utils/formatters";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { RatingDialog } from "@/components/appointments/RatingDialog";
 
 interface StaffMember {
   id: string;
@@ -30,6 +31,7 @@ export default function PublicAppointment() {
   const [uploading, setUploading] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string>('');
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchAppointmentData = async () => {
@@ -56,13 +58,36 @@ export default function PublicAppointment() {
           setCustomer(customerData);
         }
 
-        // Fetch all staff and determine assigned ones
+        // Fetch appointment_staff records for multi-staff support
+        const { data: appointmentStaffData, error: staffError } = await supabase
+          .from('appointment_staff')
+          .select('*')
+          .eq('appointment_id', id);
+
+        if (staffError) {
+          console.error("Error fetching appointment staff:", staffError);
+        }
+
+        // Fetch all staff to get names
         const allStaff = await staffService.getAll();
         
-        // For now, we'll work with the single staff_id field
-        // In the future, this could be extended to support multiple staff
         const assignedStaff: StaffMember[] = [];
-        if (appointmentData.staff_id) {
+        
+        if (appointmentStaffData && appointmentStaffData.length > 0) {
+          // Multi-staff support: use appointment_staff table
+          appointmentStaffData.forEach((as: any) => {
+            const staff = allStaff.find((s: any) => s.id === as.staff_id);
+            if (staff) {
+              assignedStaff.push({
+                id: staff.id,
+                name: staff.name,
+                hasStarted: as.has_started,
+                hasCompleted: as.has_completed,
+              });
+            }
+          });
+        } else if (appointmentData.staff_id) {
+          // Fallback to single staff_id for backward compatibility
           const staff = allStaff.find((s: any) => s.id === appointmentData.staff_id);
           if (staff) {
             assignedStaff.push({
@@ -75,7 +100,21 @@ export default function PublicAppointment() {
         }
         
         setStaffMembers(assignedStaff);
-        setOverallStatus(appointmentData.status || 'Confirmed');
+        
+        // Determine overall status based on staff members
+        let calculatedStatus = appointmentData.status || 'Confirmed';
+        if (assignedStaff.length > 0) {
+          const allCompleted = assignedStaff.every(s => s.hasCompleted);
+          const anyStarted = assignedStaff.some(s => s.hasStarted);
+          
+          if (allCompleted && calculatedStatus !== 'Completed') {
+            calculatedStatus = 'Pending Review';
+          } else if (anyStarted && calculatedStatus === 'Confirmed') {
+            calculatedStatus = 'In Progress';
+          }
+        }
+        
+        setOverallStatus(calculatedStatus);
         
         // Check for work photos in notes
         if (appointmentData.notes) {
@@ -97,8 +136,8 @@ export default function PublicAppointment() {
 
     fetchAppointmentData();
 
-    // Set up realtime subscription for this appointment
-    const channel = supabase
+    // Set up realtime subscriptions
+    const appointmentChannel = supabase
       .channel(`appointment-${id}`)
       .on(
         'postgres_changes',
@@ -110,32 +149,50 @@ export default function PublicAppointment() {
         },
         async (payload) => {
           console.log('Appointment updated:', payload);
-          // Refetch appointment data
+          fetchAppointmentData();
+        }
+      )
+      .subscribe();
+
+    const staffChannel = supabase
+      .channel(`appointment-staff-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointment_staff',
+          filter: `appointment_id=eq.${id}`
+        },
+        async (payload) => {
+          console.log('Appointment staff updated:', payload);
           fetchAppointmentData();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(appointmentChannel);
+      supabase.removeChannel(staffChannel);
     };
   }, [id]);
 
   const handleStartWork = async (staffId: string) => {
     try {
-      // Update appointment status in database
+      // Update appointment_staff record
+      const { error } = await supabase
+        .from('appointment_staff')
+        .update({ 
+          has_started: true, 
+          started_at: new Date().toISOString() 
+        })
+        .eq('appointment_id', id!)
+        .eq('staff_id', staffId);
+
+      if (error) throw error;
+
+      // Update appointment status to "In Progress"
       await appointmentService.update(id!, { status: 'In Progress' });
-      
-      setStaffMembers(prev => 
-        prev.map(staff => 
-          staff.id === staffId 
-            ? { ...staff, hasStarted: true }
-            : staff
-        )
-      );
-      
-      // If any staff member starts, set overall status to "In Progress"
-      setOverallStatus('In Progress');
       
       toast({
         title: "Work Started",
@@ -224,17 +281,30 @@ export default function PublicAppointment() {
 
   const proceedWithReview = async (staffId: string) => {
     try {
-      await appointmentService.update(id!, { status: 'Pending Review' });
+      // Update appointment_staff record
+      const { error: staffError } = await supabase
+        .from('appointment_staff')
+        .update({ 
+          has_completed: true, 
+          completed_at: new Date().toISOString() 
+        })
+        .eq('appointment_id', id!)
+        .eq('staff_id', staffId);
+
+      if (staffError) throw staffError;
+
+      // Check if all staff have completed
+      const { data: allStaffData } = await supabase
+        .from('appointment_staff')
+        .select('has_completed')
+        .eq('appointment_id', id!);
+
+      const allCompleted = allStaffData?.every(s => s.has_completed) || false;
+
+      // Update appointment status
+      const newStatus = allCompleted ? 'Pending Review' : 'In Progress';
+      await appointmentService.update(id!, { status: newStatus });
       
-      setStaffMembers(prev => 
-        prev.map(staff => 
-          staff.id === staffId 
-            ? { ...staff, hasCompleted: true }
-            : staff
-        )
-      );
-      
-      setOverallStatus('Pending Review');
       setShowUploadDialog(false);
       
       toast({
@@ -492,27 +562,17 @@ export default function PublicAppointment() {
           </Card>
         )}
 
-        {/* Share via WhatsApp - Only for Completed Status */}
+        {/* Rate the Work - Only for Completed Status */}
         {overallStatus.toLowerCase() === 'completed' && (
           <Card className="mb-6">
             <CardContent className="pt-6">
               <Button
-                onClick={() => {
-                  const message = encodeURIComponent(
-                    `Thank you for choosing Reex Empire!\n\n` +
-                    `Your appointment for ${appointment.title} has been completed.\n\n` +
-                    `Unit #${customer?.unit_number || 'N/A'}\n` +
-                    `Date: ${formatDate(appointment.appointment_date)}\n\n` +
-                    `We appreciate your business!`
-                  );
-                  const whatsappUrl = `https://wa.me/?text=${message}`;
-                  window.open(whatsappUrl, '_blank');
-                }}
-                className="w-full flex items-center justify-center gap-2 text-green-600 bg-green-50 hover:bg-green-100 border border-green-200"
-                variant="outline"
+                onClick={() => setRatingDialogOpen(true)}
+                className="w-full flex items-center justify-center gap-2"
+                variant="default"
               >
-                <Share2 className="h-5 w-5" />
-                Share via WhatsApp
+                <Star className="h-5 w-5" />
+                Rate the Work
               </Button>
             </CardContent>
           </Card>
@@ -539,6 +599,14 @@ export default function PublicAppointment() {
           </DialogContent>
         </Dialog>
 
+
+        {/* Rating Dialog */}
+        <RatingDialog
+          open={ratingDialogOpen}
+          onOpenChange={setRatingDialogOpen}
+          appointmentId={id!}
+          appointmentTitle={appointment?.title || ""}
+        />
 
         {/* Upload Work Photos Dialog */}
         <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>

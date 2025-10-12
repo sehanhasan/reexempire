@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_ratings: {
+        Row: {
+          appointment_id: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          rating: number
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_id: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating: number
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_ratings_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_staff: {
+        Row: {
+          appointment_id: string
+          completed_at: string | null
+          created_at: string | null
+          has_completed: boolean | null
+          has_started: boolean | null
+          id: string
+          staff_id: string
+          started_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          appointment_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          has_completed?: boolean | null
+          has_started?: boolean | null
+          id?: string
+          staff_id: string
+          started_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          has_completed?: boolean | null
+          has_started?: boolean | null
+          id?: string
+          staff_id?: string
+          started_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_staff_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_staff_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_date: string

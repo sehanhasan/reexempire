@@ -17,6 +17,7 @@ import { CustomerSelector } from "@/components/appointments/CustomerSelector";
 import { Customer, Staff } from "@/types/database";
 import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AddAppointment() {
   const navigate = useNavigate();
@@ -67,8 +68,16 @@ export default function AddAppointment() {
             setEndTime(appointment.end_time || "10:00");
             setStatus(appointment.status || "Confirmed");
 
-            // Set staff data
-            if (appointment.staff_id) {
+            // Fetch appointment_staff for multi-staff support
+            const { data: appointmentStaffData } = await supabase
+              .from('appointment_staff')
+              .select('staff_id')
+              .eq('appointment_id', id);
+
+            if (appointmentStaffData && appointmentStaffData.length > 0) {
+              setSelectedStaff(appointmentStaffData.map(as => as.staff_id));
+            } else if (appointment.staff_id) {
+              // Fallback to single staff_id for backward compatibility
               setSelectedStaff([appointment.staff_id]);
             }
 
@@ -291,12 +300,49 @@ export default function AddAppointment() {
       let savedAppointment;
       if (isEditMode) {
         savedAppointment = await appointmentService.update(id, appointmentData);
+        
+        // Update appointment_staff records for multi-staff support
+        if (selectedStaff.length > 0) {
+          // Delete existing appointment_staff records
+          await supabase
+            .from('appointment_staff')
+            .delete()
+            .eq('appointment_id', id);
+          
+          // Create new appointment_staff records
+          const appointmentStaffData = selectedStaff.map(staffId => ({
+            appointment_id: id,
+            staff_id: staffId,
+            has_started: false,
+            has_completed: false,
+          }));
+          
+          await supabase
+            .from('appointment_staff')
+            .insert(appointmentStaffData);
+        }
+        
         toast({
           title: "Appointment Updated",
           description: "The appointment has been updated successfully."
         });
       } else {
         savedAppointment = await appointmentService.create(appointmentData);
+        
+        // Create appointment_staff records for multi-staff support
+        if (selectedStaff.length > 0 && savedAppointment) {
+          const appointmentStaffData = selectedStaff.map(staffId => ({
+            appointment_id: savedAppointment.id,
+            staff_id: staffId,
+            has_started: false,
+            has_completed: false,
+          }));
+          
+          await supabase
+            .from('appointment_staff')
+            .insert(appointmentStaffData);
+        }
+        
         toast({
           title: "Appointment Added",
           description: "The appointment has been scheduled successfully."
