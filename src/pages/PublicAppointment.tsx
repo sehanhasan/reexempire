@@ -590,8 +590,8 @@ export default function PublicAppointment() {
           </Card>
         )}
 
-        {/* Rate the Work - Only for Completed Status */}
-        {overallStatus.toLowerCase() === 'completed' && (
+        {/* Rate the Work - Only for Completed Status and if not already rated */}
+        {overallStatus.toLowerCase() === 'completed' && !rating && (
           <Card className="mb-6">
             <CardContent className="pt-6">
               <Button
