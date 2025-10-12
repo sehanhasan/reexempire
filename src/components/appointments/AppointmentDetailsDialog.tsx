@@ -219,9 +219,9 @@ export function AppointmentDetailsDialog({
                 <div>
                   <p className="font-medium">Assigned Staff</p>
                   <p className="text-sm">{assignedStaff.name}</p>
-                  {assignedStaff.phone && (
+                  {/* {assignedStaff.phone && (
                     <p className="text-sm text-gray-600">{assignedStaff.phone}</p>
-                  )}
+                  )} */}
                 </div>
               </div>
             )}
@@ -300,7 +300,7 @@ export function AppointmentDetailsDialog({
 
             {/* View Appointment Button */}
             <Button 
-              onClick={() => navigate(`/appointments/view/${appointment.id}`)} 
+              onClick={() => window.open(`/appointments/view/${appointment.id}`, '_blank')} 
               variant="outline" 
               className="w-full flex items-center justify-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
             >

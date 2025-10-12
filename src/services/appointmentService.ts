@@ -185,19 +185,27 @@ export const appointmentService = {
       }
     }
     
+    // if (staffMembers.length > 0) {
+    //   message += `\n👨‍💼 *Staff Assigned*\n`;
+    //   staffMembers.forEach(staff => {
+    //     message += `- ${staff.name}${staff.phone ? ' ('+staff.phone+')' : ''}\n`;
+    //   });
+    // }
+
     if (staffMembers.length > 0) {
       message += `\n👨‍💼 *Staff Assigned*\n`;
       staffMembers.forEach(staff => {
-        message += `- ${staff.name}${staff.phone ? ' ('+staff.phone+')' : ''}\n`;
+        message += `- ${staff.name}\n`;  // Remove the phone number part
       });
     }
     
-    if (appointment.notes) {
-      const cleanNotes = appointment.notes.replace(/image_url:[^\s]+/g, '').trim();
-      if (cleanNotes) {
-        message += `\n📝 *Notes*\n${cleanNotes}\n`;
-      }
-    }
+    
+    // if (appointment.notes) {
+    //   const cleanNotes = appointment.notes.replace(/image_url:[^\s]+/g, '').trim();
+    //   if (cleanNotes) {
+    //     message += `\n📝 *Notes*\n${cleanNotes}\n`;
+    //   }
+    // }
     
     // Add public appointment URL
     const publicUrl = `${window.location.origin}/appointments/view/${appointment.id}`;
