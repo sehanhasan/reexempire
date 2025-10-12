@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Edit, X, Check, Play, Share2, User, Star } from "lucide-react";
+import { Calendar, Eye, MapPin, Edit, X, File, Check, Play, Share2, User, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
 import { useState, useEffect } from "react";
@@ -274,7 +274,7 @@ export function AppointmentDetailsDialog({
             )}
           </div>
         </div>
-        
+
         <DialogFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mt-4">
           {!isCompleted && !isPendingReview && (
             <Button 
@@ -288,35 +288,35 @@ export function AppointmentDetailsDialog({
           )}
           
           {isCompleted && (
-            <>
-              <Button 
-                onClick={handleShareToCustomer} 
-                variant="outline" 
-                className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
-              >
-                <Share2 className="h-4 w-4" />
-                Share to Customer
-              </Button>
-              
-              {/* View Appointment Button */}
-              <Button 
-                onClick={() => navigate(`/appointments/view/${appointment.id}`)} 
-                variant="outline" 
-                className="w-full flex items-center justify-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
-              >
-                <Edit className="h-4 w-4" />
-                View Appointment
+          <>
+            <Button 
+              onClick={handleShareToCustomer} 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </Button>
+
+            {/* View Appointment Button */}
+            <Button 
+              onClick={() => navigate(`/appointments/view/${appointment.id}`)} 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+            >
+              <Eye className="h-4 w-4" />
+                View
               </Button>
             </>
           )}
-
+          
           {isPendingReview && (
             <Button 
               onClick={() => window.open(`/appointments/view/${appointment.id}`, '_blank')} 
               variant="outline" 
               className="w-full flex items-center justify-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
             >
-              <Edit className="h-4 w-4" />
+              <File className="h-4 w-4" />
               Review Job
             </Button>
           )}
