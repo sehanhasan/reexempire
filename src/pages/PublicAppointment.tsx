@@ -673,17 +673,16 @@ export default function PublicAppointment() {
           onOpenChange={setRatingDialogOpen}
           appointmentId={id!}
           appointmentTitle={appointment?.title || ""}
-          onRatingSubmitted={() => {
-            // Refetch the rating to update the UI
-            const fetchRating = async () => {
-              const { data: ratingData } = await supabase
-                .from('appointment_ratings')
-                .select('*')
-                .eq('appointment_id', id!)
-                .maybeSingle();
-              setRating(ratingData);
-            };
-            fetchRating();
+          onRatingSubmitted={(ratingData) => {
+            // Immediately update the rating state to hide the button
+            setRating({
+              appointment_id: id!,
+              rating: ratingData.rating,
+              comment: ratingData.comment,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              id: 'temp-id', // Temporary ID, will be replaced by realtime subscription
+            });
           }}
         />
 

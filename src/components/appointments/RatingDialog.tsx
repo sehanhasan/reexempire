@@ -11,7 +11,7 @@ interface RatingDialogProps {
   onOpenChange: (open: boolean) => void;
   appointmentId: string;
   appointmentTitle: string;
-  onRatingSubmitted?: () => void;
+  onRatingSubmitted?: (ratingData: { rating: number; comment: string | null }) => void;
 }
 
 export function RatingDialog({ open, onOpenChange, appointmentId, appointmentTitle, onRatingSubmitted }: RatingDialogProps) {
@@ -47,7 +47,15 @@ export function RatingDialog({ open, onOpenChange, appointmentId, appointmentTit
         description: "Your rating has been submitted successfully",
       });
 
-      // Reset form
+      // Notify parent component immediately with the rating data
+      if (onRatingSubmitted) {
+        onRatingSubmitted({
+          rating,
+          comment: comment.trim() || null,
+        });
+      }
+
+      // Reset form and close dialog
       setRating(0);
       setComment("");
       onOpenChange(false);
