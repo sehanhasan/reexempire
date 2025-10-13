@@ -304,10 +304,20 @@ export default function PublicAppointment() {
   };
 
   const handleSubmitForReview = async (staffId: string) => {
-    setShowUploadDialog(true);
+    // Store the staffId for later use in proceedWithReview
+    const staffMember = staffMembers.find(s => s.id === staffId);
+    if (staffMember) {
+      // Pass staffId through the dialog
+      setShowUploadDialog(true);
+    }
   };
 
-  const proceedWithReview = async (staffId: string) => {
+  const proceedWithReview = async () => {
+    // Find the staff member who triggered the submit
+    const staffToSubmit = staffMembers.find(s => s.hasStarted && !s.hasCompleted);
+    if (!staffToSubmit) return;
+    
+    const staffId = staffToSubmit.id;
     try {
       // Update appointment_staff record
       const { error: staffError } = await supabase
@@ -663,6 +673,18 @@ export default function PublicAppointment() {
           onOpenChange={setRatingDialogOpen}
           appointmentId={id!}
           appointmentTitle={appointment?.title || ""}
+          onRatingSubmitted={() => {
+            // Refetch the rating to update the UI
+            const fetchRating = async () => {
+              const { data: ratingData } = await supabase
+                .from('appointment_ratings')
+                .select('*')
+                .eq('appointment_id', id!)
+                .maybeSingle();
+              setRating(ratingData);
+            };
+            fetchRating();
+          }}
         />
 
         {/* Upload Work Photos Dialog */}
@@ -711,24 +733,8 @@ export default function PublicAppointment() {
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
-              {/* <Button
-                variant="outline"
-                onClick={() => {
-                  if (staffMembers[0]) {
-                    proceedWithReview(staffMembers[0].id);
-                  }
-                }}
-                disabled={uploading}
-                className="w-full sm:w-auto"
-              >
-                Skip & Submit
-              </Button> */}
               <Button
-                onClick={() => {
-                  if (staffMembers[0]) {
-                    proceedWithReview(staffMembers[0].id);
-                  }
-                }}
+                onClick={proceedWithReview}
                 disabled={uploading}
                 className="w-full sm:w-auto"
               >

@@ -96,7 +96,7 @@ export default function Quotations() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
 
-  const { pagination, controls, paginatedData } = usePagination(filteredQuotations.length, 10);
+  const { pagination, controls, paginatedData } = usePagination(filteredQuotations.length, 25);
 
   const fetchData = async () => {
     try {

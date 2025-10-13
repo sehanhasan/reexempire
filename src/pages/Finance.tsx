@@ -86,7 +86,7 @@ export default function Finance() {
     pagination,
     controls,
     paginatedData
-  } = usePagination(filteredInvoices.length, 10);
+  } = usePagination(filteredInvoices.length, 25);
 
   // Calculate revenue metrics
   const totalRevenue = filteredInvoices.reduce((sum, invoice) => sum + Number(invoice.total), 0);

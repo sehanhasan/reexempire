@@ -29,7 +29,7 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { pagination, controls, paginatedData } = usePagination(filteredCustomers.length, 10);
+  const { pagination, controls, paginatedData } = usePagination(filteredCustomers.length, 25);
   const fetchCustomers = async () => {
     try {
       const data = await customerService.getAll();

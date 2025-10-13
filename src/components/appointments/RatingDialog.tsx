@@ -11,9 +11,10 @@ interface RatingDialogProps {
   onOpenChange: (open: boolean) => void;
   appointmentId: string;
   appointmentTitle: string;
+  onRatingSubmitted?: () => void;
 }
 
-export function RatingDialog({ open, onOpenChange, appointmentId, appointmentTitle }: RatingDialogProps) {
+export function RatingDialog({ open, onOpenChange, appointmentId, appointmentTitle, onRatingSubmitted }: RatingDialogProps) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState("");

@@ -96,7 +96,7 @@ export default function Invoices() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
-  const { pagination, controls, paginatedData } = usePagination(filteredInvoices.length, 10);
+  const { pagination, controls, paginatedData } = usePagination(filteredInvoices.length, 25);
 
   const fetchData = async () => {
     try {
