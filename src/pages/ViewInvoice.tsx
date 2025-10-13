@@ -245,7 +245,7 @@ export default function ViewInvoice() {
       <div className="py-4 px-4 invoice-content">
         <div className="max-w-4xl mx-auto space-y-4">
           {/* Compact Header with Company and Invoice Info in Columns */}
-          <div className="bg-white p-4">
+          <div className="bg-white px-4 py-0">
             <div className="grid grid-cols-2 gap-6">
               {/* Left Column - Company Logo and Details */}
               <div>
