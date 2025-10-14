@@ -26,7 +26,7 @@ export default function AddCustomerForm({
   const isMobile = useIsMobile();
   const [customerType, setCustomerType] = useState("individual");
   const [name, setName] = useState("");
-  const [residence, setResidence] = useState("Star Residences ONE");
+  const [residence, setResidence] = useState("Star Residences, Jalan Yap Kwan Seng. 50450 Kuala Lumpur");
   const [unitNumber, setUnitNumber] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
@@ -50,7 +50,7 @@ export default function AddCustomerForm({
             // Ensure WhatsApp number shows with country code when editing
             setWhatsapp(customer.phone || "");
             setEmail(customer.email || "");
-            setResidence(customer.address || "Star Residences ONE");
+            setResidence(customer.address || "Star Residences, Jalan Yap Kwan Seng. 50450 Kuala Lumpur");
             setNotes(customer.notes || "");
           }
           setIsLoading(false);
