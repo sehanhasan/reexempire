@@ -214,7 +214,7 @@ export default function Finance() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(todayRevenue)}
+              <span className="text-xs text-muted-foreground font-normal">RM</span> {todayRevenue.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               Today's revenue
@@ -229,7 +229,7 @@ export default function Finance() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(currentMonthRevenue)}
+              <span className="text-xs text-muted-foreground font-normal">RM</span> {currentMonthRevenue.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               Current month revenue
@@ -244,7 +244,7 @@ export default function Finance() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(invoices.filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && new Date(inv.issue_date).getFullYear() === new Date().getFullYear()).reduce((sum, inv) => sum + Number(inv.total), 0))}
+              <span className="text-xs text-muted-foreground font-normal">RM</span> {invoices.filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && new Date(inv.issue_date).getFullYear() === new Date().getFullYear()).reduce((sum, inv) => sum + Number(inv.total), 0).toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               Current year revenue
@@ -252,14 +252,20 @@ export default function Finance() {
           </CardContent>
         </Card>
 
-        <StatCard
-          title="Overdue"
-          value={overdueCount.toString()}
-          description="Invoices past due date"
-          icon={<AlertCircle className="h-4 w-4" />}
-          className="cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate('/invoices?status=Overdue')}
-        />
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/invoices?status=Overdue')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <AlertCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {overdueCount}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Invoices past due date
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}

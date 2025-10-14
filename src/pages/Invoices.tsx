@@ -173,7 +173,7 @@ export default function Invoices() {
     const params = new URLSearchParams(location.search);
     const status = params.get('status');
     if (status) {
-      setStatusFilter(status);
+      setStatusFilter(status.toLowerCase());
       // Remove the query parameter after setting the filter
       navigate(location.pathname, { replace: true });
     }
