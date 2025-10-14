@@ -66,7 +66,7 @@ export default function Inventory() {
     pagination,
     controls,
     paginatedData
-  } = usePagination(filteredItems.length, 10);
+  } = usePagination(filteredItems.length, 25);
   const handleDeleteClick = (id: string) => {
     setItemToDelete(id);
     setDeleteDialogOpen(true);

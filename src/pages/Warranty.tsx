@@ -132,7 +132,7 @@ export default function Warranty() {
     pagination,
     controls,
     paginatedData
-  } = usePagination(filteredWarrantyItems.length, 10);
+  } = usePagination(filteredWarrantyItems.length, 25);
   const getWarrantyStatus = (expiryDate: string) => {
     const today = new Date();
     const expiry = new Date(expiryDate);
