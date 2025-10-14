@@ -17,6 +17,9 @@ import { formatCurrency, formatDate } from "@/utils/formatters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePagination } from "@/hooks/usePagination";
 import { toast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { AlertCircle } from "lucide-react";
 export default function Finance() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("this-month");
@@ -25,6 +28,7 @@ export default function Finance() {
     to?: Date;
   }>({});
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   // Fetch invoices
   const {
@@ -99,6 +103,15 @@ export default function Finance() {
   const currentMonthRevenue = invoices.filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && new Date(inv.issue_date).toISOString().slice(0, 7) === currentMonth).reduce((sum, inv) => sum + Number(inv.total), 0);
   const previousMonthRevenue = invoices.filter(inv => (inv.payment_status === 'paid' || inv.payment_status === 'Paid') && new Date(inv.issue_date).toISOString().slice(0, 7) === previousMonth).reduce((sum, inv) => sum + Number(inv.total), 0);
   const growthPercentage = previousMonthRevenue > 0 ? (currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100 : 0;
+  
+  // Calculate overdue invoices count
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+  const overdueCount = invoices.filter(inv => {
+    const dueDate = new Date(inv.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate < currentDate && inv.payment_status !== 'Paid' && inv.payment_status !== 'paid';
+  }).length;
   const handleExport = () => {
     try {
       const csvData = filteredInvoices.map(invoice => {
@@ -193,7 +206,7 @@ export default function Finance() {
       <PageHeader title="Finance" description="Track and manage paid invoices and revenue" />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today</CardTitle>
@@ -238,6 +251,15 @@ export default function Finance() {
             </p>
           </CardContent>
         </Card>
+
+        <StatCard
+          title="Overdue"
+          value={overdueCount.toString()}
+          description="Invoices past due date"
+          icon={<AlertCircle className="h-4 w-4" />}
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/invoices?status=Overdue')}
+        />
       </div>
 
       {/* Filters */}

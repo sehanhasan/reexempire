@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { Button } from "@/components/ui/button";
@@ -85,6 +85,7 @@ const StatusIcon = ({
 
 export default function Invoices() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
   const [invoices, setInvoices] = useState<InvoiceWithCustomer[]>([]);
   const [filteredInvoices, setFilteredInvoices] = useState<InvoiceWithCustomer[]>([]);
@@ -112,10 +113,20 @@ export default function Invoices() {
       });
       setCustomers(customerMap);
 
+      // Auto-update overdue invoices
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+      
       const enhancedInvoices: InvoiceWithCustomer[] = await Promise.all(
         invoiceData.map(async (invoice) => {
+          // Check if invoice is overdue
+          const dueDate = new Date(invoice.due_date);
+          dueDate.setHours(0, 0, 0, 0);
+          const isOverdue = dueDate < currentDate && invoice.payment_status !== 'Paid' && invoice.payment_status !== 'paid';
+          
           const baseInvoice: InvoiceWithCustomer = {
             ...invoice,
+            status: isOverdue ? 'Overdue' : invoice.status,
             customer_name: customerMap[invoice.customer_id]?.name || "Unknown Customer",
             unit_number: customerMap[invoice.customer_id]?.unit_number
           };
@@ -157,6 +168,16 @@ export default function Invoices() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get('status');
+    if (status) {
+      setStatusFilter(status);
+      // Remove the query parameter after setting the filter
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
 
   const getDisplayStatus = (inv: InvoiceWithCustomer) => {
     if (inv.payment_status === 'Partially Paid') return 'Paid - Partial';
