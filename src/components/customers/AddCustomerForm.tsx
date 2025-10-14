@@ -182,14 +182,12 @@ export default function AddCustomerForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="residence">Location</Label>
-                  <Select value={residence} onValueChange={setResidence}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Star Residences, Jalan Yap Kwan Seng. 50450 Kuala Lumpur">Star Residences, Jalan yap Kwan seng. 50450 Kuala Lumpur</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input 
+                    id="residence" 
+                    placeholder="e.g. Star Residences, Jalan Yap Kwan Seng. 50450 Kuala Lumpur" 
+                    value={residence} 
+                    onChange={e => setResidence(e.target.value)} 
+                  />
                 </div>
               </div>
 
