@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePagination } from "@/hooks/usePagination";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface InvoiceWithCustomer extends Invoice {
   customer_name: string;
@@ -342,6 +343,8 @@ export default function Invoices() {
     };
   }, [searchTerm]);
 
+  const overdueInvoices = filteredInvoices.filter(inv => getDisplayStatus(inv) === 'Overdue');
+
   return (
       <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
         {!isMobile && (
@@ -351,6 +354,27 @@ export default function Invoices() {
               Create Invoice
             </Button>
           } />
+        )}
+
+        {/* Overdue Alert */}
+        {overdueInvoices.length > 0 && (
+          <Alert className="mb-4 border-red-200 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertTitle className="text-red-800">Overdue Invoices</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span className="text-red-700">
+                You have {overdueInvoices.length} overdue invoice{overdueInvoices.length > 1 ? 's' : ''} that require attention.
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-4 border-red-300 text-red-700 hover:bg-red-100"
+                onClick={() => setStatusFilter('overdue')}
+              >
+                View
+              </Button>
+            </AlertDescription>
+          </Alert>
         )}
 
         <div className={!isMobile ? "bg-white rounded-lg border" : ""}>

@@ -33,6 +33,7 @@ export default function PublicAppointment() {
   const [lightboxImage, setLightboxImage] = useState<string>('');
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [rating, setRating] = useState<any>(null);
+  const [pendingPhotos, setPendingPhotos] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchAppointmentData = async () => {
@@ -275,21 +276,12 @@ export default function PublicAppointment() {
         uploadedUrls.push(publicUrl);
       }
 
-      // Update work photos state
-      setWorkPhotos(prev => [...prev, ...uploadedUrls]);
-
-      // Update appointment notes with work photo URLs
-      const photoTags = uploadedUrls.map(url => `work_photo:${url}`).join(' ');
-      const updatedNotes = appointment.notes 
-        ? `${appointment.notes} ${photoTags}` 
-        : photoTags;
-
-      await appointmentService.update(id!, { notes: updatedNotes });
-      setAppointment({ ...appointment, notes: updatedNotes });
+      // Add to pending photos (not yet saved to appointment)
+      setPendingPhotos(prev => [...prev, ...uploadedUrls]);
 
       toast({
-        title: "Success",
-        description: `${uploadedUrls.length} photo(s) uploaded successfully`,
+        title: "Photos Added",
+        description: `${uploadedUrls.length} photo(s) added. Click Submit for Review to save.`,
       });
     } catch (error) {
       console.error("Error uploading photos:", error);
@@ -301,6 +293,10 @@ export default function PublicAppointment() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setPendingPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmitForReview = async (staffId: string) => {
@@ -319,6 +315,19 @@ export default function PublicAppointment() {
     
     const staffId = staffToSubmit.id;
     try {
+      // Save pending photos to appointment notes
+      if (pendingPhotos.length > 0) {
+        const photoTags = pendingPhotos.map(url => `work_photo:${url}`).join(' ');
+        const updatedNotes = appointment.notes 
+          ? `${appointment.notes} ${photoTags}` 
+          : photoTags;
+
+        await appointmentService.update(id!, { notes: updatedNotes });
+        setAppointment({ ...appointment, notes: updatedNotes });
+        setWorkPhotos(prev => [...prev, ...pendingPhotos]);
+        setPendingPhotos([]);
+      }
+
       // Update appointment_staff record
       const { error: staffError } = await supabase
         .from('appointment_staff')
@@ -690,9 +699,9 @@ export default function PublicAppointment() {
         <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Upload Work Photos (Optional)</DialogTitle>
+              <DialogTitle>Upload Work Photos</DialogTitle>
               <DialogDescription>
-                Add photos of your completed work before submitting for review.
+                Add at least one photo of your completed work before submitting for review.
               </DialogDescription>
             </DialogHeader>
             
@@ -714,17 +723,26 @@ export default function PublicAppointment() {
                 </label>
               </div>
 
-              {workPhotos.length > 0 && (
+              {pendingPhotos.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Uploaded Photos ({workPhotos.length})</p>
+                  <p className="text-sm font-medium">Uploaded Photos ({pendingPhotos.length})</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {workPhotos.slice(-3).map((photo, index) => (
-                      <img 
-                        key={index}
-                        src={photo} 
-                        alt={`Preview ${index + 1}`} 
-                        className="rounded w-full h-20 object-cover"
-                      />
+                    {pendingPhotos.map((photo, index) => (
+                      <div key={index} className="relative group">
+                        <img 
+                          src={photo} 
+                          alt={`Preview ${index + 1}`} 
+                          className="rounded w-full h-20 object-cover"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemovePhoto(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -734,7 +752,7 @@ export default function PublicAppointment() {
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button
                 onClick={proceedWithReview}
-                disabled={uploading}
+                disabled={uploading || pendingPhotos.length === 0}
                 className="w-full sm:w-auto"
               >
                 {uploading ? "Uploading..." : "Submit for Review"}
