@@ -20,13 +20,11 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePagination } from "@/hooks/usePagination";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
 interface InvoiceWithCustomer extends Invoice {
   customer_name: string;
   unit_number?: string;
   deposit_paid?: number; // For Due Invoices
 }
-
 const StatusBadge = ({
   status
 }: {
@@ -62,7 +60,6 @@ const StatusBadge = ({
       {status}
     </span>;
 };
-
 const StatusIcon = ({
   status
 }: {
@@ -83,7 +80,6 @@ const StatusIcon = ({
       return <AlertCircle className="h-3.5 w-3.5 mr-1 text-gray-500" />;
   }
 };
-
 export default function Invoices() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -97,17 +93,15 @@ export default function Invoices() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
-
-  const { pagination, controls, paginatedData } = usePagination(filteredInvoices.length, 25);
-
+  const {
+    pagination,
+    controls,
+    paginatedData
+  } = usePagination(filteredInvoices.length, 25);
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [invoiceData, customerData] = await Promise.all([
-        invoiceService.getAll(),
-        customerService.getAll(),
-      ]);
-
+      const [invoiceData, customerData] = await Promise.all([invoiceService.getAll(), customerService.getAll()]);
       const customerMap: Record<string, Customer> = {};
       customerData.forEach(customer => {
         customerMap[customer.id] = customer;
@@ -117,42 +111,34 @@ export default function Invoices() {
       // Auto-update overdue invoices
       const currentDate = new Date();
       currentDate.setHours(0, 0, 0, 0);
-      
-      const enhancedInvoices: InvoiceWithCustomer[] = await Promise.all(
-        invoiceData.map(async (invoice) => {
-          // Check if invoice is overdue
-          const dueDate = new Date(invoice.due_date);
-          dueDate.setHours(0, 0, 0, 0);
-          const isOverdue = dueDate < currentDate && invoice.payment_status !== 'Paid' && invoice.payment_status !== 'paid';
-          
-          const baseInvoice: InvoiceWithCustomer = {
-            ...invoice,
-            status: isOverdue ? 'Overdue' : invoice.status,
-            customer_name: customerMap[invoice.customer_id]?.name || "Unknown Customer",
-            unit_number: customerMap[invoice.customer_id]?.unit_number
-          };
+      const enhancedInvoices: InvoiceWithCustomer[] = await Promise.all(invoiceData.map(async invoice => {
+        // Check if invoice is overdue
+        const dueDate = new Date(invoice.due_date);
+        dueDate.setHours(0, 0, 0, 0);
+        const isOverdue = dueDate < currentDate && invoice.payment_status !== 'Paid' && invoice.payment_status !== 'paid';
+        const baseInvoice: InvoiceWithCustomer = {
+          ...invoice,
+          status: isOverdue ? 'Overdue' : invoice.status,
+          customer_name: customerMap[invoice.customer_id]?.name || "Unknown Customer",
+          unit_number: customerMap[invoice.customer_id]?.unit_number
+        };
 
-          // For Due Invoices (non-deposit invoices linked to quotation), fetch deposit paid
-          if (invoice.quotation_id && !invoice.is_deposit_invoice) {
-            try {
-              const { data: depositInvoice, error } = await supabase
-                .from('invoices')
-                .select('deposit_amount')
-                .eq('quotation_id', invoice.quotation_id)
-                .eq('is_deposit_invoice', true)
-                .single();
-              
-              if (!error && depositInvoice) {
-                baseInvoice.deposit_paid = depositInvoice.deposit_amount || 0;
-              }
-            } catch (err) {
-              console.warn('Failed to fetch deposit for Due Invoice:', err);
+        // For Due Invoices (non-deposit invoices linked to quotation), fetch deposit paid
+        if (invoice.quotation_id && !invoice.is_deposit_invoice) {
+          try {
+            const {
+              data: depositInvoice,
+              error
+            } = await supabase.from('invoices').select('deposit_amount').eq('quotation_id', invoice.quotation_id).eq('is_deposit_invoice', true).single();
+            if (!error && depositInvoice) {
+              baseInvoice.deposit_paid = depositInvoice.deposit_amount || 0;
             }
+          } catch (err) {
+            console.warn('Failed to fetch deposit for Due Invoice:', err);
           }
-
-          return baseInvoice;
-        })
-      );
+        }
+        return baseInvoice;
+      }));
       setInvoices(enhancedInvoices);
       setLoading(false);
     } catch (error) {
@@ -165,54 +151,41 @@ export default function Invoices() {
       });
     }
   };
-
   useEffect(() => {
     fetchData();
   }, []);
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const status = params.get('status');
     if (status) {
       setStatusFilter(status.toLowerCase());
       // Remove the query parameter after setting the filter
-      navigate(location.pathname, { replace: true });
+      navigate(location.pathname, {
+        replace: true
+      });
     }
   }, [location, navigate]);
-
   const getDisplayStatus = (inv: InvoiceWithCustomer) => {
     if (inv.payment_status === 'Partially Paid') return 'Paid - Partial';
     if (inv.status === 'Sent') return 'Unpaid';
     return inv.status;
   };
-
   useEffect(() => {
     let filtered = [...invoices];
-
     if (statusFilter !== "all") {
       filtered = filtered.filter(invoice => getDisplayStatus(invoice).toLowerCase() === statusFilter.toLowerCase());
     }
-
     if (paymentStatusFilter !== "all") {
       filtered = filtered.filter(invoice => invoice.payment_status.toLowerCase() === paymentStatusFilter.toLowerCase());
     }
-
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(invoice =>
-        invoice.reference_number.toLowerCase().includes(search) ||
-        invoice.customer_name.toLowerCase().includes(search) ||
-        formatDate(invoice.issue_date).toLowerCase().includes(search) ||
-        (invoice.unit_number && invoice.unit_number.toLowerCase().includes(search))
-      );
+      filtered = filtered.filter(invoice => invoice.reference_number.toLowerCase().includes(search) || invoice.customer_name.toLowerCase().includes(search) || formatDate(invoice.issue_date).toLowerCase().includes(search) || invoice.unit_number && invoice.unit_number.toLowerCase().includes(search));
     }
-
     setFilteredInvoices(filtered);
   }, [invoices, searchTerm, statusFilter, paymentStatusFilter]);
-
   const handleDelete = async () => {
     if (!invoiceToDelete) return;
-
     try {
       await invoiceService.delete(invoiceToDelete.id);
       setInvoices(invoices.filter(invoice => invoice.id !== invoiceToDelete.id));
@@ -232,7 +205,6 @@ export default function Invoices() {
       });
     }
   };
-
   const handleSendWhatsapp = (invoice: InvoiceWithCustomer) => {
     const customer = customers[invoice.customer_id];
     if (!customer) {
@@ -243,7 +215,6 @@ export default function Invoices() {
       });
       return;
     }
-
     try {
       const invoiceViewUrl = `${window.location.origin}/invoices/view/${invoice.id}`;
       const whatsappUrl = invoiceService.generateWhatsAppShareUrl(invoice.id, invoice.reference_number, customer.name, invoiceViewUrl);
@@ -257,7 +228,6 @@ export default function Invoices() {
       });
     }
   };
-
   const handleDownloadPDF = async (invoice: InvoiceWithCustomer) => {
     const customer = customers[invoice.customer_id];
     if (!customer) {
@@ -268,7 +238,6 @@ export default function Invoices() {
       });
       return;
     }
-
     try {
       const invoiceItems = await invoiceService.getItemsByInvoiceId(invoice.id);
       const itemsForPDF = invoiceItems.map(item => ({
@@ -280,7 +249,6 @@ export default function Invoices() {
         category: item.category || '',
         unit: item.unit || ''
       }));
-
       const pdf = generateInvoicePDF({
         documentNumber: invoice.reference_number,
         documentDate: invoice.issue_date,
@@ -297,9 +265,8 @@ export default function Invoices() {
         customerContact: customer.phone || "",
         customerEmail: customer.email || "",
         notes: invoice.notes || "",
-        expiryDate: invoice.due_date,
+        expiryDate: invoice.due_date
       });
-
       downloadPDF(pdf, `Invoice_${invoice.reference_number}_${customer.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -310,14 +277,12 @@ export default function Invoices() {
       });
     }
   };
-
   const formatMoney = (amount: number) => {
     return `RM ${parseFloat(amount.toString()).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`;
   };
-
   const getDisplayAmount = (invoice: InvoiceWithCustomer) => {
     // For Due Invoices, show balance (total minus deposit paid)
     if (invoice.quotation_id && !invoice.is_deposit_invoice && invoice.deposit_paid && invoice.deposit_paid > 0) {
@@ -342,54 +307,32 @@ export default function Invoices() {
       window.dispatchEvent(new CustomEvent('clear-mobile-search'));
     };
   }, [searchTerm]);
-
   const overdueInvoices = filteredInvoices.filter(inv => getDisplayStatus(inv) === 'Overdue');
-
-  return (
-      <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
-        {!isMobile && (
-          <PageHeader title="Invoices" actions={
-            <Button onClick={() => navigate("/invoices/create")} className="bg-blue-600 hover:bg-blue-700">
+  return <div className={`${isMobile ? 'page-container' : 'mt-6'}`}>
+        {!isMobile && <PageHeader title="Invoices" actions={<Button onClick={() => navigate("/invoices/create")} className="bg-blue-600 hover:bg-blue-700">
               <FilePlus className="mr-2 h-4 w-4" />
               Create Invoice
-            </Button>
-          } />
-        )}
+            </Button>} />}
 
         {/* Overdue Alert */}
-        {overdueInvoices.length > 0 && (
-          <Alert className="mb-4 border-red-200 bg-red-50">
+        {overdueInvoices.length > 0 && <Alert className="mb-4 border-red-200 bg-red-50">
             <AlertDescription className="flex items-center justify-between">
-              <span className="text-red-700">
+              <span className="text-red-700 text-lg">
                 You have {overdueInvoices.length} overdue invoice{overdueInvoices.length > 1 ? 's' : ''} that require attention.
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-4 border-red-300 text-red-700 hover:bg-red-100"
-                onClick={() => setStatusFilter('overdue')}
-              >
+              <Button variant="outline" size="sm" className="ml-4 border-red-300 text-red-700 hover:bg-red-100" onClick={() => setStatusFilter('overdue')}>
                 View
               </Button>
             </AlertDescription>
-          </Alert>
-        )}
+          </Alert>}
 
         <div className={!isMobile ? "bg-white rounded-lg border" : ""}>
           <div className="p-0">
             <div className="p-4 flex flex-col sm:flex-row justify-between gap-4">
-              {!isMobile && (
-                <div className="relative flex-1">
+              {!isMobile && <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search invoices..."
-                    className="pl-10 h-10"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              )}
+                  <Input type="search" placeholder="Search invoices..." className="pl-10 h-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                </div>}
 
               <div className="w-full sm:w-60">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -409,26 +352,15 @@ export default function Invoices() {
 
             </div>
 
-          {loading ? (
-            <div className="py-8 text-center bg-slate-100">
+          {loading ? <div className="py-8 text-center bg-slate-100">
               <p className="text-muted-foreground">Loading invoices...</p>
-            </div>
-          ) : filteredInvoices.length === 0 ? (
-            <div className="py-8 text-center">
+            </div> : filteredInvoices.length === 0 ? <div className="py-8 text-center">
               <p className="text-muted-foreground">No invoices found matching your criteria</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              {isMobile ? (
-                <div className="p-2 space-y-3">
+            </div> : <div className="overflow-x-auto">
+              {isMobile ? <div className="p-2 space-y-3">
                   {paginatedData(filteredInvoices).map(invoice => {
-                     const status = (invoice.payment_status === 'Partially Paid') ? 'Paid - Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
-                    return (
-                      <div
-                        key={invoice.id}
-                        className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm"
-                        onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
-                      >
+              const status = invoice.payment_status === 'Partially Paid' ? 'Paid - Partial' : invoice.status === 'Sent' ? 'Unpaid' : invoice.status;
+              return <div key={invoice.id} className="mobile-card border-l-4 border-l-blue-500 rounded-md shadow-sm" onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
                         <div className="p-3 border-b bg-blue-50/30 flex justify-between items-center">
                           <div>
                             <div className="font-medium text-blue-700">
@@ -484,44 +416,41 @@ export default function Invoices() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={e => {
-                                e.stopPropagation();
-                                window.open(`/invoices/view/${invoice.id}`, '_blank');
-                              }}>
+                        e.stopPropagation();
+                        window.open(`/invoices/view/${invoice.id}`, '_blank');
+                      }}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Invoice
                               </DropdownMenuItem>
                               {/* <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 navigate(`/add-warranty-item?customerId=${invoice.customer_id}&invoiceId=${invoice.reference_number}`);
-                              }}>
+                               }}>
                                 <ShieldCheck className="mr-2 h-4 w-4" />
                                 Add Warranty Item
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={e => {
+                               </DropdownMenuItem>
+                               <DropdownMenuItem onClick={e => {
                                 e.stopPropagation();
                                 handleSendWhatsapp(invoice);
-                              }}>
+                               }}>
                                 <Send className="mr-2 h-4 w-4" />
                                 Send via WhatsApp
-                              </DropdownMenuItem> */}
+                               </DropdownMenuItem> */}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600" onClick={e => {
-                                e.stopPropagation();
-                                setInvoiceToDelete(invoice);
-                                setDeleteDialogOpen(true);
-                              }}>
+                        e.stopPropagation();
+                        setInvoiceToDelete(invoice);
+                        setDeleteDialogOpen(true);
+                      }}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className={!isMobile ? "bg-white" : ""}>
+                      </div>;
+            })}
+                </div> : <div className={!isMobile ? "bg-white" : ""}>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -536,14 +465,10 @@ export default function Invoices() {
                     </TableHeader>
                     <TableBody>
                       {paginatedData(filteredInvoices).map(invoice => {
-                        const status = (invoice.payment_status === 'Partially Paid') ? 'Paid - Partial' : (invoice.status === 'Sent' ? 'Unpaid' : invoice.status);
-                        return (
-                          <TableRow key={invoice.id}>
+                  const status = invoice.payment_status === 'Partially Paid' ? 'Paid - Partial' : invoice.status === 'Sent' ? 'Unpaid' : invoice.status;
+                  return <TableRow key={invoice.id}>
                             <TableCell>
-                              <div
-                                className="font-medium cursor-pointer text-blue-600"
-                                onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
-                              >
+                              <div className="font-medium cursor-pointer text-blue-600" onClick={() => navigate(`/invoices/edit/${invoice.id}`)}>
                                 {invoice.reference_number}
                               </div>
                             </TableCell>
@@ -576,36 +501,28 @@ export default function Invoices() {
                                   {/* <DropdownMenuItem onClick={() => navigate(`/add-warranty-item?customerId=${invoice.customer_id}&invoiceId=${invoice.reference_number}`)}>
                                     <ShieldCheck className="mr-2 h-4 w-4" />
                                     Add Warranty Item
-                                  </DropdownMenuItem> */}
+                                   </DropdownMenuItem> */}
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-red-600"
-                                    onClick={() => {
-                                      setInvoiceToDelete(invoice);
-                                      setDeleteDialogOpen(true);
-                                    }}
-                                  >
+                                  <DropdownMenuItem className="text-red-600" onClick={() => {
+                            setInvoiceToDelete(invoice);
+                            setDeleteDialogOpen(true);
+                          }}>
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                          </TableRow>;
+                })}
                     </TableBody>
                   </Table>
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
           
-          {filteredInvoices.length > 0 && (
-            <div className="p-4 border-t">
+          {filteredInvoices.length > 0 && <div className="p-4 border-t">
               <PaginationControls pagination={pagination} controls={controls} />
-            </div>
-          )}
+            </div>}
         </div>
       </div>
 
@@ -634,6 +551,5 @@ export default function Invoices() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
