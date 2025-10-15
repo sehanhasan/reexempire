@@ -30,9 +30,15 @@ export default function AddAppointment() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [startTime, setStartTime] = useState(() => {
     const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const nextHour = now.getHours() + 1;
+    return `${String(nextHour).padStart(2, '0')}:00`;
   });
-  const [endTime, setEndTime] = useState("10:00");
+  const [endTime, setEndTime] = useState(() => {
+    const now = new Date();
+    const nextHour = now.getHours() + 1;
+    const endHour = nextHour + 1;
+    return `${String(endHour).padStart(2, '0')}:00`;
+  });
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Confirmed");
   const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
