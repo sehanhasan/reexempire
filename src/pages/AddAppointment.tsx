@@ -28,7 +28,10 @@ export default function AddAppointment() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [startTime, setStartTime] = useState("09:00");
+  const [startTime, setStartTime] = useState(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  });
   const [endTime, setEndTime] = useState("10:00");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Confirmed");
