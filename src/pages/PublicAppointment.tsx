@@ -728,7 +728,7 @@ export default function PublicAppointment() {
                   <p className="text-sm font-medium">Uploaded Photos ({pendingPhotos.length})</p>
                   <div className="grid grid-cols-3 gap-2">
                     {pendingPhotos.map((photo, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative group">
                         <img 
                           src={photo} 
                           alt={`Preview ${index + 1}`} 
@@ -737,7 +737,7 @@ export default function PublicAppointment() {
                         <Button
                           variant="destructive"
                           size="icon"
-                          className="absolute top-1 right-1 h-6 w-6"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleRemovePhoto(index)}
                         >
                           <X className="h-4 w-4" />

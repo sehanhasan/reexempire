@@ -359,6 +359,7 @@ export default function Invoices() {
         {/* Overdue Alert */}
         {overdueInvoices.length > 0 && (
           <Alert className="mb-4 border-red-200 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertTitle className="text-red-800">Overdue Invoices</AlertTitle>
             <AlertDescription className="flex items-center justify-between">
               <span className="text-red-700">
