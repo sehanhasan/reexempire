@@ -193,12 +193,12 @@ export const appointmentService = {
     }
     
     
-    if (appointment.notes) {
-      const cleanNotes = appointment.notes.replace(/image_url:[^\s]+/g, '').trim();
-      if (cleanNotes) {
-        message += `\n📝 *Notes*\n${cleanNotes}\n`;
-      }
-    }
+    // if (appointment.notes) {
+    //   const cleanNotes = appointment.notes.replace(/image_url:[^\s]+/g, '').trim();
+    //   if (cleanNotes) {
+    //     message += `\n📝 *Notes*\n${cleanNotes}\n`;
+    //   }
+    // }
     
     // Add public appointment URL
     const publicUrl = `${window.location.origin}/appointments/view/${appointment.id}`;
