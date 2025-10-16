@@ -138,11 +138,11 @@ export function AppointmentDetailsDialog({
   };
 
   const handleShareWhatsApp = () => {
-    const staffInfo = assignedStaff ? [{ 
-      id: assignedStaff.id, 
-      name: assignedStaff.name,
-      phone: assignedStaff.phone 
-    }] : [];
+    const staffInfo = allAssignedStaff.map(staff => ({ 
+      id: staff.id, 
+      name: staff.name,
+      phone: staff.phone 
+    }));
     
     const customerName = customer?.name || null;
     const whatsAppUrl = appointmentService.generateWhatsAppShareUrl(appointment, customerName, staffInfo);
