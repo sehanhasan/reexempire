@@ -155,7 +155,7 @@ export const appointmentService = {
     }
   },
 
-  generateWhatsAppShareUrl(appointment: Appointment, customerName: string | null = null, staffMembers: Array<{ id: string; name: string; phone?: string | null; notes?: string }> = []): string {
+  generateWhatsAppShareUrl(appointment: Appointment, customerName: string | null = null, staffMembers: Array<{ id: string; name: string; phone?: string | null }> = []): string {
     const dateStr = new Date(appointment.appointment_date).toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
@@ -188,11 +188,7 @@ export const appointmentService = {
     if (staffMembers.length > 0) {
       message += `\n👨‍💼 *Staff Assigned*\n`;
       staffMembers.forEach(staff => {
-        message += `- ${staff.name}`;
-        if (staff.notes) {
-          message += ` (${staff.notes})`;
-        }
-        message += `\n`;
+        message += `- ${staff.name}\n`;
       });
     }
     

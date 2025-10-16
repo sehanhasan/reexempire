@@ -138,21 +138,10 @@ export function AppointmentDetailsDialog({
   };
 
   const handleShareWhatsApp = () => {
-    // Parse staff notes from appointment notes
-    const staffNotesMap: Record<string, string> = {};
-    if (appointment.notes) {
-      const staffNoteRegex = /staff_note:([^:]+):([^\n]+)/g;
-      let match;
-      while ((match = staffNoteRegex.exec(appointment.notes)) !== null) {
-        staffNotesMap[match[1]] = match[2];
-      }
-    }
-
     const staffInfo = allAssignedStaff.map(staff => ({ 
       id: staff.id, 
       name: staff.name,
-      phone: staff.phone,
-      notes: staffNotesMap[staff.id] || undefined
+      phone: staff.phone 
     }));
     
     const customerName = customer?.name || null;
