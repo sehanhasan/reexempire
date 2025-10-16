@@ -524,9 +524,9 @@ export default function AddAppointment() {
                         >
                           <div>
                             <p className="text-sm font-medium">{staff.name}</p>
-                            <p className="text-xs text-muted-foreground">
+                            {/* <p className="text-xs text-muted-foreground">
                               {staff.position || "Staff"}
-                            </p>
+                            </p> */}
                           </div>
                         </label>
                       </div>
