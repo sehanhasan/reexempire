@@ -159,7 +159,7 @@ export default function AddStaffMember() {
                     <SelectItem value="Inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">Setting status to Inactive will ban user from logging in</p>
+                {/* <p className="text-xs text-muted-foreground">Setting status to Inactive will ban user from logging in</p> */}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
