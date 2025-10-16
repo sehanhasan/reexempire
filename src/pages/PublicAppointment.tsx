@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, Clock, MapPin, User, FileText, Play, CheckCircle, AlertCircle, Upload, FileImage, X, Star } from "lucide-react";
 import { appointmentService, customerService, staffService } from "@/services";
-import { formatDate } from "@/utils/formatters";
+import { formatDate, formatTime } from "@/utils/formatters";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RatingDialog } from "@/components/appointments/RatingDialog";
@@ -478,7 +478,7 @@ export default function PublicAppointment() {
                 <div>
                   <p className="text-sm text-muted-foreground">Time</p>
                   <p className="font-medium">
-                    {appointment.start_time} - {appointment.end_time}
+                    {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
                   </p>
                 </div>
               </div>

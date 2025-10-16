@@ -7,7 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { Customer, Staff, Appointment } from "@/types/database";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { appointmentService } from "@/services";
+import { appointmentService, staffService } from "@/services";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AppointmentDetailsDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ export function AppointmentDetailsDialog({
 }: AppointmentDetailsDialogProps) {
   const navigate = useNavigate();
   const [images, setImages] = useState<string[]>([]);
+  const [allAssignedStaff, setAllAssignedStaff] = useState<Staff[]>([]);
   
   useEffect(() => {
     if (appointment?.notes) {
@@ -40,6 +42,48 @@ export function AppointmentDetailsDialog({
     } else {
       setImages([]);
     }
+  }, [appointment]);
+
+  // Fetch all assigned staff from appointment_staff table
+  useEffect(() => {
+    const fetchAssignedStaff = async () => {
+      if (!appointment?.id) {
+        setAllAssignedStaff([]);
+        return;
+      }
+
+      try {
+        // Fetch appointment_staff records
+        const { data: appointmentStaffData, error } = await supabase
+          .from('appointment_staff')
+          .select('staff_id')
+          .eq('appointment_id', appointment.id);
+
+        if (error) {
+          console.error('Error fetching appointment staff:', error);
+          return;
+        }
+
+        if (appointmentStaffData && appointmentStaffData.length > 0) {
+          // Fetch all staff details
+          const allStaff = await staffService.getAll();
+          const staffIds = appointmentStaffData.map(as => as.staff_id);
+          const assignedStaffMembers = allStaff.filter(s => staffIds.includes(s.id));
+          setAllAssignedStaff(assignedStaffMembers);
+        } else if (appointment.staff_id) {
+          // Fallback to single staff_id for backward compatibility
+          const staff = await staffService.getById(appointment.staff_id);
+          setAllAssignedStaff(staff ? [staff] : []);
+        } else {
+          setAllAssignedStaff([]);
+        }
+      } catch (error) {
+        console.error('Error fetching assigned staff:', error);
+        setAllAssignedStaff([]);
+      }
+    };
+
+    fetchAssignedStaff();
   }, [appointment]);
   
   if (!appointment) return null;
@@ -213,15 +257,16 @@ export function AppointmentDetailsDialog({
               </div>
             )}
 
-            {assignedStaff && (
+            {allAssignedStaff.length > 0 && (
               <div className="flex items-start gap-2">
                 <User className="h-4 w-4 mt-1 text-gray-500" />
                 <div>
                   <p className="font-medium">Assigned Staff</p>
-                  <p className="text-sm">{assignedStaff.name}</p>
-                  {/* {assignedStaff.phone && (
-                    <p className="text-sm text-gray-600">{assignedStaff.phone}</p>
-                  )} */}
+                  {allAssignedStaff.map((staff, index) => (
+                    <p key={staff.id} className="text-sm">
+                      {staff.name}
+                    </p>
+                  ))}
                 </div>
               </div>
             )}

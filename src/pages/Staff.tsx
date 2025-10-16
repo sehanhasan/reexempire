@@ -213,7 +213,6 @@ export default function StaffPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>Position</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Join Date</TableHead>
                       <TableHead>Status</TableHead>
@@ -228,7 +227,6 @@ export default function StaffPage() {
                             {staffMember.name}
                           </div>
                         </TableCell>
-                        <TableCell>{staffMember.position || "-"}</TableCell>
                         <TableCell>{staffMember.phone || "-"}</TableCell>
                         <TableCell>
                           {staffMember.join_date ? new Date(staffMember.join_date).toLocaleDateString() : "-"}

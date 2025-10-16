@@ -54,6 +54,9 @@ export default function AddAppointment() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isCustomerSelectorOpen, setIsCustomerSelectorOpen] = useState(false);
 
+  // Staff search
+  const [staffSearchTerm, setStaffSearchTerm] = useState("");
+
   // Fetch staff members
   const { data: staffMembers = [], isLoading: isLoadingStaff } = useQuery({
     queryKey: ['staff'],
@@ -505,8 +508,22 @@ export default function AddAppointment() {
               {isLoadingStaff ? (
                 <div className="text-center py-4">Loading staff members...</div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  {staffMembers.map((staff: Staff) => (
+                <>
+                  <div className="relative">
+                    <Input
+                      type="search"
+                      placeholder="Search staff..."
+                      value={staffSearchTerm}
+                      onChange={(e) => setStaffSearchTerm(e.target.value)}
+                      className="pl-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {staffMembers
+                      .filter((staff: Staff) => 
+                        staff.name.toLowerCase().includes(staffSearchTerm.toLowerCase())
+                      )
+                      .map((staff: Staff) => (
                     <div key={staff.id} className="border rounded-md p-4">
                       <div className="flex items-center space-x-2">
                         <input 
@@ -546,9 +563,10 @@ export default function AddAppointment() {
                           />
                         </div>
                       )}
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

@@ -57,3 +57,19 @@ export const formatPhoneNumber = (phone?: string): string => {
   // Return as is if it doesn't match expected formats
   return phone;
 };
+
+/**
+ * Format a time string from 24hr to 12hr format
+ * @param time The time string in HH:MM format
+ * @returns Formatted time string in 12hr format
+ */
+export const formatTime = (time?: string): string => {
+  if (!time) return "";
+  
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours, 10);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  
+  return `${displayHour}:${minutes} ${period}`;
+};
