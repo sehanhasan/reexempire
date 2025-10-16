@@ -147,7 +147,7 @@ export default function AddStaffMember() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* <div className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select value={staffData.status} onValueChange={value => handleChange("status", value)}>
                   <SelectTrigger>
@@ -160,7 +160,7 @@ export default function AddStaffMember() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">Setting status to Inactive will ban user from logging in</p>
-              </div> */}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input id="phone" placeholder="e.g. +60123456789" value={staffData.phone} onChange={e => handleChange("phone", e.target.value)} required />
