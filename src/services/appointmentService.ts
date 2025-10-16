@@ -184,18 +184,11 @@ export const appointmentService = {
         message += `🏠 *Unit #:* ${appointment.location}\n`;
       }
     }
-    
-    // if (staffMembers.length > 0) {
-    //   message += `\n👨‍💼 *Staff Assigned*\n`;
-    //   staffMembers.forEach(staff => {
-    //     message += `- ${staff.name}${staff.phone ? ' ('+staff.phone+')' : ''}\n`;
-    //   });
-    // }
 
     if (staffMembers.length > 0) {
       message += `\n👨‍💼 *Staff Assigned*\n`;
       staffMembers.forEach(staff => {
-        message += `- ${staff.name}\n`;  // Remove the phone number part
+        message += `- ${staff.name}\n`;
       });
     }
     
