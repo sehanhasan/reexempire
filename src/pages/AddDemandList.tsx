@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { inventoryService } from "@/services/inventoryService";
+import { generateDemandListPDF, downloadPDF } from "@/utils/pdfGenerator";
 
 interface DemandItem {
   inventory_item_id: string;
@@ -171,6 +172,32 @@ export default function AddDemandList() {
         title: "Success",
         description: "Demand list created successfully!"
       });
+
+      // Generate and download PDF
+      const pdfItems = Object.values(selectedItems).map(item => {
+        const inventoryItem = allItems.find(i => i.id === item.inventory_item_id);
+        const unitPrice = inventoryItem?.unit_price || 0;
+        return {
+          item_name: item.item_name,
+          current_stock: item.current_stock,
+          required_quantity: item.required_quantity,
+          unit_price: unitPrice,
+          amount: unitPrice * item.required_quantity,
+          urgent: item.urgent
+        };
+      });
+
+      const pdf = generateDemandListPDF({
+        title: `Demand List - ${format(new Date(), 'dd/MM/yyyy')}`,
+        requestedDate: format(requestedDate, 'dd/MM/yyyy'),
+        requiredDate: format(requiredDate, 'dd/MM/yyyy'),
+        priority,
+        items: pdfItems,
+        totalAmount,
+        notes: notes.trim() || undefined
+      });
+
+      downloadPDF(pdf, `Demand-List-${format(new Date(), 'ddMMyyyy')}.pdf`);
 
       navigate('/inventory');
     } catch (error) {

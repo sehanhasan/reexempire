@@ -352,6 +352,7 @@ export default function CreateInvoice() {
               const itemName = nameMatch[1].trim();
               const serialNumber = nameMatch[2] || '';
               const warrantyPeriod = nameMatch[3].trim();
+              const itemQuantity = typeof item.quantity === 'string' ? parseFloat(item.quantity as string) || 1 : item.quantity;
               
               // Convert warranty period text to type
               let warrantyPeriodType = '30_days';
@@ -401,6 +402,7 @@ export default function CreateInvoice() {
                 invoice_id: createdInvoice.id,
                 item_name: itemName,
                 serial_number: serialNumber || null,
+                quantity: itemQuantity,
                 issue_date: invoiceDate,
                 warranty_period_type: warrantyPeriodType,
                 warranty_period_value: null,
@@ -408,12 +410,43 @@ export default function CreateInvoice() {
                 expiry_date: expiryDate.toISOString().split('T')[0]
               };
 
-              const { error: warrantyError } = await supabase.from('warranty_items').insert([warrantyData]);
+              const { data: warrantyResult, error: warrantyError } = await supabase
+                .from('warranty_items')
+                .insert([warrantyData])
+                .select();
 
               if (warrantyError) {
                 console.error('Error creating warranty item:', warrantyError);
-              } else {
+              } else if (warrantyResult && warrantyResult.length > 0) {
                 console.log('Created warranty item for:', itemName);
+                
+                // Create inventory movement to reduce stock
+                const { data: inventoryItem } = await supabase
+                  .from('inventory_items')
+                  .select('*')
+                  .ilike('name', itemName)
+                  .eq('status', 'Active')
+                  .maybeSingle();
+
+                if (inventoryItem) {
+                  const { error: movementError } = await supabase
+                    .from('inventory_movements')
+                    .insert([{
+                      inventory_item_id: inventoryItem.id,
+                      movement_type: 'OUT',
+                      quantity: itemQuantity,
+                      reference_type: 'warranty',
+                      reference_id: warrantyResult[0].id,
+                      notes: `Warranty item issued from invoice ${documentNumber}`,
+                      created_by: 'System'
+                    }]);
+
+                  if (movementError) {
+                    console.error('Error creating inventory movement:', movementError);
+                  } else {
+                    console.log('Created inventory movement for:', itemName);
+                  }
+                }
               }
             }
           } catch (warrantyError) {

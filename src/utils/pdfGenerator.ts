@@ -33,6 +33,25 @@ interface InvoiceDetails extends DocumentDetails {
   images?: string[];
 }
 
+interface DemandListItem {
+  item_name: string;
+  current_stock: number;
+  required_quantity: number;
+  unit_price: number;
+  amount: number;
+  urgent: boolean;
+}
+
+interface DemandListDetails {
+  title: string;
+  requestedDate: string;
+  requiredDate: string;
+  priority: string;
+  items: DemandListItem[];
+  totalAmount: number;
+  notes?: string;
+}
+
 const formatCurrency = (amount: number): string => {
   return `RM ${amount.toFixed(2)}`;
 };
@@ -545,6 +564,103 @@ const addItemsTable = (pdf: jsPDF, items: QuotationItem[] | InvoiceItem[], start
       }
     }
   });
+};
+
+// Generate a demand list PDF
+export const generateDemandListPDF = (details: DemandListDetails): jsPDF => {
+  const pdf = generateBasePDF('DEMAND LIST');
+  
+  // Add header with title
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.text(details.title, 20, 50);
+  
+  // Add dates and priority
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  pdf.text(`Requested Date: ${details.requestedDate}`, 20, 60);
+  pdf.text(`Required Date: ${details.requiredDate}`, 20, 67);
+  
+  pdf.setFont('helvetica', 'bold');
+  const priorityColor = details.priority === 'Urgent' ? [220, 38, 38] : [34, 197, 94];
+  pdf.setTextColor(priorityColor[0], priorityColor[1], priorityColor[2]);
+  pdf.text(`Priority: ${details.priority}`, 120, 60);
+  pdf.setTextColor(0, 0, 0);
+  
+  let yPos = 85;
+  
+  // Items table
+  const tableData = details.items.map((item, index) => [
+    (index + 1).toString(),
+    item.item_name,
+    item.current_stock.toString(),
+    item.required_quantity.toString(),
+    formatCurrency(item.unit_price),
+    formatCurrency(item.amount),
+    item.urgent ? 'YES' : '-'
+  ]);
+  
+  if (tableData.length > 0) {
+    autoTable(pdf, {
+      startY: yPos,
+      head: [['No.', 'Item Name', 'Current Stock', 'Required Qty', 'Unit Price', 'Amount', 'Urgent']],
+      body: tableData,
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      headStyles: {
+        fillColor: [70, 130, 180],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 25, halign: 'center' },
+        3: { cellWidth: 25, halign: 'center' },
+        4: { cellWidth: 25, halign: 'right' },
+        5: { cellWidth: 25, halign: 'right' },
+        6: { cellWidth: 18, halign: 'center' }
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    // @ts-ignore
+    yPos = pdf.lastAutoTable?.finalY + 15 || yPos + 50;
+  }
+  
+  // Total amount
+  const summaryStartX = 120;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.text('TOTAL AMOUNT:', summaryStartX, yPos);
+  pdf.text(formatCurrency(details.totalAmount), 170, yPos, { align: 'right' });
+  yPos += 15;
+  
+  // Notes section
+  if (details.notes && details.notes.trim()) {
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(11);
+    pdf.text('NOTES:', 20, yPos);
+    yPos += 8;
+    
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    const notesLines = pdf.splitTextToSize(details.notes, 170);
+    pdf.text(notesLines, 20, yPos);
+  }
+  
+  // Footer
+  const pageHeight = pdf.internal.pageSize.height;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
+  pdf.text('For internal use only', 105, pageHeight - 20, { align: 'center' });
+  pdf.text('© 2025 Reex Empire Sdn Bhd. All rights reserved.', 105, pageHeight - 15, { align: 'center' });
+  
+  return pdf;
 };
 
 // Function to download the PDF
