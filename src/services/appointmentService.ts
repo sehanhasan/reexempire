@@ -156,12 +156,12 @@ export const appointmentService = {
   },
 
   generateWhatsAppShareUrl(appointment: Appointment, customerName: string | null = null, staffMembers: Array<{ id: string; name: string; phone?: string | null }> = []): string {
-    const dateStr = new Date(appointment.appointment_date).toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    const date = new Date(appointment.appointment_date);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const dateStr = `${day}/${month}/${year} (${dayName})`;
     
     const formatTime = (time: string) => {
       if (!time) return "";

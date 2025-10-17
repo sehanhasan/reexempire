@@ -178,7 +178,7 @@ export default function AddWarrantyItem() {
           // Check if there's enough stock
           if (inventoryItem.quantity >= quantityToSubtract) {
             // Create inventory movement record - the database trigger will handle the quantity update
-            await supabase.from('inventory_movements').insert({
+            const { error: movementError } = await supabase.from('inventory_movements').insert({
               inventory_item_id: inventoryItem.id,
               movement_type: 'OUT',
               quantity: quantityToSubtract,
@@ -187,7 +187,15 @@ export default function AddWarrantyItem() {
               notes: `Warranty issued for ${formItem.item_name} (Qty: ${quantityToSubtract})`,
               created_by: 'System'
             });
+            
+            if (movementError) {
+              console.error('Error creating inventory movement:', movementError);
+            }
+          } else {
+            console.warn(`Insufficient stock for ${formItem.item_name}: Available ${inventoryItem.quantity}, Required ${quantityToSubtract}`);
           }
+        } else {
+          console.warn(`No matching inventory item found for: ${formItem.item_name}`);
         }
       }
 
